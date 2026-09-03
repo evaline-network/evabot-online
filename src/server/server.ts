@@ -74,6 +74,7 @@ export function createServer(): http.Server {
       const creds = await GoogleAuthProvider.getCredentials();
       sendJson(res, 200, {
         status: 'online',
+        version: 'v0.0.1 MVP',
         server: 'evabot-online-edge',
         uptimeSeconds: Math.floor(process.uptime()),
         memoryUsageMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),

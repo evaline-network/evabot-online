@@ -1,7 +1,7 @@
 {
   "name": "evabot-online",
-  "version": "0.2.0",
-  "description": "EvaBot Autonomous Intelligent Agent — Modular TypeScript Gemini LLM Chat System",
+  "version": "0.0.1",
+  "description": "Evabot Online v0.0.1 MVP — Hybrid Multi-LLM, Consilium & Cyber-Terminal Agent System",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
