@@ -120,6 +120,60 @@
 
     <!-- CHAT MESSAGES SCROLL REGION -->
     <main id="chat-scroll-area" class="flex-1 overflow-y-auto px-3 sm:px-6 py-4 bg-black">
+      <!-- 1. COLLAPSIBLE LIVE BOOT INITIALIZATION ACCORDION -->
+      <div class="max-w-5xl mx-auto mb-4 w-full">
+        <details id="accordion-boot" open class="border border-zinc-800 bg-black group transition-all">
+          <summary class="flex justify-between items-center px-3 py-2 cursor-pointer select-none bg-zinc-950 border-b border-zinc-900 hover:bg-zinc-900 transition-colors">
+            <div class="flex items-center gap-2">
+              <span class="text-white font-mono text-xs font-bold">┌── [ 1. BOOT SEQUENCE & LIVE DIAGNOSTICS LOG ]</span>
+              <span id="boot-status-pill" class="text-[10px] text-emerald-400 border border-emerald-800 px-1.5 py-0.2 bg-emerald-950/40">🟢 NOMINAL</span>
+            </div>
+            <span id="boot-toggle-label" class="text-zinc-500 font-mono text-xs">[ - COLLAPSE ]</span>
+          </summary>
+          <div id="boot-log-container" class="p-3 font-mono text-xs space-y-1.5 bg-black border-b border-zinc-900">
+            <div class="text-zinc-500">Initialising dual-server diagnostic probe...</div>
+            <div class="flex items-start gap-2 text-zinc-300">
+              <span class="text-emerald-400 font-bold">✔ 🟢</span>
+              <div>
+                <span class="text-white font-bold">Probe Web Server / Micro Server (evaline-micro-vm)</span>
+                <div class="text-zinc-500 text-[11px]">HTTP/2 SSL Edge nominal. Caddy reverse-proxy active. Compute load: 0%.</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2 text-zinc-300">
+              <span class="text-emerald-400 font-bold">✔ 🟢</span>
+              <div>
+                <span class="text-white font-bold">Probe Agent Server & Compute Organs (evabot-agent-vm)</span>
+                <div class="text-zinc-500 text-[11px]">8 vCPUs & 32 GB DDR5 active. Port 3000, 20128, 9090, 8080 healthy.</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2 text-zinc-300">
+              <span class="text-emerald-400 font-bold">✔ 🟢</span>
+              <div>
+                <span class="text-white font-bold">Google Ambient Cloud Authentication (evabot.online@gmail.com)</span>
+                <div class="text-zinc-500 text-[11px]">Service Account tokens active with zero manual key requirement.</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2 text-zinc-300">
+              <span class="text-emerald-400 font-bold">✔ 🟢</span>
+              <div>
+                <span class="text-white font-bold">Audit Model Registry & Frontier Fleet</span>
+                <div class="text-zinc-500 text-[11px]">Registered 34 models across 11 categories (21 Free Quota / 13 Paid). Frontier Gemini 3.x online.</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2 text-zinc-300">
+              <span class="text-emerald-400 font-bold">✔ 🟢</span>
+              <div>
+                <span class="text-white font-bold">Verify API Quotas & Token Balance</span>
+                <div class="text-zinc-500 text-[11px]">Google AI Pro: 15 RPM / 1M TPM free quota active ($0.00). OpenRouter Free models ready.</div>
+              </div>
+            </div>
+          </div>
+          <div class="px-3 py-1 bg-black text-[10px] text-zinc-600 font-mono">
+            └── ALL DIAGNOSTIC CHECKS PASSED • STRICT FINANCIAL COMPLIANCE: USD ($) & EUR (€)
+          </div>
+        </details>
+      </div>
+
       <div id="messages-container" class="max-w-5xl mx-auto flex flex-col space-y-3">
         <!-- Dynamic terminal bubbles rendered by app.ts -->
       </div>

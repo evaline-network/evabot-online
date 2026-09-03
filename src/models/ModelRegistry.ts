@@ -51,8 +51,68 @@ export interface GeminiModelInfo {
 
 export const COMPLETE_GOOGLE_MODEL_CATALOG: GeminiModelInfo[] = [
   // ============================================================================
-  // 1. GOOGLE GEMINI NEXT-GEN (Google DeepMind)
+  // 1. GOOGLE GEMINI NEXT-GEN FRONTIER (Google DeepMind - 2026 Fleet)
   // ============================================================================
+  {
+    id: 'gemini-3.8-flash',
+    name: 'Gemini 3.8 Flash',
+    provider: 'Google DeepMind',
+    category: 'Google Gemini (Next-Gen)',
+    description: 'Frontier ultra-fast autonomous agentic model with native real-time tool orchestration and multi-modal streaming.',
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: 'Free Quota + Paid',
+    protocol: 'google-genai',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'Google AI Pro / AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00)',
+      inputPer1MTokensUSD: '$0.00 (Free) / $0.075 (Paid)',
+      outputPer1MTokensUSD: '$0.00 (Free) / $0.300 (Paid)',
+      inputPer1MTokensEUR: '€0.00 (Free) / €0.070 (Paid)',
+      outputPer1MTokensEUR: '€0.00 (Free) / €0.280 (Paid)',
+    },
+  },
+  {
+    id: 'gemini-3.1-pro',
+    name: 'Gemini 3.1 Pro',
+    provider: 'Google DeepMind',
+    category: 'Google Gemini (Next-Gen)',
+    description: 'Premier enterprise reasoning frontier model with 2M token context, deep logic, and architectural planning capability.',
+    contextWindow: 2097152,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: 'Free Quota + Paid',
+    protocol: 'google-genai',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'Google AI Pro / AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00)',
+      inputPer1MTokensUSD: '$0.00 (Free) / $1.25 (Paid)',
+      outputPer1MTokensUSD: '$0.00 (Free) / $5.00 (Paid)',
+      inputPer1MTokensEUR: '€0.00 (Free) / €1.15 (Paid)',
+      outputPer1MTokensEUR: '€0.00 (Free) / €4.60 (Paid)',
+    },
+  },
+  {
+    id: 'gemini-3.1-flash',
+    name: 'Gemini 3.1 Flash',
+    provider: 'Google DeepMind',
+    category: 'Google Gemini (Next-Gen)',
+    description: 'Lightweight high-efficiency frontier flash model with ultra-low latency inference.',
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: 'Free Quota + Paid',
+    protocol: 'google-genai',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'Google AI Studio: 15 RPM, 1M TPM ($0.00)',
+      inputPer1MTokensUSD: '$0.00 (Free) / $0.050 (Paid)',
+      outputPer1MTokensUSD: '$0.00 (Free) / $0.200 (Paid)',
+      inputPer1MTokensEUR: '€0.00 (Free) / €0.046 (Paid)',
+      outputPer1MTokensEUR: '€0.00 (Free) / €0.185 (Paid)',
+    },
+  },
   {
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',

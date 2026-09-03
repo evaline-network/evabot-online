@@ -8,6 +8,21 @@
 
 ## 🚀 Active Sprints & Swimlanes
 
+### 🟡 2. In Progress / Under Execution
+- [ ] **TASK-13:** **Terminal-First Modern TUI (`src/cli/terminal-chat.ts`):**
+  - Advanced TUI with live ASCII collapsible accordions (`[+] / [-]`), interactive toggle controls, and character-perfect cyber-terminal aesthetic.
+  - Evaluation and integration of modern TUI paradigms (Ink, Blessed, Boxen/Chalk reactive ANSI).
+- [ ] **TASK-14:** **Gemini 3.x Frontier Fleet Registry:**
+  - Complete integration of `gemini-3.8-flash`, `gemini-3.1-pro`, and `gemini-3.1-flash` with token limits, free tier details, and strict USD ($) / EUR (€) pricing.
+- [ ] **TASK-15:** **Live Startup Boot Sequence & Dual-Server Diagnostics:**
+  - Detailed line-by-line boot initialization log in both Terminal and Web.
+  - Live health probe for Web Server (`evaline-micro-vm`) and Agent Server (`evabot-agent-vm`).
+  - Google Cloud ambient auth check, model availability audit, and token balance inspection.
+- [ ] **TASK-16:** **Accordion-First Architecture (`<details>/<summary>`):**
+  - Full structural alignment of Web and Terminal on collapsible accordions: Boot Log, Server Telemetry, Neural Providers, Model Catalog, Consilium, Corporate Roles, and Chat Stream.
+
+---
+
 ### 🟢 1. Done / Completed
 - [x] **TASK-01:** GCP Infrastructure Audit & Resource Diagnostics (`evaline-micro-vm` & `evabot-agent-vm`).
 - [x] **TASK-02:** Face & Brain Decoupling:
@@ -47,8 +62,6 @@
 
 ---
 
-### 🟡 2. In Progress / Under Execution
-*All currently planned tasks in this milestone are 100% completed.*
 
 ---
 

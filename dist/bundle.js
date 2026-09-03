@@ -1,8 +1,68 @@
 // src/models/ModelRegistry.ts
 var COMPLETE_GOOGLE_MODEL_CATALOG = [
   // ============================================================================
-  // 1. GOOGLE GEMINI NEXT-GEN (Google DeepMind)
+  // 1. GOOGLE GEMINI NEXT-GEN FRONTIER (Google DeepMind - 2026 Fleet)
   // ============================================================================
+  {
+    id: "gemini-3.8-flash",
+    name: "Gemini 3.8 Flash",
+    provider: "Google DeepMind",
+    category: "Google Gemini (Next-Gen)",
+    description: "Frontier ultra-fast autonomous agentic model with native real-time tool orchestration and multi-modal streaming.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Pro / AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00)",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.075 (Paid)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.300 (Paid)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.070 (Paid)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.280 (Paid)"
+    }
+  },
+  {
+    id: "gemini-3.1-pro",
+    name: "Gemini 3.1 Pro",
+    provider: "Google DeepMind",
+    category: "Google Gemini (Next-Gen)",
+    description: "Premier enterprise reasoning frontier model with 2M token context, deep logic, and architectural planning capability.",
+    contextWindow: 2097152,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Pro / AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00)",
+      inputPer1MTokensUSD: "$0.00 (Free) / $1.25 (Paid)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $5.00 (Paid)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC1.15 (Paid)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC4.60 (Paid)"
+    }
+  },
+  {
+    id: "gemini-3.1-flash",
+    name: "Gemini 3.1 Flash",
+    provider: "Google DeepMind",
+    category: "Google Gemini (Next-Gen)",
+    description: "Lightweight high-efficiency frontier flash model with ultra-low latency inference.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM ($0.00)",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.050 (Paid)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.200 (Paid)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.046 (Paid)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.185 (Paid)"
+    }
+  },
   {
     id: "gemini-2.5-flash",
     name: "Gemini 2.5 Flash",
@@ -1117,6 +1177,13 @@ var EvaBotWebApp = class {
     document.getElementById("header-model-pill")?.addEventListener("click", () => {
       deckSection?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+    const bootAccordion = document.getElementById("accordion-boot");
+    const bootLabel = document.getElementById("boot-toggle-label");
+    bootAccordion?.addEventListener("toggle", () => {
+      if (bootLabel) {
+        bootLabel.textContent = bootAccordion.open ? "[ - COLLAPSE ]" : "[ + EXPAND ]";
+      }
+    });
   }
   async checkHealth() {
     const t0 = performance.now();
@@ -1136,6 +1203,35 @@ var EvaBotWebApp = class {
       this.lastLatencyMs = 999;
     }
     this.updateTelemetryUI();
+    this.fetchBootDiagnostics();
+  }
+  async fetchBootDiagnostics() {
+    try {
+      const res = await fetch(`/api/diagnostics/boot?model=${encodeURIComponent(this.currentModel)}`);
+      if (res.ok) {
+        const report = await res.json();
+        const container = document.getElementById("boot-log-container");
+        if (container && report.steps) {
+          container.innerHTML = `
+            <div class="text-zinc-500 font-bold mb-1">Live dual-server diagnostic probe completed in ${report.totalDurationMs}ms:</div>
+            ${report.steps.map((step) => `
+              <div class="flex items-start gap-2 text-zinc-300 py-0.5">
+                <span class="text-emerald-400 font-bold">\u2714 \u{1F7E2}</span>
+                <div class="flex-1">
+                  <div class="flex justify-between items-center">
+                    <span class="text-white font-bold">${step.name}</span>
+                    <span class="text-zinc-500 text-[10px] font-mono">${step.latencyMs}ms</span>
+                  </div>
+                  <div class="text-zinc-400 text-[11px]">${step.details}</div>
+                </div>
+              </div>
+            `).join("")}
+          `;
+        }
+      }
+    } catch (e) {
+      console.warn("Boot diagnostics fetch skipped:", e);
+    }
   }
   startTelemetryLoop() {
     if (this.uptimeInterval) clearInterval(this.uptimeInterval);

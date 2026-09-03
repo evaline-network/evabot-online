@@ -6,6 +6,8 @@ import { UniversalLlmClient, LlmProvider } from '../core/UniversalLlmClient.js';
 import { ConsiliumEngine, ConsiliumMode, ConsiliumParticipant } from '../core/ConsiliumEngine.js';
 import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
 import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
+import { GeminiClient } from '../core/GeminiClient.js';
+import { BootDiagnostics } from '../core/BootDiagnostics.js';
 import { Config } from '../core/Config.js';
 import { logger } from '../core/Logger.js';
 
@@ -86,6 +88,14 @@ export function createServer(): http.Server {
         omnirouteEndpoint: Config.omnirouteBaseUrl,
         availableRolesCount: Object.keys(CORPORATE_ROLES).length,
       });
+      return;
+    }
+
+    // Live Boot Sequence & Diagnostics Probe
+    if (pathname === '/api/diagnostics/boot' && req.method === 'GET') {
+      const activeModel = parsedUrl.searchParams.get('model') || 'gemini-3.8-flash';
+      const report = await BootDiagnostics.runDiagnostics(activeModel);
+      sendJson(res, 200, report);
       return;
     }
 

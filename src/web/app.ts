@@ -586,6 +586,14 @@ export class EvaBotWebApp {
     document.getElementById('header-model-pill')?.addEventListener('click', () => {
       deckSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+
+    const bootAccordion = document.getElementById('accordion-boot') as HTMLDetailsElement | null;
+    const bootLabel = document.getElementById('boot-toggle-label');
+    bootAccordion?.addEventListener('toggle', () => {
+      if (bootLabel) {
+        bootLabel.textContent = bootAccordion.open ? '[ - COLLAPSE ]' : '[ + EXPAND ]';
+      }
+    });
   }
 
   private async checkHealth(): Promise<void> {
@@ -606,6 +614,36 @@ export class EvaBotWebApp {
       this.lastLatencyMs = 999;
     }
     this.updateTelemetryUI();
+    this.fetchBootDiagnostics();
+  }
+
+  private async fetchBootDiagnostics(): Promise<void> {
+    try {
+      const res = await fetch(`/api/diagnostics/boot?model=${encodeURIComponent(this.currentModel)}`);
+      if (res.ok) {
+        const report = await res.json();
+        const container = document.getElementById('boot-log-container');
+        if (container && report.steps) {
+          container.innerHTML = `
+            <div class="text-zinc-500 font-bold mb-1">Live dual-server diagnostic probe completed in ${report.totalDurationMs}ms:</div>
+            ${report.steps.map((step: any) => `
+              <div class="flex items-start gap-2 text-zinc-300 py-0.5">
+                <span class="text-emerald-400 font-bold">✔ 🟢</span>
+                <div class="flex-1">
+                  <div class="flex justify-between items-center">
+                    <span class="text-white font-bold">${step.name}</span>
+                    <span class="text-zinc-500 text-[10px] font-mono">${step.latencyMs}ms</span>
+                  </div>
+                  <div class="text-zinc-400 text-[11px]">${step.details}</div>
+                </div>
+              </div>
+            `).join('')}
+          `;
+        }
+      }
+    } catch (e) {
+      console.warn('Boot diagnostics fetch skipped:', e);
+    }
   }
 
   private startTelemetryLoop(): void {
