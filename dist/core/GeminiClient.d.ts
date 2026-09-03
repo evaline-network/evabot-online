@@ -12,11 +12,18 @@ export interface GenerationOptions {
     signal?: AbortSignal;
 }
 export declare class GeminiClient {
-    private apiKey;
+    private explicitToken?;
+    private tokenType;
     private baseUrl;
-    constructor(apiKey: string);
+    constructor(apiKeyOrToken?: string);
     setApiKey(apiKey: string): void;
+    setBearerToken(token: string): void;
     hasApiKey(): boolean;
+    /**
+     * Resolves authentication credentials: uses explicit key if set,
+     * otherwise queries GoogleAuthProvider for ambient Google Cloud / ADC credentials.
+     */
+    private resolveAuth;
     /**
      * Generates content without streaming
      */

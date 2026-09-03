@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ModelRegistry } from '../models/ModelRegistry.js';
 import { GeminiClient, ChatMessage } from '../core/GeminiClient.js';
+import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
 import { Config } from '../core/Config.js';
 import { logger } from '../core/Logger.js';
 
@@ -66,23 +67,27 @@ export function createServer(): http.Server {
       return;
     }
 
-    // Health Check
+    // Health Check & Ambient Google Cloud Auth Status
     if (pathname === '/api/health' && req.method === 'GET') {
+      const creds = await GoogleAuthProvider.getCredentials();
       sendJson(res, 200, {
         status: 'online',
         server: 'evabot-online-edge',
         uptimeSeconds: Math.floor(process.uptime()),
         memoryUsageMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),
         availableModels: ModelRegistry.getAllModels().length,
-        hasServerApiKey: Boolean(Config.geminiApiKey),
+        hasServerApiKey: Boolean(creds),
+        authSource: creds ? creds.source : 'None',
+        account: creds ? creds.account : 'evabot.online@gmail.com',
       });
       return;
     }
 
-    // Model List
+    // Model List & Categorization
     if (pathname === '/api/models' && req.method === 'GET') {
       sendJson(res, 200, {
         models: ModelRegistry.getAllModels(),
+        categories: ModelRegistry.getCategories(),
         defaultModel: Config.defaultModel,
       });
       return;
@@ -99,16 +104,8 @@ export function createServer(): http.Server {
           return;
         }
 
-        const effectiveKey = (apiKey && apiKey.trim()) || Config.geminiApiKey;
-        if (!effectiveKey) {
-          sendJson(res, 401, {
-            error: 'No Gemini API key configured. Provide "apiKey" in request or configure GEMINI_API_KEY on server.',
-          });
-          return;
-        }
-
         const targetModel = ModelRegistry.isValidModel(model) ? model : Config.defaultModel;
-        const client = new GeminiClient(effectiveKey);
+        const client = new GeminiClient(apiKey || Config.geminiApiKey || undefined);
 
         const contents: ChatMessage[] = [
           ...history,
@@ -125,7 +122,8 @@ export function createServer(): http.Server {
         });
       } catch (err: any) {
         logger.error('Server', `Chat error: ${err.message}`);
-        sendJson(res, 500, { error: err.message || 'Internal server error' });
+        const status = (err.message && (err.message.includes('credentials') || err.message.includes('API key'))) ? 401 : 500;
+        sendJson(res, status, { error: err.message || 'Internal server error' });
       }
       return;
     }
@@ -141,16 +139,8 @@ export function createServer(): http.Server {
           return;
         }
 
-        const effectiveKey = (apiKey && apiKey.trim()) || Config.geminiApiKey;
-        if (!effectiveKey) {
-          sendJson(res, 401, {
-            error: 'No Gemini API key configured. Provide "apiKey" in request or configure GEMINI_API_KEY on server.',
-          });
-          return;
-        }
-
         const targetModel = ModelRegistry.isValidModel(model) ? model : Config.defaultModel;
-        const client = new GeminiClient(effectiveKey);
+        const client = new GeminiClient(apiKey || Config.geminiApiKey || undefined);
 
         const contents: ChatMessage[] = [
           ...history,

@@ -1,24 +1,61 @@
 import { logger } from './Logger.js';
+import { GoogleAuthProvider } from './GoogleAuthProvider.js';
 export class GeminiClient {
-    apiKey;
+    explicitToken;
+    tokenType = 'api_key';
     baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    constructor(apiKey) {
-        this.apiKey = apiKey.trim();
+    constructor(apiKeyOrToken) {
+        if (apiKeyOrToken) {
+            this.setApiKey(apiKeyOrToken);
+        }
     }
     setApiKey(apiKey) {
-        this.apiKey = apiKey.trim();
+        this.explicitToken = apiKey.trim();
+        this.tokenType = 'api_key';
+    }
+    setBearerToken(token) {
+        this.explicitToken = token.trim();
+        this.tokenType = 'bearer';
     }
     hasApiKey() {
-        return Boolean(this.apiKey && this.apiKey.length > 5);
+        return Boolean(this.explicitToken && this.explicitToken.length > 5);
+    }
+    /**
+     * Resolves authentication credentials: uses explicit key if set,
+     * otherwise queries GoogleAuthProvider for ambient Google Cloud / ADC credentials.
+     */
+    async resolveAuth() {
+        if (this.explicitToken && this.explicitToken.length > 5) {
+            return {
+                token: this.explicitToken,
+                type: this.tokenType,
+                headers: this.tokenType === 'bearer'
+                    ? { 'Authorization': `Bearer ${this.explicitToken}` }
+                    : { 'x-goog-api-key': this.explicitToken },
+            };
+        }
+        const autoCreds = await GoogleAuthProvider.getCredentials();
+        if (autoCreds) {
+            return {
+                token: autoCreds.token,
+                type: autoCreds.type,
+                headers: autoCreds.type === 'bearer'
+                    ? { 'Authorization': `Bearer ${autoCreds.token}` }
+                    : { 'x-goog-api-key': autoCreds.token },
+            };
+        }
+        throw new Error("Google AI credentials not configured. Please supply an API key in the interface or configure Google Cloud credentials.");
     }
     /**
      * Generates content without streaming
      */
     async generateContent(model, contents, options = {}) {
-        if (!this.hasApiKey()) {
-            throw new Error("Gemini API key is not configured. Please set GEMINI_API_KEY or provide it in the chat interface.");
+        const auth = await this.resolveAuth();
+        // Build URL according to auth type
+        let url = `${this.baseUrl}/models/${encodeURIComponent(model)}:generateContent`;
+        if (auth.type === 'api_key') {
+            url += `?key=${auth.token}`;
         }
-        const url = `${this.baseUrl}/models/${encodeURIComponent(model)}:generateContent?key=${this.apiKey}`;
         const payload = {
             contents,
             generationConfig: {
@@ -31,10 +68,16 @@ export class GeminiClient {
                 parts: [{ text: options.systemInstruction }],
             };
         }
-        logger.debug('GeminiClient', `Sending unary request to ${model}`, { messageCount: contents.length });
+        logger.debug('GeminiClient', `Sending unary request to ${model}`, {
+            messageCount: contents.length,
+            authType: auth.type,
+        });
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...auth.headers,
+            },
             body: JSON.stringify(payload),
             signal: options.signal,
         });
@@ -51,7 +94,7 @@ export class GeminiClient {
                 // use errText
             }
             logger.error('GeminiClient', `HTTP Error ${response.status}: ${parsedErr}`);
-            throw new Error(`Gemini API Error (${response.status}): ${parsedErr}`);
+            throw new Error(`Google AI API Error (${response.status}): ${parsedErr}`);
         }
         const data = await response.json();
         const candidate = data.candidates?.[0];
@@ -59,7 +102,7 @@ export class GeminiClient {
             if (candidate?.finishReason) {
                 return `[Completed with reason: ${candidate.finishReason}]`;
             }
-            return '[No response text received from Gemini]';
+            return '[No response text received from model]';
         }
         return candidate.content.parts.map((p) => p.text || '').join('');
     }
@@ -67,10 +110,11 @@ export class GeminiClient {
      * Streams content chunk-by-chunk via Server-Sent Events (SSE)
      */
     async streamContent(model, contents, onChunk, options = {}) {
-        if (!this.hasApiKey()) {
-            throw new Error("Gemini API key is not configured. Please set GEMINI_API_KEY or provide it in the chat interface.");
+        const auth = await this.resolveAuth();
+        let url = `${this.baseUrl}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
+        if (auth.type === 'api_key') {
+            url += `&key=${auth.token}`;
         }
-        const url = `${this.baseUrl}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse&key=${this.apiKey}`;
         const payload = {
             contents,
             generationConfig: {
@@ -83,10 +127,16 @@ export class GeminiClient {
                 parts: [{ text: options.systemInstruction }],
             };
         }
-        logger.debug('GeminiClient', `Starting stream request to ${model}`, { messageCount: contents.length });
+        logger.debug('GeminiClient', `Starting stream request to ${model}`, {
+            messageCount: contents.length,
+            authType: auth.type,
+        });
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...auth.headers,
+            },
             body: JSON.stringify(payload),
             signal: options.signal,
         });
@@ -103,7 +153,7 @@ export class GeminiClient {
                 // use errText
             }
             logger.error('GeminiClient', `Stream HTTP Error ${response.status}: ${parsedErr}`);
-            throw new Error(`Gemini API Error (${response.status}): ${parsedErr}`);
+            throw new Error(`Google AI API Error (${response.status}): ${parsedErr}`);
         }
         if (!response.body) {
             throw new Error("Response body is empty.");

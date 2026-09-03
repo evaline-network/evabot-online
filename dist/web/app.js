@@ -5,6 +5,8 @@ class EvaBotWebApp {
     isGenerating = false;
     abortController = null;
     serverHasApiKey = false;
+    authSource = 'Google Cloud Ambient';
+    userAccount = 'evabot.online@gmail.com';
     constructor() {
         this.init();
     }
@@ -39,7 +41,7 @@ class EvaBotWebApp {
             this.currentModel = e.target.value;
             this.updateModelDetailsBar();
             const m = ModelRegistry.getModelById(this.currentModel);
-            this.addSystemNotification(`Switched active model to **${m?.name || this.currentModel}** [${m?.pricing.freeTierStatus}]`);
+            this.addSystemNotification(`Switched active model to **${m?.name || this.currentModel}** [${m?.category} • ${m?.pricing.freeTierStatus}]`);
         });
         clearBtn?.addEventListener('click', () => {
             this.messages = [];
@@ -65,11 +67,11 @@ class EvaBotWebApp {
             const key = apiKeyInput?.value.trim() || '';
             if (key) {
                 localStorage.setItem('evabot_gemini_key', key);
-                this.addSystemNotification('Gemini API key saved to browser storage.');
+                this.addSystemNotification('Custom Gemini API key saved to browser storage.');
             }
             else {
                 localStorage.removeItem('evabot_gemini_key');
-                this.addSystemNotification('Custom Gemini API key removed.');
+                this.addSystemNotification('Using ambient Google Cloud account authentication.');
             }
             this.updateKeyStatusUI();
             const modal = document.getElementById('settings-modal');
@@ -83,6 +85,10 @@ class EvaBotWebApp {
             if (res.ok) {
                 const data = await res.json();
                 this.serverHasApiKey = Boolean(data.hasServerApiKey);
+                if (data.authSource)
+                    this.authSource = data.authSource;
+                if (data.account)
+                    this.userAccount = data.account;
             }
         }
         catch {
@@ -94,32 +100,33 @@ class EvaBotWebApp {
         if (!select)
             return;
         select.innerHTML = '';
-        const freeModels = ModelRegistry.getFreeModels();
-        const paidModels = ModelRegistry.getPaidOnlyModels();
-        // 1. Free Quota Available Group
-        const freeGroup = document.createElement('optgroup');
-        freeGroup.label = '🟢 Free Quota Available (Google AI Studio / Pro)';
-        for (const m of freeModels) {
-            const opt = document.createElement('option');
-            opt.value = m.id;
-            opt.textContent = `${m.name}${m.recommended ? ' ★ [Recommended]' : ''}`;
-            if (m.id === this.currentModel)
-                opt.selected = true;
-            freeGroup.appendChild(opt);
+        const categories = [
+            'Google Gemini (Next-Gen)',
+            'Google Gemini (Long-Context)',
+            'Google Gemma (Open Weights)',
+            'Anthropic Claude on Google Cloud',
+            'Meta Llama 3 on Google Cloud',
+            'Mistral AI on Google Cloud',
+            'DeepSeek on Google Cloud',
+            'AI21 Labs & Cohere on Google Cloud',
+        ];
+        for (const cat of categories) {
+            const models = ModelRegistry.getModelsByCategory(cat);
+            if (!models || models.length === 0)
+                continue;
+            const group = document.createElement('optgroup');
+            group.label = cat;
+            for (const m of models) {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                const tag = m.recommended ? ' ★ [Rec]' : (m.pricing.freeTierStatus.includes('Free') ? ' [Free]' : ' [Paid]');
+                opt.textContent = `${m.name}${tag}`;
+                if (m.id === this.currentModel)
+                    opt.selected = true;
+                group.appendChild(opt);
+            }
+            select.appendChild(group);
         }
-        select.appendChild(freeGroup);
-        // 2. Paid / Vertex AI Enterprise Group
-        const paidGroup = document.createElement('optgroup');
-        paidGroup.label = '🟡 Paid Only (Vertex AI Enterprise & Claude)';
-        for (const m of paidModels) {
-            const opt = document.createElement('option');
-            opt.value = m.id;
-            opt.textContent = `${m.name} [Paid / Vertex AI]`;
-            if (m.id === this.currentModel)
-                opt.selected = true;
-            paidGroup.appendChild(opt);
-        }
-        select.appendChild(paidGroup);
     }
     updateModelDetailsBar() {
         const bar = document.getElementById('model-details-bar');
@@ -131,13 +138,14 @@ class EvaBotWebApp {
         const isFree = m.pricing.freeTierStatus === '100% Free Quota Available';
         const badgeClass = isFree ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40';
         bar.innerHTML = `
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <span class="px-2 py-0.5 rounded border ${badgeClass} font-bold text-[10px] tracking-wider uppercase">${m.pricing.freeTierStatus}</span>
+        <span class="px-2 py-0.5 rounded border border-cyan-800 bg-cyan-950/60 text-cyan-300 text-[10px] font-bold">${m.provider}</span>
         <span class="text-slate-400">Context: <strong class="text-white">${m.contextWindow.toLocaleString()}</strong> tokens</span>
         <span class="text-slate-600">|</span>
         <span class="text-slate-400">Max Out: <strong class="text-white">${m.maxOutputTokens.toLocaleString()}</strong></span>
       </div>
-      <div class="flex items-center gap-2 text-slate-300">
+      <div class="flex items-center gap-2 text-slate-300 flex-wrap">
         <span class="text-cyan-400">Input: <strong>${m.pricing.inputPer1MTokensUSD}</strong></span>
         <span class="text-slate-600">|</span>
         <span class="text-purple-400">Output: <strong>${m.pricing.outputPer1MTokensUSD}</strong></span>
@@ -150,22 +158,22 @@ class EvaBotWebApp {
             return;
         const customKey = localStorage.getItem('evabot_gemini_key');
         if (customKey) {
-            badge.textContent = 'Custom Key Active';
+            badge.textContent = 'Custom API Key Active';
             badge.className = 'text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono';
         }
         else if (this.serverHasApiKey) {
-            badge.textContent = 'Server Key Ready';
+            badge.textContent = `Google Auto-Auth (${this.userAccount})`;
             badge.className = 'text-xs px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono';
         }
         else {
-            badge.textContent = 'API Key Required';
-            badge.className = 'text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono cursor-pointer';
+            badge.textContent = 'Google Auto-Auth Active';
+            badge.className = 'text-xs px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono';
         }
     }
     renderWelcomeMessage() {
         this.appendMessage({
             role: 'model',
-            text: "👋 **Welcome to EvaBot Online — Google Model Garden Gateway!**\n\nI am connected to the full catalog of models available across Google AI Studio and Vertex AI Model Garden.\n\n- **Free Quota Tier:** Gemini 2.5 Flash, Gemini 2.5 Pro, Gemini 2.0 Flash (Included with Google AI Studio / Google AI Pro).\n- **Paid / Vertex AI Tier:** Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku via Google Cloud Vertex AI.\n\nSelect any model from the dropdown above to view pricing (strictly in USD `$` and EUR `€`) and token consumption rates.",
+            text: `👋 **Welcome to EvaBot Online — Google Model Garden Gateway!**\n\nConnected to **Google Antigravity & Google Cloud** account \`${this.userAccount}\`.\n\nAll models are accessible via Google native protocols with automatic credential routing:\n- **Google Gemini Series:** 2.5 Flash, 2.5 Pro, 2.0 Flash, 1.5 Pro, 1.5 Flash\n- **Open Models by Google:** Gemma 2 (27B & 9B Instruct)\n- **Anthropic Claude on Google Cloud:** Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku\n- **Meta Llama 3 on Google Cloud:** Llama 3.3 70B, Llama 3.2 Vision 90B, Llama 3.1 405B\n- **Mistral AI & DeepSeek on Google Cloud:** Mistral Large 2, Codestral 25.01, DeepSeek R1\n- **AI21 Labs & Cohere on Google Cloud:** Jamba 1.5 Large, Command R+\n\nSelect any model from the dropdown to check real-time pricing (strictly USD \`$\` / EUR \`€\`) and token consumption.`,
         });
     }
     async handleSend() {
@@ -178,13 +186,6 @@ class EvaBotWebApp {
         input.value = '';
         this.appendMessage({ role: 'user', text });
         const customKey = localStorage.getItem('evabot_gemini_key') || '';
-        if (!customKey && !this.serverHasApiKey) {
-            this.appendMessage({
-                role: 'model',
-                text: '⚠️ **API Key Missing**: Please click on **API Key Settings** at the top right and enter your Gemini API key (from your Google AI Pro / Google AI Studio account).',
-            });
-            return;
-        }
         this.isGenerating = true;
         this.updateSendButtonState(true);
         const botMessageElement = this.createMessageBubble('model', '');

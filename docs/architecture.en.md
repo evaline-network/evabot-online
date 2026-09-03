@@ -1,6 +1,6 @@
 # EvaBot Modular Architecture & Technical Specification
 
-**Version:** 0.2.0  
+**Version:** 0.2.1  
 **Status:** Active  
 **Pricing Standards:** Strictly USD ($) and EUR (€)  
 
@@ -8,86 +8,42 @@
 
 ## 1. System Overview
 
-EvaBot is a modular TypeScript application designed to provide conversational AI capabilities powered by Google Gemini (under Google AI Pro subscription). The system is engineered to run seamlessly across both terminal environments (CLI) and web browsers.
+EvaBot is a modular TypeScript application designed to provide conversational AI capabilities connected to the full Google Model Garden catalog (Gemini models under Google AI Pro, Gemma open models, and Anthropic Claude via Vertex AI).
 
-```
-                  ┌─────────────────────────────────┐
-                  │       Universal Chat Layer       │
-                  │   (Terminal CLI & Web Browser)  │
-                  └────────────────┬────────────────┘
-                                   │
-              ┌────────────────────┴────────────────────┐
-              ▼                                         ▼
-   ┌──────────────────────┐                  ┌──────────────────────┐
-   │ Interactive CLI REPL │                  │   Web Browser UI     │
-   │ (src/cli/terminal)   │                  │   (public/ & app.ts) │
-   └──────────┬───────────┘                  └──────────┬───────────┘
-              │                                         │
-              │                               ┌─────────┴──────────┐
-              │                               ▼                    ▼
-              │                     ┌──────────────────┐ ┌──────────────────┐
-              │                     │ Direct Client    │ │ Edge Daemon SSE  │
-              │                     │ (Browser Storage)│ │ (src/server)     │
-              │                     └─────────┬────────┘ └────────┬─────────┘
-              │                               │                   │
-              └───────────────────────────────┼───────────────────┘
-                                              ▼
-                                   ┌────────────────────┐
-                                   │    GeminiClient    │
-                                   │  (Unary & Stream)  │
-                                   └──────────┬─────────┘
-                                              ▼
-                                   ┌────────────────────┐
-                                   │   ModelRegistry    │
-                                   │ (2.5-flash, 2.5-pro│
-                                   │  2.0-flash, 1.5-pro│
-                                   └──────────┬─────────┘
-                                              ▼
-                               ┌─────────────────────────────┐
-                               │ Google Generative AI API     │
-                               │ (Google AI Pro Subscription)│
-                               └─────────────────────────────┘
-```
+The architecture delivers dual-surface operation:
+1. **Interactive Terminal CLI (`npm run cli`):** Full-featured REPL with live streaming, slash commands, and real-time model catalog inspection.
+2. **Web Browser UI (`https://evabot.online`):** Responsive dark interface with dynamic model details bar (pricing, token consumption limits, free vs paid badges), markdown rendering, code copying, and local API key management.
 
 ---
 
-## 2. Core Modules
+## 2. Google Model Garden Catalog & Pricing Breakdown
 
-### 2.1 `src/models/ModelRegistry.ts`
-Centralized catalog of supported Google Gemini models with metadata, token boundaries, and tier classifications:
-- `gemini-2.5-flash`: Default recommended model for responsive conversational throughput.
-- `gemini-2.5-pro`: Flagship model for in-depth reasoning, code generation, and complex analysis.
-- `gemini-2.0-flash`: Low-latency high-throughput engine.
-- `gemini-1.5-pro`: Deep context window support.
-- `gemini-1.5-flash`: Resource-efficient query engine.
+All models are categorized strictly by billing tier:
 
-### 2.2 `src/core/GeminiClient.ts`
-Native zero-dependency HTTP client communicating directly with Google Generative Language REST APIs:
-- Unary generation via `/v1beta/models/{model}:generateContent`.
-- Real-time Server-Sent Events (SSE) streaming via `/v1beta/models/{model}:streamGenerateContent?alt=sse`.
-- Works identically in Node.js 18+ and browser runtimes.
+### 2.1 Free Quota Tier (Google AI Studio / Google AI Pro)
+Zero cost under standard rate limits:
+- **`gemini-2.5-flash` [Recommended]:** 1,048,576 tokens context, 8,192 max output. Free quota: 15 RPM, 1M TPM, 1,500 RPD ($0.00). Paid tier: $0.075 / 1M input, $0.30 / 1M output (€0.070 / €0.280).
+- **`gemini-2.5-pro`:** 2,097,152 tokens context, 8,192 max output. Free quota: 2 RPM, 32k TPM, 50 RPD ($0.00). Paid tier: $1.25 / 1M input, $5.00 / 1M output (€1.17 / €4.68).
+- **`gemini-2.0-flash`:** 1,048,576 tokens context, 8,192 max output. Free quota: 15 RPM, 1M TPM ($0.00). Paid tier: $0.10 / 1M input, $0.40 / 1M output (€0.093 / €0.375).
+- **`gemini-2.0-flash-lite`:** 1,048,576 tokens context. Free quota: 30 RPM ($0.00). Paid tier: $0.075 / 1M input, $0.30 / 1M output (€0.070 / €0.280).
+- **`gemini-1.5-pro`:** 2,097,152 tokens context. Free quota: 2 RPM ($0.00). Paid tier: $1.25 / 1M input, $5.00 / 1M output (€1.17 / €4.68).
+- **`gemini-1.5-flash`:** 1,048,576 tokens context. Free quota: 15 RPM ($0.00). Paid tier: $0.075 / 1M input, $0.30 / 1M output (€0.070 / €0.280).
+- **`gemma-2-27b`:** 8,192 tokens context. Open weights ($0.00 self-hosted) / Vertex AI compute rate.
 
-### 2.3 `src/core/ChatSession.ts`
-Encapsulates conversation memory, turn history tracking, automated history trimming to avoid context overrun, dynamic model switching, and persona instruction injection.
-
-### 2.4 `src/core/Logger.ts`
-Dual-destination structured logger writing clean ANSI color outputs to console and structured timestamped logs to `logs/evabot.log`.
-
-### 2.5 `src/server/server.ts`
-Lightweight HTTP daemon built on Node.js built-ins:
-- Serves static assets for the web chat frontend.
-- Exposes `/api/health`, `/api/models`, `/api/chat`, and `/api/chat/stream`.
-- Operates under 25 MB RAM, fitting comfortably within the 1 GB footprint of GCP `e2-micro`.
+### 2.2 Paid Only / Vertex AI Enterprise Tier
+Billed directly to Google Cloud project:
+- **`claude-3-7-sonnet`:** 200,000 tokens context. Pricing: $3.00 / 1M input, $15.00 / 1M output (€2.80 / €14.00).
+- **`claude-3-5-sonnet`:** 200,000 tokens context. Pricing: $3.00 / 1M input, $15.00 / 1M output (€2.80 / €14.00).
+- **`claude-3-5-haiku`:** 200,000 tokens context. Pricing: $0.80 / 1M input, $4.00 / 1M output (€0.75 / €3.75).
 
 ---
 
-## 3. Deployment Topology
+## 3. Remote Antigravity 2.0 Offloading Architecture
 
-1. **`evaline-micro-vm` (`e2-micro`, Iowa):**
-   - Caddy acts as edge TLS terminator on ports 80/443.
-   - Proxies `/api/*` to `localhost:3000` where `evabot-chat.service` runs.
-   - Serves static compiled bundle and UI assets with zero cache penalty.
-   - 2 GB Swap enabled to provide buffer memory stability.
+To leverage the compute resources of **`evabot-agent-vm`** (Frankfurt `c3-standard-8`: 8 vCPUs, 32 GB DDR5 RAM, 100 GB NVMe) without putting load on the local machine:
 
-2. **`evabot-agent-vm` (`c3-standard-8`, Frankfurt):**
-   - Reserved for heavy computational routines, code-server workspace, and persistent volume storage (`/data`).
+1. **Remote SSH Agent Execution:**
+   - Antigravity 2.0 / Antigravity IDE connects to `evabot-agent-vm` via SSH (`34.179.253.183` or Tailscale `100.66.98.4`).
+   - The Antigravity backend server runs as a remote process on `evabot-agent-vm`. All LLM agent iterations, subagent processes, file indexing, and bash tools execute on the 8 vCPUs of Frankfurt, resulting in 0% local CPU/RAM load.
+2. **Web GUI Shell (Code-Server):**
+   - Accessible on `evabot-agent-vm:8080`, providing a complete browser-based development shell where Antigravity agents can be monitored and commanded graphically.

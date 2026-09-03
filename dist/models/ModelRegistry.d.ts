@@ -9,13 +9,14 @@ export interface ModelPricing {
 export interface GeminiModelInfo {
     id: string;
     name: string;
-    provider: 'Google DeepMind' | 'Anthropic (Google Vertex AI)';
-    category: 'Gemini Next-Gen' | 'Gemini Long-Context' | 'Claude via Vertex AI' | 'Open Gemma';
+    provider: 'Google DeepMind' | 'Anthropic' | 'Meta' | 'Mistral AI' | 'AI21 Labs' | 'Cohere' | 'DeepSeek';
+    category: 'Google Gemini (Next-Gen)' | 'Google Gemini (Long-Context)' | 'Google Gemma (Open Weights)' | 'Anthropic Claude on Google Cloud' | 'Meta Llama 3 on Google Cloud' | 'Mistral AI on Google Cloud' | 'DeepSeek on Google Cloud' | 'AI21 Labs & Cohere on Google Cloud';
     description: string;
     contextWindow: number;
     maxOutputTokens: number;
     recommended: boolean;
     tier: 'Free Quota + Paid' | 'Vertex AI Enterprise' | 'Open Weights';
+    protocol: 'google-genai' | 'google-vertex' | 'google-partner';
     pricing: ModelPricing;
 }
 export declare const COMPLETE_GOOGLE_MODEL_CATALOG: GeminiModelInfo[];
@@ -25,6 +26,8 @@ export declare class ModelRegistry {
     static getModelById(id: string): GeminiModelInfo | undefined;
     static isValidModel(id: string): boolean;
     static getDefaultModel(): GeminiModelInfo;
+    static getCategories(): string[];
+    static getModelsByCategory(category: string): GeminiModelInfo[];
     static getFreeModels(): GeminiModelInfo[];
     static getPaidOnlyModels(): GeminiModelInfo[];
 }
