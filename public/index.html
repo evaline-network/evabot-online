@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- ANTI-CACHING HEADERS -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <title>EvaBot Online // Modular Gemini LLM Agent</title>
+
+  <!-- TAILWIND CSS & FONTS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            orbitron: ['Orbitron', 'sans-serif'],
+          },
+          colors: {
+            cyberDark: '#070a12',
+            cyberCard: '#0d1322',
+            cyberBorder: '#1e293b',
+            accentCyan: '#06b6d4',
+            accentPurple: '#8b5cf6',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #070a12;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #070a12;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #06b6d4;
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col bg-[#070a12] text-slate-100 antialiased overflow-hidden">
+
+  <!-- TOP APP BAR -->
+  <header class="flex-none bg-[#0d1322]/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 sm:px-6">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      
+      <!-- LOGO & STATUS -->
+      <div class="flex items-center gap-3">
+        <div class="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 p-[1px]">
+          <div class="w-full h-full bg-slate-950 rounded-xl flex items-center justify-center font-orbitron font-extrabold text-cyan-400 text-sm">
+            E
+          </div>
+          <span class="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+          </span>
+        </div>
+        <div>
+          <h1 class="font-orbitron font-bold text-base sm:text-lg text-white tracking-wide flex items-center gap-2">
+            EVABOT <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/60 font-mono">LLM AGENT</span>
+          </h1>
+          <p class="text-[11px] font-mono text-slate-400 hidden sm:block">Google AI Pro (Gemini) • Multi-Model Gateway</p>
+        </div>
+      </div>
+
+      <!-- CONTROLS & MODEL SELECTOR -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        
+        <!-- MODEL DROPDOWN -->
+        <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1.5 shadow-inner">
+          <label for="model-select" class="text-xs font-mono text-slate-400 hidden md:inline">Model:</label>
+          <select id="model-select" class="bg-transparent text-xs font-mono text-cyan-300 focus:outline-none cursor-pointer">
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          </select>
+        </div>
+
+        <!-- KEY STATUS / SETTINGS BUTTON -->
+        <button id="settings-btn" class="flex items-center gap-1.5 text-xs font-mono hover:opacity-80 transition-all">
+          <span id="key-status-badge" class="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+            API Key
+          </span>
+        </button>
+
+        <!-- CLEAR CHAT -->
+        <button id="clear-btn" title="Clear Conversation" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-rose-400 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- CHAT MESSAGES SCROLL AREA -->
+  <main id="chat-scroll-area" class="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+    <div id="messages-container" class="max-w-4xl mx-auto flex flex-col">
+      <!-- Dynamic chat bubbles rendered by app.ts -->
+    </div>
+  </main>
+
+  <!-- CHAT INPUT BAR -->
+  <footer class="flex-none bg-[#0d1322]/95 backdrop-blur-md border-t border-slate-800 p-4">
+    <div class="max-w-4xl mx-auto">
+      <form id="chat-form" class="relative flex items-end gap-2 bg-slate-900/90 border border-slate-700/80 rounded-2xl p-2 shadow-2xl focus-within:border-cyan-500/80 transition-all">
+        <textarea
+          id="user-input"
+          rows="1"
+          placeholder="Ask EvaBot anything or type your prompt..."
+          class="flex-1 bg-transparent px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none resize-none max-h-36 overflow-y-auto font-sans"
+        ></textarea>
+        
+        <button
+          type="submit"
+          id="send-btn"
+          class="flex items-center justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium text-xs shadow-lg shadow-cyan-900/40 transition-all active:scale-95 flex-none"
+        >
+          <span>Send</span>
+          <svg class="w-4 h-4 ml-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+          </svg>
+        </button>
+      </form>
+      <div class="flex justify-between items-center px-2 mt-1.5 text-[11px] font-mono text-slate-500">
+        <span>Press <kbd class="px-1 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">Enter</kbd> to send, <kbd class="px-1 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">Shift+Enter</kbd> for newline</span>
+        <span class="text-cyan-500/80 font-semibold">EvaBot Modular Core v0.2.0</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="font-orbitron font-bold text-white text-base">Gemini API Settings</h3>
+        <button id="close-settings-btn" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+      <div class="py-4 space-y-4">
+        <div>
+          <label class="block text-xs font-mono text-slate-300 mb-1">Google Gemini API Key</label>
+          <input
+            type="password"
+            id="api-key-input"
+            placeholder="AIzaSy..."
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-cyan-300 font-mono focus:outline-none focus:border-cyan-500"
+          />
+          <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+            Obtain your API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-cyan-400 underline">Google AI Studio</a> using your Google AI Pro account. Your key is stored only locally in your browser's <code class="text-slate-300">localStorage</code>.
+          </p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+        <button id="save-key-btn" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs tracking-wider transition-all">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT BUNDLE -->
+  <script type="module" src="/dist/bundle.js"></script>
+</body>
+</html>

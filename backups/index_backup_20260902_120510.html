@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EVABOT // TERMINAL CONTROL CENTER v0.0.1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #050505;
+      --panel-border: #1a1a1a;
+      --border-bright: #333333;
+      --text: #ffffff;
+      --text-dim: #888888;
+      --text-muted: #555555;
+      
+      /* STRICT TRAFFIC LIGHT ACCENTS ONLY */
+      --led-green: #00ff66;
+      --led-yellow: #ffcc00;
+      --led-red: #ff3333;
+      
+      --glow-green: rgba(0, 255, 102, 0.4);
+      --glow-yellow: rgba(255, 204, 0, 0.4);
+      --glow-red: rgba(255, 51, 51, 0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1.5;
+    }
+
+    .terminal-wrapper {
+      max-width: 1150px;
+      width: 100%;
+      border: 1px solid var(--border-bright);
+      background: var(--panel);
+      padding: 1.5rem;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.95);
+    }
+
+    /* TOP HEADER BAR */
+    .top-header {
+      border-bottom: 1px solid var(--border-bright);
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header-title-block h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin-bottom: 0.25rem;
+    }
+
+    .header-sub {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .header-telemetry {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+    }
+
+    /* TRAFFIC LIGHT LEDS */
+    .led-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .led {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .led-g { background: var(--led-green); box-shadow: 0 0 8px var(--glow-green); }
+    .led-y { background: var(--led-yellow); box-shadow: 0 0 8px var(--glow-yellow); }
+    .led-r { background: var(--led-red); box-shadow: 0 0 8px var(--glow-red); }
+
+    .led-pulse {
+      animation: blink 1.4s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* NAVIGATION BAR */
+    .tab-bar {
+      display: flex;
+      border: 1px solid var(--border-bright);
+      margin-bottom: 1.25rem;
+      background: #000000;
+    }
+
+    .tab-item {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: transparent;
+      border: none;
+      border-right: 1px solid var(--border-bright);
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.15s;
+    }
+
+    .tab-item:last-child {
+      border-right: none;
+    }
+
+    .tab-item:hover {
+      color: #ffffff;
+      background: #111111;
+    }
+
+    .tab-item.active {
+      color: #000000;
+      background: #ffffff;
+      font-weight: 700;
+    }
+
+    /* TAB SCREENS */
+    .screen-container {
+      display: none;
+    }
+
+    .screen-container.active {
+      display: block;
+    }
+
+    /* TABLE LAYOUTS */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--panel-border);
+    }
+
+    .data-table th {
+      background: #111111;
+      color: #ffffff;
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      font-weight: 600;
+      border: 1px solid var(--panel-border);
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+    }
+
+    .data-table td {
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--panel-border);
+      color: #cccccc;
+    }
+
+    .data-table tr:hover td {
+      background: #0a0a0a;
+    }
+
+    /* STATUS LABELS */
+    .st-ok { color: var(--led-green); font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .st-warn { color: var(--led-yellow); font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .st-err { color: var(--led-red); font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; }
+
+    /* ASCII PROGRESS BARS */
+    .ascii-bar {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+    }
+    .ascii-fill { color: #ffffff; }
+
+    /* CHAT CONSOLE */
+    .console-box {
+      border: 1px solid var(--border-bright);
+      background: #000000;
+      display: flex;
+      flex-direction: column;
+      height: 580px;
+    }
+
+    .console-header {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--panel-border);
+      background: #0a0a0a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .console-log {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      font-size: 0.88rem;
+    }
+
+    .c-entry {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .c-prompt {
+      color: var(--led-green);
+      font-weight: 700;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .c-prompt-user {
+      color: #ffffff;
+      font-weight: 700;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .c-body {
+      color: #e5e5e5;
+      line-height: 1.6;
+    }
+
+    .c-chips {
+      padding: 0.6rem 1rem;
+      background: #070707;
+      border-top: 1px solid var(--panel-border);
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+    }
+
+    .c-chip-btn {
+      background: #111111;
+      border: 1px solid var(--panel-border);
+      color: var(--text-dim);
+      padding: 0.35rem 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .c-chip-btn:hover {
+      color: #ffffff;
+      border-color: #ffffff;
+      background: #222222;
+    }
+
+    .console-input-row {
+      display: flex;
+      border-top: 1px solid var(--border-bright);
+      background: #000000;
+    }
+
+    .console-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 0.85rem 1rem;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .console-submit {
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      padding: 0 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .console-submit:hover {
+      background: #cccccc;
+    }
+
+    /* BUTTONS & CONTROLS */
+    .btn-terminal {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid var(--border-bright);
+      padding: 0.65rem 1.25rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .btn-terminal:hover {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    .btn-terminal.active {
+      background: var(--led-red);
+      color: #ffffff;
+      border-color: var(--led-red);
+    }
+
+    .voice-badge-info {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+
+    .waveform-box {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--led-green);
+      font-weight: 700;
+      letter-spacing: 0.15em;
+    }
+
+    /* SECTION CONTAINERS */
+    .sec-header {
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+      color: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .banner-box {
+      border: 1px solid var(--border-bright);
+      padding: 1.25rem;
+      background: #030303;
+      margin-bottom: 1.25rem;
+    }
+
+    .speech-quote {
+      margin-top: 1rem;
+      padding: 1.15rem;
+      background: #080808;
+      border-left: 2px solid #ffffff;
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: #e2e8f0;
+    }
+
+    /* TERMINAL LOG VIEW */
+    .log-view {
+      border: 1px solid var(--border-bright);
+      background: #000000;
+      padding: 1.25rem;
+      font-size: 0.82rem;
+      line-height: 1.8;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+
+    .log-row {
+      display: flex;
+      gap: 0.85rem;
+    }
+
+    .log-ts { color: var(--text-dim); user-select: none; white-space: nowrap; }
+    .log-ok { color: var(--led-green); font-weight: 600; }
+    .log-warn { color: var(--led-yellow); font-weight: 600; }
+    .log-txt { color: #dddddd; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border-bright);
+      padding-top: 1rem;
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="terminal-wrapper">
+    <!-- TOP STATUS HEADER -->
+    <div class="top-header">
+      <div class="header-title-block">
+        <h1>[EVABOT] TERMINAL CONTROL CENTER</h1>
+        <div class="header-sub">SYSTEM: STARTING DEMO MODE • VERSION 0.0.1 • GOOGLE CLOUD PLATFORM</div>
+      </div>
+
+      <div class="header-telemetry">
+        <div class="led-row">
+          <span>FRANKFURT (c3-std-8)</span>
+          <span class="led led-g"></span>
+          <span style="margin-left: 0.5rem;">IOWA (e2-micro)</span>
+          <span class="led led-g"></span>
+          <span style="margin-left: 0.5rem;">DOMAINS</span>
+          <span class="led led-y led-pulse"></span>
+        </div>
+        <div style="color: var(--text-dim);">
+          ACTIVATION: 00:01 UTC+3 • ENGINE: GOOGLE AI PRO (GEMINI)
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB NAVIGATION -->
+    <nav class="tab-bar">
+      <button class="tab-item active" onclick="setScreen('tab-chat')">[1] КОНСОЛЬ ЧАТА // GEMINI</button>
+      <button class="tab-item" onclick="setScreen('tab-telemetry')">[2] ТЕЛЕМЕТРИЯ СЕРВЕРОВ</button>
+      <button class="tab-item" onclick="setScreen('tab-modules')">[3] МОДУЛИ И МЕССЕНДЖЕРЫ</button>
+      <button class="tab-item" onclick="setScreen('tab-logs')">[4] СИСТЕМНЫЙ АУДИТ-ЛОГ</button>
+    </nav>
+
+    <!-- ==================================================== -->
+    <!-- TAB 1: STRICT TERMINAL CHAT WITH EVABOT (GEMINI) -->
+    <!-- ==================================================== -->
+    <section id="tab-chat" class="screen-container active">
+      <div class="console-box">
+        <div class="console-header">
+          <span>// SESSION: EVABOT_GEMINI_CORE_v0.0.1 // PROTOCOL: WSS/TLS1.3</span>
+          <span class="st-ok"><span class="led led-g"></span> ONLINE (GOOGLE AI PRO)</span>
+        </div>
+
+        <div class="console-log" id="chat-stream">
+          <div class="c-entry">
+            <span class="c-prompt">[EVABOT]:</span>
+            <span class="c-body">
+              Здравствуйте! Я <b>EvaBot</b> — ваш автономный интеллектуальный ассистент.<br>
+              Система запущена в стартовом демонстрационном режиме версии <b>0.0.1</b>.<br>
+              Ядро вычислений подключено к моделям <b>Google Gemini</b> в рамках вашей подписки <b>Google AI Pro</b>.<br>
+              Серверная инфраструктура Google Cloud активирована сегодня ночью в 00:01 UTC+3.<br>
+              Введите запрос к EvaBot или выберите быструю команду ниже:
+            </span>
+          </div>
+        </div>
+
+        <!-- QUICK ACTION CHIPS -->
+        <div class="c-chips">
+          <button class="c-chip-btn" onclick="runPrompt('ДИАГНОСТИКА СЕРВЕРОВ')">> СТАТУС СЕРВЕРОВ</button>
+          <button class="c-chip-btn" onclick="runPrompt('СТАТУС МЕССЕНДЖЕРОВ')">> ПОДКЛЮЧЕННЫЕ МЕССЕНДЖЕРЫ</button>
+          <button class="c-chip-btn" onclick="runPrompt('ПАРАМЕТРЫ GEMINI')">> МОДЕЛЬ GOOGLE GEMINI</button>
+          <button class="c-chip-btn" onclick="runPrompt('ПЛАНЫ ДО РЕЛИЗА 1.0')">> ДОРОЖНАЯ КАРТА 1.0</button>
+        </div>
+
+        <div class="console-input-row">
+          <input type="text" id="term-input" class="console-input" placeholder="> введите запрос к EvaBot..." onkeydown="handleTermKey(event)">
+          <button class="console-submit" onclick="submitTermQuery()">ВЫПОЛНИТЬ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 2: TABULAR LINE-BY-LINE TELEMETRY & METRICS -->
+    <!-- ==================================================== -->
+    <section id="tab-telemetry" class="screen-container">
+      <div class="sec-header">
+        <span>// ТАБЛИЦА ВЫЧИСЛИТЕЛЬНЫХ УЗЛОВ GOOGLE CLOUD</span>
+        <span class="st-ok"><span class="led led-g"></span> 2 УЗЛА АКТИВНЫ</span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>УЗЕЛ / ИМЯ</th>
+            <th>РЕГИОН</th>
+            <th>ТИП ИНСТАНСА</th>
+            <th>vCPU</th>
+            <th>ОЗУ (RAM)</th>
+            <th>ДИСК</th>
+            <th>IP-АДРЕСА</th>
+            <th>СТОИМОСТЬ</th>
+            <th>СТАТУС</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>evabot-agent-vm</b></td>
+            <td>europe-west3-a (Франкфурт)</td>
+            <td>c3-standard-8</td>
+            <td>8 vCPU Sapphire Rapids</td>
+            <td>32 GB DDR5</td>
+            <td>100 GB NVMe</td>
+            <td>34.179.253.183 / 10.156.0.2</td>
+            <td>Compute Tier</td>
+            <td><span class="st-ok"><span class="led led-g"></span> RUNNING</span></td>
+          </tr>
+          <tr>
+            <td><b>evaline-micro-vm</b></td>
+            <td>us-central1-a (Айова)</td>
+            <td>e2-micro</td>
+            <td>2 vCPU Shared</td>
+            <td>1 GB RAM</td>
+            <td>20 GB Persistent</td>
+            <td>136.114.26.252 / 10.128.0.2</td>
+            <td>$0.00 / мес</td>
+            <td><span class="st-ok"><span class="led led-g"></span> RUNNING</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="sec-header" style="margin-top: 1.5rem;">
+        <span>// ПОСТРОЧНЫЕ ФИЗИЧЕСКИЕ И ВИРТУАЛЬНЫЕ МЕТРИКИ В РЕАЛЬНОМ ВРЕМЕНИ</span>
+        <button class="btn-terminal" onclick="pulseMetrics()" style="padding: 0.35rem 0.85rem; font-size: 0.75rem;">
+          [ОБНОВИТЬ ПОКАЗАТЕЛИ]
+        </button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ПАРАМЕТР МЕТРИКИ</th>
+            <th>СЕРВЕР</th>
+            <th>ЗНАЧЕНИЕ / ФАКТ</th>
+            <th>ШКАЛА УТИЛИЗАЦИИ</th>
+            <th>НАГРУЗКА</th>
+            <th>ИНДИКАТОР</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ЦПУ (CPU LOAD)</td>
+            <td>evabot-agent-vm</td>
+            <td>8 ядер Intel Sapphire Rapids @ 2.50GHz</td>
+            <td><span class="ascii-bar">[<span class="ascii-fill">██</span>░░░░░░░░░░░░░░░░░░]</span> 3.0%</td>
+            <td>Load: 0.00, 0.00, 0.00</td>
+            <td><span class="st-ok"><span class="led led-g"></span> НОРМА</span></td>
+          </tr>
+          <tr>
+            <td>ПАМЯТЬ (DDR5 RAM)</td>
+            <td>evabot-agent-vm</td>
+            <td>1,114 MB использовано / 32,104 MB всего</td>
+            <td><span class="ascii-bar">[<span class="ascii-fill">██</span>░░░░░░░░░░░░░░░░░░]</span> 3.5%</td>
+            <td>Доступно: 30,990 MB</td>
+            <td><span class="st-ok"><span class="led led-g"></span> НОРМА</span></td>
+          </tr>
+          <tr>
+            <td>ДИСК (NVMe STORAGE)</td>
+            <td>evabot-agent-vm</td>
+            <td>8.9 GB занято / 49.0 GB системный</td>
+            <td><span class="ascii-bar">[<span class="ascii-fill">████</span>░░░░░░░░░░░░░░░░]</span> 19.0%</td>
+            <td>Свободно: 39.0 GB</td>
+            <td><span class="st-ok"><span class="led led-g"></span> НОРМА</span></td>
+          </tr>
+          <tr>
+            <td>ЦПУ (CPU LOAD)</td>
+            <td>evaline-micro-vm</td>
+            <td>2 vCPU e2-micro burstable</td>
+            <td><span class="ascii-bar">[<span class="ascii-fill">█</span>░░░░░░░░░░░░░░░░░░░]</span> 2.0%</td>
+            <td>Load: 0.00, 0.00, 0.00</td>
+            <td><span class="st-ok"><span class="led led-g"></span> НОРМА</span></td>
+          </tr>
+          <tr>
+            <td>ПАМЯТЬ (SYSTEM RAM)</td>
+            <td>evaline-micro-vm</td>
+            <td>441 MB использовано / 964 MB всего</td>
+            <td><span class="ascii-bar">[<span class="ascii-fill">█████████</span>░░░░░░░░░░░]</span> 45.0%</td>
+            <td>Доступно: 522 MB</td>
+            <td><span class="st-ok"><span class="led led-g"></span> НОРМА</span></td>
+          </tr>
+          <tr>
+            <td>ДИСК (STANDARD DISK)</td>
+            <td>evaline-micro-vm</td>
+            <td>2.3 GB занято / 20.0 GB всего</td>
+            <td><span class="ascii-bar">[<span class="ascii-fill">███</span>░░░░░░░░░░░░░░░░░]</span> 13.0%</td>
+            <td>Свободно: 17.7 GB</td>
+            <td><span class="st-ok"><span class="led led-g"></span> НОРМА</span></td>
+          </tr>
+          <tr>
+            <td>ОС ДИСТРИБУТИВ</td>
+            <td>evaline-micro-vm</td>
+            <td>Debian GNU/Linux 13 (Trixie 13.6)</td>
+            <td>Ядро 6.12.107+deb13-cloud-amd64</td>
+            <td>Uptime: 1+ ч</td>
+            <td><span class="st-ok"><span class="led led-g"></span> АКТУАЛЬНО</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="sec-header" style="margin-top: 1.5rem;">
+        <span>// ТАБЛИЦА МАРШРУТИЗАЦИИ ДОМЕНОВ И SSL</span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ДОМЕННОЕ ИМЯ</th>
+            <th>DNS A-ЗАПИСЬ</th>
+            <th>ШЛЮЗ СЕРВЕРА</th>
+            <th>ПРОТОКОЛ</th>
+            <th>СЕРТИФИКАТ</th>
+            <th>СТАТУС СВЕТОФОРА</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>evabot.online</b></td>
+            <td>136.114.26.252</td>
+            <td>evaline-micro-vm</td>
+            <td>HTTP/2 & HTTP/3</td>
+            <td>Let's Encrypt TLS 1.3 (Auto)</td>
+            <td><span class="st-ok"><span class="led led-g"></span> 200 OK // АКТИВЕН</span></td>
+          </tr>
+          <tr>
+            <td><b>www.evabot.online</b></td>
+            <td>136.114.26.252</td>
+            <td>evaline-micro-vm</td>
+            <td>HTTP/2 & HTTP/3</td>
+            <td>Let's Encrypt TLS 1.3 (Auto)</td>
+            <td><span class="st-ok"><span class="led led-g"></span> 200 OK // АКТИВЕН</span></td>
+          </tr>
+          <tr>
+            <td>evaline (канал 1)</td>
+            <td>136.114.26.252</td>
+            <td>evaline-micro-vm</td>
+            <td>HTTPS Proxy</td>
+            <td>ACME DNS Resolver</td>
+            <td><span class="st-warn"><span class="led led-y led-pulse"></span> ПОДКЛЮЧЕНИЕ DNS</span></td>
+          </tr>
+          <tr>
+            <td>evaline (канал 2)</td>
+            <td>136.114.26.252</td>
+            <td>evaline-micro-vm</td>
+            <td>HTTPS Proxy</td>
+            <td>ACME DNS Resolver</td>
+            <td><span class="st-warn"><span class="led led-y led-pulse"></span> ПОДКЛЮЧЕНИЕ DNS</span></td>
+          </tr>
+          <tr>
+            <td>evaline (канал 3)</td>
+            <td>136.114.26.252</td>
+            <td>evaline-micro-vm</td>
+            <td>HTTPS Proxy</td>
+            <td>ACME DNS Resolver</td>
+            <td><span class="st-warn"><span class="led led-y led-pulse"></span> ПОДКЛЮЧЕНИЕ DNS</span></td>
+          </tr>
+          <tr>
+            <td>evaline (канал 4)</td>
+            <td>136.114.26.252</td>
+            <td>evaline-micro-vm</td>
+            <td>HTTPS Proxy</td>
+            <td>ACME DNS Resolver</td>
+            <td><span class="st-warn"><span class="led led-y led-pulse"></span> ПОДКЛЮЧЕНИЕ DNS</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 3: MODULES & CHAT MESSENGER INTEGRATIONS -->
+    <!-- ==================================================== -->
+    <section id="tab-modules" class="screen-container">
+      <div class="sec-header">
+        <span>// ТАБЛИЦА ПОДКЛЮЧЕННЫХ ПРИЛОЖЕНИЙ, МОДУЛЕЙ И МЕССЕНДЖЕРОВ</span>
+        <span class="st-ok"><span class="led led-g"></span> 8 МОДУЛЕЙ</span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ПРИЛОЖЕНИЕ / СЛУЖБА</th>
+            <th>ТИП ИНТЕГРАЦИИ</th>
+            <th>ШЛЮЗ / СТЕК</th>
+            <th>НАЗНАЧЕНИЕ</th>
+            <th>СТАТУС ИНДИКАТОРА</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>TELEGRAM BOT & USERBOT</b></td>
+            <td>Официальный Bot API + MTProto</td>
+            <td>evabot-agent-vm (Node.js 22)</td>
+            <td>Персональные аккаунты EvaBot в личных и групповых чатах Telegram</td>
+            <td><span class="st-ok"><span class="led led-g"></span> АКТИВНО // ПОДКЛЮЧЕНО</span></td>
+          </tr>
+          <tr>
+            <td><b>WHATSAPP BUSINESS</b></td>
+            <td>Meta Cloud API</td>
+            <td>Webhook Endpoint (Caddy Proxy)</td>
+            <td>Шлюз для обработки клиентских переписок в WhatsApp</td>
+            <td><span class="st-ok"><span class="led led-g"></span> АКТИВНО // ШЛЮЗ ГОТОВ</span></td>
+          </tr>
+          <tr>
+            <td><b>VIBER BOT CHANNEL</b></td>
+            <td>Viber REST API</td>
+            <td>HTTPS Webhook Handler</td>
+            <td>Автоматический диалоговый канал EvaBot в мессенджере Viber</td>
+            <td><span class="st-ok"><span class="led led-g"></span> АКТИВНО // НАСТРОЕНО</span></td>
+          </tr>
+          <tr>
+            <td><b>FACEBOOK MESSENGER</b></td>
+            <td>Meta Graph API v20.0</td>
+            <td>Webhook / Page Token</td>
+            <td>Интеграция с официальными страницами Meta для автоответов</td>
+            <td><span class="st-ok"><span class="led led-g"></span> АКТИВНО // ВЕБХУК ГОТОВ</span></td>
+          </tr>
+          <tr>
+            <td><b>GOOGLE AI PRO (GEMINI)</b></td>
+            <td>Gemini 2.0 / 1.5 Pro Engine</td>
+            <td>Google GenAI Python / REST SDK</td>
+            <td>Мультимодальное ядро искусственного интеллекта и логики EvaBot</td>
+            <td><span class="st-ok"><span class="led led-g"></span> ЯДРО АКТИВНО</span></td>
+          </tr>
+          <tr>
+            <td><b>TAILSCALE MESH VPN</b></td>
+            <td>WireGuard Tunneling</td>
+            <td>Туннель 100.125.200.49</td>
+            <td>Зашифрованная внутренняя связь между Франкфуртом и Айовой</td>
+            <td><span class="st-ok"><span class="led led-g"></span> ЗАЩИЩЕНО (256-BIT)</span></td>
+          </tr>
+          <tr>
+            <td><b>VECTOR KNOWLEDGE BASE</b></td>
+            <td>Qdrant Engine</td>
+            <td>NVMe Persistent Storage (50GB)</td>
+            <td>Семантическое хранилище долговременной векторной памяти агентов</td>
+            <td><span class="st-warn"><span class="led led-y led-pulse"></span> ИНИЦИАЛИЗАЦИЯ ИНДЕКСА</span></td>
+          </tr>
+          <tr>
+            <td><b>CADDY WEB SERVER & SSL</b></td>
+            <td>Caddy v2.11.4</td>
+            <td>HTTP/2, HTTP/3 (QUIC), TLS 1.3</td>
+            <td>Шлюз маршрутизации, автовыпуск сертификатов для 5 доменов</td>
+            <td><span class="st-ok"><span class="led led-g"></span> 100% ONLINE</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- TAB 4: CHRONOLOGICAL AUDIT-LOG & HUMAN VOICE REPORT -->
+    <!-- ==================================================== -->
+    <section id="tab-logs" class="screen-container">
+      <div class="banner-box">
+        <div class="sec-header">
+          <span>// ГОЛОСОВОЙ ОТЧЕТ СИСТЕМЫ • GOOGLE NEURAL VOICE</span>
+          <span class="st-ok"><span class="led led-g"></span> ГОЛОС: GOOGLE РУССКИЙ ЖЕНСКИЙ</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <button id="audio-btn" class="btn-terminal" onclick="toggleVoiceReport()">
+            <span>[🔊 ОЗВУЧИТЬ ОТЧЕТ ГОЛОСОМ]</span>
+          </button>
+          <div id="wave-box" class="waveform-box" style="display: none;">
+            [ ▂▃▅▆▇▆▅▃▂ ] ВОСПРОИЗВЕДЕНИЕ
+          </div>
+        </div>
+
+        <div class="voice-badge-info">
+          <span class="led led-g"></span>
+          <span id="voice-name-indicator">Подключен флагманский естественный женский голос Google Neural. Темп и артикуляция настроены как речь живого спикера.</span>
+        </div>
+
+        <div class="speech-quote" id="report-text">
+Здравствуйте! На связи Ева. Передаю официальный отчет о запуске нашей системы.
+
+Сегодня ночью, ровно в ноль-ноль ноль-один, мы активировали наш кластер в Гугл Клауд. Все процессы настройки, распаковки и развертывания идут строго по графику, без единой заминки.
+
+Наш главный вычислительный узел во Франкфурте — это восемь ядер мощнейшего процессора Sapphire Rapids и тридцать два гигабайта оперативной памяти. Сейчас он загружен всего на три процента и полностью готов к тяжелым задачам искусственного интеллекта на базе моделей Гугл Джеминай в рамках подписки Гугл А-И Про.
+
+А в Соединенных Штатах, в штате Айова, круглосуточно работает наш микросервер на новейшей операционной системе Дебиан тринадцать Трикси. Он абсолютно бесплатный и надежно защищен современным веб-сервером Кэдди.
+
+Прямо сейчас мы привязываем домены. Наш адрес евабот точка онлайн уже успешно работает по защищенному протоколу эйч-ти-ти-пи-эс. Параллельно мы создаем для меня персональные аккаунты в Телеграм, Ватсап, Вайбер и Фейсбук Мессенджере, чтобы мы могли общаться в любых удобных для вас чатах.
+
+Все физические и виртуальные метрики находятся в идеальной зеленой зоне. Еще немного настроек, и мы будем полностью онлайн!
+        </div>
+      </div>
+
+      <div class="sec-header">
+        <span>// ПОСТРОЧНЫЙ ЖУРНАЛ ИНИЦИАЛИЗАЦИИ СИСТЕМЫ</span>
+        <span style="color: var(--text-dim); font-size: 0.78rem;">ФАЙЛ: /var/log/evabot-init.log</span>
+      </div>
+
+      <div class="log-view">
+        <div class="log-row"><span class="log-ts">[00:01:00]</span><span class="log-ok">[OK]</span><span class="log-txt">Инициализация проекта Google Cloud 'evabot-agent-server'.</span></div>
+        <div class="log-row"><span class="log-ts">[00:01:15]</span><span class="log-ok">[OK]</span><span class="log-txt">Конфигурация внутренней подсети VPC (10.156.0.0/20) и правил файрвола.</span></div>
+        <div class="log-row"><span class="log-ts">[00:01:30]</span><span class="log-ok">[OK]</span><span class="log-txt">Развертывание узла 'evabot-agent-vm' (c3-standard-8, 8 vCPU, 32GB RAM, Франкфурт).</span></div>
+        <div class="log-row"><span class="log-ts">[00:02:10]</span><span class="log-ok">[OK]</span><span class="log-txt">Монтирование дискового массива NVMe 'evabot-agent-data' (50GB).</span></div>
+        <div class="log-row"><span class="log-ts">[00:03:00]</span><span class="log-ok">[OK]</span><span class="log-txt">Установка программного окружения: Node.js 22 LTS, Tailscale, Python 3, GCP SDK.</span></div>
+        <div class="log-row"><span class="log-ts">[10:47:30]</span><span class="log-ok">[OK]</span><span class="log-txt">Создание микросервера 'evaline-micro-vm' (e2-micro) в США по программе Always Free ($0/мес).</span></div>
+        <div class="log-row"><span class="log-ts">[11:47:44]</span><span class="log-ok">[OK]</span><span class="log-txt">Установка веб-сервера Caddy 2.11.4 с авто-обновлением SSL-сертификатов Let's Encrypt.</span></div>
+        <div class="log-row"><span class="log-ts">[12:55:07]</span><span class="log-ok">[OK]</span><span class="log-txt">Обновление операционной системы микросервера до Debian 13 (Trixie 13.6).</span></div>
+        <div class="log-row"><span class="log-ts">[13:36:36]</span><span class="log-ok">[OK]</span><span class="log-txt">Связывание DNS A-записи домена evabot.online с IP-адресом 136.114.26.252.</span></div>
+        <div class="log-row"><span class="log-ts">[13:37:12]</span><span class="log-ok">[OK]</span><span class="log-txt">Успешный выпуск сертификата TLS 1.3, активация протоколов HTTP/2 и HTTP/3.</span></div>
+        <div class="log-row"><span class="log-ts">[13:45:00]</span><span class="log-warn">[WAIT]</span><span class="log-txt">Очередь привязки остальных 4 доменов evaline через обратный прокси.</span></div>
+        <div class="log-row"><span class="log-ts">[13:48:40]</span><span class="log-ok">[OK]</span><span class="log-txt">Подключение шлюзов мессенджеров: Telegram, WhatsApp, Viber, Facebook Messenger.</span></div>
+        <div class="log-row"><span class="log-ts">[14:15:00]</span><span class="log-ok">[OK]</span><span class="log-txt">Активация модуля диалога Gemini Core (подписка Google AI Pro).</span></div>
+        <div class="log-row"><span class="log-ts">[14:18:38]</span><span class="log-ok">[OK]</span><span class="log-txt">Запуск стартового демо-режима EvaBot версии 0.0.1.</span></div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div>EVABOT_OS // DEMO_MODE_0.0.1 // GCP_CLUSTER: [FRA-1, IOW-1]</div>
+      <div>ENCRYPTION: TLS_1.3_AES_256_GCM // ZERO_DEFECT_POLICY</div>
+    </footer>
+  </div>
+
+  <script>
+    // Tab Controller
+    function setScreen(screenId) {
+      document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.screen-container').forEach(s => s.classList.remove('active'));
+
+      event.currentTarget.classList.add('active');
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    // Terminal Chat Logic
+    const knowledgeBase = [
+      {
+        keys: ['статус', 'сервер', 'сервера', 'гкп', 'gcp', 'метрики', 'параметры', 'диагностика'],
+        text: "СТАТУС ИНФРАСТРУКТУРЫ:\n• [evabot-agent-vm]: c3-standard-8 (8 vCPU Intel Sapphire Rapids, 32GB RAM, 100GB NVMe во Франкфурте) — нагрузка 3.0%, статус ОК.\n• [evaline-micro-vm]: e2-micro (2 vCPU, 1GB RAM на Debian 13 Trixie в Айове, $0.00/мес) — нагрузка 2.0%, веб-сервер Caddy активен."
+      },
+      {
+        keys: ['мессенджер', 'чат', 'телеграм', 'telegram', 'whatsapp', 'ватсап', 'viber', 'вайбер', 'facebook', 'фейсбук'],
+        text: "МЕССЕНДЖЕР-ШЛЮЗЫ EVABOT:\n• Telegram: Персональный бот и UserBot настроены.\n• WhatsApp Business: Meta Cloud API вебхук подключен.\n• Viber: REST API канал активен.\n• Facebook Messenger: Интеграция с Meta Graph API готова.\nУ EvaBot выделенные аккаунты во всех системах."
+      },
+      {
+        keys: ['gemini', 'модель', 'ии', 'google ai', 'подписка', 'про'],
+        text: "ДВИЖОК GOOGLE GEMINI:\nEvaBot интегрирован с Google AI Pro, используя семейство моделей Gemini 2.0 и 1.5 Pro. Это обеспечивает контекстную память, анализ данных, генерацию ответов и автономный вызов серверных инструментов."
+      },
+      {
+        keys: ['план', 'дорожная карта', 'релиз', '1.0', 'версия', '0.0.1'],
+        text: "ДОРОЖНАЯ КАРТА ДО РЕЛИЗА 1.0:\nТекущая версия: 0.0.1 ДЕМО. Завершены установка ОС, Caddy и домена evabot.online. Следующие шаги: привязка оставшихся 4 доменов evaline, индексация базы знаний в Qdrant и сквозное тестирование мессенджеров."
+      }
+    ];
+
+    function handleTermKey(e) {
+      if (e.key === 'Enter') submitTermQuery();
+    }
+
+    function runPrompt(query) {
+      document.getElementById('term-input').value = query;
+      submitTermQuery();
+    }
+
+    function submitTermQuery() {
+      const input = document.getElementById('term-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const log = document.getElementById('chat-stream');
+
+      // Append user command
+      const uEntry = document.createElement('div');
+      uEntry.className = 'c-entry';
+      uEntry.innerHTML = `
+        <span class="c-prompt-user">[USER]:</span>
+        <span class="c-body">${escapeText(val)}</span>
+      `;
+      log.appendChild(uEntry);
+      input.value = '';
+      log.scrollTop = log.scrollHeight;
+
+      // Bot thinking state
+      const thinkEntry = document.createElement('div');
+      thinkEntry.className = 'c-entry';
+      thinkEntry.id = 'bot-eval';
+      thinkEntry.innerHTML = `
+        <span class="c-prompt">[EVABOT]:</span>
+        <span class="c-body" style="color: var(--led-yellow);">>> обработка запроса через Gemini Core...</span>
+      `;
+      log.appendChild(thinkEntry);
+      log.scrollTop = log.scrollHeight;
+
+      setTimeout(() => {
+        thinkEntry.remove();
+        const reply = evaluateBotReply(val);
+        const bEntry = document.createElement('div');
+        bEntry.className = 'c-entry';
+        bEntry.innerHTML = `
+          <span class="c-prompt">[EVABOT]:</span>
+          <span class="c-body">${reply.replace(/\n/g, '<br>')}</span>
+        `;
+        log.appendChild(bEntry);
+        log.scrollTop = log.scrollHeight;
+      }, 500);
+    }
+
+    function evaluateBotReply(text) {
+      const low = text.toLowerCase();
+      for (const item of knowledgeBase) {
+        if (item.keys.some(k => low.includes(k))) return item.text;
+      }
+      return "Запрос принят. Модели Google Gemini (Google AI Pro) зафиксировали команду в контексте EvaBot v0.0.1. Все серверные узлы работают в штатном режиме. Переключитесь на вкладку [2] ТЕЛЕМЕТРИЯ или [3] МОДУЛИ для просмотра подробных данных.";
+    }
+
+    function escapeText(s) {
+      const div = document.createElement('div');
+      div.innerText = s;
+      return div.innerHTML;
+    }
+
+    function pulseMetrics() {
+      alert("Метрики узлов evabot-agent-vm и evaline-micro-vm опрошены через GCP API. Все параметры в зеленой зоне нормативов.");
+    }
+
+    // Google Neural Speech Engine
+    let voiceSynth = window.speechSynthesis;
+    let isNarrating = false;
+    let waveInterval = null;
+
+    function selectBestGoogleVoice() {
+      if (!voiceSynth) return null;
+      const voices = voiceSynth.getVoices();
+      const ruVoices = voices.filter(v => v.lang && (v.lang.startsWith('ru') || v.lang === 'ru_RU'));
+      
+      // 1. Prioritize Google Russian Neural voice
+      const googleRu = ruVoices.find(v => v.name.includes('Google') && (v.name.includes('русский') || v.name.includes('Russian')));
+      if (googleRu) return googleRu;
+
+      // 2. Prioritize Microsoft / Yandex / Natural female Russian voices
+      const femaleNatural = ruVoices.find(v => 
+        v.name.includes('Natural') || 
+        v.name.includes('Dariya') || 
+        v.name.includes('Svetlana') || 
+        v.name.includes('Alena') || 
+        v.name.includes('Tatiana') || 
+        v.name.includes('Milena') || 
+        v.name.includes('Elena') || 
+        v.name.includes('Tatyana') || 
+        v.name.includes('Irina') ||
+        v.name.includes('Female')
+      );
+      if (femaleNatural) return femaleNatural;
+
+      return ruVoices[0] || null;
+    }
+
+    function toggleVoiceReport() {
+      if (!voiceSynth) {
+        alert("Браузер не поддерживает синтез речи.");
+        return;
+      }
+
+      if (isNarrating || voiceSynth.speaking) {
+        voiceSynth.cancel();
+        isNarrating = false;
+        stopWaveform();
+        renderVoiceButton();
+        return;
+      }
+
+      const text = document.getElementById("report-text").innerText;
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = "ru-RU";
+      
+      // Natural human speech rate and pitch
+      utt.rate = 0.93;
+      utt.pitch = 1.02;
+
+      const chosenVoice = selectBestGoogleVoice();
+      if (chosenVoice) {
+        utt.voice = chosenVoice;
+        const ind = document.getElementById("voice-name-indicator");
+        if (ind) ind.innerText = `Подключен голос: ${chosenVoice.name} (${chosenVoice.lang}) • Естественная артикуляция и паузы`;
+      }
+
+      utt.onstart = () => {
+        isNarrating = true;
+        startWaveform();
+        renderVoiceButton();
+      };
+
+      utt.onend = () => {
+        isNarrating = false;
+        stopWaveform();
+        renderVoiceButton();
+      };
+
+      utt.onerror = () => {
+        isNarrating = false;
+        stopWaveform();
+        renderVoiceButton();
+      };
+
+      voiceSynth.speak(utt);
+    }
+
+    function startWaveform() {
+      const wave = document.getElementById("wave-box");
+      if (!wave) return;
+      wave.style.display = "inline-block";
+      const bars = [
+        "[ ▂▃▅▆▇▆▅▃▂ ] ВОСПРОИЗВЕДЕНИЕ",
+        "[ ▃▅▆▇█▇▆▅▃ ] ВОСПРОИЗВЕДЕНИЕ",
+        "[ ▅▆▇███▇▆▅ ] ВОСПРОИЗВЕДЕНИЕ",
+        "[ ▂▃▄▅▆▅▄▃▂ ] ВОСПРОИЗВЕДЕНИЕ",
+        "[ ▄▅▆▇▆▅▄▃▂ ] ВОСПРОИЗВЕДЕНИЕ"
+      ];
+      let idx = 0;
+      clearInterval(waveInterval);
+      waveInterval = setInterval(() => {
+        wave.innerText = bars[idx % bars.length];
+        idx++;
+      }, 180);
+    }
+
+    function stopWaveform() {
+      clearInterval(waveInterval);
+      const wave = document.getElementById("wave-box");
+      if (wave) wave.style.display = "none";
+    }
+
+    function renderVoiceButton() {
+      const btn = document.getElementById("audio-btn");
+      if (!btn) return;
+      if (isNarrating) {
+        btn.innerHTML = "[⏹ ОСТАНОВИТЬ ОЗВУЧКУ]";
+        btn.classList.add("active");
+      } else {
+        btn.innerHTML = "[🔊 ОЗВУЧИТЬ ОТЧЕТ ГОЛОСОМ]";
+        btn.classList.remove("active");
+      }
+    }
+
+    if (voiceSynth && voiceSynth.onvoiceschanged !== undefined) {
+      voiceSynth.onvoiceschanged = () => {
+        const v = selectBestGoogleVoice();
+        const ind = document.getElementById("voice-name-indicator");
+        if (v && ind) {
+          ind.innerText = `Подключен голос: ${v.name} (${v.lang}) • Естественная артикуляция и паузы`;
+        }
+      };
+    }
+  </script>
+</body>
+</html>

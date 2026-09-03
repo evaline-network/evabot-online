@@ -1,0 +1,31 @@
+{
+  "name": "evabot-online",
+  "version": "0.2.0",
+  "description": "EvaBot Autonomous Intelligent Agent — Modular TypeScript Gemini LLM Chat System",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build:client": "npx esbuild src/web/app.ts --bundle --outfile=dist/bundle.js --format=esm --target=es2022 --sourcemap",
+    "build:server": "tsc",
+    "build": "npm run build:server && npm run build:client",
+    "test": "npx tsx tests/index.ts",
+    "cli": "npx tsx src/cli/terminal-chat.ts",
+    "start": "npx tsx src/server/server.ts"
+  },
+  "keywords": [
+    "evabot",
+    "gemini",
+    "llm",
+    "chat",
+    "typescript",
+    "google-ai-pro"
+  ],
+  "author": "EvaBot Engineering Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,22 @@
+[Unit]
+Description=EvaBot Modular Gemini LLM Chat Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/evabot.online
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOST=127.0.0.1
+ExecStart=/usr/bin/node dist/server/server.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/evabot.log
+StandardError=append:/var/log/evabot.error.log
+
+# Memory safeguard for e2-micro
+MemoryMax=250M
+
+[Install]
+WantedBy=multi-user.target
