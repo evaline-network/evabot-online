@@ -1,6 +1,7 @@
 import { GeminiClient, ChatMessage, GenerationOptions } from './GeminiClient.js';
 import { Config } from './Config.js';
 import { logger } from './Logger.js';
+import { ModelRegistry } from '../models/ModelRegistry.js';
 
 export type LlmProvider = 'google' | 'omniroute' | 'openrouter' | 'opencode';
 
@@ -46,6 +47,41 @@ export class UniversalLlmClient {
       m.includes('deepseek-r1:free') ||
       m.includes('llama-3.3-70b:free') ||
       m.includes('gemini-2.0-flash-exp:free')
+    ) {
+      return 'openrouter';
+    }
+
+    const modelInfo = ModelRegistry.getModelById(model);
+    if (modelInfo) {
+      if (
+        modelInfo.category.startsWith('OpenRouter') ||
+        modelInfo.tier === 'OpenRouter Paid' ||
+        modelInfo.tier === '100% Free Community' ||
+        modelInfo.provider === 'OpenRouter'
+      ) {
+        return 'openrouter';
+      }
+      if (modelInfo.category.startsWith('OmniRoute') || modelInfo.tier === 'OmniRoute Daemon' || modelInfo.provider === 'OmniRoute') {
+        return 'omniroute';
+      }
+      if (modelInfo.category.startsWith('OpenCode') || modelInfo.tier === 'OpenCode Platform' || modelInfo.provider === 'OpenCode AI') {
+        return 'opencode';
+      }
+      if (modelInfo.provider === 'Google DeepMind') {
+        return 'google';
+      }
+    }
+
+    if (
+      m.startsWith('anthropic/') ||
+      m.startsWith('openai/') ||
+      m.startsWith('deepseek/') ||
+      m.startsWith('qwen/') ||
+      m.startsWith('mistralai/') ||
+      m.startsWith('microsoft/') ||
+      m.startsWith('x-ai/') ||
+      m.startsWith('cohere/') ||
+      m.startsWith('meta-llama/')
     ) {
       return 'openrouter';
     }

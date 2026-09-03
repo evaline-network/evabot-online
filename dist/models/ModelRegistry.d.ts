@@ -9,13 +9,14 @@ export interface ModelPricing {
 export interface GeminiModelInfo {
     id: string;
     name: string;
-    provider: 'Google DeepMind' | 'Anthropic' | 'Meta' | 'Mistral AI' | 'AI21 Labs' | 'Cohere' | 'DeepSeek' | 'OmniRoute' | 'OpenRouter' | 'OpenCode AI';
-    category: 'Google Gemini (Next-Gen)' | 'Google Gemini (Long-Context)' | 'Google Gemma (Open Weights)' | 'Anthropic Claude on Google Cloud' | 'Meta Llama 3 on Google Cloud' | 'Mistral AI on Google Cloud' | 'DeepSeek on Google Cloud' | 'AI21 Labs & Cohere on Google Cloud' | 'OmniRoute Daemon Cluster' | 'OpenRouter Free Models' | 'OpenRouter Premium' | 'OpenCode Go Platforms';
+    provider: 'Google DeepMind' | 'Anthropic' | 'Meta' | 'Mistral AI' | 'AI21 Labs' | 'Cohere' | 'DeepSeek' | 'OpenAI' | 'Microsoft' | 'xAI' | 'Qwen' | 'OmniRoute' | 'OpenRouter' | 'OpenCode AI';
+    category: 'Google Gemini (Next-Gen)' | 'Google Gemini (Long-Context)' | 'Google Gemma (Open Weights)' | 'Google Specialized & Embeddings' | 'Anthropic Claude on Google Cloud' | 'Meta Llama 3 on Google Cloud' | 'Mistral AI on Google Cloud' | 'DeepSeek on Google Cloud' | 'AI21 Labs & Cohere on Google Cloud' | 'OmniRoute Daemon Cluster' | 'OpenRouter Free Models' | 'OpenRouter Premium' | 'OpenCode Go Platforms';
     description: string;
+    codingStrengths: string;
     contextWindow: number;
     maxOutputTokens: number;
     recommended: boolean;
-    tier: 'Free Quota + Paid' | 'Vertex AI Enterprise' | 'Open Weights' | '100% Free Community' | 'OmniRoute Daemon' | 'OpenCode Platform';
+    tier: 'Free Quota + Paid' | 'Vertex AI Enterprise' | 'Open Weights' | '100% Free Community' | 'OpenRouter Paid' | 'OmniRoute Daemon' | 'OpenCode Platform';
     protocol: 'google-genai' | 'google-vertex' | 'google-partner' | 'openai-compatible';
     pricing: ModelPricing;
 }
@@ -30,4 +31,7 @@ export declare class ModelRegistry {
     static getModelsByCategory(category: string): GeminiModelInfo[];
     static getFreeModels(): GeminiModelInfo[];
     static getPaidOnlyModels(): GeminiModelInfo[];
+    static getGoogleModels(): GeminiModelInfo[];
+    static getOpenRouterModels(): GeminiModelInfo[];
+    static getTopCodingModels(): GeminiModelInfo[];
 }

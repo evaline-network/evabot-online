@@ -14,11 +14,11 @@ export async function runServerTests(): Promise<boolean> {
   }
 
   const server = createServer();
-  const testPort = 3999;
-
   await new Promise<void>((resolve) => {
-    server.listen(testPort, '127.0.0.1', () => resolve());
+    server.listen(0, '127.0.0.1', () => resolve());
   });
+  const address = server.address() as any;
+  const testPort = address.port;
 
   try {
     // Test /api/health

@@ -1,14 +1,15 @@
 // src/models/ModelRegistry.ts
 var COMPLETE_GOOGLE_MODEL_CATALOG = [
   // ============================================================================
-  // 1. GOOGLE GEMINI NEXT-GEN FRONTIER (Google DeepMind - 2026 Fleet)
+  // 1. GOOGLE GEMINI NEXT-GEN FRONTIER (Google DeepMind)
   // ============================================================================
   {
     id: "gemini-3.8-flash",
     name: "Gemini 3.8 Flash",
     provider: "Google DeepMind",
     category: "Google Gemini (Next-Gen)",
-    description: "Frontier ultra-fast autonomous agentic model with native real-time tool orchestration and multi-modal streaming.",
+    description: "Frontier ultra-fast autonomous agentic model with native real-time tool orchestration, extreme streaming throughput, and multimodal reasoning.",
+    codingStrengths: "Autonomous multi-file repository refactoring, sub-second live debugging, continuous agentic tool calling, and high-frequency code review loops.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: false,
@@ -16,7 +17,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Pro / AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00)",
+      freeTierDetails: "Google AI Pro / AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $0.075 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $0.300 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.070 (Paid)",
@@ -28,7 +29,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemini 3.1 Pro",
     provider: "Google DeepMind",
     category: "Google Gemini (Next-Gen)",
-    description: "Premier enterprise reasoning frontier model with 2M token context, deep logic, and architectural planning capability.",
+    description: "Premier enterprise reasoning frontier model with 2M token context, deep multi-step logic, formal mathematics, and architectural planning capability.",
+    codingStrengths: "Enterprise system architecture synthesis, SWE-bench level task execution, complex AST transformations, and cross-framework code translation.",
     contextWindow: 2097152,
     maxOutputTokens: 8192,
     recommended: false,
@@ -36,7 +38,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Pro / AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00)",
+      freeTierDetails: "Google AI Pro / AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $1.25 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $5.00 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC1.15 (Paid)",
@@ -48,7 +50,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemini 3.1 Flash",
     provider: "Google DeepMind",
     category: "Google Gemini (Next-Gen)",
-    description: "Lightweight high-efficiency frontier flash model with ultra-low latency inference.",
+    description: "Lightweight high-efficiency frontier flash model with ultra-low latency inference, multimodal comprehension, and minimal token cost.",
+    codingStrengths: "Instant syntax validation, rapid unit test generation, fast documentation parsing, and interactive terminal scripting.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: false,
@@ -56,7 +59,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM ($0.00)",
+      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $0.050 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $0.200 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.046 (Paid)",
@@ -68,7 +71,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemini 2.5 Flash",
     provider: "Google DeepMind",
     category: "Google Gemini (Next-Gen)",
-    description: "Google\u2019s fastest flagship model with native multimodal reasoning and real-time responsiveness.",
+    description: "Google\u2019s fastest flagship production model with native multimodal reasoning, breakthrough latency, and industry-leading developer rate limits.",
+    codingStrengths: "High-throughput code transformations, CI/CD pipeline automation, automated test generation, and pair programming dialogues.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: true,
@@ -76,7 +80,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00)",
+      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $0.075 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $0.30 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.070 (Paid)",
@@ -88,7 +92,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemini 2.5 Pro",
     provider: "Google DeepMind",
     category: "Google Gemini (Next-Gen)",
-    description: "Premier reasoning and code generation engine for complex analytical challenges.",
+    description: "Premier reasoning and code generation engine for complex analytical challenges, multi-million token context digestion, and rigorous mathematical proofs.",
+    codingStrengths: "Top-tier SWE-bench Verified coding score (52.1%), full-repository bug localization across 2M tokens, concurrency debugging, and architectural migration.",
     contextWindow: 2097152,
     maxOutputTokens: 8192,
     recommended: false,
@@ -96,7 +101,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00)",
+      freeTierDetails: "Google AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $1.25 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $5.00 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC1.17 (Paid)",
@@ -108,7 +113,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemini 2.0 Flash",
     provider: "Google DeepMind",
     category: "Google Gemini (Next-Gen)",
-    description: "Next-gen streaming architecture for high-frequency interactive dialogues and agent loops.",
+    description: "Next-generation streaming architecture optimized for high-frequency interactive dialogues, agent execution loops, and real-time tool calling.",
+    codingStrengths: "Fast code generation, live bash command generation, regex drafting, and multi-turn conversational code debugging.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: false,
@@ -116,7 +122,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00)",
+      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $0.10 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $0.40 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.093 (Paid)",
@@ -128,7 +134,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemini 2.0 Flash Lite",
     provider: "Google DeepMind",
     category: "Google Gemini (Next-Gen)",
-    description: "Ultra cost-efficient model designed for extreme throughput and low latency agent tasks.",
+    description: "Ultra cost-efficient model designed for extreme token throughput, high token frequency, and ultra-low latency background tasks.",
+    codingStrengths: "High-volume linting, boilerplate generation, JSON schema validation, and docstring automation.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: false,
@@ -136,22 +143,44 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Studio: 30 RPM, 1,500 RPD ($0.00)",
+      freeTierDetails: "Google AI Studio: 30 RPM, 1,500 RPD ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $0.075 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $0.30 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.070 (Paid)",
       outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.280 (Paid)"
     }
   },
+  {
+    id: "gemini-2.0-flash-thinking-exp",
+    name: "Gemini 2.0 Flash Thinking Exp",
+    provider: "Google DeepMind",
+    category: "Google Gemini (Next-Gen)",
+    description: "Experimental reasoning model that externalizes intermediate thoughts before responding, providing deep chain-of-thought code verification.",
+    codingStrengths: "LiveCodeBench 57.1%, complex algorithmic puzzles, race condition detection, concurrency debugging, and step-by-step mathematical proofs.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio Experimental: 10 RPM, 4M TPM ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.100 (Paid)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.400 (Paid)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.093 (Paid)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.375 (Paid)"
+    }
+  },
   // ============================================================================
-  // 2. GOOGLE GEMINI LONG-CONTEXT
+  // 2. GOOGLE GEMINI LONG-CONTEXT (Google DeepMind)
   // ============================================================================
   {
     id: "gemini-1.5-pro",
     name: "Gemini 1.5 Pro",
     provider: "Google DeepMind",
     category: "Google Gemini (Long-Context)",
-    description: "2,000,000 token context window capable of ingesting entire codebases and long video streams.",
+    description: "2,000,000 token context window capable of ingesting entire multi-repository codebases, extensive architecture docs, and technical specifications.",
+    codingStrengths: "Cross-repository dependency analysis, legacy codebase modernization, full-stack audit across hundreds of source files without chunking loss.",
     contextWindow: 2097152,
     maxOutputTokens: 8192,
     recommended: false,
@@ -159,7 +188,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00)",
+      freeTierDetails: "Google AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $1.25 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $5.00 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC1.17 (Paid)",
@@ -171,7 +200,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemini 1.5 Flash",
     provider: "Google DeepMind",
     category: "Google Gemini (Long-Context)",
-    description: "Fast, lightweight multimodal model with 1,000,000 tokens context.",
+    description: "Fast, lightweight multimodal model with 1,000,000 tokens context window built for high-volume analysis and rapid code inspection.",
+    codingStrengths: "Fast full-file parsing, multi-file code searches, log triage, and automated commit message generation.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: false,
@@ -179,7 +209,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM ($0.00)",
+      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $0.075 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $0.30 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.070 (Paid)",
@@ -191,7 +221,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemini 1.5 Flash 8B",
     provider: "Google DeepMind",
     category: "Google Gemini (Long-Context)",
-    description: "Compact 8-billion parameter version built for high-speed lightweight routing.",
+    description: "Compact 8-billion parameter version built for high-speed lightweight routing, sub-second query classifications, and edge workloads.",
+    codingStrengths: "Micro-task execution, syntax check, token-efficient query routing, and markdown code snippet extraction.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: false,
@@ -199,7 +230,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Google AI Studio: 15 RPM ($0.00)",
+      freeTierDetails: "Google AI Studio: 15 RPM ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Free) / $0.0375 (Paid)",
       outputPer1MTokensUSD: "$0.00 (Free) / $0.15 (Paid)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.035 (Paid)",
@@ -214,7 +245,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemma 2 (27B Instruct)",
     provider: "Google DeepMind",
     category: "Google Gemma (Open Weights)",
-    description: "Google\u2019s flagship open weights model with performance rivaling closed models.",
+    description: "Google\u2019s flagship open weights model with performance rivaling proprietary models in mathematical and coding benchmarks.",
+    codingStrengths: "Strong Python, TypeScript, and C++ code completion, algorithmic optimization, and competitive HumanEval score.",
     contextWindow: 8192,
     maxOutputTokens: 4096,
     recommended: false,
@@ -222,7 +254,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Open Weights ($0.00) or Google AI Studio Free Quota",
+      freeTierDetails: "Open Weights ($0.00 / \u20AC0.00) or Google AI Studio Free Quota",
       inputPer1MTokensUSD: "$0.00 (Free) / $0.27 (Vertex AI)",
       outputPer1MTokensUSD: "$0.00 (Free) / $0.27 (Vertex AI)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.25 (Vertex AI)",
@@ -234,7 +266,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Gemma 2 (9B Instruct)",
     provider: "Google DeepMind",
     category: "Google Gemma (Open Weights)",
-    description: "High efficiency open weights model with exceptional reasoning-per-parameter ratio.",
+    description: "High efficiency open weights model with exceptional reasoning-per-parameter ratio and fast local/cloud inference.",
+    codingStrengths: "Fast local code assistance, unit test generation, script writing, and compact containerized deployment.",
     contextWindow: 8192,
     maxOutputTokens: 4096,
     recommended: false,
@@ -242,22 +275,599 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "google-genai",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "Open Weights ($0.00) or Google AI Studio Free Quota",
+      freeTierDetails: "Open Weights ($0.00 / \u20AC0.00) or Google AI Studio Free Quota",
       inputPer1MTokensUSD: "$0.00 (Free) / $0.10 (Vertex AI)",
       outputPer1MTokensUSD: "$0.00 (Free) / $0.10 (Vertex AI)",
       inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.09 (Vertex AI)",
       outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.09 (Vertex AI)"
     }
   },
+  {
+    id: "gemma-2-2b-it",
+    name: "Gemma 2 (2B Instruct)",
+    provider: "Google DeepMind",
+    category: "Google Gemma (Open Weights)",
+    description: "Ultra-compact open weights model for on-device inference, edge computing, and minimal memory footprints.",
+    codingStrengths: "On-device code completion, fast regex construction, lightweight CLI helpers, and mobile edge code intelligence.",
+    contextWindow: 8192,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "Open Weights",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Open Weights ($0.00 / \u20AC0.00) or Google AI Studio Free Quota",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.04 (Vertex AI)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.04 (Vertex AI)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.037 (Vertex AI)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.037 (Vertex AI)"
+    }
+  },
   // ============================================================================
-  // 4. ANTHROPIC CLAUDE ON GOOGLE CLOUD (Vertex AI Model Garden)
+  // 4. GOOGLE SPECIALIZED & EMBEDDINGS (Google DeepMind)
+  // ============================================================================
+  {
+    id: "codegemma-7b-it",
+    name: "CodeGemma (7B Instruct)",
+    provider: "Google DeepMind",
+    category: "Google Specialized & Embeddings",
+    description: "Specialized code intelligence model fine-tuned on 500+ billion tokens of code, math, and technical documentation.",
+    codingStrengths: "Code infilling (Fill-in-the-Middle), multi-language syntax completion (Python, JS, TS, Go, Java, C++, Rust), and refactoring.",
+    contextWindow: 8192,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "Open Weights",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Open Weights ($0.00 / \u20AC0.00) or Google AI Studio Free Quota",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.10 (Vertex AI)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.10 (Vertex AI)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.09 (Vertex AI)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.09 (Vertex AI)"
+    }
+  },
+  {
+    id: "codegemma-2b",
+    name: "CodeGemma (2B Base/FIM)",
+    provider: "Google DeepMind",
+    category: "Google Specialized & Embeddings",
+    description: "Ultra-fast code completion and fill-in-the-middle model designed for sub-50ms real-time IDE typing latency.",
+    codingStrengths: "Low-latency Fill-in-the-Middle (FIM), inline code predictions, cursor completion, and IDE tab-completion integration.",
+    contextWindow: 8192,
+    maxOutputTokens: 2048,
+    recommended: false,
+    tier: "Open Weights",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Open Weights ($0.00 / \u20AC0.00) or Google AI Studio Free Quota",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.04 (Vertex AI)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.04 (Vertex AI)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.037 (Vertex AI)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.037 (Vertex AI)"
+    }
+  },
+  {
+    id: "recurrentgemma-2b-it",
+    name: "RecurrentGemma (2B Instruct)",
+    provider: "Google DeepMind",
+    category: "Google Specialized & Embeddings",
+    description: "Innovative recurrent model based on Griffin architecture, combining linear recurrences with local attention for constant memory usage at long sequences.",
+    codingStrengths: "Constant-memory generation, infinite code trace analysis, lightweight embedded code execution, and high-frequency token generation.",
+    contextWindow: 8192,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "Open Weights",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Open Weights ($0.00 / \u20AC0.00) or Google AI Studio Free Quota",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.04 (Vertex AI)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.04 (Vertex AI)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.037 (Vertex AI)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.037 (Vertex AI)"
+    }
+  },
+  {
+    id: "text-embedding-004",
+    name: "Text-Embedding-004",
+    provider: "Google DeepMind",
+    category: "Google Specialized & Embeddings",
+    description: "State-of-the-art semantic text and code embedding model with 768-dimensional vector representations for code search and RAG.",
+    codingStrengths: "Semantic codebase indexing, function definition retrieval, duplicate code identification, and hybrid vector/AST search.",
+    contextWindow: 2048,
+    maxOutputTokens: 768,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio: 1,500 RPD ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.025 (Paid)",
+      outputPer1MTokensUSD: "$0.00 (Embeddings output zero billable generation tokens)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.023 (Paid)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Embeddings output zero billable generation tokens)"
+    }
+  },
+  // ============================================================================
+  // 5. OPENROUTER FREE MODELS (https://openrouter.ai)
+  // ============================================================================
+  {
+    id: "deepseek/deepseek-r1:free",
+    name: "DeepSeek R1 (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Frontier open reasoning model with transparent chain-of-thought verification, rivaling proprietary reasoning models on math and code, 100% free via OpenRouter.",
+    codingStrengths: "LiveCodeBench 65.7%, deep algorithmic logic, complex competitive programming (AIME, Codeforces), and rigorous bug verification.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier (20 RPM queue) ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "meta-llama/llama-3.3-70b-instruct:free",
+    name: "Llama 3.3 70B Instruct (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "State-of-the-art Meta 70B open weight instruction model with 128k context, offering GPT-4 class coding capabilities for zero cost.",
+    codingStrengths: "Full-stack web development, Python data engineering, REST API scaffolding, and clean documentation generation.",
+    contextWindow: 128e3,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier (20 RPM queue) ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "meta-llama/llama-3.3-70b:free",
+    name: "Llama 3.3 70B (Free on OpenRouter Alias)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Legacy alias endpoint for Meta Llama 3.3 70B on OpenRouter community free infrastructure.",
+    codingStrengths: "General code assistance, Python/TypeScript development, and system scripts.",
+    contextWindow: 128e3,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "google/gemini-2.0-flash-exp:free",
+    name: "Gemini 2.0 Flash Exp (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Ultra-fast Google experimental Gemini 2.0 Flash endpoint with 1M context accessed with zero cost via OpenRouter gateway.",
+    codingStrengths: "Fast code refactoring, instant code reviews, multi-language translation, and streaming assistant responses.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "qwen/qwen-2.5-coder-32b-instruct:free",
+    name: "Qwen 2.5 Coder 32B (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Alibaba Qwen dedicated code specialist with 128k context, scoring top marks on LiveCodeBench, accessible for free on OpenRouter.",
+    codingStrengths: "LiveCodeBench 55.5%, SWE-bench Verified 39.8%, unmatched efficiency-per-parameter, AST modifications, and multi-file editing.",
+    contextWindow: 128e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "mistralai/mistral-7b-instruct:free",
+    name: "Mistral 7B Instruct (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Fast, reliable 7B lightweight instruction model on OpenRouter community queue for agile scripting and rapid prototyping.",
+    codingStrengths: "Fast bash scripting, basic unit testing, regex parsing, and lightweight configuration generation.",
+    contextWindow: 32768,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "google/gemini-2.0-pro-exp-02-05:free",
+    name: "Gemini 2.0 Pro Exp 02-05 (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Google\u2019s experimental premier reasoning model snapshot with 2M token context, benchmark-grade coding, and deep agentic planning on OpenRouter.",
+    codingStrengths: "SWE-bench software engineering, architectural planning, massive whole-repository refactoring, and multi-file debugging.",
+    contextWindow: 2097152,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "microsoft/phi-3-medium-128k-instruct:free",
+    name: "Phi-3 Medium 128k Instruct (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Microsoft's 14B state-of-the-art small language model trained on highly curated synthetic educational data with 128k context.",
+    codingStrengths: "Algorithmic logic, Python/C# data structures, mathematics verification, and concise code explanations.",
+    contextWindow: 128e3,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier ($0.00 / \u20AC0.00)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  // ============================================================================
+  // 6. OPENROUTER TOP PAID MODELS
+  // ============================================================================
+  {
+    id: "anthropic/claude-3.7-sonnet",
+    name: "Claude 3.7 Sonnet (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Anthropic's flagship hybrid reasoning model combining instant inference with dynamic extended thinking, #1 ranked in SWE-bench and LiveCodeBench.",
+    codingStrengths: "SWE-bench Verified 70.3%, LiveCodeBench 65.8%, autonomous multi-file repository refactoring, deep bug remediation, frontend UI precision.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$3.00",
+      outputPer1MTokensUSD: "$15.00",
+      inputPer1MTokensEUR: "\u20AC2.80",
+      outputPer1MTokensEUR: "\u20AC14.00"
+    }
+  },
+  {
+    id: "anthropic/claude-3.5-sonnet",
+    name: "Claude 3.5 Sonnet (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Industry benchmark for code generation, visual comprehension, and multi-turn pair programming with flawless architectural consistency.",
+    codingStrengths: "Exceptional code synthesis, UI/UX component generation, thorough test case authoring, and complex bug remediation.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$3.00",
+      outputPer1MTokensUSD: "$15.00",
+      inputPer1MTokensEUR: "\u20AC2.80",
+      outputPer1MTokensEUR: "\u20AC14.00"
+    }
+  },
+  {
+    id: "anthropic/claude-3.5-haiku",
+    name: "Claude 3.5 Haiku (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "High-speed, cost-effective Anthropic model matching Claude 3 Opus capabilities at a fraction of latency and cost.",
+    codingStrengths: "High-throughput subagent tasks, rapid code editing, CLI tooling, and fast test execution monitoring.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$0.80",
+      outputPer1MTokensUSD: "$4.00",
+      inputPer1MTokensEUR: "\u20AC0.75",
+      outputPer1MTokensEUR: "\u20AC3.75"
+    }
+  },
+  {
+    id: "openai/o3-mini",
+    name: "OpenAI o3-mini (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "OpenAI's latest cost-efficient reasoning model optimized for STEM, competitive programming, and complex multi-step logic.",
+    codingStrengths: "LiveCodeBench 61.4%, algorithmic optimization, competitive math, and reasoning effort controls (low/med/high).",
+    contextWindow: 2e5,
+    maxOutputTokens: 1e5,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$1.10",
+      outputPer1MTokensUSD: "$4.40",
+      inputPer1MTokensEUR: "\u20AC1.02",
+      outputPer1MTokensEUR: "\u20AC4.10"
+    }
+  },
+  {
+    id: "openai/o1",
+    name: "OpenAI o1 (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "OpenAI's flagship deep reasoning model designed for complex planning, scientific problem solving, and rigorous software development.",
+    codingStrengths: "LiveCodeBench 62.5%, SWE-bench Verified 48.9%, complex algorithm design, security vulnerability exploit analysis, and deep mathematical logic.",
+    contextWindow: 2e5,
+    maxOutputTokens: 1e5,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$15.00",
+      outputPer1MTokensUSD: "$60.00",
+      inputPer1MTokensEUR: "\u20AC14.00",
+      outputPer1MTokensEUR: "\u20AC56.00"
+    }
+  },
+  {
+    id: "openai/gpt-4o",
+    name: "OpenAI GPT-4o (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "OpenAI's flagship omni model combining fast multimodal intelligence, strong coding, and 128k context.",
+    codingStrengths: "Full-stack app scaffolding, multimodal UI-to-code generation, robust REST API design, and multi-language support.",
+    contextWindow: 128e3,
+    maxOutputTokens: 16384,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$2.50",
+      outputPer1MTokensUSD: "$10.00",
+      inputPer1MTokensEUR: "\u20AC2.33",
+      outputPer1MTokensEUR: "\u20AC9.30"
+    }
+  },
+  {
+    id: "openai/gpt-4o-mini",
+    name: "OpenAI GPT-4o-mini (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Compact, extremely affordable and fast model outperforming GPT-3.5 across coding and reasoning benchmarks.",
+    codingStrengths: "Lightweight script generation, data transformations, unit test stubbing, and high-volume background tasks.",
+    contextWindow: 128e3,
+    maxOutputTokens: 16384,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$0.15",
+      outputPer1MTokensUSD: "$0.60",
+      inputPer1MTokensEUR: "\u20AC0.14",
+      outputPer1MTokensEUR: "\u20AC0.56"
+    }
+  },
+  {
+    id: "deepseek/deepseek-r1",
+    name: "DeepSeek R1 (OpenRouter Paid)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Open-weights reasoning powerhouse on dedicated OpenRouter paid infrastructure without community queue throttling.",
+    codingStrengths: "High-priority competitive programming, formal verification, complex multi-step debugging, and mathematical logic proofs.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$0.55",
+      outputPer1MTokensUSD: "$2.19",
+      inputPer1MTokensEUR: "\u20AC0.51",
+      outputPer1MTokensEUR: "\u20AC2.04"
+    }
+  },
+  {
+    id: "qwen/qwen-2.5-coder-32b-instruct",
+    name: "Qwen 2.5 Coder 32B (OpenRouter Paid)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Alibaba's premier code intelligence model on dedicated low-latency OpenRouter enterprise infrastructure.",
+    codingStrengths: "Top LiveCodeBench score (55.5%), multi-file code editing, AST analysis, repository-wide consistency, and unit test generation.",
+    contextWindow: 128e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$0.18",
+      outputPer1MTokensUSD: "$0.18",
+      inputPer1MTokensEUR: "\u20AC0.17",
+      outputPer1MTokensEUR: "\u20AC0.17"
+    }
+  },
+  {
+    id: "meta-llama/llama-3.1-405b-instruct",
+    name: "Meta Llama 3.1 405B Instruct (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Meta\u2019s 405B open-weight frontier model delivering massive knowledge capacity, deep reasoning, and high coding prowess.",
+    codingStrengths: "Synthetic dataset generation, complex compiler design, formal verification, and enterprise architecture blueprints.",
+    contextWindow: 128e3,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$2.50",
+      outputPer1MTokensUSD: "$2.50",
+      inputPer1MTokensEUR: "\u20AC2.33",
+      outputPer1MTokensEUR: "\u20AC2.33"
+    }
+  },
+  {
+    id: "mistralai/codestral-2501",
+    name: "Codestral 25.01 (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Mistral AI\u2019s state-of-the-art coding engine with 256k context and specialized support for 80+ programming languages.",
+    codingStrengths: "Fill-in-the-Middle (FIM), 256k context repo-level reasoning, Python/Rust/C++/Java/TS expert debugging, and test suite generation.",
+    contextWindow: 256e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$0.30",
+      outputPer1MTokensUSD: "$0.90",
+      inputPer1MTokensEUR: "\u20AC0.28",
+      outputPer1MTokensEUR: "\u20AC0.84"
+    }
+  },
+  {
+    id: "x-ai/grok-2-1212",
+    name: "xAI Grok 2 (1212) (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "xAI\u2019s flagship frontier model with strong coding capabilities, real-time knowledge synthesis, and mathematical reasoning.",
+    codingStrengths: "Rapid code generation, creative algorithm design, complex system diagnostics, and API integration code.",
+    contextWindow: 131072,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$2.00",
+      outputPer1MTokensUSD: "$10.00",
+      inputPer1MTokensEUR: "\u20AC1.86",
+      outputPer1MTokensEUR: "\u20AC9.30"
+    }
+  },
+  {
+    id: "cohere/command-r-plus-08-2024",
+    name: "Cohere Command R+ (08-2024) (OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Enterprise-grade RAG and tool-use model optimized for multi-step reasoning, citations, and business logic execution.",
+    codingStrengths: "Multi-hop tool orchestration, automated documentation parsing, API client synthesis, and structured JSON output.",
+    contextWindow: 128e3,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter pay-as-you-go balance",
+      inputPer1MTokensUSD: "$2.50",
+      outputPer1MTokensUSD: "$10.00",
+      inputPer1MTokensEUR: "\u20AC2.33",
+      outputPer1MTokensEUR: "\u20AC9.30"
+    }
+  },
+  {
+    id: "openrouter/deepseek-chat",
+    name: "DeepSeek V3 (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "DeepSeek V3 671B MoE model with extreme cost efficiency and high coding quality.",
+    codingStrengths: "Cost-efficient code generation, full-stack web applications, refactoring, and multi-language syntax.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenRouter Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$0.14",
+      outputPer1MTokensUSD: "$0.28",
+      inputPer1MTokensEUR: "\u20AC0.13",
+      outputPer1MTokensEUR: "\u20AC0.26"
+    }
+  },
+  // ============================================================================
+  // 7. ANTHROPIC CLAUDE ON GOOGLE CLOUD (Vertex AI Model Garden)
   // ============================================================================
   {
     id: "claude-3-7-sonnet",
     name: "Claude 3.7 Sonnet (Vertex AI)",
     provider: "Anthropic",
     category: "Anthropic Claude on Google Cloud",
-    description: "Hybrid reasoning and instant response model available on Google Cloud Vertex AI.",
+    description: "Hybrid reasoning and instant response model available on Google Cloud Vertex AI infrastructure.",
+    codingStrengths: "SWE-bench 70.3%, multi-turn tool calling, architectural code synthesis, and Google Cloud integration.",
     contextWindow: 2e5,
     maxOutputTokens: 8192,
     recommended: false,
@@ -277,7 +887,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Claude 3.5 Sonnet (Vertex AI)",
     provider: "Anthropic",
     category: "Anthropic Claude on Google Cloud",
-    description: "Industry benchmark for code generation and multi-step reasoning on Vertex AI.",
+    description: "Industry benchmark for code generation and multi-step reasoning on Google Cloud Vertex AI.",
+    codingStrengths: "High-precision code completion, UI layout rendering, and complex bug remediation.",
     contextWindow: 2e5,
     maxOutputTokens: 8192,
     recommended: false,
@@ -298,6 +909,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     provider: "Anthropic",
     category: "Anthropic Claude on Google Cloud",
     description: "High speed, cost-effective Anthropic model running in Google Cloud.",
+    codingStrengths: "Fast subagent logic, lightweight code reviews, and CLI parsing.",
     contextWindow: 2e5,
     maxOutputTokens: 8192,
     recommended: false,
@@ -313,14 +925,15 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     }
   },
   // ============================================================================
-  // 5. META LLAMA 3 ON GOOGLE CLOUD (Vertex AI Model Garden)
+  // 8. META LLAMA 3 ON GOOGLE CLOUD (Vertex AI Model Garden)
   // ============================================================================
   {
     id: "llama-3.3-70b-instruct",
-    name: "Meta Llama 3.3 (70B Instruct)",
+    name: "Meta Llama 3.3 (70B Instruct - Vertex AI)",
     provider: "Meta",
     category: "Meta Llama 3 on Google Cloud",
     description: "Meta\u2019s latest 70-billion parameter model fully hosted on Google Cloud Vertex AI.",
+    codingStrengths: "Web backend logic, Python scripts, SQL querying, and unit test generation.",
     contextWindow: 128e3,
     maxOutputTokens: 4096,
     recommended: false,
@@ -337,10 +950,11 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
   },
   {
     id: "llama-3.2-90b-vision-instruct",
-    name: "Meta Llama 3.2 (90B Vision)",
+    name: "Meta Llama 3.2 (90B Vision - Vertex AI)",
     provider: "Meta",
     category: "Meta Llama 3 on Google Cloud",
     description: "Premier open multimodal vision and text model on Google Cloud Vertex AI.",
+    codingStrengths: "Visual diagram-to-code, architecture layout inspection, and image OCR.",
     contextWindow: 128e3,
     maxOutputTokens: 4096,
     recommended: false,
@@ -357,10 +971,11 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
   },
   {
     id: "llama-3.1-405b-instruct",
-    name: "Meta Llama 3.1 (405B Instruct)",
+    name: "Meta Llama 3.1 (405B Instruct - Vertex AI)",
     provider: "Meta",
     category: "Meta Llama 3 on Google Cloud",
-    description: "Massive 405-billion parameter frontier model running on Google TPU/GPU cluster.",
+    description: "Massive 405-billion parameter frontier model running on Google Cloud TPU/GPU cluster.",
+    codingStrengths: "Massive knowledge synthesis, complex compiler design, and synthetic dataset generation.",
     contextWindow: 128e3,
     maxOutputTokens: 4096,
     recommended: false,
@@ -376,7 +991,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     }
   },
   // ============================================================================
-  // 6. MISTRAL AI ON GOOGLE CLOUD (Vertex AI Model Garden)
+  // 9. MISTRAL AI ON GOOGLE CLOUD (Vertex AI Model Garden)
   // ============================================================================
   {
     id: "mistral-large-2411",
@@ -384,6 +999,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     provider: "Mistral AI",
     category: "Mistral AI on Google Cloud",
     description: "Mistral\u2019s top-tier multilingual reasoning and coding model on Google Cloud.",
+    codingStrengths: "Multilingual codebase translation, complex multi-turn logic, and JSON schema compliance.",
     contextWindow: 128e3,
     maxOutputTokens: 4096,
     recommended: false,
@@ -403,7 +1019,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "Codestral 25.01 (Vertex AI)",
     provider: "Mistral AI",
     category: "Mistral AI on Google Cloud",
-    description: "Specialized code completion, debugging, and fill-in-the-middle on Google Cloud.",
+    description: "Specialized code completion, debugging, and fill-in-the-middle on Google Cloud Vertex AI.",
+    codingStrengths: "Fast Fill-in-the-Middle (FIM), 256k context, and multi-file code completion.",
     contextWindow: 256e3,
     maxOutputTokens: 4096,
     recommended: false,
@@ -419,14 +1036,15 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     }
   },
   // ============================================================================
-  // 7. DEEPSEEK & AI21 ON GOOGLE CLOUD (Vertex AI Model Garden)
+  // 10. DEEPSEEK & AI21 ON GOOGLE CLOUD (Vertex AI Model Garden)
   // ============================================================================
   {
     id: "deepseek-r1",
-    name: "DeepSeek R1 (Reasoning)",
+    name: "DeepSeek R1 (Vertex AI)",
     provider: "DeepSeek",
     category: "DeepSeek on Google Cloud",
-    description: "Frontier open reasoning model with transparent chain-of-thought verification on Google Cloud.",
+    description: "Frontier open reasoning model with transparent chain-of-thought verification hosted on Google Cloud Vertex AI compute.",
+    codingStrengths: "Deep algorithmic problem solving, code reasoning verification, and competitive programming.",
     contextWindow: 64e3,
     maxOutputTokens: 8192,
     recommended: false,
@@ -446,7 +1064,8 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     name: "AI21 Jamba 1.5 Large",
     provider: "AI21 Labs",
     category: "AI21 Labs & Cohere on Google Cloud",
-    description: "Hybrid Mamba-Transformer architecture offering 256,000 tokens long-context speed.",
+    description: "Hybrid Mamba-Transformer architecture offering 256,000 tokens long-context speed on Google Cloud.",
+    codingStrengths: "High-speed long document parsing, config analysis, and structured code translation.",
     contextWindow: 256e3,
     maxOutputTokens: 4096,
     recommended: false,
@@ -467,6 +1086,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     provider: "Cohere",
     category: "AI21 Labs & Cohere on Google Cloud",
     description: "Enterprise Retrieval-Augmented Generation (RAG) model on Google Cloud.",
+    codingStrengths: "API tool calling, citation-grounded code search, and documentation querying.",
     contextWindow: 128e3,
     maxOutputTokens: 4096,
     recommended: false,
@@ -482,7 +1102,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     }
   },
   // ============================================================================
-  // 8. OMNIROUTE DAEMON CLUSTER (http://100.66.98.4:20128)
+  // 11. OMNIROUTE DAEMON CLUSTER (http://100.66.98.4:20128)
   // ============================================================================
   {
     id: "omniroute/gemini-2.5-pro",
@@ -490,6 +1110,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     provider: "OmniRoute",
     category: "OmniRoute Daemon Cluster",
     description: "High-availability routing proxy via OmniRoute daemon with automatic load balancing and fallback.",
+    codingStrengths: "Edge routed 2M token context for whole-repo analysis with automatic failover.",
     contextWindow: 2097152,
     maxOutputTokens: 8192,
     recommended: false,
@@ -510,6 +1131,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     provider: "OmniRoute",
     category: "OmniRoute Daemon Cluster",
     description: "DeepSeek R1 reasoning executed through local OmniRoute daemon cluster.",
+    codingStrengths: "High-throughput reasoning without rate limit choke points.",
     contextWindow: 64e3,
     maxOutputTokens: 8192,
     recommended: false,
@@ -530,6 +1152,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     provider: "OmniRoute",
     category: "OmniRoute Daemon Cluster",
     description: "Anthropic Claude 3.5 Sonnet proxied through high-reliability OmniRoute daemon gateway.",
+    codingStrengths: "Edge proxied pair programming and refactoring pipeline.",
     contextWindow: 2e5,
     maxOutputTokens: 8192,
     recommended: false,
@@ -545,140 +1168,15 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     }
   },
   // ============================================================================
-  // 9. OPENROUTER FREE MODELS (https://openrouter.ai)
-  // ============================================================================
-  {
-    id: "deepseek/deepseek-r1:free",
-    name: "DeepSeek R1 (Free on OpenRouter)",
-    provider: "OpenRouter",
-    category: "OpenRouter Free Models",
-    description: "Frontier open reasoning model with chain-of-thought verification, 100% free via OpenRouter tier.",
-    contextWindow: 64e3,
-    maxOutputTokens: 8192,
-    recommended: false,
-    tier: "100% Free Community",
-    protocol: "openai-compatible",
-    pricing: {
-      freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "OpenRouter Community Free Tier (20 RPM queue)",
-      inputPer1MTokensUSD: "$0.00 (100% Free)",
-      outputPer1MTokensUSD: "$0.00 (100% Free)",
-      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
-      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
-    }
-  },
-  {
-    id: "meta-llama/llama-3.3-70b:free",
-    name: "Llama 3.3 70B Instruct (Free on OpenRouter)",
-    provider: "OpenRouter",
-    category: "OpenRouter Free Models",
-    description: "State-of-the-art Meta 70B open weight instruction model hosted on OpenRouter free tier.",
-    contextWindow: 128e3,
-    maxOutputTokens: 4096,
-    recommended: false,
-    tier: "100% Free Community",
-    protocol: "openai-compatible",
-    pricing: {
-      freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "OpenRouter Community Free Tier (20 RPM queue)",
-      inputPer1MTokensUSD: "$0.00 (100% Free)",
-      outputPer1MTokensUSD: "$0.00 (100% Free)",
-      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
-      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
-    }
-  },
-  {
-    id: "google/gemini-2.0-flash-exp:free",
-    name: "Gemini 2.0 Flash Exp (Free on OpenRouter)",
-    provider: "OpenRouter",
-    category: "OpenRouter Free Models",
-    description: "Ultra-fast Google experimental Gemini 2.0 Flash endpoint accessed via OpenRouter free gateway.",
-    contextWindow: 1048576,
-    maxOutputTokens: 8192,
-    recommended: false,
-    tier: "100% Free Community",
-    protocol: "openai-compatible",
-    pricing: {
-      freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "OpenRouter Community Free Tier",
-      inputPer1MTokensUSD: "$0.00 (100% Free)",
-      outputPer1MTokensUSD: "$0.00 (100% Free)",
-      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
-      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
-    }
-  },
-  {
-    id: "qwen/qwen-2.5-coder-32b-instruct:free",
-    name: "Qwen 2.5 Coder 32B (Free on OpenRouter)",
-    provider: "OpenRouter",
-    category: "OpenRouter Free Models",
-    description: "Alibaba Qwen code generation specialist with 128k context on OpenRouter free tier.",
-    contextWindow: 128e3,
-    maxOutputTokens: 8192,
-    recommended: false,
-    tier: "100% Free Community",
-    protocol: "openai-compatible",
-    pricing: {
-      freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "OpenRouter Community Free Tier",
-      inputPer1MTokensUSD: "$0.00 (100% Free)",
-      outputPer1MTokensUSD: "$0.00 (100% Free)",
-      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
-      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
-    }
-  },
-  {
-    id: "mistralai/mistral-7b-instruct:free",
-    name: "Mistral 7B Instruct (Free on OpenRouter)",
-    provider: "OpenRouter",
-    category: "OpenRouter Free Models",
-    description: "Fast, reliable 7B lightweight instruction model on OpenRouter free queue.",
-    contextWindow: 32768,
-    maxOutputTokens: 4096,
-    recommended: false,
-    tier: "100% Free Community",
-    protocol: "openai-compatible",
-    pricing: {
-      freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "OpenRouter Community Free Tier",
-      inputPer1MTokensUSD: "$0.00 (100% Free)",
-      outputPer1MTokensUSD: "$0.00 (100% Free)",
-      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
-      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
-    }
-  },
-  // ============================================================================
-  // 10. OPENROUTER PREMIUM MODELS
-  // ============================================================================
-  {
-    id: "openrouter/deepseek-chat",
-    name: "DeepSeek V3 (OpenRouter Premium)",
-    provider: "OpenRouter",
-    category: "OpenRouter Premium",
-    description: "DeepSeek V3 671B MoE model with extreme cost efficiency and high coding quality.",
-    contextWindow: 64e3,
-    maxOutputTokens: 8192,
-    recommended: false,
-    tier: "Free Quota + Paid",
-    protocol: "openai-compatible",
-    pricing: {
-      freeTierStatus: "Paid / Pay-As-You-Go Only",
-      freeTierDetails: "OpenRouter credit balance",
-      inputPer1MTokensUSD: "$0.14",
-      outputPer1MTokensUSD: "$0.28",
-      inputPer1MTokensEUR: "\u20AC0.13",
-      outputPer1MTokensEUR: "\u20AC0.26"
-    }
-  },
-  // ============================================================================
-  // 11. OPENCODE GO PLATFORMS (OpenCode AI Platform API / OmniRoute Adapter)
+  // 12. OPENCODE GO PLATFORMS (OpenCode AI Platform API)
   // ============================================================================
   {
     id: "opencode/go-coder-32b",
     name: "OpenCode Go Coder 32B",
     provider: "OpenCode AI",
     category: "OpenCode Go Platforms",
-    description: "Specialized enterprise coding platform model with automated unit test generation and refactoring.",
+    description: "Specialized enterprise coding platform model with automated unit test generation, AST analysis, and refactoring.",
+    codingStrengths: "Automated test suite generation, syntax refactoring, AST linting, and bug fixing.",
     contextWindow: 64e3,
     maxOutputTokens: 8192,
     recommended: false,
@@ -686,7 +1184,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "openai-compatible",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "OpenCode Developer Community Quota",
+      freeTierDetails: "OpenCode Developer Community Quota ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.20 (Prod)",
       outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.60 (Prod)",
       inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.18 (Prod)",
@@ -699,6 +1197,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     provider: "OpenCode AI",
     category: "OpenCode Go Platforms",
     description: "Ultra-low latency code agent model optimized for autocomplete and fast interactive edits.",
+    codingStrengths: "Fast auto-complete, short snippet transformations, and inline suggestions.",
     contextWindow: 32768,
     maxOutputTokens: 4096,
     recommended: false,
@@ -706,7 +1205,7 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     protocol: "openai-compatible",
     pricing: {
       freeTierStatus: "100% Free Quota Available",
-      freeTierDetails: "OpenCode Developer Community Quota",
+      freeTierDetails: "OpenCode Developer Community Quota ($0.00 / \u20AC0.00)",
       inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.08 (Prod)",
       outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.24 (Prod)",
       inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.07 (Prod)",
@@ -739,6 +1238,29 @@ var ModelRegistry = class {
   }
   static getPaidOnlyModels() {
     return COMPLETE_GOOGLE_MODEL_CATALOG.filter((m) => m.pricing.freeTierStatus === "Paid / Pay-As-You-Go Only");
+  }
+  static getGoogleModels() {
+    return COMPLETE_GOOGLE_MODEL_CATALOG.filter((m) => m.provider === "Google DeepMind");
+  }
+  static getOpenRouterModels() {
+    return COMPLETE_GOOGLE_MODEL_CATALOG.filter(
+      (m) => m.category.startsWith("OpenRouter") || m.provider === "OpenRouter"
+    );
+  }
+  static getTopCodingModels() {
+    const topIds = [
+      "anthropic/claude-3.7-sonnet",
+      "openai/o3-mini",
+      "deepseek/deepseek-r1:free",
+      "qwen/qwen-2.5-coder-32b-instruct:free",
+      "anthropic/claude-3.5-sonnet",
+      "gemini-2.5-pro",
+      "openai/gpt-4o",
+      "gemini-2.0-flash-thinking-exp",
+      "mistralai/codestral-2501",
+      "meta-llama/llama-3.3-70b-instruct:free"
+    ];
+    return topIds.map((id) => this.getModelById(id)).filter((m) => m !== void 0);
   }
 };
 
@@ -1389,6 +1911,8 @@ var EvaBotWebApp = class {
     if (specEur) specEur.textContent = `In: ${m.pricing.inputPer1MTokensEUR} | Out: ${m.pricing.outputPer1MTokensEUR}`;
     const specQuota = document.getElementById("model-spec-quota");
     if (specQuota) specQuota.textContent = m.pricing.freeTierDetails;
+    const specCoding = document.getElementById("model-spec-coding");
+    if (specCoding) specCoding.textContent = m.codingStrengths;
     this.updateTelemetryUI();
   }
   updateKeyStatusUI() {

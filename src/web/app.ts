@@ -845,6 +845,9 @@ export class EvaBotWebApp {
     const specQuota = document.getElementById('model-spec-quota');
     if (specQuota) specQuota.textContent = m.pricing.freeTierDetails;
 
+    const specCoding = document.getElementById('model-spec-coding');
+    if (specCoding) specCoding.textContent = m.codingStrengths;
+
     this.updateTelemetryUI();
   }
 

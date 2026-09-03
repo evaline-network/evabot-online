@@ -1,224 +1,178 @@
 #!/usr/bin/env npx tsx
 /**
  * terminal-chat.ts
- * EvaBot Online v0.0.1 MVP — Cyber-Terminal TUI
+ * EvaBot Online v0.0.1 MVP — Reactive Linear Cyber-Terminal TUI
  * 
  * Features:
- * - Boot Sequence & Live Diagnostics across Web Server & Agent Server
- * - Collapsible ASCII Accordions ([+] / [-]) matching Web details/summary
- * - Full Model Garden support (Gemini 3.8 Flash, 3.1 Pro/Flash, Claude, DeepSeek)
- * - Multi-Agent Consilium, Dialogue & Corporate Roles
- * - Strict Currency Rules: USD ($) & EUR (€) only
+ * - Strictly linear, line-by-line, minimal, elegant, and uncluttered layout
+ * - Zero pseudo-accordions
+ * - Real-time startup banner with live boot checkmarks
+ * - Clean monospace tabular view for /models with USD ($) and EUR (€) pricing
+ * - Dynamic model switching across all 34+ models in Model Registry
+ * - Multi-agent Consilium & 2-model Dialogue debates
+ * - Corporate roles and knowledge base integration
+ * - Powered by AnsiStreamEngine for 1:1 parity with plain text and web
+ * - Strict financial standard: USD ($) & EUR (€) only
  */
 
 import readline from 'node:readline';
 import { ChatSession } from '../core/ChatSession.js';
-import { ModelRegistry } from '../models/ModelRegistry.js';
+import { ModelRegistry, GeminiModelInfo } from '../models/ModelRegistry.js';
 import { BootDiagnostics, BootDiagnosticReport } from '../core/BootDiagnostics.js';
 import { UniversalLlmClient } from '../core/UniversalLlmClient.js';
 import { ConsiliumEngine, ConsiliumMode, ConsiliumProgressEvent } from '../core/ConsiliumEngine.js';
 import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
+import {
+  AnsiStreamEngine,
+  AnsiColors,
+  TableFormatter,
+  AnsiStreamWriter,
+  statusBadge,
+  promptSymbol,
+  formatPrompt,
+  divider,
+  stripAnsi,
+} from '../core/AnsiStreamEngine.js';
 
-// ANSI terminal color pallet (Minimalist B&W + Traffic Light standard)
-const C = {
-  reset: '\x1b[0m',
-  bold: '\x1b[1m',
-  dim: '\x1b[2m',
-  white: '\x1b[97m',
-  gray: '\x1b[90m',
-  zinc: '\x1b[37m',
-  // Traffic Lights
-  green: '\x1b[32m',     // 🟢 Online / Ready / Free
-  yellow: '\x1b[33m',    // 🟡 Standby / Busy / Paid
-  red: '\x1b[31m',       // 🔴 Error / Offline
-  // Accents
-  cyan: '\x1b[36m',
-  magenta: '\x1b[35m',
-};
-
-// Accordion expansion states
-interface AccordionState {
-  bootLog: boolean;
-  servers: boolean;
-  models: boolean;
-  consilium: boolean;
-  roles: boolean;
-}
-
-const accordions: AccordionState = {
-  bootLog: true,     // Expanded on initial boot
-  servers: false,
-  models: false,
-  consilium: false,
-  roles: false,
-};
+const C = AnsiColors;
 
 let lastDiagnosticReport: BootDiagnosticReport | null = null;
 let currentRole = 'general_assistant';
 let currentMode: ConsiliumMode = 'solo';
 
-function renderAccordionHeader(title: string, isOpen: boolean, tag: string = ''): string {
-  const icon = isOpen ? `${C.green}[ - COLLAPSE ]${C.reset}` : `${C.yellow}[ + EXPAND ]${C.reset}`;
-  const border = '─'.repeat(Math.max(10, 68 - title.length - tag.length));
-  return `${C.gray}┌──${C.reset} ${C.bold}${C.white}${title}${C.reset} ${tag} ${C.gray}─${border}─${C.reset} ${icon}`;
-}
-
-function renderAccordionFooter(): string {
-  return `${C.gray}└──${'─'.repeat(76)}┘${C.reset}`;
-}
-
 /**
- * Renders the live system boot sequence and diagnostics
+ * Renders the clean linear startup banner and live boot sequence checkmarks
  */
-async function runAndPrintBootSequence(activeModel: string): Promise<void> {
-  console.clear();
-  console.log(`
-${C.bold}${C.white}┌────────────────────────────────────────────────────────────────────────────┐
-│  ⚡ EVABOT ONLINE v0.0.1 MVP // CYBER-TERMINAL BOOT SEQUENCE              │
-│  Hybrid Architecture: Web Server (Face) ◄──► Agent Server (Brain)          │
-└────────────────────────────────────────────────────────────────────────────┘${C.reset}
-`);
+async function runBootSequence(activeModel: string): Promise<BootDiagnosticReport> {
+  console.log(`\n${C.gray}┌${'─'.repeat(78)}┐${C.reset}`);
+  console.log(`${C.gray}│${C.reset} ${C.bold}${C.brightWhite}⚡ EVABOT ONLINE v0.0.1 MVP // LINEAR CYBER-TERMINAL${C.reset}${' '.repeat(26)}${C.gray}│${C.reset}`);
+  console.log(`${C.gray}│${C.reset} ${C.gray}Hybrid Topology: Web Edge Gateway (Face) ◄──► Agent Server (Brain)${C.reset}          ${C.gray}│${C.reset}`);
+  console.log(`${C.gray}└${'─'.repeat(78)}┘${C.reset}\n`);
 
-  process.stdout.write(`${C.gray}Initialising dual-server diagnostic probe...${C.reset}\n`);
-  lastDiagnosticReport = await BootDiagnostics.runDiagnostics(activeModel);
+  process.stdout.write(`${C.gray}[BOOT DIAGNOSTICS] Probing dual-server infrastructure & model garden...${C.reset}\n`);
+  const report = await BootDiagnostics.runDiagnostics(activeModel);
+  lastDiagnosticReport = report;
 
-  for (const step of lastDiagnosticReport.steps) {
-    const statusIcon = step.status === 'success' ? `${C.green}✔ 🟢${C.reset}` : `${C.red}✖ 🔴${C.reset}`;
-    console.log(`  ${statusIcon} ${C.bold}${step.name}${C.reset} ${C.gray}(${step.latencyMs}ms)${C.reset}`);
+  for (const step of report.steps) {
+    const icon = step.status === 'success' ? `${C.green}✔ 🟢${C.reset}` : `${C.red}✖ 🔴${C.reset}`;
+    console.log(`  ${icon} ${C.bold}${step.name}${C.reset} ${C.gray}(${step.latencyMs}ms)${C.reset}`);
     console.log(`     ${C.gray}└─ ${step.details}${C.reset}`);
   }
 
-  console.log(`
-${C.green}✔ ALL DIAGNOSTIC CHECKS PASSED [Total: ${lastDiagnosticReport.totalDurationMs}ms]${C.reset}
-`);
+  console.log(`\n${C.green}✔ ALL DIAGNOSTIC CHECKS PASSED [Total: ${report.totalDurationMs}ms]${C.reset}`);
+  return report;
 }
 
 /**
- * Prints the main Cyber-Terminal banner and accordion summaries
+ * Prints the minimal one-line status bar
  */
-function renderDashboard(session: ChatSession): void {
-  const currentModel = ModelRegistry.getModelById(session.getModel());
-  const isFree = currentModel?.pricing.freeTierStatus === '100% Free Quota Available';
-  const tierBadge = isFree ? `${C.green}🟢 [100% FREE QUOTA]${C.reset}` : `${C.yellow}🟡 [PAID / METERED]${C.reset}`;
+function printStatusBar(session: ChatSession): void {
+  const model = ModelRegistry.getModelById(session.getModel());
+  const isFree = model?.pricing.freeTierStatus === '100% Free Quota Available';
+  const tierBadge = isFree ? `${C.green}🟢 FREE QUOTA${C.reset}` : `${C.yellow}🟡 PAID / METERED${C.reset}`;
 
-  console.log(`
-${C.gray}┌────────────────────────────────────────────────────────────────────────────┐${C.reset}
-${C.gray}│${C.reset} ${C.bold}${C.white}EVABOT // CORE v0.0.1 MVP${C.reset}  ${C.green}🟢 ONLINE${C.reset}  ${C.gray}│${C.reset} Mode: ${C.cyan}${currentMode.toUpperCase()}${C.reset}  ${C.gray}│${C.reset} Role: ${C.white}${currentRole}${C.reset} ${C.gray}│${C.reset}
-${C.gray}│${C.reset} Model: ${C.bold}${C.white}${session.getModel().padEnd(25)}${C.reset} ${tierBadge.padEnd(35)} ${C.gray}│${C.reset}
-${C.gray}│${C.reset} Auth:  ${C.green}🟢 Google Auto-Auth (evabot.online@gmail.com)${C.reset}    ${C.gray}Strict: USD ($)/EUR (€)│${C.reset}
-${C.gray}└────────────────────────────────────────────────────────────────────────────┘${C.reset}
-`);
-
-  // Accordion 1: Boot Log Summary
-  console.log(renderAccordionHeader('1. BOOT SEQUENCE & DIAGNOSTICS LOG', accordions.bootLog));
-  if (accordions.bootLog && lastDiagnosticReport) {
-    for (const step of lastDiagnosticReport.steps) {
-      console.log(`  ${C.green}🟢${C.reset} ${C.white}${step.name}${C.reset}: ${C.gray}${step.details}${C.reset}`);
-    }
-  }
-  console.log(renderAccordionFooter());
-
-  // Accordion 2: Dual Server Telemetry
-  console.log(renderAccordionHeader('2. DUAL SERVER TELEMETRY (WEB SERVER VS AGENT SERVER)', accordions.servers));
-  if (accordions.servers && lastDiagnosticReport) {
-    const ws = lastDiagnosticReport.servers.webServer;
-    const as = lastDiagnosticReport.servers.agentServer;
-    console.log(`  ${C.bold}🌐 ${ws.role} [${ws.name}]${C.reset} - ${ws.status}`);
-    console.log(`     Location: ${ws.zone} | IP: ${ws.ip}`);
-    console.log(`     CPU Load: ${ws.cpuLoad} | RAM: ${ws.memoryUsed}`);
-    console.log(`     Workload: ${C.green}0% Compute (Caddy SSL Edge Gateway & Reverse Proxy)${C.reset}`);
-    console.log(`  ${C.bold}🧠 ${as.role} [${as.name}]${C.reset} - ${as.status}`);
-    console.log(`     Location: ${as.zone} | Tailscale IP: ${as.ip}`);
-    console.log(`     Hardware: ${as.cpuSpec} | ${as.memorySpec}`);
-    console.log(`     CPU Load: ${as.cpuLoad} | RAM: ${as.memoryUsed}`);
-    console.log(`     Services: ${as.services.join(', ')}`);
-  }
-  console.log(renderAccordionFooter());
-
-  // Accordion 3: Frontier Models & Quotas
-  console.log(renderAccordionHeader('3. FRONTIER MODEL GARDEN (34 MODELS REGISTERED)', accordions.models));
-  if (accordions.models) {
-    console.log(`  ${C.green}🟢 1. Google Next-Gen Frontier (Gemini 3.x / 2.5):${C.reset}`);
-    console.log(`     • ${C.bold}gemini-3.8-flash${C.reset} - 1M ctx | 15 RPM Free Quota | Ultra-fast agentic`);
-    console.log(`     • ${C.bold}gemini-3.1-pro${C.reset}   - 2M ctx | Complex reasoning & architecture`);
-    console.log(`     • ${C.bold}gemini-3.1-flash${C.reset} - 1M ctx | High-efficiency real-time flash`);
-    console.log(`     • ${C.bold}gemini-2.5-flash${C.reset} - 1M ctx | Flagship multimodal balance`);
-    console.log(`  ${C.green}🟢 2. OpenRouter Free Tier (:free):${C.reset}`);
-    console.log(`     • deepseek/deepseek-r1:free | meta-llama/llama-3.3-70b:free | gemini-2.0-flash-exp:free`);
-    console.log(`  ${C.yellow}🟡 3. Paid Enterprise Partners (Google Cloud Vertex AI):${C.reset}`);
-    console.log(`     • claude-3-7-sonnet | claude-3-5-sonnet | mistral-large-2411 | jamba-1.5-large`);
-    console.log(`  ${C.gray}Use /models for the comprehensive rate card and full specification table.${C.reset}`);
-  }
-  console.log(renderAccordionFooter());
-
-  // Accordion 4: Consilium Engine
-  console.log(renderAccordionHeader('4. MULTI-AGENT CONSILIUM & DEBATE CONTROLLER', accordions.consilium));
-  if (accordions.consilium) {
-    console.log(`  Current Mode: ${C.bold}${C.cyan}${currentMode.toUpperCase()}${C.reset}`);
-    console.log(`  Supported Modes:`);
-    console.log(`    • ${C.white}solo${C.reset}      - 1-on-1 direct dialogue with active model`);
-    console.log(`    • ${C.white}broadcast${C.reset} - 1 prompt sent to 3 frontier models concurrently`);
-    console.log(`    • ${C.white}dialogue${C.reset}  - 2 models engage in an autonomous thesis debate`);
-    console.log(`    • ${C.white}consilium${C.reset} - 3 to 10 models deliberate in rounds with consensus report`);
-    console.log(`  ${C.gray}Switch mode with: /mode <solo|broadcast|dialogue|consilium>${C.reset}`);
-  }
-  console.log(renderAccordionFooter());
-
-  // Accordion 5: Corporate Roles
-  console.log(renderAccordionHeader('5. EVALINE CORPORATE ROLES & KNOWLEDGE BASE', accordions.roles));
-  if (accordions.roles) {
-    console.log(`  Active Role: ${C.bold}${C.white}${currentRole}${C.reset}`);
-    console.log(`  Available Roles: architect, devops, security_auditor, general_assistant, data_engineer`);
-    console.log(`  Knowledge Base: Hybrid PostgreSQL + Qdrant Vector Store (Connected)`);
-    console.log(`  ${C.gray}Switch role with: /role <role_id>${C.reset}`);
-  }
-  console.log(renderAccordionFooter());
-
-  console.log(`
-${C.gray}Interactive Commands:${C.reset}
-  ${C.cyan}/toggle <1-5|all>${C.reset}  Toggle accordions     ${C.cyan}/mode <mode>${C.reset}        Set Consilium mode
-  ${C.cyan}/model <id>${C.reset}        Switch active model   ${C.cyan}/role <role>${C.reset}        Set Corporate role
-  ${C.cyan}/boot${C.reset}              Re-run diagnostics    ${C.cyan}/clear${C.reset}              Clear chat stream
-  ${C.cyan}/help${C.reset}              Full command guide    ${C.cyan}/exit${C.reset}               Quit terminal
-`);
+  console.log(divider('─', 80, C.gray));
+  console.log(
+    `  ${C.bold}${C.white}EVABOT${C.reset} ${C.green}🟢 ONLINE${C.reset} │ Model: ${C.bold}${C.cyan}${session.getModel()}${C.reset} [${tierBadge}] │ Mode: ${C.bold}${C.brightYellow}${currentMode.toUpperCase()}${C.reset} │ Role: ${C.bold}${C.white}${currentRole}${C.reset}`
+  );
+  console.log(
+    `  ${C.gray}Standards: USD ($) & EUR (€) strictly │ 34 Models Active │ Type /help for commands${C.reset}`
+  );
+  console.log(divider('─', 80, C.gray) + '\n');
 }
 
-function printHelp(): void {
-  console.log(`
-${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
-  ${C.cyan}/toggle <1-5|all>${C.reset}      Expand or collapse specified accordion section
-  ${C.cyan}/boot${C.reset}                  Re-run live diagnostics across Web Server and Agent Server
-  ${C.cyan}/models${C.reset}                Display full catalog of all 34 registered models
-  ${C.cyan}/model <id>${C.reset}            Switch active model (e.g. /model gemini-3.8-flash, /model gemini-3.1-pro)
-  ${C.cyan}/mode <mode>${C.reset}            Set mode: solo, broadcast, dialogue, consilium
-  ${C.cyan}/role <id>${C.reset}             Set corporate role: architect, devops, security_auditor, general_assistant
-  ${C.cyan}/consilium <prompt>${C.reset}    Launch an instant 3-model deliberation with consensus report
-  ${C.cyan}/dialogue <prompt>${C.reset}     Launch an autonomous 2-model debate
-  ${C.cyan}/clear${C.reset}                 Clear conversation history
-  ${C.cyan}/help${C.reset}                  Show this help screen
-  ${C.cyan}/exit${C.reset}                  Exit terminal chat
-`);
-}
-
-function printAllModels(): void {
-  console.log(`\n${C.yellow}${C.bold}═`.repeat(78) + C.reset);
-  console.log(`${C.bold}${C.white}GOOGLE MODEL GARDEN & MULTI-PROVIDER CATALOG (34 MODELS)${C.reset}`);
-  console.log(`${C.yellow}${C.bold}═`.repeat(78) + `${C.reset}\n`);
-
+/**
+ * Renders the clean monospace tabular view of models with free/paid indicators and USD/EUR pricing
+ */
+function printModelsTable(filterCategory?: string): void {
   const models = ModelRegistry.getAllModels();
-  for (const m of models) {
-    const isFree = m.pricing.freeTierStatus === '100% Free Quota Available';
-    const tag = isFree ? `${C.green}🟢 FREE QUOTA${C.reset}` : `${C.yellow}🟡 PAID / METERED${C.reset}`;
-    console.log(`  ${C.bold}${C.white}${m.id.padEnd(32)}${C.reset} [${m.provider}] ${tag}`);
-    console.log(`    Context: ${m.contextWindow.toLocaleString()} tokens | Max Out: ${m.maxOutputTokens} tokens`);
-    console.log(`    Pricing: In: ${m.pricing.inputPer1MTokensUSD} (${m.pricing.inputPer1MTokensEUR}) │ Out: ${m.pricing.outputPer1MTokensUSD} (${m.pricing.outputPer1MTokensEUR})`);
-    console.log(`    ${C.gray}${m.description}${C.reset}\n`);
+  const filtered = filterCategory
+    ? models.filter((m) => m.category.toLowerCase().includes(filterCategory.toLowerCase()) || m.provider.toLowerCase().includes(filterCategory.toLowerCase()))
+    : models;
+
+  console.log(`\n${C.bold}${C.white}GOOGLE MODEL GARDEN & MULTI-PROVIDER CATALOG (${filtered.length} of ${models.length} MODELS)${C.reset}`);
+  console.log(`${C.gray}Strict currency policy: USD ($) & EUR (€) only. No other currencies supported.${C.reset}\n`);
+
+  interface ModelTableRow {
+    id: string;
+    provider: string;
+    context: string;
+    tier: string;
+    inputPrice: string;
+    outputPrice: string;
   }
+
+  const rows: ModelTableRow[] = filtered.map((m) => {
+    const isFree = m.pricing.freeTierStatus === '100% Free Quota Available';
+    const tier = isFree ? `${C.green}🟢 Free${C.reset}` : `${C.yellow}🟡 Paid${C.reset}`;
+    
+    // Format compact price strings
+    let inPrice = m.pricing.inputPer1MTokensUSD;
+    let outPrice = m.pricing.outputPer1MTokensUSD;
+    if (inPrice.includes('(')) inPrice = inPrice.split('/')[0].trim();
+    if (outPrice.includes('(')) outPrice = outPrice.split('/')[0].trim();
+
+    return {
+      id: `${C.bold}${C.white}${m.id}${C.reset}`,
+      provider: m.provider,
+      context: `${(m.contextWindow / 1024).toFixed(0)}k`,
+      tier,
+      inputPrice: inPrice,
+      outputPrice: outPrice,
+    };
+  });
+
+  const tableStr = TableFormatter.render<ModelTableRow>(rows, {
+    columns: [
+      { key: 'id', header: 'MODEL ID', minWidth: 26 },
+      { key: 'provider', header: 'PROVIDER', minWidth: 16 },
+      { key: 'context', header: 'CTX', minWidth: 6, align: 'right' },
+      { key: 'tier', header: 'TIER', minWidth: 10 },
+      { key: 'inputPrice', header: 'IN / 1M', minWidth: 14 },
+      { key: 'outputPrice', header: 'OUT / 1M', minWidth: 14 },
+    ],
+    borderStyle: 'unicode',
+    borderColor: C.gray,
+    headerColor: `${C.bold}${C.brightWhite}`,
+  });
+
+  console.log(tableStr);
+  console.log(`\n${C.gray}Switch model with: /model <model_id> (e.g. /model gemini-3.8-flash, /model deepseek/deepseek-r1:free)${C.reset}\n`);
 }
 
+/**
+ * Prints the clean, linear command reference guide
+ */
+function printHelp(): void {
+  console.log(`\n${C.bold}${C.white}EVA-BOT CYBER-TERMINAL COMMAND REFERENCE${C.reset}`);
+  console.log(divider('─', 80, C.gray));
+
+  const commands = [
+    { cmd: '/models [filter]', desc: 'Clean monospace tabular view of models with free/paid status & pricing' },
+    { cmd: '/model <id>', desc: 'Switch active model (e.g. /model gemini-3.8-flash, /model gemini-3.1-pro)' },
+    { cmd: '/mode <mode>', desc: 'Switch mode: solo | broadcast | dialogue | consilium' },
+    { cmd: '/role <id>', desc: 'Switch corporate role: architect, devops, security_auditor, general_assistant' },
+    { cmd: '/dialogue <prompt>', desc: 'Run autonomous 2-model debate on specified topic' },
+    { cmd: '/consilium <prompt>', desc: 'Run 3-10 model deliberation with executive consensus synthesis' },
+    { cmd: '/boot', desc: 'Re-run live infrastructure and model diagnostics' },
+    { cmd: '/clear', desc: 'Clear conversation history and terminal screen' },
+    { cmd: '/help', desc: 'Display this command reference' },
+    { cmd: '/exit', desc: 'Terminate terminal session cleanly' },
+  ];
+
+  for (const c of commands) {
+    console.log(`  ${C.bold}${C.cyan}${c.cmd.padEnd(22)}${C.reset} ${C.gray}│${C.reset} ${c.desc}`);
+  }
+
+  console.log(divider('─', 80, C.gray) + '\n');
+}
+
+/**
+ * Handles running a multi-agent debate or consilium
+ */
 async function handleConsiliumRun(mode: ConsiliumMode, prompt: string): Promise<void> {
   console.log(`\n${C.yellow}⚡ Launching ${mode.toUpperCase()} session...${C.reset}`);
-  console.log(`${C.gray}Prompt: "${prompt}"${C.reset}\n`);
+  console.log(`${C.gray}Topic: "${prompt}"${C.reset}\n`);
 
   try {
     const participants = mode === 'consilium'
@@ -235,44 +189,76 @@ async function handleConsiliumRun(mode: ConsiliumMode, prompt: string): Promise<
       useKnowledgeBase: true,
       onProgress: (evt: ConsiliumProgressEvent) => {
         console.log(`  ${C.cyan}▸ [${evt.type.toUpperCase()}]${C.reset} ${evt.message || ''}`);
-      }
+      },
     });
 
     console.log(`\n${C.green}✔ ${mode.toUpperCase()} COMPLETED [${result.durationMs}ms]${C.reset}\n`);
+
     for (const turn of result.turns) {
-      console.log(`${C.bold}${C.cyan}┌─ [${turn.name.toUpperCase()}] (${turn.model}) ──${C.reset}`);
-      console.log(turn.content);
-      console.log(`${C.bold}${C.cyan}└─${'─'.repeat(50)}${C.reset}\n`);
+      console.log(`${C.gray}┌─${C.reset} ${C.bold}${C.cyan}[${turn.name.toUpperCase()}]${C.reset} ${C.gray}(${turn.model})${'─'.repeat(30)}${C.reset}`);
+      const lines = turn.content.split('\n');
+      for (const line of lines) {
+        console.log(`${C.gray}│${C.reset} ${line}`);
+      }
+      console.log(`${C.gray}└${'─'.repeat(60)}${C.reset}\n`);
     }
 
     if (result.synthesis) {
-      console.log(`${C.bold}${C.green}╔══════════════════════════════════════════════════════════════════════════════╗${C.reset}`);
-      console.log(`${C.bold}${C.green}║                    🏆 FINAL EXECUTIVE CONSENSUS REPORT                       ║${C.reset}`);
-      console.log(`${C.bold}${C.green}╚══════════════════════════════════════════════════════════════════════════════╝${C.reset}`);
-      console.log(result.synthesis);
-      console.log(`\n${C.gray}Synthesized by consensus arbiter${C.reset}\n`);
+      console.log(`\n${C.gray}┌${'─'.repeat(78)}┐${C.reset}`);
+      console.log(`${C.gray}│${C.reset} ${C.bold}${C.green}🏆 FINAL EXECUTIVE CONSENSUS REPORT${C.reset}${' '.repeat(42)}${C.gray}│${C.reset}`);
+      console.log(`${C.gray}├${'─'.repeat(78)}┤${C.reset}`);
+      const synthLines = result.synthesis.split('\n');
+      for (const sLine of synthLines) {
+        console.log(`${C.gray}│${C.reset} ${sLine}`);
+      }
+      console.log(`${C.gray}└${'─'.repeat(78)}┘${C.reset}`);
+      console.log(`${C.gray}Deliberated by 3 frontier models & synthesized via consensus arbiter.${C.reset}\n`);
     }
   } catch (err: any) {
-    console.log(`${C.red}✖ Consilium Error: ${err.message}${C.reset}`);
+    console.log(`\n${C.red}✖ Consilium Execution Error: ${err.message}${C.reset}\n`);
   }
 }
 
+/**
+ * Interactive REPL setup
+ */
 async function main(): Promise<void> {
+  // Check CLI arguments for non-interactive flags like --help, -h, --boot
+  const args = process.argv.slice(2);
+  if (args.includes('--help') || args.includes('-h')) {
+    printHelp();
+    process.exit(0);
+  }
+
+  if (args.includes('--models')) {
+    printModelsTable();
+    process.exit(0);
+  }
+
   const initialModel = 'gemini-3.8-flash';
   const session = new ChatSession({ model: initialModel });
 
-  // 1. Run live boot diagnostics
-  await runAndPrintBootSequence(session.getModel());
+  // 1. Run live boot sequence
+  await runBootSequence(session.getModel());
 
-  // 2. Render initial cyber dashboard
-  renderDashboard(session);
+  // If --boot flag was passed, exit after boot
+  if (args.includes('--boot')) {
+    process.exit(0);
+  }
 
-  // 3. Start REPL prompt
+  // 2. Render linear status bar
+  printStatusBar(session);
+
+  // 3. Setup linear readline REPL
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: `\n${C.bold}${C.green}> ${C.reset}`,
+    prompt: formatPrompt({ model: session.getModel(), mode: currentMode, role: currentRole }),
   });
+
+  const updatePrompt = () => {
+    rl.setPrompt(formatPrompt({ model: session.getModel(), mode: currentMode, role: currentRole }));
+  };
 
   rl.prompt();
 
@@ -296,63 +282,56 @@ async function main(): Promise<void> {
           process.exit(0);
 
         case '/boot':
-          await runAndPrintBootSequence(session.getModel());
-          renderDashboard(session);
+          await runBootSequence(session.getModel());
+          printStatusBar(session);
           break;
 
         case '/models':
-          printAllModels();
+          printModelsTable(arg || undefined);
           break;
 
         case '/model':
           if (!arg) {
-            console.log(`${C.yellow}Usage: /model <id> (e.g. /model gemini-3.8-flash, /model gemini-3.1-pro)${C.reset}`);
+            console.log(`${C.yellow}Current model: ${session.getModel()}${C.reset}`);
+            console.log(`${C.gray}Usage: /model <id> (e.g. /model gemini-3.8-flash, /model gemini-3.1-pro, /model deepseek/deepseek-r1:free)${C.reset}`);
           } else if (ModelRegistry.isValidModel(arg)) {
             session.setModel(arg);
-            console.log(`${C.green}✔ Switched active model to: ${C.bold}${arg}${C.reset}`);
+            const mInfo = ModelRegistry.getModelById(arg);
+            const freeTag = mInfo?.pricing.freeTierStatus === '100% Free Quota Available'
+              ? `${C.green}🟢 Free Quota${C.reset}`
+              : `${C.yellow}🟡 Paid${C.reset}`;
+            console.log(`${C.green}✔ Switched active model to:${C.reset} ${C.bold}${arg}${C.reset} [${mInfo?.provider}] (${freeTag})`);
+            updatePrompt();
           } else {
-            console.log(`${C.red}✖ Unknown model: ${arg}. Use /models to view all 34 registered models.${C.reset}`);
+            console.log(`${C.red}✖ Unknown model: ${arg}.${C.reset} Type /models to view all registered models.`);
           }
           break;
 
-        case '/mode':
-          if (['solo', 'broadcast', 'dialogue', 'consilium'].includes(arg.toLowerCase())) {
-            currentMode = arg.toLowerCase() as ConsiliumMode;
-            console.log(`${C.green}✔ Switched mode to: ${C.bold}${currentMode.toUpperCase()}${C.reset}`);
+        case '/mode': {
+          const modeChoice = arg.toLowerCase();
+          if (['solo', 'broadcast', 'dialogue', 'consilium'].includes(modeChoice)) {
+            currentMode = modeChoice as ConsiliumMode;
+            console.log(`${C.green}✔ Switched mode to:${C.reset} ${C.bold}${currentMode.toUpperCase()}${C.reset}`);
+            updatePrompt();
           } else {
             console.log(`${C.yellow}Usage: /mode <solo|broadcast|dialogue|consilium>${C.reset}`);
           }
           break;
+        }
 
         case '/role':
-          if (CORPORATE_ROLES[arg]) {
+          if (!arg) {
+            console.log(`${C.yellow}Current role: ${currentRole}${C.reset}`);
+            console.log(`${C.gray}Available roles: ${Object.keys(CORPORATE_ROLES).join(', ')}${C.reset}`);
+          } else if (CORPORATE_ROLES[arg]) {
             currentRole = arg;
-            console.log(`${C.green}✔ Active role set to: ${C.bold}${arg}${C.reset}`);
+            const roleMeta = CORPORATE_ROLES[arg];
+            console.log(`${C.green}✔ Active role set to:${C.reset} ${C.bold}${arg}${C.reset} [${roleMeta.title}]`);
+            updatePrompt();
           } else {
             console.log(`${C.yellow}Available roles: ${Object.keys(CORPORATE_ROLES).join(', ')}${C.reset}`);
           }
           break;
-
-        case '/toggle': {
-          const target = arg.toLowerCase();
-          if (target === '1' || target === 'boot') accordions.bootLog = !accordions.bootLog;
-          else if (target === '2' || target === 'servers') accordions.servers = !accordions.servers;
-          else if (target === '3' || target === 'models') accordions.models = !accordions.models;
-          else if (target === '4' || target === 'consilium') accordions.consilium = !accordions.consilium;
-          else if (target === '5' || target === 'roles') accordions.roles = !accordions.roles;
-          else if (target === 'all') {
-            const nextState = !accordions.servers;
-            accordions.bootLog = nextState;
-            accordions.servers = nextState;
-            accordions.models = nextState;
-            accordions.consilium = nextState;
-            accordions.roles = nextState;
-          } else {
-            console.log(`${C.yellow}Usage: /toggle <1-5|all|boot|servers|models|consilium|roles>${C.reset}`);
-          }
-          renderDashboard(session);
-          break;
-        }
 
         case '/consilium':
           if (!arg) {
@@ -364,7 +343,7 @@ async function main(): Promise<void> {
 
         case '/dialogue':
           if (!arg) {
-            console.log(`${C.yellow}Usage: /dialogue <debate topic or question>${C.reset}`);
+            console.log(`${C.yellow}Usage: /dialogue <debate topic or proposition>${C.reset}`);
           } else {
             await handleConsiliumRun('dialogue', arg);
           }
@@ -373,8 +352,8 @@ async function main(): Promise<void> {
         case '/clear':
           session.clearHistory();
           console.clear();
-          renderDashboard(session);
-          console.log(`${C.green}✔ Session memory cleared.${C.reset}`);
+          printStatusBar(session);
+          console.log(`${C.green}✔ Session memory cleared.${C.reset}\n`);
           break;
 
         case '/help':
@@ -382,9 +361,10 @@ async function main(): Promise<void> {
           break;
 
         default:
-          console.log(`${C.red}✖ Unknown command: ${cmd}. Type /help for assistance.${C.reset}`);
+          console.log(`${C.red}✖ Unknown command: ${cmd}.${C.reset} Type /help for assistance.`);
           break;
       }
+
       rl.prompt();
       return;
     }
@@ -396,20 +376,27 @@ async function main(): Promise<void> {
       return;
     }
 
-    // Standard solo chat stream via UniversalLlmClient
-    process.stdout.write(`\n${C.bold}${C.white}┌─ [EVABOT] (${session.getModel()}) ───────────────────────${C.reset}\n`);
+    // Standard solo chat stream via UniversalLlmClient and AnsiStreamWriter
+    console.log(`\n${C.gray}┌─ [EVABOT] (${session.getModel()}) ${'─'.repeat(45)}${C.reset}`);
+    const writer = new AnsiStreamWriter({
+      prefix: `${C.gray}│${C.reset} `,
+      writeToStdout: true,
+    });
+
     try {
       const client = new UniversalLlmClient();
       await client.streamContent(
         session.getModel(),
         [{ role: 'user', content: input }],
         (chunk: string) => {
-          process.stdout.write(chunk);
+          writer.write(chunk);
         }
       );
-      process.stdout.write(`\n${C.bold}${C.white}└─${'─'.repeat(50)}${C.reset}\n`);
+      writer.end();
+      console.log(`${C.gray}└${'─'.repeat(70)}${C.reset}\n`);
     } catch (err: any) {
-      process.stdout.write(`\n${C.red}✖ Generation Error: ${err.message}${C.reset}\n`);
+      writer.end();
+      console.log(`\n${C.red}✖ Generation Error: ${err.message}${C.reset}\n`);
     }
 
     rl.prompt();

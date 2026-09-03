@@ -89,6 +89,33 @@ export class ConsiliumEngine {
         });
     }
     /**
+     * Validates and bounds participants for Consilium mode (strictly between 3 and 10 participants)
+     */
+    validateConsiliumParticipants(participants) {
+        let activeParticipants = [...participants];
+        if (activeParticipants.length < 3) {
+            // Expand up to 3 minimum with corporate roles
+            const extraRoles = ['architect', 'devops', 'security_auditor'];
+            while (activeParticipants.length < 3) {
+                const role = CORPORATE_ROLES[extraRoles[activeParticipants.length % extraRoles.length]];
+                activeParticipants.push({
+                    id: `consilium-agent-${activeParticipants.length + 1}`,
+                    model: role.preferredModel,
+                    roleId: role.id,
+                    name: role.name,
+                    title: role.title,
+                    systemPrompt: role.systemPrompt,
+                    temperature: role.suggestedTemperature,
+                });
+            }
+        }
+        else if (activeParticipants.length > 10) {
+            // Bound to maximum 10 participants
+            activeParticipants = activeParticipants.slice(0, 10);
+        }
+        return activeParticipants;
+    }
+    /**
      * Mode 1: Solo Mode (Standard 1-on-1 execution)
      */
     async runSolo(options, participants, kbContext, startTime, kbIncluded) {
@@ -108,12 +135,19 @@ export class ConsiliumEngine {
         });
         const turnStart = Date.now();
         const effectivePrompt = kbContext ? `${kbContext}\n\nUser Request: ${options.prompt}` : options.prompt;
-        const response = await this.client.generateContent(participant.model, [{ role: 'user', content: effectivePrompt }], {
-            temperature: participant.temperature,
-            systemInstruction: participant.systemPrompt,
-            apiKey: options.apiKey,
-            signal: options.signal,
-        });
+        let response;
+        try {
+            response = await this.client.generateContent(participant.model, [{ role: 'user', content: effectivePrompt }], {
+                temperature: participant.temperature,
+                systemInstruction: participant.systemPrompt,
+                apiKey: options.apiKey,
+                signal: options.signal,
+            });
+        }
+        catch (err) {
+            logger.error('ConsiliumEngine', `Solo execution error on ${participant.model}: ${err.message}`);
+            response = `[Error querying model ${participant.model}: ${err.message}]`;
+        }
         const turn = {
             round: 1,
             participantId: participant.id,
@@ -246,12 +280,19 @@ export class ConsiliumEngine {
             const p1Prompt = round === 1
                 ? effectivePrompt
                 : `Round ${round} Counter-Argument: Review the previous reply and defend or refine your architectural stance:\n\n${dialogueHistory[dialogueHistory.length - 1].content}`;
-            const p1Response = await this.client.generateContent(p1.model, [...dialogueHistory, { role: 'user', content: p1Prompt }], {
-                temperature: p1.temperature,
-                systemInstruction: `${p1.systemPrompt}\nYou are participating in a bilateral technical dialogue with ${p2.name} (${p2.title}). Maintain intellectual rigor, focus on concrete trade-offs, and defend your positions with evidence.`,
-                apiKey: options.apiKey,
-                signal: options.signal,
-            });
+            let p1Response = '';
+            try {
+                p1Response = await this.client.generateContent(p1.model, [...dialogueHistory, { role: 'user', content: p1Prompt }], {
+                    temperature: p1.temperature,
+                    systemInstruction: `${p1.systemPrompt}\nYou are participating in a bilateral technical dialogue with ${p2.name} (${p2.title}). Maintain intellectual rigor, focus on concrete trade-offs, and defend your positions with evidence.`,
+                    apiKey: options.apiKey,
+                    signal: options.signal,
+                });
+            }
+            catch (err) {
+                logger.error('ConsiliumEngine', `Dialogue turn error for ${p1.name}: ${err.message}`);
+                p1Response = `[Error generating argument from ${p1.name}: ${err.message}]`;
+            }
             const turn1 = {
                 round,
                 participantId: p1.id,
@@ -279,12 +320,19 @@ export class ConsiliumEngine {
                 message: `Round ${round}/${totalRounds}: ${p2.name} is responding and critiquing...`,
             });
             const p2Prompt = `Round ${round} Critique: Directly address the arguments posed by ${p1.name} above. Point out vulnerabilities, edge cases, cost implications in USD/EUR, and suggest counter-proposals:\n\n${p1Response}`;
-            const p2Response = await this.client.generateContent(p2.model, [...dialogueHistory, { role: 'user', content: p2Prompt }], {
-                temperature: p2.temperature,
-                systemInstruction: `${p2.systemPrompt}\nYou are participating in a bilateral technical dialogue with ${p1.name} (${p1.title}). Critically analyze their statements, probe for weak spots, and propose resilient solutions.`,
-                apiKey: options.apiKey,
-                signal: options.signal,
-            });
+            let p2Response = '';
+            try {
+                p2Response = await this.client.generateContent(p2.model, [...dialogueHistory, { role: 'user', content: p2Prompt }], {
+                    temperature: p2.temperature,
+                    systemInstruction: `${p2.systemPrompt}\nYou are participating in a bilateral technical dialogue with ${p1.name} (${p1.title}). Critically analyze their statements, probe for weak spots, and propose resilient solutions.`,
+                    apiKey: options.apiKey,
+                    signal: options.signal,
+                });
+            }
+            catch (err) {
+                logger.error('ConsiliumEngine', `Dialogue turn error for ${p2.name}: ${err.message}`);
+                p2Response = `[Error generating argument from ${p2.name}: ${err.message}]`;
+            }
             const turn2 = {
                 round,
                 participantId: p2.id,
@@ -317,12 +365,19 @@ export class ConsiliumEngine {
             `1. Core Points of Consensus\n` +
             `2. Unresolved Trade-Offs & Edge Cases\n` +
             `3. Definitive Actionable Recommendation (with cost impact in USD ($) or EUR (€)).`;
-        const synthesis = await this.client.generateContent(synthModel, [{ role: 'user', content: synthPrompt }], {
-            temperature: 0.2,
-            systemInstruction: Config.defaultSystemInstruction,
-            apiKey: options.apiKey,
-            signal: options.signal,
-        });
+        let synthesis = '';
+        try {
+            synthesis = await this.client.generateContent(synthModel, [{ role: 'user', content: synthPrompt }], {
+                temperature: 0.2,
+                systemInstruction: Config.defaultSystemInstruction,
+                apiKey: options.apiKey,
+                signal: options.signal,
+            });
+        }
+        catch (err) {
+            logger.error('ConsiliumEngine', `Dialogue synthesis error: ${err.message}`);
+            synthesis = `[Dialogue synthesis generation error: ${err.message}]`;
+        }
         options.onProgress?.({
             type: 'synthesis_complete',
             message: 'Dialogue synthesis completed.',
@@ -343,26 +398,7 @@ export class ConsiliumEngine {
      */
     async runConsilium(options, participants, kbContext, startTime, kbIncluded) {
         // Validate bounds: 3 to 10 participants
-        let activeParticipants = [...participants];
-        if (activeParticipants.length < 3) {
-            // Expand up to 3 minimum
-            const extraRoles = ['architect', 'devops', 'security_auditor'];
-            while (activeParticipants.length < 3) {
-                const role = CORPORATE_ROLES[extraRoles[activeParticipants.length % extraRoles.length]];
-                activeParticipants.push({
-                    id: `consilium-agent-${activeParticipants.length + 1}`,
-                    model: role.preferredModel,
-                    roleId: role.id,
-                    name: role.name,
-                    title: role.title,
-                    systemPrompt: role.systemPrompt,
-                    temperature: role.suggestedTemperature,
-                });
-            }
-        }
-        else if (activeParticipants.length > 10) {
-            activeParticipants = activeParticipants.slice(0, 10);
-        }
+        const activeParticipants = this.validateConsiliumParticipants(participants);
         const totalRounds = Math.max(1, Math.min(options.rounds || 2, 4));
         const turns = [];
         const effectivePrompt = kbContext ? `${kbContext}\n\nConsilium Mandate / Technical Challenge: ${options.prompt}` : options.prompt;
@@ -509,12 +545,19 @@ export class ConsiliumEngine {
             `## 3. Disputed Decisions, Risk Analysis & Trade-Offs\n` +
             `## 4. Implementation Roadmap & Technical Milestones\n` +
             `## 5. Budgetary & Infrastructure Impact (strictly in USD ($) and EUR (€))\n`;
-        const synthesis = await this.client.generateContent(synthModel, [{ role: 'user', content: synthesisPrompt }], {
-            temperature: 0.2,
-            systemInstruction: Config.defaultSystemInstruction,
-            apiKey: options.apiKey,
-            signal: options.signal,
-        });
+        let synthesis = '';
+        try {
+            synthesis = await this.client.generateContent(synthModel, [{ role: 'user', content: synthesisPrompt }], {
+                temperature: 0.2,
+                systemInstruction: Config.defaultSystemInstruction,
+                apiKey: options.apiKey,
+                signal: options.signal,
+            });
+        }
+        catch (err) {
+            logger.error('ConsiliumEngine', `Consilium synthesis error: ${err.message}`);
+            synthesis = `[Consilium consensus synthesis generation error: ${err.message}]`;
+        }
         options.onProgress?.({
             type: 'synthesis_complete',
             message: 'Consilium Consensus Report successfully generated.',

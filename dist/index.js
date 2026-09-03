@@ -7,3 +7,4 @@ export { ModelRegistry, GEMINI_MODELS } from './models/ModelRegistry.js';
 export { Config } from './core/Config.js';
 export { Logger, logger, LogLevel } from './core/Logger.js';
 export { createServer, startServer } from './server/server.js';
+export { AnsiStreamEngine, AnsiColors, TableFormatter, AnsiStreamWriter } from './core/AnsiStreamEngine.js';

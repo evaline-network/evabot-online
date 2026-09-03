@@ -9,6 +9,11 @@
 ## 🚀 Active Sprints & Swimlanes
 
 ### 🟢 1. Done / Completed
+- [x] **TASK-17:** **Reactive ANSI Engine & Linear TUI (`src/core/AnsiStreamEngine.ts` & `src/cli/terminal-chat.ts`):**
+  - High-performance reactive ANSI stream engine with 1:1 parity across Terminal, Plain text, and Web.
+  - Strictly linear, minimal, uncluttered Cyber-Terminal with real-time startup checkmarks and zero pseudo-accordions.
+  - Formatted monospace `/models` table with free/paid indicators and strict USD ($) / EUR (€) pricing.
+  - Interactive commands: `/models`, `/model <id>`, `/mode <name>`, `/role <id>`, `/dialogue`, `/consilium`, `/boot`, `/clear`, `/help`, `/exit`.
 - [x] **TASK-01:** GCP Infrastructure Audit & Resource Diagnostics (`evaline-micro-vm` & `evabot-agent-vm`).
 - [x] **TASK-02:** Face & Brain Decoupling:
   - Microserver (`evaline-micro-vm`) configured as Face with Caddy SSL & static file server (0% compute load).

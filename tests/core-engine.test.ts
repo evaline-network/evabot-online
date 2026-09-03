@@ -69,12 +69,13 @@ export async function runCoreEngineTests(): Promise<boolean> {
       assert(false, `Model ${model.id} contains forbidden currency`);
     }
   }
-  assert(true, 'All 31 models strictly enforce USD ($) and EUR (€) without rubles');
+  assert(true, `All ${ModelRegistry.getAllModels().length} models strictly enforce USD ($) and EUR (€) without rubles`);
 
   // 4. Server Endpoints Verification
   const server = createServer();
-  const testPort = 4019;
-  await new Promise<void>((resolve) => server.listen(testPort, '127.0.0.1', () => resolve()));
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
+  const address = server.address() as any;
+  const testPort = address.port;
 
   try {
     // GET /api/roles

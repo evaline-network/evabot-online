@@ -9,6 +9,11 @@
 ## 🚀 Active Sprints & Swimlanes
 
 ### 🟢 1. Done / Completed
+- [x] **TASK-17:** **Reactive ANSI Engine & Linear TUI (`src/core/AnsiStreamEngine.ts` & `src/cli/terminal-chat.ts`):**
+  - High-performance reactive ANSI stream engine with 1:1 parity across Terminal, Plain text, and Web.
+  - Strictly linear, minimal, uncluttered Cyber-Terminal with real-time startup checkmarks and zero pseudo-accordions.
+  - Formatted monospace `/models` table with free/paid indicators and strict USD ($) / EUR (€) pricing.
+  - Interactive commands: `/models`, `/model <id>`, `/mode <name>`, `/role <id>`, `/dialogue`, `/consilium`, `/boot`, `/clear`, `/help`, `/exit`.
 - [x] **TASK-13:** **Terminal-First Modern TUI (`src/cli/terminal-chat.ts`):**
   - Advanced TUI with live ASCII collapsible accordions (`[+] / [-]`), interactive toggle controls, and character-perfect cyber-terminal aesthetic.
 - [x] **TASK-14:** **Gemini 3.x Frontier Fleet Registry:**

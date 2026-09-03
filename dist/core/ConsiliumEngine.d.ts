@@ -61,7 +61,11 @@ export declare class ConsiliumEngine {
     /**
      * Resolves and enriches participants list with corporate roles and defaults
      */
-    private resolveParticipants;
+    resolveParticipants(options: ConsiliumRunOptions): ConsiliumParticipant[];
+    /**
+     * Validates and bounds participants for Consilium mode (strictly between 3 and 10 participants)
+     */
+    validateConsiliumParticipants(participants: ConsiliumParticipant[]): ConsiliumParticipant[];
     /**
      * Mode 1: Solo Mode (Standard 1-on-1 execution)
      */
