@@ -10,8 +10,18 @@ export interface ModelPricing {
 export interface GeminiModelInfo {
   id: string;
   name: string;
-  provider: 'Google DeepMind' | 'Anthropic' | 'Meta' | 'Mistral AI' | 'AI21 Labs' | 'Cohere' | 'DeepSeek';
-  category: 
+  provider:
+    | 'Google DeepMind'
+    | 'Anthropic'
+    | 'Meta'
+    | 'Mistral AI'
+    | 'AI21 Labs'
+    | 'Cohere'
+    | 'DeepSeek'
+    | 'OmniRoute'
+    | 'OpenRouter'
+    | 'OpenCode AI';
+  category:
     | 'Google Gemini (Next-Gen)'
     | 'Google Gemini (Long-Context)'
     | 'Google Gemma (Open Weights)'
@@ -19,13 +29,23 @@ export interface GeminiModelInfo {
     | 'Meta Llama 3 on Google Cloud'
     | 'Mistral AI on Google Cloud'
     | 'DeepSeek on Google Cloud'
-    | 'AI21 Labs & Cohere on Google Cloud';
+    | 'AI21 Labs & Cohere on Google Cloud'
+    | 'OmniRoute Daemon Cluster'
+    | 'OpenRouter Free Models'
+    | 'OpenRouter Premium'
+    | 'OpenCode Go Platforms';
   description: string;
   contextWindow: number;
   maxOutputTokens: number;
   recommended: boolean;
-  tier: 'Free Quota + Paid' | 'Vertex AI Enterprise' | 'Open Weights';
-  protocol: 'google-genai' | 'google-vertex' | 'google-partner';
+  tier:
+    | 'Free Quota + Paid'
+    | 'Vertex AI Enterprise'
+    | 'Open Weights'
+    | '100% Free Community'
+    | 'OmniRoute Daemon'
+    | 'OpenCode Platform';
+  protocol: 'google-genai' | 'google-vertex' | 'google-partner' | 'openai-compatible';
   pricing: ModelPricing;
 }
 
@@ -457,6 +477,242 @@ export const COMPLETE_GOOGLE_MODEL_CATALOG: GeminiModelInfo[] = [
       outputPer1MTokensEUR: '€9.30',
     },
   },
+
+  // ============================================================================
+  // 8. OMNIROUTE DAEMON CLUSTER (http://100.66.98.4:20128)
+  // ============================================================================
+  {
+    id: 'omniroute/gemini-2.5-pro',
+    name: 'OmniRoute Gemini 2.5 Pro (Edge Router)',
+    provider: 'OmniRoute',
+    category: 'OmniRoute Daemon Cluster',
+    description: 'High-availability routing proxy via OmniRoute daemon with automatic load balancing and fallback.',
+    contextWindow: 2097152,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: 'OmniRoute Daemon',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'Direct edge routing via internal daemon cluster ($0.00 margin)',
+      inputPer1MTokensUSD: '$0.00 (Self-Hosted) / $1.25 (Upstream)',
+      outputPer1MTokensUSD: '$0.00 (Self-Hosted) / $5.00 (Upstream)',
+      inputPer1MTokensEUR: '€0.00 (Self-Hosted) / €1.17 (Upstream)',
+      outputPer1MTokensEUR: '€0.00 (Self-Hosted) / €4.68 (Upstream)',
+    },
+  },
+  {
+    id: 'omniroute/deepseek-r1',
+    name: 'OmniRoute DeepSeek R1 (Daemon Cluster)',
+    provider: 'OmniRoute',
+    category: 'OmniRoute Daemon Cluster',
+    description: 'DeepSeek R1 reasoning executed through local OmniRoute daemon cluster.',
+    contextWindow: 64000,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: 'OmniRoute Daemon',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'Routed through high-throughput OmniRoute node ($0.00 node fee)',
+      inputPer1MTokensUSD: '$0.00 (Local) / $0.55 (Upstream)',
+      outputPer1MTokensUSD: '$0.00 (Local) / $2.19 (Upstream)',
+      inputPer1MTokensEUR: '€0.00 (Local) / €0.51 (Upstream)',
+      outputPer1MTokensEUR: '€0.00 (Local) / €2.04 (Upstream)',
+    },
+  },
+  {
+    id: 'omniroute/claude-3.5-sonnet',
+    name: 'OmniRoute Claude 3.5 Sonnet (Edge Proxy)',
+    provider: 'OmniRoute',
+    category: 'OmniRoute Daemon Cluster',
+    description: 'Anthropic Claude 3.5 Sonnet proxied through high-reliability OmniRoute daemon gateway.',
+    contextWindow: 200000,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: 'OmniRoute Daemon',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: 'Paid / Pay-As-You-Go Only',
+      freeTierDetails: 'Edge-routed Anthropic upstream billing',
+      inputPer1MTokensUSD: '$3.00',
+      outputPer1MTokensUSD: '$15.00',
+      inputPer1MTokensEUR: '€2.80',
+      outputPer1MTokensEUR: '€14.00',
+    },
+  },
+
+  // ============================================================================
+  // 9. OPENROUTER FREE MODELS (https://openrouter.ai)
+  // ============================================================================
+  {
+    id: 'deepseek/deepseek-r1:free',
+    name: 'DeepSeek R1 (Free on OpenRouter)',
+    provider: 'OpenRouter',
+    category: 'OpenRouter Free Models',
+    description: 'Frontier open reasoning model with chain-of-thought verification, 100% free via OpenRouter tier.',
+    contextWindow: 64000,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: '100% Free Community',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'OpenRouter Community Free Tier (20 RPM queue)',
+      inputPer1MTokensUSD: '$0.00 (100% Free)',
+      outputPer1MTokensUSD: '$0.00 (100% Free)',
+      inputPer1MTokensEUR: '€0.00 (100% Free)',
+      outputPer1MTokensEUR: '€0.00 (100% Free)',
+    },
+  },
+  {
+    id: 'meta-llama/llama-3.3-70b:free',
+    name: 'Llama 3.3 70B Instruct (Free on OpenRouter)',
+    provider: 'OpenRouter',
+    category: 'OpenRouter Free Models',
+    description: 'State-of-the-art Meta 70B open weight instruction model hosted on OpenRouter free tier.',
+    contextWindow: 128000,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: '100% Free Community',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'OpenRouter Community Free Tier (20 RPM queue)',
+      inputPer1MTokensUSD: '$0.00 (100% Free)',
+      outputPer1MTokensUSD: '$0.00 (100% Free)',
+      inputPer1MTokensEUR: '€0.00 (100% Free)',
+      outputPer1MTokensEUR: '€0.00 (100% Free)',
+    },
+  },
+  {
+    id: 'google/gemini-2.0-flash-exp:free',
+    name: 'Gemini 2.0 Flash Exp (Free on OpenRouter)',
+    provider: 'OpenRouter',
+    category: 'OpenRouter Free Models',
+    description: 'Ultra-fast Google experimental Gemini 2.0 Flash endpoint accessed via OpenRouter free gateway.',
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: '100% Free Community',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'OpenRouter Community Free Tier',
+      inputPer1MTokensUSD: '$0.00 (100% Free)',
+      outputPer1MTokensUSD: '$0.00 (100% Free)',
+      inputPer1MTokensEUR: '€0.00 (100% Free)',
+      outputPer1MTokensEUR: '€0.00 (100% Free)',
+    },
+  },
+  {
+    id: 'qwen/qwen-2.5-coder-32b-instruct:free',
+    name: 'Qwen 2.5 Coder 32B (Free on OpenRouter)',
+    provider: 'OpenRouter',
+    category: 'OpenRouter Free Models',
+    description: 'Alibaba Qwen code generation specialist with 128k context on OpenRouter free tier.',
+    contextWindow: 128000,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: '100% Free Community',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'OpenRouter Community Free Tier',
+      inputPer1MTokensUSD: '$0.00 (100% Free)',
+      outputPer1MTokensUSD: '$0.00 (100% Free)',
+      inputPer1MTokensEUR: '€0.00 (100% Free)',
+      outputPer1MTokensEUR: '€0.00 (100% Free)',
+    },
+  },
+  {
+    id: 'mistralai/mistral-7b-instruct:free',
+    name: 'Mistral 7B Instruct (Free on OpenRouter)',
+    provider: 'OpenRouter',
+    category: 'OpenRouter Free Models',
+    description: 'Fast, reliable 7B lightweight instruction model on OpenRouter free queue.',
+    contextWindow: 32768,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: '100% Free Community',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'OpenRouter Community Free Tier',
+      inputPer1MTokensUSD: '$0.00 (100% Free)',
+      outputPer1MTokensUSD: '$0.00 (100% Free)',
+      inputPer1MTokensEUR: '€0.00 (100% Free)',
+      outputPer1MTokensEUR: '€0.00 (100% Free)',
+    },
+  },
+
+  // ============================================================================
+  // 10. OPENROUTER PREMIUM MODELS
+  // ============================================================================
+  {
+    id: 'openrouter/deepseek-chat',
+    name: 'DeepSeek V3 (OpenRouter Premium)',
+    provider: 'OpenRouter',
+    category: 'OpenRouter Premium',
+    description: 'DeepSeek V3 671B MoE model with extreme cost efficiency and high coding quality.',
+    contextWindow: 64000,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: 'Free Quota + Paid',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: 'Paid / Pay-As-You-Go Only',
+      freeTierDetails: 'OpenRouter credit balance',
+      inputPer1MTokensUSD: '$0.14',
+      outputPer1MTokensUSD: '$0.28',
+      inputPer1MTokensEUR: '€0.13',
+      outputPer1MTokensEUR: '€0.26',
+    },
+  },
+
+  // ============================================================================
+  // 11. OPENCODE GO PLATFORMS (OpenCode AI Platform API / OmniRoute Adapter)
+  // ============================================================================
+  {
+    id: 'opencode/go-coder-32b',
+    name: 'OpenCode Go Coder 32B',
+    provider: 'OpenCode AI',
+    category: 'OpenCode Go Platforms',
+    description: 'Specialized enterprise coding platform model with automated unit test generation and refactoring.',
+    contextWindow: 64000,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: 'OpenCode Platform',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'OpenCode Developer Community Quota',
+      inputPer1MTokensUSD: '$0.00 (Dev Tier) / $0.20 (Prod)',
+      outputPer1MTokensUSD: '$0.00 (Dev Tier) / $0.60 (Prod)',
+      inputPer1MTokensEUR: '€0.00 (Dev Tier) / €0.18 (Prod)',
+      outputPer1MTokensEUR: '€0.00 (Dev Tier) / €0.55 (Prod)',
+    },
+  },
+  {
+    id: 'opencode/go-fast',
+    name: 'OpenCode Go Fast (Low-Latency)',
+    provider: 'OpenCode AI',
+    category: 'OpenCode Go Platforms',
+    description: 'Ultra-low latency code agent model optimized for autocomplete and fast interactive edits.',
+    contextWindow: 32768,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: 'OpenCode Platform',
+    protocol: 'openai-compatible',
+    pricing: {
+      freeTierStatus: '100% Free Quota Available',
+      freeTierDetails: 'OpenCode Developer Community Quota',
+      inputPer1MTokensUSD: '$0.00 (Dev Tier) / $0.08 (Prod)',
+      outputPer1MTokensUSD: '$0.00 (Dev Tier) / $0.24 (Prod)',
+      inputPer1MTokensEUR: '€0.00 (Dev Tier) / €0.07 (Prod)',
+      outputPer1MTokensEUR: '€0.00 (Dev Tier) / €0.22 (Prod)',
+    },
+  },
 ];
 
 export const GEMINI_MODELS = COMPLETE_GOOGLE_MODEL_CATALOG;
@@ -467,31 +723,31 @@ export class ModelRegistry {
   }
 
   public static getModelById(id: string): GeminiModelInfo | undefined {
-    return COMPLETE_GOOGLE_MODEL_CATALOG.find(m => m.id === id);
+    return COMPLETE_GOOGLE_MODEL_CATALOG.find((m) => m.id === id);
   }
 
   public static isValidModel(id: string): boolean {
-    return COMPLETE_GOOGLE_MODEL_CATALOG.some(m => m.id === id);
+    return COMPLETE_GOOGLE_MODEL_CATALOG.some((m) => m.id === id);
   }
 
   public static getDefaultModel(): GeminiModelInfo {
-    return COMPLETE_GOOGLE_MODEL_CATALOG.find(m => m.recommended) || COMPLETE_GOOGLE_MODEL_CATALOG[0];
+    return COMPLETE_GOOGLE_MODEL_CATALOG.find((m) => m.recommended) || COMPLETE_GOOGLE_MODEL_CATALOG[0];
   }
 
   public static getCategories(): string[] {
-    const cats = new Set(COMPLETE_GOOGLE_MODEL_CATALOG.map(m => m.category));
+    const cats = new Set(COMPLETE_GOOGLE_MODEL_CATALOG.map((m) => m.category));
     return Array.from(cats);
   }
 
   public static getModelsByCategory(category: string): GeminiModelInfo[] {
-    return COMPLETE_GOOGLE_MODEL_CATALOG.filter(m => m.category === category);
+    return COMPLETE_GOOGLE_MODEL_CATALOG.filter((m) => m.category === category);
   }
 
   public static getFreeModels(): GeminiModelInfo[] {
-    return COMPLETE_GOOGLE_MODEL_CATALOG.filter(m => m.pricing.freeTierStatus === '100% Free Quota Available');
+    return COMPLETE_GOOGLE_MODEL_CATALOG.filter((m) => m.pricing.freeTierStatus === '100% Free Quota Available');
   }
 
   public static getPaidOnlyModels(): GeminiModelInfo[] {
-    return COMPLETE_GOOGLE_MODEL_CATALOG.filter(m => m.pricing.freeTierStatus === 'Paid / Pay-As-You-Go Only');
+    return COMPLETE_GOOGLE_MODEL_CATALOG.filter((m) => m.pricing.freeTierStatus === 'Paid / Pay-As-You-Go Only');
   }
 }

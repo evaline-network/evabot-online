@@ -2,7 +2,9 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ModelRegistry } from '../models/ModelRegistry.js';
-import { GeminiClient, ChatMessage } from '../core/GeminiClient.js';
+import { UniversalLlmClient, LlmProvider } from '../core/UniversalLlmClient.js';
+import { ConsiliumEngine, ConsiliumMode, ConsiliumParticipant } from '../core/ConsiliumEngine.js';
+import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
 import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
 import { Config } from '../core/Config.js';
 import { logger } from '../core/Logger.js';
@@ -22,7 +24,7 @@ function sendJson(res: http.ServerResponse, statusCode: number, data: any): void
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Gemini-Key',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Gemini-Key, X-OmniRoute-Key, X-OpenRouter-Key',
   });
   res.end(JSON.stringify(data));
 }
@@ -43,7 +45,7 @@ function parseJsonBody(req: http.IncomingMessage): Promise<any> {
       }
       try {
         resolve(JSON.parse(body));
-      } catch (err) {
+      } catch {
         reject(new Error('Malformed JSON body'));
       }
     });
@@ -61,13 +63,13 @@ export function createServer(): http.Server {
       res.writeHead(204, {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Gemini-Key',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Gemini-Key, X-OmniRoute-Key, X-OpenRouter-Key',
       });
       res.end();
       return;
     }
 
-    // Health Check & Ambient Google Cloud Auth Status
+    // Health Check & System Status
     if (pathname === '/api/health' && req.method === 'GET') {
       const creds = await GoogleAuthProvider.getCredentials();
       sendJson(res, 200, {
@@ -79,6 +81,9 @@ export function createServer(): http.Server {
         hasServerApiKey: Boolean(creds),
         authSource: creds ? creds.source : 'None',
         account: creds ? creds.account : 'evabot.online@gmail.com',
+        supportedProviders: ['google', 'omniroute', 'openrouter', 'opencode'],
+        omnirouteEndpoint: Config.omnirouteBaseUrl,
+        availableRolesCount: Object.keys(CORPORATE_ROLES).length,
       });
       return;
     }
@@ -93,32 +98,56 @@ export function createServer(): http.Server {
       return;
     }
 
-    // Chat (Unary non-streaming)
+    // EvaLine Corporate Roles Endpoint
+    if (pathname === '/api/roles' && req.method === 'GET') {
+      const rolesList = Object.values(CORPORATE_ROLES).map((role) => ({
+        id: role.id,
+        name: role.name,
+        title: role.title,
+        department: role.department,
+        description: role.description,
+        preferredModel: role.preferredModel,
+        suggestedTemperature: role.suggestedTemperature,
+        knowledgeAccessLevel: role.knowledgeAccessLevel,
+        systemPrompt: role.systemPrompt,
+      }));
+
+      sendJson(res, 200, {
+        roles: rolesList,
+        count: rolesList.length,
+      });
+      return;
+    }
+
+    // Chat (Unary non-streaming via UniversalLlmClient)
     if (pathname === '/api/chat' && req.method === 'POST') {
       try {
         const body = await parseJsonBody(req);
-        const { message, model, history = [], apiKey, systemInstruction } = body;
+        const { message, model, history = [], apiKey, systemInstruction, provider } = body;
 
         if (!message || typeof message !== 'string') {
           sendJson(res, 400, { error: 'Missing or invalid "message" parameter' });
           return;
         }
 
-        const targetModel = ModelRegistry.isValidModel(model) ? model : Config.defaultModel;
-        const client = new GeminiClient(apiKey || Config.geminiApiKey || undefined);
+        const targetModel = model || Config.defaultModel;
+        const client = new UniversalLlmClient(apiKey || Config.geminiApiKey || undefined);
 
-        const contents: ChatMessage[] = [
+        const messages = [
           ...history,
-          { role: 'user', parts: [{ text: message.trim() }] },
+          { role: 'user', content: message.trim() },
         ];
 
-        const responseText = await client.generateContent(targetModel, contents, {
+        const responseText = await client.generateContent(targetModel, messages, {
           systemInstruction: systemInstruction || Config.defaultSystemInstruction,
+          provider: provider as LlmProvider | undefined,
+          apiKey,
         });
 
         sendJson(res, 200, {
           response: responseText,
           model: targetModel,
+          provider: client.resolveProvider(targetModel, provider),
         });
       } catch (err: any) {
         logger.error('Server', `Chat error: ${err.message}`);
@@ -128,23 +157,23 @@ export function createServer(): http.Server {
       return;
     }
 
-    // Chat (Real-time SSE Streaming)
+    // Chat (Real-time SSE Streaming via UniversalLlmClient)
     if (pathname === '/api/chat/stream' && req.method === 'POST') {
       try {
         const body = await parseJsonBody(req);
-        const { message, model, history = [], apiKey, systemInstruction } = body;
+        const { message, model, history = [], apiKey, systemInstruction, provider } = body;
 
         if (!message || typeof message !== 'string') {
           sendJson(res, 400, { error: 'Missing or invalid "message" parameter' });
           return;
         }
 
-        const targetModel = ModelRegistry.isValidModel(model) ? model : Config.defaultModel;
-        const client = new GeminiClient(apiKey || Config.geminiApiKey || undefined);
+        const targetModel = model || Config.defaultModel;
+        const client = new UniversalLlmClient(apiKey || Config.geminiApiKey || undefined);
 
-        const contents: ChatMessage[] = [
+        const messages = [
           ...history,
-          { role: 'user', parts: [{ text: message.trim() }] },
+          { role: 'user', content: message.trim() },
         ];
 
         res.writeHead(200, {
@@ -156,11 +185,15 @@ export function createServer(): http.Server {
 
         const fullText = await client.streamContent(
           targetModel,
-          contents,
+          messages,
           (chunk) => {
             res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
           },
-          { systemInstruction: systemInstruction || Config.defaultSystemInstruction }
+          {
+            systemInstruction: systemInstruction || Config.defaultSystemInstruction,
+            provider: provider as LlmProvider | undefined,
+            apiKey,
+          }
         );
 
         res.write(`data: ${JSON.stringify({ done: true, fullText })}\n\n`);
@@ -173,6 +206,60 @@ export function createServer(): http.Server {
           res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
           res.end();
         }
+      }
+      return;
+    }
+
+    // Consilium Multi-Agent Engine (Solo, Broadcast, Dialogue, Consilium)
+    if (pathname === '/api/consilium' && req.method === 'POST') {
+      try {
+        const body = await parseJsonBody(req);
+        const {
+          prompt,
+          mode = 'consilium',
+          models,
+          participants,
+          rounds,
+          synthesizerModel,
+          systemInstruction,
+          apiKey,
+          useKnowledgeBase = true,
+        } = body;
+
+        if (!prompt || typeof prompt !== 'string') {
+          sendJson(res, 400, { error: 'Missing or invalid "prompt" parameter' });
+          return;
+        }
+
+        const validModes: ConsiliumMode[] = ['solo', 'broadcast', 'dialogue', 'consilium'];
+        if (!validModes.includes(mode)) {
+          sendJson(res, 400, {
+            error: `Invalid "mode" parameter. Expected one of: ${validModes.join(', ')}`,
+          });
+          return;
+        }
+
+        const engine = new ConsiliumEngine(apiKey || Config.geminiApiKey || undefined);
+
+        const result = await engine.run({
+          mode,
+          prompt: prompt.trim(),
+          models,
+          participants,
+          rounds: typeof rounds === 'number' ? rounds : undefined,
+          synthesizerModel,
+          systemInstruction,
+          apiKey,
+          useKnowledgeBase: Boolean(useKnowledgeBase),
+        });
+
+        sendJson(res, 200, {
+          success: true,
+          result,
+        });
+      } catch (err: any) {
+        logger.error('Server', `Consilium error: ${err.message}`);
+        sendJson(res, 500, { error: err.message || 'Consilium execution error' });
       }
       return;
     }

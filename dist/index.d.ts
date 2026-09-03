@@ -1,4 +1,7 @@
 export { GeminiClient, type ChatMessage, type GenerationOptions } from './core/GeminiClient.js';
+export { UniversalLlmClient, type UniversalMessage, type UniversalGenerationOptions, type LlmProvider } from './core/UniversalLlmClient.js';
+export { ConsiliumEngine, type ConsiliumMode, type ConsiliumParticipant, type ConsiliumTurn, type ConsiliumRunOptions, type ConsiliumResult } from './core/ConsiliumEngine.js';
+export { CORPORATE_ROLES, type CorporateRole, KnowledgeBaseConnector, type KnowledgeDocument } from './core/CorporateRoles.js';
 export { ChatSession, type ChatSessionOptions } from './core/ChatSession.js';
 export { ModelRegistry, type GeminiModelInfo, GEMINI_MODELS } from './models/ModelRegistry.js';
 export { Config, type SystemConfig } from './core/Config.js';

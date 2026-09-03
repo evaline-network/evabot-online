@@ -8,6 +8,12 @@ export interface SystemConfig {
   serverHost: string;
   defaultSystemInstruction: string;
   supportedCurrencies: string[];
+  omnirouteBaseUrl: string;
+  omnirouteApiKey: string;
+  openrouterBaseUrl: string;
+  openrouterApiKey: string;
+  opencodeBaseUrl: string;
+  opencodeApiKey: string;
 }
 
 /**
@@ -53,4 +59,10 @@ export const Config: SystemConfig = {
     "You operate in English, Ukrainian, and Russian depending on the user's input language. " +
     "All financial figures and pricing estimates must strictly be in USD ($) or EUR (€).",
   supportedCurrencies: ['USD', 'EUR'],
+  omnirouteBaseUrl: process.env.OMNIROUTE_BASE_URL || 'http://100.66.98.4:20128/v1',
+  omnirouteApiKey: process.env.OMNIROUTE_API_KEY || 'omniroute-default',
+  openrouterBaseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+  openrouterApiKey: process.env.OPENROUTER_API_KEY || '',
+  opencodeBaseUrl: process.env.OPENCODE_BASE_URL || 'http://100.66.98.4:20128/v1',
+  opencodeApiKey: process.env.OPENCODE_API_KEY || '',
 };

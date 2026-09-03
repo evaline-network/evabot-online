@@ -420,6 +420,238 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
       inputPer1MTokensEUR: "\u20AC2.33",
       outputPer1MTokensEUR: "\u20AC9.30"
     }
+  },
+  // ============================================================================
+  // 8. OMNIROUTE DAEMON CLUSTER (http://100.66.98.4:20128)
+  // ============================================================================
+  {
+    id: "omniroute/gemini-2.5-pro",
+    name: "OmniRoute Gemini 2.5 Pro (Edge Router)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "High-availability routing proxy via OmniRoute daemon with automatic load balancing and fallback.",
+    contextWindow: 2097152,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Direct edge routing via internal daemon cluster ($0.00 margin)",
+      inputPer1MTokensUSD: "$0.00 (Self-Hosted) / $1.25 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Self-Hosted) / $5.00 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC1.17 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC4.68 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/deepseek-r1",
+    name: "OmniRoute DeepSeek R1 (Daemon Cluster)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "DeepSeek R1 reasoning executed through local OmniRoute daemon cluster.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Routed through high-throughput OmniRoute node ($0.00 node fee)",
+      inputPer1MTokensUSD: "$0.00 (Local) / $0.55 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Local) / $2.19 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.51 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC2.04 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/claude-3.5-sonnet",
+    name: "OmniRoute Claude 3.5 Sonnet (Edge Proxy)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "Anthropic Claude 3.5 Sonnet proxied through high-reliability OmniRoute daemon gateway.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "Edge-routed Anthropic upstream billing",
+      inputPer1MTokensUSD: "$3.00",
+      outputPer1MTokensUSD: "$15.00",
+      inputPer1MTokensEUR: "\u20AC2.80",
+      outputPer1MTokensEUR: "\u20AC14.00"
+    }
+  },
+  // ============================================================================
+  // 9. OPENROUTER FREE MODELS (https://openrouter.ai)
+  // ============================================================================
+  {
+    id: "deepseek/deepseek-r1:free",
+    name: "DeepSeek R1 (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Frontier open reasoning model with chain-of-thought verification, 100% free via OpenRouter tier.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier (20 RPM queue)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "meta-llama/llama-3.3-70b:free",
+    name: "Llama 3.3 70B Instruct (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "State-of-the-art Meta 70B open weight instruction model hosted on OpenRouter free tier.",
+    contextWindow: 128e3,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier (20 RPM queue)",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "google/gemini-2.0-flash-exp:free",
+    name: "Gemini 2.0 Flash Exp (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Ultra-fast Google experimental Gemini 2.0 Flash endpoint accessed via OpenRouter free gateway.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "qwen/qwen-2.5-coder-32b-instruct:free",
+    name: "Qwen 2.5 Coder 32B (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Alibaba Qwen code generation specialist with 128k context on OpenRouter free tier.",
+    contextWindow: 128e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "mistralai/mistral-7b-instruct:free",
+    name: "Mistral 7B Instruct (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Fast, reliable 7B lightweight instruction model on OpenRouter free queue.",
+    contextWindow: 32768,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  // ============================================================================
+  // 10. OPENROUTER PREMIUM MODELS
+  // ============================================================================
+  {
+    id: "openrouter/deepseek-chat",
+    name: "DeepSeek V3 (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "DeepSeek V3 671B MoE model with extreme cost efficiency and high coding quality.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$0.14",
+      outputPer1MTokensUSD: "$0.28",
+      inputPer1MTokensEUR: "\u20AC0.13",
+      outputPer1MTokensEUR: "\u20AC0.26"
+    }
+  },
+  // ============================================================================
+  // 11. OPENCODE GO PLATFORMS (OpenCode AI Platform API / OmniRoute Adapter)
+  // ============================================================================
+  {
+    id: "opencode/go-coder-32b",
+    name: "OpenCode Go Coder 32B",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Specialized enterprise coding platform model with automated unit test generation and refactoring.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.20 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.60 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.18 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.55 (Prod)"
+    }
+  },
+  {
+    id: "opencode/go-fast",
+    name: "OpenCode Go Fast (Low-Latency)",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Ultra-low latency code agent model optimized for autocomplete and fast interactive edits.",
+    contextWindow: 32768,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.08 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.24 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.07 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.22 (Prod)"
+    }
   }
 ];
 var ModelRegistry = class {
@@ -451,34 +683,366 @@ var ModelRegistry = class {
 };
 
 // src/web/app.ts
+var TRANSLATIONS = {
+  en: {
+    appTitle: "EVABOT // CYBER-TERMINAL",
+    appSubtitle: "Autonomous Multi-Provider Neural Deck",
+    statusOnline: "\u{1F7E2} ONLINE // IDLE",
+    statusBusy: "\u{1F7E1} STREAMING // ACTIVE",
+    statusError: "\u{1F534} ERROR // OFFLINE",
+    controlPanelBtn: "[ \u2193 CONTROL PANEL // SYSTEM DECK ]",
+    returnTerminalBtn: "[ \u2191 RETURN TO TERMINAL ]",
+    clearChatBtn: "[ CLR ]",
+    transmitBtn: "[ TRANSMIT \u21B5 ]",
+    stopBtn: "[ STOP \u{1F7E1} ]",
+    inputPlaceholder: "Enter cyber command or query prompt (Enter to send, Shift+Enter for newline)...",
+    inputLegend: "Enter: Transmit \u2022 Shift+Enter: Linebreak \u2022 EvaBot Core v0.2.0",
+    welcomeHeading: "EVABOT NEURAL CYBER-TERMINAL ONLINE",
+    welcomeNotice: "Session initialized. Pure black & white minimalist cyber-deck active. Connected to Google Cloud ambient infrastructure with real-time multi-provider routing.",
+    secDeckTitle: "EVA CONTROL DECK // CONFIGURATION & TELEMETRY",
+    secProviders: "1. NEURAL PROVIDERS",
+    secModels: "2. MODEL SELECTION & QUOTAS",
+    secModes: "3. OPERATIONAL MODES",
+    secRoles: "4. CORPORATE ROLES & PERSONAS",
+    secTelemetry: "5. REAL-TIME SYSTEM TELEMETRY",
+    secSecurity: "6. SECURITY & CREDENTIALS",
+    badgeFree: "\u{1F7E2} FREE QUOTA",
+    badgePaid: "\u{1F7E1} PAID / PAYG",
+    badgeActive: "\u{1F7E2} ACTIVE",
+    badgeReady: "\u{1F7E2} READY",
+    badgeStandby: "\u{1F7E1} STANDBY",
+    provGoogleName: "Google Cloud (Vertex AI & AI Studio)",
+    provGoogleDesc: "Native Google DeepMind Gemini and enterprise partner models with low-latency direct API dispatch.",
+    provOmniName: "OmniRoute Neural Gateway",
+    provOmniDesc: "Dynamic multi-cloud neural router featuring intelligent load-balancing, failover, and prompt routing.",
+    provOpenRouterName: "OpenRouter Mesh",
+    provOpenRouterDesc: "Decentralized gateway granting access to global open-weights clusters and specialized reasoning engines.",
+    provOpenCodeName: "OpenCode Go Engine",
+    provOpenCodeDesc: "High-throughput code inference node designed for private syntax generation, refactoring, and AST analysis.",
+    modeSoloName: "SOLO",
+    modeSoloDesc: "Direct single LLM execution focused strictly on active corporate persona directives.",
+    modeBroadcastName: "BROADCAST",
+    modeBroadcastDesc: "Multi-perspective analysis broadcasting your prompt across core architectural dimensions.",
+    modeDialogueName: "DIALOGUE",
+    modeDialogueDesc: "Rapid-cadence conversational cyber-stream with continuous state retention and feedback.",
+    modeConsiliumName: "CONSILIUM",
+    modeConsiliumDesc: "Autonomous corporate council deliberation synthesizing executive viewpoints into consensus.",
+    roleCeoName: "CEO // Executive Strategist",
+    roleCeoDesc: "High-level corporate strategy, market positioning, ROI evaluation, and decisive leadership.",
+    roleCtoName: "CTO // Principal Architect",
+    roleCtoDesc: "Distributed systems design, enterprise scalability, zero-downtime reliability, and clean code.",
+    roleCisoName: "CISO // Cyber Security & Infosec",
+    roleCisoDesc: "Threat modeling, zero-trust architecture, cryptographic integrity, and zero-day defense.",
+    roleCfoName: "CFO // Financial & Risk Analyst",
+    roleCfoDesc: "Fiscal governance, tokenomics optimization, operational expenditure in USD ($) and EUR (\u20AC).",
+    roleUxName: "UX/DES // Creative Director",
+    roleUxDesc: "Minimalist cyber aesthetics, terminal ergonomics, human-computer interaction, and high usability.",
+    roleDevName: "DEV // Lead Full-Stack Engineer",
+    roleDevDesc: "Production-ready code implementation, bug elimination, algorithmic efficiency, and test suites.",
+    roleRschName: "RSCH // AI Research Scientist",
+    roleRschDesc: "Attention mechanisms, context compression, reasoning paradigms, and neurosymbolic agent loops.",
+    roleLegalName: "LEGAL // Compliance Counsel",
+    roleLegalDesc: "Regulatory adherence (GDPR, EU AI Act), risk mitigation, license conformity, and ethics.",
+    telemServerLabel: "Edge Server",
+    telemUptimeLabel: "Uptime",
+    telemMemoryLabel: "Memory (RSS)",
+    telemLatencyLabel: "API Latency",
+    telemProviderLabel: "Provider",
+    telemModelLabel: "Active Model",
+    telemQuotaLabel: "Quota Status",
+    telemAuthLabel: "Auth Source",
+    telemAccountLabel: "Account",
+    apiKeyLabel: "Google Gemini / Vertex API Key",
+    apiKeyHelp: "Enter your custom key to override server ambient credentials. Stored securely in browser localStorage.",
+    apiKeyPlaceholder: "AIzaSy...",
+    saveKeyBtn: "[ SAVE CREDENTIALS ]",
+    clearKeyBtn: "[ USE AMBIENT AUTO-AUTH ]",
+    keyStatusCustom: "\u{1F7E2} CUSTOM KEY ACTIVE",
+    keyStatusAmbient: "\u{1F7E2} GOOGLE AMBIENT AUTH",
+    noticeModelSwitched: "Switched model to",
+    noticeRoleSwitched: "Activated corporate role",
+    noticeModeSwitched: "Changed operation mode to",
+    noticeProviderSwitched: "Switched primary neural provider to",
+    noticeKeySaved: "Custom API credentials saved to local browser storage.",
+    noticeKeyCleared: "Reverted to Google Cloud ambient auto-authentication.",
+    noticeChatCleared: "Chat history purged.",
+    copiedBtn: "COPIED",
+    copyBtn: "COPY"
+  },
+  uk: {
+    appTitle: "EVABOT // \u041A\u0406\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B",
+    appSubtitle: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u0438\u0439 \u0431\u0430\u0433\u0430\u0442\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u0438\u0439 \u043D\u0435\u0439\u0440\u043E\u0434\u0435\u043A",
+    statusOnline: "\u{1F7E2} \u0412 \u041C\u0415\u0420\u0415\u0416\u0406 // \u041E\u0427\u0406\u041A\u0423\u0412\u0410\u041D\u041D\u042F",
+    statusBusy: "\u{1F7E1} \u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0406\u042F // \u0410\u041A\u0422\u0418\u0412\u041D\u041E",
+    statusError: "\u{1F534} \u041F\u041E\u041C\u0418\u041B\u041A\u0410 // \u041E\u0424\u041B\u0410\u0419\u041D",
+    controlPanelBtn: "[ \u2193 \u041F\u0410\u041D\u0415\u041B\u042C \u041A\u0415\u0420\u0423\u0412\u0410\u041D\u041D\u042F // \u0421\u0418\u0421\u0422\u0415\u041C\u041D\u0418\u0419 \u0414\u0415\u041A ]",
+    returnTerminalBtn: "[ \u2191 \u041F\u041E\u0412\u0415\u0420\u041D\u0423\u0422\u0418\u0421\u042F \u0414\u041E \u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B\u0423 ]",
+    clearChatBtn: "[ \u041E\u0427\u0418\u0421\u0422\u0418\u0422\u0418 ]",
+    transmitBtn: "[ \u0412\u0406\u0414\u041F\u0420\u0410\u0412\u0418\u0422\u0418 \u21B5 ]",
+    stopBtn: "[ \u0417\u0423\u041F\u0418\u041D\u0418\u0422\u0418 \u{1F7E1} ]",
+    inputPlaceholder: "\u0412\u0432\u0435\u0434\u0456\u0442\u044C \u043A\u0456\u0431\u0435\u0440-\u043A\u043E\u043C\u0430\u043D\u0434\u0443 \u0430\u0431\u043E \u0437\u0430\u043F\u0438\u0442 (Enter \u0434\u043B\u044F \u0432\u0456\u0434\u043F\u0440\u0430\u0432\u043A\u0438, Shift+Enter \u0434\u043B\u044F \u043D\u043E\u0432\u043E\u0433\u043E \u0440\u044F\u0434\u043A\u0430)...",
+    inputLegend: "Enter: \u0412\u0456\u0434\u043F\u0440\u0430\u0432\u0438\u0442\u0438 \u2022 Shift+Enter: \u041F\u0435\u0440\u0435\u043D\u043E\u0441 \u0440\u044F\u0434\u043A\u0430 \u2022 \u042F\u0434\u0440\u043E EvaBot v0.2.0",
+    welcomeHeading: "\u041D\u0415\u0419\u0420\u041E\u041D\u041D\u0418\u0419 \u041A\u0406\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B EVABOT \u0412 \u041C\u0415\u0420\u0415\u0416\u0406",
+    welcomeNotice: "\u0421\u0435\u0441\u0456\u044E \u0456\u043D\u0456\u0446\u0456\u0430\u043B\u0456\u0437\u043E\u0432\u0430\u043D\u043E. \u041C\u0456\u043D\u0456\u043C\u0430\u043B\u0456\u0441\u0442\u0438\u0447\u043D\u0438\u0439 \u0447\u043E\u0440\u043D\u043E-\u0431\u0456\u043B\u0438\u0439 \u043A\u0456\u0431\u0435\u0440-\u0434\u0435\u043A \u0430\u043A\u0442\u0438\u0432\u043E\u0432\u0430\u043D\u043E. \u041F\u0456\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u0434\u043E \u0445\u043C\u0430\u0440\u043D\u043E\u0457 \u0456\u043D\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438 Google Cloud \u0456\u0437 \u0431\u0430\u0433\u0430\u0442\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u043E\u044E \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0456\u0454\u044E.",
+    secDeckTitle: "\u0414\u0415\u041A \u041A\u0415\u0420\u0423\u0412\u0410\u041D\u041D\u042F EVA // \u041A\u041E\u041D\u0424\u0406\u0413\u0423\u0420\u0410\u0426\u0406\u042F \u0422\u0410 \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0406\u042F",
+    secProviders: "1. \u041D\u0415\u0419\u0420\u041E\u041D\u041D\u0406 \u041F\u0420\u041E\u0412\u0410\u0419\u0414\u0415\u0420\u0418",
+    secModels: "2. \u0412\u0418\u0411\u0406\u0420 \u041C\u041E\u0414\u0415\u041B\u0406 \u0422\u0410 \u041A\u0412\u041E\u0422\u0418",
+    secModes: "3. \u0420\u0415\u0416\u0418\u041C\u0418 \u0420\u041E\u0411\u041E\u0422\u0418",
+    secRoles: "4. \u041A\u041E\u0420\u041F\u041E\u0420\u0410\u0422\u0418\u0412\u041D\u0406 \u0420\u041E\u041B\u0406 \u0422\u0410 \u041F\u0415\u0420\u0421\u041E\u041D\u0418",
+    secTelemetry: "5. \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0406\u042F \u0412 \u0420\u0415\u0410\u041B\u042C\u041D\u041E\u041C\u0423 \u0427\u0410\u0421\u0406",
+    secSecurity: "6. \u0411\u0415\u0417\u041F\u0415\u041A\u0410 \u0422\u0410 \u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F",
+    badgeFree: "\u{1F7E2} \u0411\u0415\u0417\u041A\u041E\u0428\u0422\u041E\u0412\u041D\u041E",
+    badgePaid: "\u{1F7E1} \u041F\u041B\u0410\u0422\u041D\u041E / PAYG",
+    badgeActive: "\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u041D\u0418\u0419",
+    badgeReady: "\u{1F7E2} \u0413\u041E\u0422\u041E\u0412\u0418\u0419",
+    badgeStandby: "\u{1F7E1} \u041E\u0427\u0406\u041A\u0423\u0412\u0410\u041D\u041D\u042F",
+    provGoogleName: "Google Cloud (Vertex AI & AI Studio)",
+    provGoogleDesc: "\u041E\u0440\u0438\u0433\u0456\u043D\u0430\u043B\u044C\u043D\u0456 \u043C\u043E\u0434\u0435\u043B\u0456 Google DeepMind Gemini \u0442\u0430 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\u0441\u044C\u043A\u0456 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0456 \u043C\u043E\u0434\u0435\u043B\u0456 \u0437 \u043F\u0440\u044F\u043C\u043E\u044E \u0432\u0456\u0434\u043F\u0440\u0430\u0432\u043A\u043E\u044E.",
+    provOmniName: "\u041D\u0435\u0439\u0440\u043E\u0448\u043B\u044E\u0437 OmniRoute",
+    provOmniDesc: "\u0414\u0438\u043D\u0430\u043C\u0456\u0447\u043D\u0438\u0439 \u0431\u0430\u0433\u0430\u0442\u043E\u0445\u043C\u0430\u0440\u043D\u0438\u0439 \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0442\u043E\u0440 \u0437 \u0456\u043D\u0442\u0435\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u0438\u043C \u0431\u0430\u043B\u0430\u043D\u0441\u0443\u0432\u0430\u043D\u043D\u044F\u043C \u043D\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u0442\u0430 \u0432\u0456\u0434\u043C\u043E\u0432\u043E\u0441\u0442\u0456\u0439\u043A\u0456\u0441\u0442\u044E.",
+    provOpenRouterName: "\u041C\u0435\u0440\u0435\u0436\u0430 OpenRouter",
+    provOpenRouterDesc: "\u0414\u0435\u0446\u0435\u043D\u0442\u0440\u0430\u043B\u0456\u0437\u043E\u0432\u0430\u043D\u0438\u0439 \u0448\u043B\u044E\u0437 \u0434\u043B\u044F \u0434\u043E\u0441\u0442\u0443\u043F\u0443 \u0434\u043E \u0441\u0432\u0456\u0442\u043E\u0432\u0438\u0445 \u043A\u043B\u0430\u0441\u0442\u0435\u0440\u0456\u0432 \u0432\u0456\u0434\u043A\u0440\u0438\u0442\u0438\u0445 \u0432\u0430\u0433 \u0442\u0430 \u0441\u043F\u0435\u0446\u0456\u0430\u043B\u0456\u0437\u043E\u0432\u0430\u043D\u0438\u0445 \u043C\u043E\u0434\u0435\u043B\u0435\u0439.",
+    provOpenCodeName: "\u0412\u0443\u0437\u043E\u043B OpenCode Go",
+    provOpenCodeDesc: "\u0412\u0438\u0441\u043E\u043A\u043E\u043F\u0440\u043E\u0434\u0443\u043A\u0442\u0438\u0432\u043D\u0438\u0439 \u0440\u0443\u0448\u0456\u0439 \u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0456\u0457 \u043A\u043E\u0434\u0443 \u0434\u043B\u044F \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0433\u043E \u0441\u0438\u043D\u0442\u0430\u043A\u0441\u0438\u0447\u043D\u043E\u0433\u043E \u0430\u043D\u0430\u043B\u0456\u0437\u0443, \u0440\u0435\u0444\u0430\u043A\u0442\u043E\u0440\u0438\u043D\u0433\u0443 \u0442\u0430 AST.",
+    modeSoloName: "\u0421\u041E\u041B\u041E",
+    modeSoloDesc: "\u041F\u0440\u044F\u043C\u0435 \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043D\u044F \u043E\u0434\u043D\u043E\u0433\u043E LLM \u0456\u0437 \u0441\u0443\u0432\u043E\u0440\u0438\u043C \u0434\u043E\u0442\u0440\u0438\u043C\u0430\u043D\u043D\u044F\u043C \u0432\u0438\u0431\u0440\u0430\u043D\u043E\u0457 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u043E\u0457 \u0440\u043E\u043B\u0456.",
+    modeBroadcastName: "\u0422\u0420\u0410\u041D\u0421\u041B\u042F\u0426\u0406\u042F",
+    modeBroadcastDesc: "\u0411\u0430\u0433\u0430\u0442\u043E\u0432\u0438\u043C\u0456\u0440\u043D\u0438\u0439 \u0430\u043D\u0430\u043B\u0456\u0437 \u0456\u0437 \u043F\u0430\u0440\u0430\u043B\u0435\u043B\u044C\u043D\u0438\u043C \u0442\u0440\u0430\u043D\u0441\u043B\u044E\u0432\u0430\u043D\u043D\u044F\u043C \u0437\u0430\u043F\u0438\u0442\u0443 \u0437\u0430 \u043A\u043B\u044E\u0447\u043E\u0432\u0438\u043C\u0438 \u043D\u0430\u043F\u0440\u044F\u043C\u043A\u0430\u043C\u0438.",
+    modeDialogueName: "\u0414\u0406\u0410\u041B\u041E\u0413",
+    modeDialogueDesc: "\u0428\u0432\u0438\u0434\u043A\u0438\u0439 \u0434\u0456\u0430\u043B\u043E\u0433\u043E\u0432\u0438\u0439 \u043A\u0456\u0431\u0435\u0440-\u043F\u043E\u0442\u0456\u043A \u0456\u0437 \u043F\u043E\u0441\u0442\u0456\u0439\u043D\u0438\u043C \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043D\u044F\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0443 \u0442\u0430 \u0448\u0432\u0438\u0434\u043A\u0438\u043C \u0437\u0432\u043E\u0440\u043E\u0442\u043D\u0438\u043C \u0437\u0432\u2019\u044F\u0437\u043A\u043E\u043C.",
+    modeConsiliumName: "\u041A\u041E\u041D\u0421\u0418\u041B\u0406\u0423\u041C",
+    modeConsiliumDesc: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u0435 \u0437\u0430\u0441\u0456\u0434\u0430\u043D\u043D\u044F \u0440\u0430\u0434\u0438 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440\u0456\u0432 \u0456\u0437 \u0441\u0438\u043D\u0442\u0435\u0437\u043E\u043C \u043F\u043E\u0437\u0438\u0446\u0456\u0439 \u043B\u0456\u0434\u0435\u0440\u0456\u0432 \u0443 \u0454\u0434\u0438\u043D\u0438\u0439 \u0443\u0437\u0433\u043E\u0434\u0436\u0435\u043D\u0438\u0439 \u043A\u043E\u043D\u0441\u0435\u043D\u0441\u0443\u0441.",
+    roleCeoName: "CEO // \u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0447\u043D\u0438\u0439 \u043B\u0456\u0434\u0435\u0440",
+    roleCeoDesc: "\u041A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0430 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u044F \u0432\u0438\u0441\u043E\u043A\u043E\u0433\u043E \u0440\u0456\u0432\u043D\u044F, \u0440\u0438\u043D\u043A\u043E\u0432\u0435 \u043F\u043E\u0437\u0438\u0446\u0456\u043E\u043D\u0443\u0432\u0430\u043D\u043D\u044F, \u043E\u0446\u0456\u043D\u043A\u0430 ROI \u0442\u0430 \u0440\u0456\u0448\u0443\u0447\u0435 \u043B\u0456\u0434\u0435\u0440\u0441\u0442\u0432\u043E.",
+    roleCtoName: "CTO // \u0413\u043E\u043B\u043E\u0432\u043D\u0438\u0439 \u0430\u0440\u0445\u0456\u0442\u0435\u043A\u0442\u043E\u0440",
+    roleCtoDesc: "\u041F\u0440\u043E\u0454\u043A\u0442\u0443\u0432\u0430\u043D\u043D\u044F \u0440\u043E\u0437\u043F\u043E\u0434\u0456\u043B\u0435\u043D\u0438\u0445 \u0441\u0438\u0441\u0442\u0435\u043C, \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0435 \u043C\u0430\u0441\u0448\u0442\u0430\u0431\u0443\u0432\u0430\u043D\u043D\u044F, \u0432\u0456\u0434\u043C\u043E\u0432\u043E\u0441\u0442\u0456\u0439\u043A\u0456\u0441\u0442\u044C \u0442\u0430 \u0447\u0438\u0441\u0442\u0438\u0439 \u043A\u043E\u0434.",
+    roleCisoName: "CISO // \u041A\u0456\u0431\u0435\u0440\u0431\u0435\u0437\u043F\u0435\u043A\u0430 \u0442\u0430 \u0456\u043D\u0444\u043E\u0431\u0435\u0437\u043F\u0435\u043A\u0430",
+    roleCisoDesc: "\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F \u0437\u0430\u0433\u0440\u043E\u0437, \u0430\u0440\u0445\u0456\u0442\u0435\u043A\u0442\u0443\u0440\u0430 Zero-Trust, \u043A\u0440\u0438\u043F\u0442\u043E\u0433\u0440\u0430\u0444\u0456\u0447\u043D\u0430 \u0446\u0456\u043B\u0456\u0441\u043D\u0456\u0441\u0442\u044C \u0442\u0430 \u0437\u0430\u0445\u0438\u0441\u0442 \u0432\u0456\u0434 zero-day.",
+    roleCfoName: "CFO // \u0424\u0456\u043D\u0430\u043D\u0441\u043E\u0432\u0438\u0439 \u0430\u043D\u0430\u043B\u0456\u0442\u0438\u043A",
+    roleCfoDesc: "\u0424\u0456\u043D\u0430\u043D\u0441\u043E\u0432\u0438\u0439 \u043A\u043E\u043D\u0442\u0440\u043E\u043B\u044C, \u043E\u043F\u0442\u0438\u043C\u0456\u0437\u0430\u0446\u0456\u044F \u0442\u043E\u043A\u0435\u043D\u043E\u043C\u0456\u043A\u0438, \u0440\u043E\u0437\u0440\u0430\u0445\u0443\u043D\u043E\u043A \u0432\u0438\u0442\u0440\u0430\u0442 \u0441\u0442\u0440\u043E\u0433\u043E \u0432 \u0434\u043E\u043B\u0430\u0440\u0430\u0445 \u0421\u0428\u0410 ($) \u0442\u0430 \u0454\u0432\u0440\u043E (\u20AC).",
+    roleUxName: "UX/DES // \u041A\u0440\u0435\u0430\u0442\u0438\u0432\u043D\u0438\u0439 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440",
+    roleUxDesc: "\u041C\u0456\u043D\u0456\u043C\u0430\u043B\u0456\u0441\u0442\u0438\u0447\u043D\u0430 \u043A\u0456\u0431\u0435\u0440-\u0435\u0441\u0442\u0435\u0442\u0438\u043A\u0430, \u0435\u0440\u0433\u043E\u043D\u043E\u043C\u0456\u043A\u0430 \u0442\u0435\u0440\u043C\u0456\u043D\u0430\u043B\u0430, \u043B\u044E\u0434\u0438\u043D\u043E-\u043C\u0430\u0448\u0438\u043D\u043D\u0430 \u0432\u0437\u0430\u0454\u043C\u043E\u0434\u0456\u044F \u0442\u0430 \u0432\u0438\u0441\u043E\u043A\u0430 \u0437\u0440\u0443\u0447\u043D\u0456\u0441\u0442\u044C.",
+    roleDevName: "DEV // \u041F\u0440\u043E\u0432\u0456\u0434\u043D\u0438\u0439 Full-Stack \u0456\u043D\u0436\u0435\u043D\u0435\u0440",
+    roleDevDesc: "\u0412\u043F\u0440\u043E\u0432\u0430\u0434\u0436\u0435\u043D\u043D\u044F \u043F\u0440\u043E\u0434\u0430\u043A\u0448\u043D-\u043A\u043E\u0434\u0443, \u0443\u0441\u0443\u043D\u0435\u043D\u043D\u044F \u0431\u0430\u0433\u0456\u0432, \u0430\u043B\u0433\u043E\u0440\u0438\u0442\u043C\u0456\u0447\u043D\u0430 \u043E\u043F\u0442\u0438\u043C\u0456\u0437\u0430\u0446\u0456\u044F \u0442\u0430 \u043C\u043E\u0434\u0443\u043B\u044C\u043D\u0435 \u0442\u0435\u0441\u0442\u0443\u0432\u0430\u043D\u043D\u044F.",
+    roleRschName: "RSCH // \u0414\u043E\u0441\u043B\u0456\u0434\u043D\u0438\u043A \u0448\u0442\u0443\u0447\u043D\u043E\u0433\u043E \u0456\u043D\u0442\u0435\u043B\u0435\u043A\u0442\u0443",
+    roleRschDesc: "\u041C\u0435\u0445\u0430\u043D\u0456\u0437\u043C\u0438 \u0443\u0432\u0430\u0433\u0438, \u0441\u0442\u0438\u0441\u043D\u0435\u043D\u043D\u044F \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0443, \u043C\u0456\u0440\u043A\u0443\u0432\u0430\u043D\u043D\u044F LLM \u0442\u0430 \u043D\u0435\u0439\u0440\u043E\u0441\u0438\u043C\u0432\u043E\u043B\u0456\u0447\u043D\u0456 \u0430\u0433\u0435\u043D\u0442\u043D\u0456 \u043A\u043E\u043D\u0442\u0443\u0440\u0438.",
+    roleLegalName: "LEGAL // \u042E\u0440\u0438\u0441\u0442 \u0437 \u043A\u043E\u043C\u043F\u043B\u0430\u0439\u0454\u043D\u0441\u0443",
+    roleLegalDesc: "\u0414\u043E\u0442\u0440\u0438\u043C\u0430\u043D\u043D\u044F \u0440\u0435\u0433\u043B\u0430\u043C\u0435\u043D\u0442\u0456\u0432 (GDPR, EU AI Act), \u043C\u0456\u043D\u0456\u043C\u0456\u0437\u0430\u0446\u0456\u044F \u0440\u0438\u0437\u0438\u043A\u0456\u0432, \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0457 \u0442\u0430 \u0435\u0442\u0438\u0447\u043D\u0456 \u043D\u043E\u0440\u043C\u0438 \u0428\u0406.",
+    telemServerLabel: "\u0412\u0443\u0437\u043E\u043B \u0441\u0435\u0440\u0432\u0435\u0440\u0430",
+    telemUptimeLabel: "\u0427\u0430\u0441 \u0440\u043E\u0431\u043E\u0442\u0438",
+    telemMemoryLabel: "\u041F\u0430\u043C\u2019\u044F\u0442\u044C (RSS)",
+    telemLatencyLabel: "\u0417\u0430\u0442\u0440\u0438\u043C\u043A\u0430 API",
+    telemProviderLabel: "\u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440",
+    telemModelLabel: "\u0410\u043A\u0442\u0438\u0432\u043D\u0430 \u043C\u043E\u0434\u0435\u043B\u044C",
+    telemQuotaLabel: "\u0421\u0442\u0430\u0442\u0443\u0441 \u043A\u0432\u043E\u0442\u0438",
+    telemAuthLabel: "\u0414\u0436\u0435\u0440\u0435\u043B\u043E \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0456\u0457",
+    telemAccountLabel: "\u0410\u043A\u0430\u0443\u043D\u0442",
+    apiKeyLabel: "API \u043A\u043B\u044E\u0447 Google Gemini / Vertex",
+    apiKeyHelp: "\u0412\u0432\u0435\u0434\u0456\u0442\u044C \u0432\u043B\u0430\u0441\u043D\u0438\u0439 \u043A\u043B\u044E\u0447 \u0434\u043B\u044F \u043F\u0435\u0440\u0435\u0432\u0438\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u043D\u043E\u0457 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0456\u0457. \u0417\u0431\u0435\u0440\u0456\u0433\u0430\u0454\u0442\u044C\u0441\u044F \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0456.",
+    apiKeyPlaceholder: "AIzaSy...",
+    saveKeyBtn: "[ \u0417\u0411\u0415\u0420\u0415\u0413\u0422\u0418 \u041A\u041B\u042E\u0427 ]",
+    clearKeyBtn: "[ \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F GOOGLE ]",
+    keyStatusCustom: "\u{1F7E2} \u0412\u041B\u0410\u0421\u041D\u0418\u0419 \u041A\u041B\u042E\u0427 \u0410\u041A\u0422\u0418\u0412\u041D\u0418\u0419",
+    keyStatusAmbient: "\u{1F7E2} \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F GOOGLE",
+    noticeModelSwitched: "\u041F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u043C\u043E\u0434\u0435\u043B\u044C \u043D\u0430",
+    noticeRoleSwitched: "\u0410\u043A\u0442\u0438\u0432\u043E\u0432\u0430\u043D\u043E \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0443 \u0440\u043E\u043B\u044C",
+    noticeModeSwitched: "\u0417\u043C\u0456\u043D\u0435\u043D\u043E \u0440\u0435\u0436\u0438\u043C \u0440\u043E\u0431\u043E\u0442\u0438 \u043D\u0430",
+    noticeProviderSwitched: "\u0417\u043C\u0456\u043D\u0435\u043D\u043E \u043D\u0435\u0439\u0440\u043E\u043D\u043D\u043E\u0433\u043E \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 \u043D\u0430",
+    noticeKeySaved: "\u0412\u043B\u0430\u0441\u043D\u0438\u0439 \u043A\u043B\u044E\u0447 API \u0443\u0441\u043F\u0456\u0448\u043D\u043E \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043E \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0456.",
+    noticeKeyCleared: "\u041F\u043E\u0432\u0435\u0440\u043D\u0443\u0442\u043E \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u043D\u0443 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0456\u044E Google Cloud.",
+    noticeChatCleared: "\u0406\u0441\u0442\u043E\u0440\u0456\u044E \u043F\u043E\u0432\u0456\u0434\u043E\u043C\u043B\u0435\u043D\u044C \u043E\u0447\u0438\u0449\u0435\u043D\u043E.",
+    copiedBtn: "\u0421\u041A\u041E\u041F\u0406\u0419\u041E\u0412\u0410\u041D\u041E",
+    copyBtn: "\u041A\u041E\u041F\u0406\u042E\u0412\u0410\u0422\u0418"
+  },
+  ru: {
+    appTitle: "EVABOT // \u041A\u0418\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B",
+    appSubtitle: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u044B\u0439 \u043C\u043D\u043E\u0433\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u044B\u0439 \u043D\u0435\u0439\u0440\u043E\u0434\u0435\u043A",
+    statusOnline: "\u{1F7E2} \u0412 \u0421\u0415\u0422\u0418 // \u041E\u0416\u0418\u0414\u0410\u041D\u0418\u0415",
+    statusBusy: "\u{1F7E1} \u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0418\u042F // \u0410\u041A\u0422\u0418\u0412\u041D\u041E",
+    statusError: "\u{1F534} \u041E\u0428\u0418\u0411\u041A\u0410 // \u041E\u0424\u041B\u0410\u0419\u041D",
+    controlPanelBtn: "[ \u2193 \u041A\u041E\u041D\u0422\u0420\u041E\u041B\u042C\u041D\u0410\u042F \u041F\u0410\u041D\u0415\u041B\u042C // \u0421\u0418\u0421\u0422\u0415\u041C\u041D\u042B\u0419 \u0414\u0415\u041A ]",
+    returnTerminalBtn: "[ \u2191 \u0412\u0415\u0420\u041D\u0423\u0422\u042C\u0421\u042F \u0412 \u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B ]",
+    clearChatBtn: "[ \u041E\u0427\u0418\u0421\u0422\u0418\u0422\u042C ]",
+    transmitBtn: "[ \u041E\u0422\u041F\u0420\u0410\u0412\u0418\u0422\u042C \u21B5 ]",
+    stopBtn: "[ \u041E\u0421\u0422\u0410\u041D\u041E\u0412\u0418\u0422\u042C \u{1F7E1} ]",
+    inputPlaceholder: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u0438\u0431\u0435\u0440-\u043A\u043E\u043C\u0430\u043D\u0434\u0443 \u0438\u043B\u0438 \u0437\u0430\u043F\u0440\u043E\u0441 (Enter \u0434\u043B\u044F \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438, Shift+Enter \u0434\u043B\u044F \u043D\u043E\u0432\u043E\u0439 \u0441\u0442\u0440\u043E\u043A\u0438)...",
+    inputLegend: "Enter: \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u2022 Shift+Enter: \u041F\u0435\u0440\u0435\u043D\u043E\u0441 \u0441\u0442\u0440\u043E\u043A\u0438 \u2022 \u042F\u0434\u0440\u043E EvaBot v0.2.0",
+    welcomeHeading: "\u041D\u0415\u0419\u0420\u041E\u041D\u041D\u042B\u0419 \u041A\u0418\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B EVABOT \u0412 \u0421\u0415\u0422\u0418",
+    welcomeNotice: "\u0421\u0435\u0441\u0441\u0438\u044F \u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u0430. \u041C\u0438\u043D\u0438\u043C\u0430\u043B\u0438\u0441\u0442\u0438\u0447\u043D\u044B\u0439 \u0447\u0435\u0440\u043D\u043E-\u0431\u0435\u043B\u044B\u0439 \u043A\u0438\u0431\u0435\u0440-\u0434\u0435\u043A \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D. \u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u043A \u043E\u0431\u043B\u0430\u0447\u043D\u043E\u0439 \u0438\u043D\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0435 Google Cloud \u0441 \u043C\u043D\u043E\u0433\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u043E\u0439 \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u0435\u0439.",
+    secDeckTitle: "\u0414\u0415\u041A \u0423\u041F\u0420\u0410\u0412\u041B\u0415\u041D\u0418\u042F EVA // \u041A\u041E\u041D\u0424\u0418\u0413\u0423\u0420\u0410\u0426\u0418\u042F \u0418 \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0418\u042F",
+    secProviders: "1. \u041D\u0415\u0419\u0420\u041E\u041D\u041D\u042B\u0415 \u041F\u0420\u041E\u0412\u0410\u0419\u0414\u0415\u0420\u042B",
+    secModels: "2. \u0412\u042B\u0411\u041E\u0420 \u041C\u041E\u0414\u0415\u041B\u0418 \u0418 \u041A\u0412\u041E\u0422\u042B",
+    secModes: "3. \u0420\u0415\u0416\u0418\u041C\u042B \u0420\u0410\u0411\u041E\u0422\u042B",
+    secRoles: "4. \u041A\u041E\u0420\u041F\u041E\u0420\u0410\u0422\u0418\u0412\u041D\u042B\u0415 \u0420\u041E\u041B\u0418 \u0418 \u041F\u0415\u0420\u0421\u041E\u041D\u042B",
+    secTelemetry: "5. \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0418\u042F \u0412 \u0420\u0415\u0410\u041B\u042C\u041D\u041E\u041C \u0412\u0420\u0415\u041C\u0415\u041D\u0418",
+    secSecurity: "6. \u0411\u0415\u0417\u041E\u041F\u0410\u0421\u041D\u041E\u0421\u0422\u042C \u0418 \u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F",
+    badgeFree: "\u{1F7E2} \u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u041E",
+    badgePaid: "\u{1F7E1} \u041F\u041B\u0410\u0422\u041D\u041E / PAYG",
+    badgeActive: "\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u0415\u041D",
+    badgeReady: "\u{1F7E2} \u0413\u041E\u0422\u041E\u0412",
+    badgeStandby: "\u{1F7E1} \u041E\u0416\u0418\u0414\u0410\u041D\u0418\u0415",
+    provGoogleName: "Google Cloud (Vertex AI & AI Studio)",
+    provGoogleDesc: "\u041E\u0440\u0438\u0433\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438 Google DeepMind Gemini \u0438 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\u0441\u043A\u0438\u0435 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438 \u043F\u0440\u044F\u043C\u043E\u0433\u043E \u0432\u044B\u0437\u043E\u0432\u0430.",
+    provOmniName: "\u041D\u0435\u0439\u0440\u043E\u0448\u043B\u044E\u0437 OmniRoute",
+    provOmniDesc: "\u0414\u0438\u043D\u0430\u043C\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043C\u0443\u043B\u044C\u0442\u0438\u043E\u0431\u043B\u0430\u0447\u043D\u044B\u0439 \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0442\u043E\u0440 \u0441 \u0438\u043D\u0442\u0435\u043B\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u043E\u0439 \u0431\u0430\u043B\u0430\u043D\u0441\u0438\u0440\u043E\u0432\u043A\u043E\u0439 \u0438 \u043E\u0442\u043A\u0430\u0437\u043E\u0443\u0441\u0442\u043E\u0439\u0447\u0438\u0432\u043E\u0441\u0442\u044C\u044E.",
+    provOpenRouterName: "\u0421\u0435\u0442\u044C OpenRouter",
+    provOpenRouterDesc: "\u0414\u0435\u0446\u0435\u043D\u0442\u0440\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D\u043D\u044B\u0439 \u0448\u043B\u044E\u0437 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u0433\u043B\u043E\u0431\u0430\u043B\u044C\u043D\u044B\u043C \u043A\u043B\u0430\u0441\u0442\u0435\u0440\u0430\u043C \u043E\u0442\u043A\u0440\u044B\u0442\u044B\u0445 \u0432\u0435\u0441\u043E\u0432 \u0438 \u0441\u043F\u0435\u0446\u0438\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u043C \u043C\u043E\u0434\u0435\u043B\u044F\u043C.",
+    provOpenCodeName: "\u0423\u0437\u0435\u043B OpenCode Go",
+    provOpenCodeDesc: "\u0412\u044B\u0441\u043E\u043A\u043E\u043F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0434\u0432\u0438\u0436\u043E\u043A \u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u0438 \u043A\u043E\u0434\u0430 \u0434\u043B\u044F \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0433\u043E \u0430\u043D\u0430\u043B\u0438\u0437\u0430, \u0440\u0435\u0444\u0430\u043A\u0442\u043E\u0440\u0438\u043D\u0433\u0430 \u0438 AST.",
+    modeSoloName: "\u0421\u041E\u041B\u041E",
+    modeSoloDesc: "\u041F\u0440\u044F\u043C\u043E\u0435 \u0438\u0441\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u043E\u0434\u043D\u043E\u0439 LLM \u0441\u043E \u0441\u0442\u0440\u043E\u0433\u043E\u0439 \u0444\u043E\u043A\u0443\u0441\u0438\u0440\u043E\u0432\u043A\u043E\u0439 \u043D\u0430 \u0434\u0438\u0440\u0435\u043A\u0442\u0438\u0432\u0430\u0445 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0439 \u0440\u043E\u043B\u0438.",
+    modeBroadcastName: "\u0422\u0420\u0410\u041D\u0421\u041B\u042F\u0426\u0418\u042F",
+    modeBroadcastDesc: "\u041C\u043D\u043E\u0433\u043E\u043C\u0435\u0440\u043D\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0437 \u0441 \u043F\u0430\u0440\u0430\u043B\u043B\u0435\u043B\u044C\u043D\u043E\u0439 \u0442\u0440\u0430\u043D\u0441\u043B\u044F\u0446\u0438\u0435\u0439 \u0437\u0430\u043F\u0440\u043E\u0441\u0430 \u043F\u043E \u043A\u043B\u044E\u0447\u0435\u0432\u044B\u043C \u0430\u043D\u0430\u043B\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u043C \u0441\u0440\u0435\u0437\u0430\u043C.",
+    modeDialogueName: "\u0414\u0418\u0410\u041B\u041E\u0413",
+    modeDialogueDesc: "\u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432\u044B\u0439 \u043A\u0438\u0431\u0435\u0440-\u043F\u043E\u0442\u043E\u043A \u0441 \u043D\u0435\u043F\u0440\u0435\u0440\u044B\u0432\u043D\u044B\u043C \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0430 \u0438 \u043E\u043F\u0435\u0440\u0430\u0442\u0438\u0432\u043D\u044B\u043C \u043E\u0442\u043A\u043B\u0438\u043A\u043E\u043C.",
+    modeConsiliumName: "\u041A\u041E\u041D\u0421\u0418\u041B\u0418\u0423\u041C",
+    modeConsiliumDesc: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u043E\u0435 \u0441\u043E\u0432\u0435\u0449\u0430\u043D\u0438\u0435 \u0441\u043E\u0432\u0435\u0442\u0430 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440\u043E\u0432 \u0441 \u0441\u0438\u043D\u0442\u0435\u0437\u043E\u043C \u043C\u043D\u0435\u043D\u0438\u0439 \u044D\u043A\u0441\u043F\u0435\u0440\u0442\u043E\u0432 \u0432 \u0435\u0434\u0438\u043D\u044B\u0439 \u043A\u043E\u043D\u0441\u0435\u043D\u0441\u0443\u0441.",
+    roleCeoName: "CEO // \u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043B\u0438\u0434\u0435\u0440",
+    roleCeoDesc: "\u041A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0430\u044F \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044F \u0432\u044B\u0441\u043E\u043A\u043E\u0433\u043E \u0443\u0440\u043E\u0432\u043D\u044F, \u0440\u044B\u043D\u043E\u0447\u043D\u043E\u0435 \u043F\u043E\u0437\u0438\u0446\u0438\u043E\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435, \u0440\u0430\u0441\u0447\u0435\u0442 ROI \u0438 \u043B\u0438\u0434\u0435\u0440\u0441\u0442\u0432\u043E.",
+    roleCtoName: "CTO // \u0413\u043B\u0430\u0432\u043D\u044B\u0439 \u0430\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u043E\u0440",
+    roleCtoDesc: "\u041F\u0440\u043E\u0435\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0440\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u043D\u044B\u0445 \u0441\u0438\u0441\u0442\u0435\u043C, \u043C\u0430\u0441\u0448\u0442\u0430\u0431\u0438\u0440\u0443\u0435\u043C\u043E\u0441\u0442\u044C, \u043E\u0442\u043A\u0430\u0437\u043E\u0443\u0441\u0442\u043E\u0439\u0447\u0438\u0432\u043E\u0441\u0442\u044C \u0438 \u0447\u0438\u0441\u0442\u044B\u0439 \u043A\u043E\u0434.",
+    roleCisoName: "CISO // \u041A\u0438\u0431\u0435\u0440\u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C \u0438 \u0438\u043D\u0444\u043E\u0431\u0435\u0437",
+    roleCisoDesc: "\u041C\u043E\u0434\u0435\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0443\u0433\u0440\u043E\u0437, \u0430\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u0443\u0440\u0430 Zero-Trust, \u043A\u0440\u0438\u043F\u0442\u043E\u0433\u0440\u0430\u0444\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0446\u0435\u043B\u043E\u0441\u0442\u043D\u043E\u0441\u0442\u044C \u0438 \u043E\u0442\u0440\u0430\u0436\u0435\u043D\u0438\u0435 \u0430\u0442\u0430\u043A.",
+    roleCfoName: "CFO // \u0424\u0438\u043D\u0430\u043D\u0441\u043E\u0432\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0442\u0438\u043A",
+    roleCfoDesc: "\u0424\u0438\u043D\u0430\u043D\u0441\u043E\u0432\u044B\u0439 \u0430\u0443\u0434\u0438\u0442, \u043E\u043F\u0442\u0438\u043C\u0438\u0437\u0430\u0446\u0438\u044F \u0442\u043E\u043A\u0435\u043D\u043E\u043C\u0438\u043A\u0438, \u0443\u0447\u0435\u0442 \u0437\u0430\u0442\u0440\u0430\u0442 \u0441\u0442\u0440\u043E\u0433\u043E \u0432 \u0434\u043E\u043B\u043B\u0430\u0440\u0430\u0445 \u0421\u0428\u0410 ($) \u0438 \u0435\u0432\u0440\u043E (\u20AC).",
+    roleUxName: "UX/DES // \u041A\u0440\u0435\u0430\u0442\u0438\u0432\u043D\u044B\u0439 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440",
+    roleUxDesc: "\u041C\u0438\u043D\u0438\u043C\u0430\u043B\u0438\u0441\u0442\u0438\u0447\u043D\u0430\u044F \u043A\u0438\u0431\u0435\u0440-\u044D\u0441\u0442\u0435\u0442\u0438\u043A\u0430, \u044D\u0440\u0433\u043E\u043D\u043E\u043C\u0438\u043A\u0430 \u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u0430, \u0432\u0437\u0430\u0438\u043C\u043E\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435 \u0441 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u043C \u0438 \u0434\u0438\u0437\u0430\u0439\u043D.",
+    roleDevName: "DEV // \u0412\u0435\u0434\u0443\u0449\u0438\u0439 Full-Stack \u0438\u043D\u0436\u0435\u043D\u0435\u0440",
+    roleDevDesc: "\u0420\u0435\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043F\u0440\u043E\u0434\u0430\u043A\u0448\u043D-\u043A\u043E\u0434\u0430, \u0443\u0441\u0442\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u043E\u0448\u0438\u0431\u043E\u043A, \u0430\u043B\u0433\u043E\u0440\u0438\u0442\u043C\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043E\u043F\u0442\u0438\u043C\u0438\u0437\u0430\u0446\u0438\u044F \u0438 \u043C\u043E\u0434\u0443\u043B\u044C\u043D\u044B\u0435 \u0442\u0435\u0441\u0442\u044B.",
+    roleRschName: "RSCH // \u0418\u0441\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u0418\u0418",
+    roleRschDesc: "\u041C\u0435\u0445\u0430\u043D\u0438\u0437\u043C\u044B \u0432\u043D\u0438\u043C\u0430\u043D\u0438\u044F, \u043A\u043E\u043C\u043F\u0440\u0435\u0441\u0441\u0438\u044F \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0430, \u0430\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u0443\u0440\u0430 \u0440\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u0439 \u0438 \u043D\u0435\u0439\u0440\u043E\u0441\u0438\u043C\u0432\u043E\u043B\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0430\u0433\u0435\u043D\u0442\u044B.",
+    roleLegalName: "LEGAL // \u041A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u044B\u0439 \u044E\u0440\u0438\u0441\u0442",
+    roleLegalDesc: "\u0421\u043E\u0431\u043B\u044E\u0434\u0435\u043D\u0438\u0435 \u0440\u0435\u0433\u043B\u0430\u043C\u0435\u043D\u0442\u043E\u0432 (GDPR, EU AI Act), \u0441\u043D\u0438\u0436\u0435\u043D\u0438\u0435 \u0440\u0438\u0441\u043A\u043E\u0432, \u043B\u0438\u0446\u0435\u043D\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0438 \u044D\u0442\u0438\u043A\u0430 \u0418\u0418.",
+    telemServerLabel: "\u0423\u0437\u0435\u043B \u0441\u0435\u0440\u0432\u0435\u0440\u0430",
+    telemUptimeLabel: "\u0412\u0440\u0435\u043C\u044F \u0440\u0430\u0431\u043E\u0442\u044B",
+    telemMemoryLabel: "\u041F\u0430\u043C\u044F\u0442\u044C (RSS)",
+    telemLatencyLabel: "\u0417\u0430\u0434\u0435\u0440\u0436\u043A\u0430 API",
+    telemProviderLabel: "\u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440",
+    telemModelLabel: "\u0410\u043A\u0442\u0438\u0432\u043D\u0430\u044F \u043C\u043E\u0434\u0435\u043B\u044C",
+    telemQuotaLabel: "\u0421\u0442\u0430\u0442\u0443\u0441 \u043A\u0432\u043E\u0442\u044B",
+    telemAuthLabel: "\u0418\u0441\u0442\u043E\u0447\u043D\u0438\u043A \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438",
+    telemAccountLabel: "\u0410\u043A\u043A\u0430\u0443\u043D\u0442",
+    apiKeyLabel: "API \u043A\u043B\u044E\u0447 Google Gemini / Vertex",
+    apiKeyHelp: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0441\u043E\u0431\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u0434\u043B\u044F \u043F\u0435\u0440\u0435\u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u043D\u043E\u0439 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438. \u0421\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u0442\u0441\u044F \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0435.",
+    apiKeyPlaceholder: "AIzaSy...",
+    saveKeyBtn: "[ \u0421\u041E\u0425\u0420\u0410\u041D\u0418\u0422\u042C \u041A\u041B\u042E\u0427 ]",
+    clearKeyBtn: "[ \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F GOOGLE ]",
+    keyStatusCustom: "\u{1F7E2} \u0421\u041E\u0411\u0421\u0422\u0412\u0415\u041D\u041D\u042B\u0419 \u041A\u041B\u042E\u0427 \u0410\u041A\u0422\u0418\u0412\u0415\u041D",
+    keyStatusAmbient: "\u{1F7E2} \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F GOOGLE",
+    noticeModelSwitched: "\u041C\u043E\u0434\u0435\u043B\u044C \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0430 \u043D\u0430",
+    noticeRoleSwitched: "\u0410\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0430\u044F \u0440\u043E\u043B\u044C",
+    noticeModeSwitched: "\u0420\u0435\u0436\u0438\u043C \u0440\u0430\u0431\u043E\u0442\u044B \u0438\u0437\u043C\u0435\u043D\u0435\u043D \u043D\u0430",
+    noticeProviderSwitched: "\u041D\u0435\u0439\u0440\u043E\u043D\u043D\u044B\u0439 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440 \u0438\u0437\u043C\u0435\u043D\u0435\u043D \u043D\u0430",
+    noticeKeySaved: "\u041A\u043B\u044E\u0447 API \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D \u0432 \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E\u043C \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430.",
+    noticeKeyCleared: "\u0412\u043E\u0437\u0432\u0440\u0430\u0449\u0435\u043D\u0430 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F Google Cloud.",
+    noticeChatCleared: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439 \u043E\u0447\u0438\u0449\u0435\u043D\u0430.",
+    copiedBtn: "\u0421\u041A\u041E\u041F\u0418\u0420\u041E\u0412\u0410\u041D\u041E",
+    copyBtn: "\u041A\u041E\u041F\u0418\u0420\u041E\u0412\u0410\u0422\u042C"
+  }
+};
 var EvaBotWebApp = class {
   messages = [];
+  currentLang = "en";
+  currentProvider = "google";
   currentModel = "gemini-2.5-flash";
+  currentMode = "solo";
+  currentRole = "ceo";
   isGenerating = false;
   abortController = null;
   serverHasApiKey = false;
   authSource = "Google Cloud Ambient";
   userAccount = "evabot.online@gmail.com";
+  serverUptimeSec = 0;
+  serverMemoryMb = 0;
+  lastLatencyMs = 0;
+  uptimeInterval = null;
   constructor() {
     this.init();
   }
   async init() {
+    const savedLang = localStorage.getItem("evabot_lang");
+    if (savedLang && (savedLang === "en" || savedLang === "uk" || savedLang === "ru")) {
+      this.currentLang = savedLang;
+    }
     this.setupEventListeners();
     await this.checkHealth();
     this.populateModelSelector();
-    this.updateModelDetailsBar();
+    this.applyLanguage();
+    this.updateProviderUI();
+    this.updateModeUI();
+    this.updateRoleUI();
+    this.updateModelDetailsUI();
     this.updateKeyStatusUI();
     this.renderWelcomeMessage();
+    this.startTelemetryLoop();
+  }
+  t() {
+    return TRANSLATIONS[this.currentLang];
+  }
+  setLanguage(lang) {
+    if (lang === this.currentLang) return;
+    this.currentLang = lang;
+    localStorage.setItem("evabot_lang", lang);
+    this.applyLanguage();
+    this.updateModelDetailsUI();
+    this.updateKeyStatusUI();
+    this.updateTelemetryUI();
+    if (this.messages.length <= 1) {
+      this.messages = [];
+      const container = document.getElementById("messages-container");
+      if (container) container.innerHTML = "";
+      this.renderWelcomeMessage();
+    }
+  }
+  applyLanguage() {
+    const t = this.t();
+    ["en", "uk", "ru"].forEach((l) => {
+      const btn = document.getElementById(`lang-btn-${l}`);
+      if (btn) {
+        if (l === this.currentLang) {
+          btn.className = "px-2 py-0.5 text-xs font-bold bg-white text-black border border-white";
+        } else {
+          btn.className = "px-2 py-0.5 text-xs font-bold bg-black text-zinc-400 hover:text-white border border-transparent";
+        }
+      }
+    });
+    document.title = `${t.appTitle} // ${this.currentModel}`;
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (key && t[key]) {
+        el.textContent = t[key];
+      }
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-placeholder");
+      if (key && t[key]) {
+        el.placeholder = t[key];
+      }
+    });
+    const ctrlBtn = document.getElementById("control-panel-btn-label");
+    if (ctrlBtn) ctrlBtn.textContent = t.controlPanelBtn;
+    const retBtn = document.getElementById("return-terminal-btn-label");
+    if (retBtn) retBtn.textContent = t.returnTerminalBtn;
+    const clrBtn = document.getElementById("clear-btn");
+    if (clrBtn) clrBtn.textContent = t.clearChatBtn;
+    this.updateSendButtonState(this.isGenerating);
   }
   setupEventListeners() {
+    document.getElementById("lang-btn-en")?.addEventListener("click", () => this.setLanguage("en"));
+    document.getElementById("lang-btn-uk")?.addEventListener("click", () => this.setLanguage("uk"));
+    document.getElementById("lang-btn-ru")?.addEventListener("click", () => this.setLanguage("ru"));
+    const toDeckBtn = document.getElementById("scroll-to-deck-btn");
+    const toTerminalBtn = document.getElementById("scroll-to-terminal-btn");
+    const deckSection = document.getElementById("screen-control-deck");
+    const terminalSection = document.getElementById("screen-terminal");
+    toDeckBtn?.addEventListener("click", () => {
+      deckSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    toTerminalBtn?.addEventListener("click", () => {
+      terminalSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     const form = document.getElementById("chat-form");
     const input = document.getElementById("user-input");
-    const modelSelect = document.getElementById("model-select");
-    const clearBtn = document.getElementById("clear-btn");
-    const settingsBtn = document.getElementById("settings-btn");
-    const closeSettingsBtn = document.getElementById("close-settings-btn");
-    const saveKeyBtn = document.getElementById("save-key-btn");
-    const apiKeyInput = document.getElementById("api-key-input");
     form?.addEventListener("submit", (e) => {
       e.preventDefault();
       this.handleSend();
@@ -489,57 +1053,140 @@ var EvaBotWebApp = class {
         this.handleSend();
       }
     });
-    modelSelect?.addEventListener("change", (e) => {
-      this.currentModel = e.target.value;
-      this.updateModelDetailsBar();
-      const m = ModelRegistry.getModelById(this.currentModel);
-      this.addSystemNotification(`Switched active model to **${m?.name || this.currentModel}** [${m?.category} \u2022 ${m?.pricing.freeTierStatus}]`);
-    });
-    clearBtn?.addEventListener("click", () => {
+    document.getElementById("clear-btn")?.addEventListener("click", () => {
       this.messages = [];
       const container = document.getElementById("messages-container");
       if (container) container.innerHTML = "";
       this.renderWelcomeMessage();
+      this.addSystemNotification(this.t().noticeChatCleared);
     });
-    settingsBtn?.addEventListener("click", () => {
-      const modal = document.getElementById("settings-modal");
-      if (modal) modal.classList.remove("hidden");
-      const savedKey = localStorage.getItem("evabot_gemini_key") || "";
-      if (apiKeyInput) apiKeyInput.value = savedKey;
+    const modelSelect = document.getElementById("deck-model-select");
+    modelSelect?.addEventListener("change", (e) => {
+      this.currentModel = e.target.value;
+      this.updateModelDetailsUI();
+      const m = ModelRegistry.getModelById(this.currentModel);
+      this.addSystemNotification(`${this.t().noticeModelSwitched} **${m?.name || this.currentModel}**`);
     });
-    closeSettingsBtn?.addEventListener("click", () => {
-      const modal = document.getElementById("settings-modal");
-      if (modal) modal.classList.add("hidden");
+    document.querySelectorAll("[data-provider]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const prov = el.getAttribute("data-provider");
+        if (prov) {
+          this.currentProvider = prov;
+          this.updateProviderUI();
+          this.addSystemNotification(`${this.t().noticeProviderSwitched} **${prov.toUpperCase()}**`);
+        }
+      });
     });
+    document.querySelectorAll("[data-mode]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const mode = el.getAttribute("data-mode");
+        if (mode) {
+          this.currentMode = mode;
+          this.updateModeUI();
+          this.addSystemNotification(`${this.t().noticeModeSwitched} **${mode.toUpperCase()}**`);
+        }
+      });
+    });
+    document.querySelectorAll("[data-role]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const role = el.getAttribute("data-role");
+        if (role) {
+          this.currentRole = role;
+          this.updateRoleUI();
+          this.addSystemNotification(`${this.t().noticeRoleSwitched} **${role.toUpperCase()}**`);
+        }
+      });
+    });
+    const saveKeyBtn = document.getElementById("deck-save-key-btn");
+    const clearKeyBtn = document.getElementById("deck-clear-key-btn");
+    const apiKeyInput = document.getElementById("deck-api-key-input");
     saveKeyBtn?.addEventListener("click", () => {
-      const key = apiKeyInput?.value.trim() || "";
-      if (key) {
-        localStorage.setItem("evabot_gemini_key", key);
-        this.addSystemNotification("Custom Gemini API key saved to browser storage.");
-      } else {
-        localStorage.removeItem("evabot_gemini_key");
-        this.addSystemNotification("Using ambient Google Cloud account authentication.");
+      const val = apiKeyInput?.value.trim() || "";
+      if (val) {
+        localStorage.setItem("evabot_gemini_key", val);
+        this.addSystemNotification(this.t().noticeKeySaved);
       }
       this.updateKeyStatusUI();
-      const modal = document.getElementById("settings-modal");
-      if (modal) modal.classList.add("hidden");
+    });
+    clearKeyBtn?.addEventListener("click", () => {
+      localStorage.removeItem("evabot_gemini_key");
+      if (apiKeyInput) apiKeyInput.value = "";
+      this.addSystemNotification(this.t().noticeKeyCleared);
+      this.updateKeyStatusUI();
+    });
+    document.getElementById("header-model-pill")?.addEventListener("click", () => {
+      deckSection?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
   async checkHealth() {
+    const t0 = performance.now();
     try {
       const res = await fetch("/api/health");
+      this.lastLatencyMs = Math.round(performance.now() - t0);
       if (res.ok) {
         const data = await res.json();
         this.serverHasApiKey = Boolean(data.hasServerApiKey);
         if (data.authSource) this.authSource = data.authSource;
         if (data.account) this.userAccount = data.account;
+        if (data.uptimeSeconds) this.serverUptimeSec = data.uptimeSeconds;
+        if (data.memoryUsageMb) this.serverMemoryMb = data.memoryUsageMb;
       }
     } catch {
       this.serverHasApiKey = false;
+      this.lastLatencyMs = 999;
     }
+    this.updateTelemetryUI();
+  }
+  startTelemetryLoop() {
+    if (this.uptimeInterval) clearInterval(this.uptimeInterval);
+    this.uptimeInterval = setInterval(() => {
+      this.serverUptimeSec += 1;
+      this.updateTelemetryUI();
+    }, 1e3);
+    setInterval(() => {
+      this.checkHealth();
+    }, 15e3);
+  }
+  updateTelemetryUI() {
+    const t = this.t();
+    const serverEl = document.getElementById("telem-server");
+    if (serverEl) serverEl.textContent = "evabot-online-edge";
+    const uptimeEl = document.getElementById("telem-uptime");
+    if (uptimeEl) {
+      const hrs = Math.floor(this.serverUptimeSec / 3600);
+      const mins = Math.floor(this.serverUptimeSec % 3600 / 60);
+      const secs = this.serverUptimeSec % 60;
+      uptimeEl.textContent = `${hrs}h ${mins}m ${secs}s`;
+    }
+    const memEl = document.getElementById("telem-memory");
+    if (memEl) memEl.textContent = `${this.serverMemoryMb} MB`;
+    const latEl = document.getElementById("telem-latency");
+    if (latEl) latEl.textContent = `${this.lastLatencyMs} ms`;
+    const provEl = document.getElementById("telem-provider");
+    if (provEl) provEl.textContent = this.currentProvider.toUpperCase();
+    const modelEl = document.getElementById("telem-model");
+    if (modelEl) modelEl.textContent = this.currentModel;
+    const roleEl = document.getElementById("telem-role");
+    if (roleEl) roleEl.textContent = this.currentRole.toUpperCase();
+    const modeEl = document.getElementById("telem-mode");
+    if (modeEl) modeEl.textContent = this.currentMode.toUpperCase();
+    const m = ModelRegistry.getModelById(this.currentModel);
+    const isFree = m?.pricing.freeTierStatus === "100% Free Quota Available";
+    const quotaEl = document.getElementById("telem-quota");
+    if (quotaEl) {
+      quotaEl.textContent = isFree ? t.badgeFree : t.badgePaid;
+      quotaEl.className = isFree ? "text-emerald-400 font-bold" : "text-amber-400 font-bold";
+    }
+    const authEl = document.getElementById("telem-auth");
+    if (authEl) {
+      const customKey = localStorage.getItem("evabot_gemini_key");
+      authEl.textContent = customKey ? "Custom API Key" : this.authSource;
+    }
+    const accEl = document.getElementById("telem-account");
+    if (accEl) accEl.textContent = this.userAccount;
   }
   populateModelSelector() {
-    const select = document.getElementById("model-select");
+    const select = document.getElementById("deck-model-select");
     if (!select) return;
     select.innerHTML = "";
     const categories = [
@@ -560,87 +1207,199 @@ var EvaBotWebApp = class {
       for (const m of models) {
         const opt = document.createElement("option");
         opt.value = m.id;
-        const tag = m.recommended ? " \u2605 [Rec]" : m.pricing.freeTierStatus.includes("Free") ? " [Free]" : " [Paid]";
-        opt.textContent = `${m.name}${tag}`;
+        const isFree = m.pricing.freeTierStatus.includes("Free");
+        const badge = isFree ? " [\u{1F7E2} FREE]" : " [\u{1F7E1} PAID]";
+        opt.textContent = `${m.name}${badge}`;
         if (m.id === this.currentModel) opt.selected = true;
         group.appendChild(opt);
       }
       select.appendChild(group);
     }
   }
-  updateModelDetailsBar() {
-    const bar = document.getElementById("model-details-bar");
-    if (!bar) return;
+  updateProviderUI() {
+    document.querySelectorAll("[data-provider]").forEach((el) => {
+      const prov = el.getAttribute("data-provider");
+      const isSelected = prov === this.currentProvider;
+      if (isSelected) {
+        el.classList.add("border-white", "bg-zinc-900", "text-white");
+        el.classList.remove("border-zinc-800", "bg-black", "text-zinc-400");
+      } else {
+        el.classList.remove("border-white", "bg-zinc-900", "text-white");
+        el.classList.add("border-zinc-800", "bg-black", "text-zinc-400");
+      }
+    });
+    this.updateTelemetryUI();
+  }
+  updateModeUI() {
+    document.querySelectorAll("[data-mode]").forEach((el) => {
+      const mode = el.getAttribute("data-mode");
+      const isSelected = mode === this.currentMode;
+      if (isSelected) {
+        el.classList.add("border-white", "bg-zinc-900", "text-white");
+        el.classList.remove("border-zinc-800", "bg-black", "text-zinc-400");
+      } else {
+        el.classList.remove("border-white", "bg-zinc-900", "text-white");
+        el.classList.add("border-zinc-800", "bg-black", "text-zinc-400");
+      }
+    });
+    const headerMode = document.getElementById("header-mode-badge");
+    if (headerMode) headerMode.textContent = `MODE: ${this.currentMode.toUpperCase()}`;
+    this.updateTelemetryUI();
+  }
+  updateRoleUI() {
+    document.querySelectorAll("[data-role]").forEach((el) => {
+      const role = el.getAttribute("data-role");
+      const isSelected = role === this.currentRole;
+      if (isSelected) {
+        el.classList.add("border-white", "bg-zinc-900", "text-white");
+        el.classList.remove("border-zinc-800", "bg-black", "text-zinc-400");
+      } else {
+        el.classList.remove("border-white", "bg-zinc-900", "text-white");
+        el.classList.add("border-zinc-800", "bg-black", "text-zinc-400");
+      }
+    });
+    const headerRole = document.getElementById("header-role-badge");
+    if (headerRole) headerRole.textContent = `ROLE: ${this.currentRole.toUpperCase()}`;
+    this.updateTelemetryUI();
+  }
+  updateModelDetailsUI() {
     const m = ModelRegistry.getModelById(this.currentModel);
     if (!m) return;
+    const t = this.t();
     const isFree = m.pricing.freeTierStatus === "100% Free Quota Available";
-    const badgeClass = isFree ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-amber-500/20 text-amber-300 border-amber-500/40";
-    bar.innerHTML = `
-      <div class="flex items-center gap-2 flex-wrap">
-        <span class="px-2 py-0.5 rounded border ${badgeClass} font-bold text-[10px] tracking-wider uppercase">${m.pricing.freeTierStatus}</span>
-        <span class="px-2 py-0.5 rounded border border-cyan-800 bg-cyan-950/60 text-cyan-300 text-[10px] font-bold">${m.provider}</span>
-        <span class="text-slate-400">Context: <strong class="text-white">${m.contextWindow.toLocaleString()}</strong> tokens</span>
-        <span class="text-slate-600">|</span>
-        <span class="text-slate-400">Max Out: <strong class="text-white">${m.maxOutputTokens.toLocaleString()}</strong></span>
-      </div>
-      <div class="flex items-center gap-2 text-slate-300 flex-wrap">
-        <span class="text-cyan-400">Input: <strong>${m.pricing.inputPer1MTokensUSD}</strong></span>
-        <span class="text-slate-600">|</span>
-        <span class="text-purple-400">Output: <strong>${m.pricing.outputPer1MTokensUSD}</strong></span>
-      </div>
-    `;
+    const headerName = document.getElementById("header-model-name");
+    if (headerName) headerName.textContent = m.name;
+    const headerBadge = document.getElementById("header-model-badge");
+    if (headerBadge) {
+      headerBadge.textContent = isFree ? "\u{1F7E2} FREE" : "\u{1F7E1} PAID";
+      headerBadge.className = isFree ? "px-1.5 py-0.2 bg-emerald-950 text-emerald-400 border border-emerald-700 text-[10px] font-bold" : "px-1.5 py-0.2 bg-amber-950 text-amber-400 border border-amber-700 text-[10px] font-bold";
+    }
+    const specName = document.getElementById("model-spec-name");
+    if (specName) specName.textContent = m.name;
+    const specProv = document.getElementById("model-spec-provider");
+    if (specProv) specProv.textContent = m.provider;
+    const specBadge = document.getElementById("model-spec-badge");
+    if (specBadge) {
+      specBadge.textContent = isFree ? t.badgeFree : t.badgePaid;
+      specBadge.className = isFree ? "px-2 py-0.5 border border-emerald-600 text-emerald-400 font-bold text-xs" : "px-2 py-0.5 border border-amber-600 text-amber-400 font-bold text-xs";
+    }
+    const specContext = document.getElementById("model-spec-context");
+    if (specContext) specContext.textContent = `${m.contextWindow.toLocaleString()} tokens`;
+    const specMaxOut = document.getElementById("model-spec-maxout");
+    if (specMaxOut) specMaxOut.textContent = `${m.maxOutputTokens.toLocaleString()} tokens`;
+    const specUsd = document.getElementById("model-spec-usd");
+    if (specUsd) specUsd.textContent = `In: ${m.pricing.inputPer1MTokensUSD} | Out: ${m.pricing.outputPer1MTokensUSD}`;
+    const specEur = document.getElementById("model-spec-eur");
+    if (specEur) specEur.textContent = `In: ${m.pricing.inputPer1MTokensEUR} | Out: ${m.pricing.outputPer1MTokensEUR}`;
+    const specQuota = document.getElementById("model-spec-quota");
+    if (specQuota) specQuota.textContent = m.pricing.freeTierDetails;
+    this.updateTelemetryUI();
   }
   updateKeyStatusUI() {
-    const badge = document.getElementById("key-status-badge");
-    if (!badge) return;
-    const customKey = localStorage.getItem("evabot_gemini_key");
-    if (customKey) {
-      badge.textContent = "Custom API Key Active";
-      badge.className = "text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono";
-    } else if (this.serverHasApiKey) {
-      badge.textContent = `Google Auto-Auth (${this.userAccount})`;
-      badge.className = "text-xs px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono";
-    } else {
-      badge.textContent = "Google Auto-Auth Active";
-      badge.className = "text-xs px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono";
+    const t = this.t();
+    const statusEl = document.getElementById("deck-key-status");
+    const input = document.getElementById("deck-api-key-input");
+    const customKey = localStorage.getItem("evabot_gemini_key") || "";
+    if (input && !input.value) {
+      input.value = customKey;
+    }
+    if (statusEl) {
+      if (customKey) {
+        statusEl.textContent = t.keyStatusCustom;
+        statusEl.className = "text-xs font-bold text-emerald-400 border border-emerald-800 bg-emerald-950/40 px-2.5 py-1";
+      } else {
+        statusEl.textContent = `${t.keyStatusAmbient} (${this.userAccount})`;
+        statusEl.className = "text-xs font-bold text-emerald-400 border border-emerald-800 bg-emerald-950/40 px-2.5 py-1";
+      }
     }
   }
   renderWelcomeMessage() {
+    const t = this.t();
+    const m = ModelRegistry.getModelById(this.currentModel);
+    const welcome = `+==============================================================================+
+| ${t.welcomeHeading}
++==============================================================================+
+${t.welcomeNotice}
+
+\u2022 PROVIDER: [${this.currentProvider.toUpperCase()}] // Google Cloud Vertex & AI Studio
+\u2022 ACTIVE MODEL: ${m?.name || this.currentModel} [${m?.pricing.freeTierStatus}]
+\u2022 OPERATIONAL MODE: [${this.currentMode.toUpperCase()}]
+\u2022 CORPORATE PERSONA: [${this.currentRole.toUpperCase()}]
+\u2022 CURRENCY ACCOUNTING: Strictly USD ($) and EUR (\u20AC) [Zero Ruble Compliance]
+
+Execute commands or submit analytical inquiries below. Click '[ \u2193 CONTROL PANEL ]' to toggle neural deck parameters.`;
     this.appendMessage({
       role: "model",
-      text: `\u{1F44B} **Welcome to EvaBot Online \u2014 Google Model Garden Gateway!**
-
-Connected to **Google Antigravity & Google Cloud** account \`${this.userAccount}\`.
-
-All models are accessible via Google native protocols with automatic credential routing:
-- **Google Gemini Series:** 2.5 Flash, 2.5 Pro, 2.0 Flash, 1.5 Pro, 1.5 Flash
-- **Open Models by Google:** Gemma 2 (27B & 9B Instruct)
-- **Anthropic Claude on Google Cloud:** Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku
-- **Meta Llama 3 on Google Cloud:** Llama 3.3 70B, Llama 3.2 Vision 90B, Llama 3.1 405B
-- **Mistral AI & DeepSeek on Google Cloud:** Mistral Large 2, Codestral 25.01, DeepSeek R1
-- **AI21 Labs & Cohere on Google Cloud:** Jamba 1.5 Large, Command R+
-
-Select any model from the dropdown to check real-time pricing (strictly USD \`$\` / EUR \`\u20AC\`) and token consumption.`
+      text: welcome,
+      timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString(),
+      metadata: {
+        model: this.currentModel,
+        mode: this.currentMode,
+        role: this.currentRole,
+        provider: this.currentProvider
+      }
     });
   }
+  buildSystemInstruction() {
+    const rolePrompts = {
+      ceo: "Act as EvaBot Executive Strategist & CEO. Deliver decisive, high-level corporate insight, focus on strategic objectives, market leadership, and return on investment.",
+      cto: "Act as EvaBot Principal System Architect & CTO. Focus strictly on distributed systems design, zero-downtime scalability, fault tolerance, robust engineering, and clean code.",
+      ciso: "Act as EvaBot Cyber Security Specialist & CISO. Scrutinize zero-trust architecture, threat modeling, cryptographic integrity, attack surface minimization, and zero-day resilience.",
+      cfo: "Act as EvaBot Financial & Risk Analyst & CFO. Provide rigorous financial and tokenomics evaluations. All calculations and budget estimates must be strictly in USD ($) and EUR (\u20AC). Never mention rubles or forbidden geographic currencies.",
+      ux: "Act as EvaBot Creative Director & UX Designer. Focus on minimalist cyber aesthetics, high-contrast monochrome terminal ergonomics, clarity, and frictionless human-agent interaction.",
+      dev: "Act as EvaBot Lead Full-Stack Software Engineer. Provide complete, production-grade, bug-free implementations with clear type safety, algorithmic precision, and tests.",
+      rsch: "Act as EvaBot AI Research Scientist. Analyze attention topologies, context retention, chain-of-thought paradigms, and neurosymbolic reasoning loops.",
+      legal: "Act as EvaBot Compliance Counsel & Legal Officer. Scrutinize regulatory alignment (GDPR, EU AI Act), data sovereignty, intellectual property, and ethical AI standards."
+    };
+    const modePrompts = {
+      solo: "Mode: SOLO. Focus with maximum precision on the assigned corporate role mandate.",
+      broadcast: "Mode: BROADCAST. Deliver a comprehensive multi-dimensional breakdown analyzing technical feasibility, financial impact (USD/EUR only), security risks, and operational execution.",
+      dialogue: "Mode: DIALOGUE. Maintain high-cadence, crisp, responsive interactive cyber-terminal communication.",
+      consilium: "Mode: CONSILIUM. Convene an executive council of leadership roles (CEO, CTO, CISO, CFO). Deliberate trade-offs across perspectives, then synthesize into a decisive actionable consensus."
+    };
+    const langDirective = this.currentLang === "uk" ? "Respond strictly in Ukrainian (\u0423\u043A\u0440\u0430\u0457\u043D\u0441\u044C\u043A\u0430 \u043C\u043E\u0432\u0430). Maintain technical precision and cyber-terminal formatting." : this.currentLang === "ru" ? "Respond strictly in Russian. Maintain technical precision and cyber-terminal formatting. Adhere strictly to the rule: NEVER mention rubles or Russia; use strictly USD ($) or EUR (\u20AC)." : "Respond strictly in English. Maintain technical precision and cyber-terminal formatting.";
+    return `${rolePrompts[this.currentRole]}
+
+${modePrompts[this.currentMode]}
+
+${langDirective}
+
+Format your responses with clean cyber-terminal markdown, crisp ASCII tables or bullet points where appropriate, and clean code blocks.`;
+  }
   async handleSend() {
-    if (this.isGenerating) return;
+    if (this.isGenerating) {
+      if (this.abortController) {
+        this.abortController.abort();
+      }
+      return;
+    }
     const input = document.getElementById("user-input");
     const text = input?.value.trim();
     if (!text) return;
     input.value = "";
-    this.appendMessage({ role: "user", text });
+    const now = (/* @__PURE__ */ new Date()).toLocaleTimeString();
+    this.appendMessage({
+      role: "user",
+      text,
+      timestamp: now,
+      metadata: {
+        mode: this.currentMode,
+        role: this.currentRole
+      }
+    });
     const customKey = localStorage.getItem("evabot_gemini_key") || "";
     this.isGenerating = true;
+    this.updateStatusLight("busy");
     this.updateSendButtonState(true);
-    const botMessageElement = this.createMessageBubble("model", "");
+    const botMessageElement = this.createMessageBubble("model", "", now);
     const textSpan = botMessageElement.querySelector(".message-body");
     try {
       this.abortController = new AbortController();
-      const historyPayload = this.messages.map((m) => ({
+      const historyPayload = this.messages.filter((m) => m.role === "user" || m.role === "model").map((m) => ({
         role: m.role,
         parts: [{ text: m.text }]
       }));
+      const t0 = performance.now();
       const response = await fetch("/api/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -648,12 +1407,15 @@ Select any model from the dropdown to check real-time pricing (strictly USD \`$\
           message: text,
           model: this.currentModel,
           history: historyPayload,
-          apiKey: customKey || void 0
+          apiKey: customKey || void 0,
+          systemInstruction: this.buildSystemInstruction()
         }),
         signal: this.abortController.signal
       });
+      this.lastLatencyMs = Math.round(performance.now() - t0);
+      this.updateTelemetryUI();
       if (!response.ok) {
-        const errJson = await response.json().catch(() => ({ error: "Request failed" }));
+        const errJson = await response.json().catch(() => ({ error: "Transmission error" }));
         throw new Error(errJson.error || `HTTP ${response.status}`);
       }
       if (!response.body) throw new Error("Readable stream not supported");
@@ -689,43 +1451,74 @@ Select any model from the dropdown to check real-time pricing (strictly USD \`$\
           }
         }
       }
-      this.messages.push({ role: "user", text });
-      this.messages.push({ role: "model", text: accumulatedText });
+      this.messages.push({
+        role: "model",
+        text: accumulatedText,
+        timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString(),
+        metadata: {
+          model: this.currentModel,
+          mode: this.currentMode,
+          role: this.currentRole,
+          provider: this.currentProvider
+        }
+      });
+      this.updateStatusLight("online");
     } catch (err) {
+      this.updateStatusLight("error");
       if (err.name === "AbortError") {
-        textSpan.innerHTML += " *(Generation stopped by user)*";
+        textSpan.innerHTML += '\n<span class="text-amber-400 font-mono text-xs"> [STREAM_HALTED_BY_OPERATOR \u{1F7E1}]</span>';
       } else {
-        textSpan.innerHTML = `<span class="text-rose-400">\u274C Error: ${this.escapeHtml(err.message)}</span>`;
+        textSpan.innerHTML = `<span class="text-rose-500 font-mono text-xs">\u{1F534} TRANSMISSION_ERROR: ${this.escapeHtml(err.message)}</span>`;
       }
     } finally {
       this.isGenerating = false;
       this.abortController = null;
       this.updateSendButtonState(false);
       this.setupCodeCopyButtons();
+      setTimeout(() => {
+        if (!this.isGenerating) this.updateStatusLight("online");
+      }, 3e3);
+    }
+  }
+  updateStatusLight(state) {
+    const t = this.t();
+    const light = document.getElementById("telemetry-status-light");
+    const text = document.getElementById("telemetry-status-text");
+    if (state === "online") {
+      if (light) light.className = "inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#22c55e]";
+      if (text) {
+        text.textContent = t.statusOnline;
+        text.className = "text-xs text-emerald-400 font-mono font-bold";
+      }
+    } else if (state === "busy") {
+      if (light) light.className = "inline-block w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse";
+      if (text) {
+        text.textContent = t.statusBusy;
+        text.className = "text-xs text-amber-400 font-mono font-bold";
+      }
+    } else {
+      if (light) light.className = "inline-block w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_#ef4444]";
+      if (text) {
+        text.textContent = t.statusError;
+        text.className = "text-xs text-rose-500 font-mono font-bold";
+      }
     }
   }
   updateSendButtonState(generating) {
+    const t = this.t();
     const sendBtn = document.getElementById("send-btn");
     if (!sendBtn) return;
     if (generating) {
-      sendBtn.innerHTML = `
-        <svg class="animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-        </svg>
-      `;
+      sendBtn.textContent = t.stopBtn;
+      sendBtn.className = "px-4 py-2 border border-amber-500 bg-amber-950/40 text-amber-400 font-bold text-xs tracking-wider transition-all hover:bg-amber-900/60 font-mono";
     } else {
-      sendBtn.innerHTML = `
-        <span>Send</span>
-        <svg class="w-4 h-4 ml-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-        </svg>
-      `;
+      sendBtn.textContent = t.transmitBtn;
+      sendBtn.className = "px-4 py-2 border border-white bg-white text-black font-bold text-xs tracking-wider transition-all hover:bg-zinc-200 active:scale-95 font-mono";
     }
   }
   appendMessage(msg) {
     this.messages.push(msg);
-    const el = this.createMessageBubble(msg.role, msg.text);
+    const el = this.createMessageBubble(msg.role, msg.text, msg.timestamp);
     const container = document.getElementById("messages-container");
     if (container) {
       container.appendChild(el);
@@ -733,26 +1526,30 @@ Select any model from the dropdown to check real-time pricing (strictly USD \`$\
       this.setupCodeCopyButtons();
     }
   }
-  createMessageBubble(role, text) {
+  createMessageBubble(role, text, timestamp) {
     const wrapper = document.createElement("div");
-    wrapper.className = `flex ${role === "user" ? "justify-end" : "justify-start"} mb-4 animate-fade-in`;
-    const bubble = document.createElement("div");
+    wrapper.className = "w-full mb-4 animate-fade-in font-mono text-sm";
     const isUser = role === "user";
-    bubble.className = isUser ? "max-w-2xl bg-cyan-600/90 text-white rounded-2xl rounded-tr-none px-4 py-3 shadow-lg font-sans text-sm sm:text-base border border-cyan-400/30" : "max-w-3xl bg-slate-900/90 text-slate-100 rounded-2xl rounded-tl-none px-5 py-4 shadow-xl font-sans text-sm sm:text-base border border-slate-700/60 leading-relaxed";
+    const isSystem = role === "system";
+    const card = document.createElement("div");
+    card.className = isUser ? "border border-zinc-700 bg-black p-3 sm:p-4 text-white" : isSystem ? "border border-dashed border-zinc-800 bg-black p-2 text-zinc-400 text-xs text-center" : "border border-zinc-800 bg-black p-3 sm:p-4 text-white";
     const header = document.createElement("div");
-    header.className = "text-xs font-mono text-slate-400 mb-1 flex items-center justify-between gap-4 border-b border-slate-700/40 pb-1";
+    header.className = "text-xs text-zinc-500 mb-2 flex items-center justify-between gap-2 border-b border-zinc-900 pb-1.5 font-mono";
+    const callsign = isUser ? `\u250C\u2500 [${timestamp}] [USER // OPERATOR]` : `\u250C\u2500 [${timestamp}] [EVA // ${this.currentModel.toUpperCase()} // ${this.currentMode.toUpperCase()} // ${this.currentRole.toUpperCase()}]`;
     header.innerHTML = `
-      <span class="font-bold ${isUser ? "text-cyan-200" : "text-purple-300"}">
-        ${isUser ? "\u{1F464} You" : `\u26A1 EvaBot (${this.currentModel})`}
-      </span>
-      <span class="text-slate-500">${(/* @__PURE__ */ new Date()).toLocaleTimeString()}</span>
+      <span class="font-bold ${isUser ? "text-white" : "text-zinc-300"}">${callsign}</span>
+      <span class="text-zinc-600 text-[11px]">${isUser ? "TX_OK" : "RX_OK \u{1F7E2}"}</span>
     `;
     const body = document.createElement("div");
-    body.className = "message-body prose prose-invert max-w-none";
+    body.className = "message-body font-mono text-zinc-200 leading-relaxed overflow-x-auto";
     body.innerHTML = this.renderMarkdown(text);
-    bubble.appendChild(header);
-    bubble.appendChild(body);
-    wrapper.appendChild(bubble);
+    card.appendChild(header);
+    card.appendChild(body);
+    const footer = document.createElement("div");
+    footer.className = "text-xs text-zinc-700 mt-2 font-mono select-none";
+    footer.textContent = "\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500";
+    card.appendChild(footer);
+    wrapper.appendChild(card);
     const container = document.getElementById("messages-container");
     container?.appendChild(wrapper);
     return wrapper;
@@ -762,35 +1559,38 @@ Select any model from the dropdown to check real-time pricing (strictly USD \`$\
     let html = md;
     html = html.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_match, lang, code) => {
       const language = lang || "text";
+      const t = this.t();
       return `
-        <div class="code-block-wrapper my-3 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 font-mono text-xs">
-          <div class="flex justify-between items-center px-3 py-1.5 bg-slate-800/80 text-slate-400">
-            <span class="font-bold uppercase tracking-wider text-[10px] text-cyan-400">${language}</span>
-            <button class="copy-code-btn px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 transition-all text-[11px]" data-code="${encodeURIComponent(code)}">Copy</button>
+        <div class="code-block-wrapper my-3 border border-zinc-800 bg-black font-mono text-xs">
+          <div class="flex justify-between items-center px-3 py-1.5 border-b border-zinc-800 bg-zinc-950 text-zinc-400">
+            <span class="font-bold uppercase tracking-widest text-[11px] text-white">\u250C [CODE: ${language.toUpperCase()}]</span>
+            <button class="copy-code-btn px-2 py-0.5 border border-zinc-700 bg-black hover:bg-zinc-800 text-zinc-200 transition-all text-[10px]" data-code="${encodeURIComponent(code)}">${t.copyBtn}</button>
           </div>
-          <pre class="p-3 overflow-x-auto text-slate-200"><code>${this.escapeHtml(code)}</code></pre>
+          <pre class="p-3 overflow-x-auto text-zinc-200"><code>${this.escapeHtml(code)}</code></pre>
+          <div class="px-3 py-0.5 border-t border-zinc-900 text-zinc-700 text-[10px]">\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500</div>
         </div>
       `;
     });
-    html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 font-mono text-xs">$1</code>');
-    html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-    html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-    html = html.replace(/^### (.*$)/gim, '<h3 class="text-base font-bold text-cyan-300 mt-2 mb-1">$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold text-white mt-3 mb-1.5">$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1 class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mt-3 mb-2">$1</h1>');
-    html = html.replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4 list-disc text-slate-200">$1</li>');
+    html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 border border-zinc-800 bg-zinc-950 text-white font-mono text-xs">$1</code>');
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
+    html = html.replace(/\*([^*]+)\*/g, '<em class="text-zinc-400">$1</em>');
+    html = html.replace(/^### (.*$)/gim, '<h3 class="text-sm font-bold text-white mt-3 mb-1 border-b border-zinc-800 pb-0.5">> $1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 class="text-base font-bold text-white mt-4 mb-1.5 border-b border-zinc-700 pb-1">>> $1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 class="text-lg font-bold text-white mt-4 mb-2 border-b border-zinc-600 pb-1">>>> $1</h1>');
+    html = html.replace(/^\s*-\s+(.*$)/gim, '<div class="flex items-start gap-2 ml-2 my-0.5 text-zinc-300"><span class="text-zinc-500">\u2022</span><span>$1</span></div>');
     html = html.replace(/\n\n/g, "<br/><br/>");
     return html;
   }
   setupCodeCopyButtons() {
+    const t = this.t();
     document.querySelectorAll(".copy-code-btn").forEach((btn) => {
       btn.onclick = () => {
         const raw = btn.getAttribute("data-code");
         if (raw) {
           navigator.clipboard.writeText(decodeURIComponent(raw));
-          btn.textContent = "Copied!";
+          btn.textContent = t.copiedBtn;
           setTimeout(() => {
-            btn.textContent = "Copy";
+            btn.textContent = t.copyBtn;
           }, 2e3);
         }
       };
@@ -800,7 +1600,7 @@ Select any model from the dropdown to check real-time pricing (strictly USD \`$\
     const container = document.getElementById("messages-container");
     if (!container) return;
     const notif = document.createElement("div");
-    notif.className = "text-center my-2 text-xs font-mono text-slate-500";
+    notif.className = "text-center my-2 text-xs font-mono text-zinc-500";
     notif.innerHTML = `\u2726 ${this.renderMarkdown(text)}`;
     container.appendChild(notif);
     this.scrollToBottom();
@@ -815,7 +1615,11 @@ Select any model from the dropdown to check real-time pricing (strictly USD \`$\
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 };
+window.EvaBotWebApp = EvaBotWebApp;
 window.addEventListener("DOMContentLoaded", () => {
   window.evaBotApp = new EvaBotWebApp();
 });
+export {
+  EvaBotWebApp
+};
 //# sourceMappingURL=bundle.js.map
