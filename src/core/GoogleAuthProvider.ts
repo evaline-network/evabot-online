@@ -42,21 +42,7 @@ export class GoogleAuthProvider {
       return this.cachedCredentials;
     }
 
-    // 2. Google Compute Engine VM Metadata Server (Zero-config on GCP)
-    const gceToken = await this.fetchGceMetadataToken();
-    if (gceToken) {
-      this.cachedCredentials = {
-        token: gceToken,
-        type: 'bearer',
-        source: 'Google Compute Engine Service Account',
-        account: 'evabot.online@gmail.com',
-      };
-      this.expiresAt = now + 50 * 60 * 1000; // 50 minutes
-      logger.info('GoogleAuthProvider', 'Authenticated automatically via Google Compute Engine Metadata Service');
-      return this.cachedCredentials;
-    }
-
-    // 3. Google ADC refresh token exchange
+    // 2. Google ADC refresh token exchange (full cloud-platform scope for evabot.online@gmail.com)
     const adcToken = await this.exchangeAdcRefreshToken();
     if (adcToken) {
       this.cachedCredentials = {
@@ -67,6 +53,20 @@ export class GoogleAuthProvider {
       };
       this.expiresAt = now + 50 * 60 * 1000;
       logger.info('GoogleAuthProvider', 'Authenticated automatically via Google ADC refresh token');
+      return this.cachedCredentials;
+    }
+
+    // 3. Google Compute Engine VM Metadata Server fallback
+    const gceToken = await this.fetchGceMetadataToken();
+    if (gceToken) {
+      this.cachedCredentials = {
+        token: gceToken,
+        type: 'bearer',
+        source: 'Google Compute Engine Service Account',
+        account: 'evabot.online@gmail.com',
+      };
+      this.expiresAt = now + 50 * 60 * 1000; // 50 minutes
+      logger.info('GoogleAuthProvider', 'Authenticated automatically via Google Compute Engine Metadata Service');
       return this.cachedCredentials;
     }
 
