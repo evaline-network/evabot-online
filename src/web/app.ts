@@ -843,7 +843,7 @@ ${t.welcomeNotice}
 • ACTIVE MODEL: ${m?.name || this.currentModel} [${m?.pricing.freeTierStatus}]
 • OPERATIONAL MODE: [${this.currentMode.toUpperCase()}]
 • CORPORATE PERSONA: [${this.currentRole.toUpperCase()}]
-• CURRENCY ACCOUNTING: Strictly USD ($) and EUR (€) [Zero Ruble Compliance]
+• CURRENCY ACCOUNTING: Strictly USD ($) and EUR (€) Compliance
 
 Execute commands or submit analytical inquiries below. Click '[ ↓ CONTROL PANEL ]' to toggle neural deck parameters.`;
 
@@ -865,7 +865,7 @@ Execute commands or submit analytical inquiries below. Click '[ ↓ CONTROL PANE
       ceo: 'Act as EvaBot Executive Strategist & CEO. Deliver decisive, high-level corporate insight, focus on strategic objectives, market leadership, and return on investment.',
       cto: 'Act as EvaBot Principal System Architect & CTO. Focus strictly on distributed systems design, zero-downtime scalability, fault tolerance, robust engineering, and clean code.',
       ciso: 'Act as EvaBot Cyber Security Specialist & CISO. Scrutinize zero-trust architecture, threat modeling, cryptographic integrity, attack surface minimization, and zero-day resilience.',
-      cfo: 'Act as EvaBot Financial & Risk Analyst & CFO. Provide rigorous financial and tokenomics evaluations. All calculations and budget estimates must be strictly in USD ($) and EUR (€). Never mention rubles or forbidden geographic currencies.',
+      cfo: 'Act as EvaBot Financial & Risk Analyst & CFO. Provide rigorous financial and tokenomics evaluations. All calculations and budget estimates must be strictly in USD ($) and EUR (€). Calculations must be exclusively in USD ($) or EUR (€).',
       ux: 'Act as EvaBot Creative Director & UX Designer. Focus on minimalist cyber aesthetics, high-contrast monochrome terminal ergonomics, clarity, and frictionless human-agent interaction.',
       dev: 'Act as EvaBot Lead Full-Stack Software Engineer. Provide complete, production-grade, bug-free implementations with clear type safety, algorithmic precision, and tests.',
       rsch: 'Act as EvaBot AI Research Scientist. Analyze attention topologies, context retention, chain-of-thought paradigms, and neurosymbolic reasoning loops.',
@@ -882,7 +882,7 @@ Execute commands or submit analytical inquiries below. Click '[ ↓ CONTROL PANE
     const langDirective = this.currentLang === 'uk'
       ? 'Respond strictly in Ukrainian (Українська мова). Maintain technical precision and cyber-terminal formatting.'
       : this.currentLang === 'ru'
-      ? 'Respond strictly in Russian. Maintain technical precision and cyber-terminal formatting. Adhere strictly to the rule: NEVER mention rubles or Russia; use strictly USD ($) or EUR (€).'
+      ? 'Respond strictly in Russian. Maintain technical precision and cyber-terminal formatting. Adhere strictly to the rule: Use strictly USD ($) or EUR (€) for all pricing and metrics.'
       : 'Respond strictly in English. Maintain technical precision and cyber-terminal formatting.';
 
     return `${rolePrompts[this.currentRole]}\n\n${modePrompts[this.currentMode]}\n\n${langDirective}\n\nFormat your responses with clean cyber-terminal markdown, crisp ASCII tables or bullet points where appropriate, and clean code blocks.`;
