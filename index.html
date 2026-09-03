@@ -9,7 +9,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <title>EvaBot Online // Modular Gemini LLM Agent</title>
+  <title>EvaBot Online // Google Model Garden & Gemini LLM Agent</title>
 
   <!-- TAILWIND CSS & FONTS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -79,9 +79,9 @@
         </div>
         <div>
           <h1 class="font-orbitron font-bold text-base sm:text-lg text-white tracking-wide flex items-center gap-2">
-            EVABOT <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/60 font-mono">LLM AGENT</span>
+            EVABOT <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/60 font-mono">MODEL GARDEN</span>
           </h1>
-          <p class="text-[11px] font-mono text-slate-400 hidden sm:block">Google AI Pro (Gemini) • Multi-Model Gateway</p>
+          <p class="text-[11px] font-mono text-slate-400 hidden sm:block">Google AI Pro & Vertex AI • Gemini & Claude Gateway</p>
         </div>
       </div>
 
@@ -91,11 +91,8 @@
         <!-- MODEL DROPDOWN -->
         <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1.5 shadow-inner">
           <label for="model-select" class="text-xs font-mono text-slate-400 hidden md:inline">Model:</label>
-          <select id="model-select" class="bg-transparent text-xs font-mono text-cyan-300 focus:outline-none cursor-pointer">
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          <select id="model-select" class="bg-transparent text-xs font-mono text-cyan-300 focus:outline-none cursor-pointer max-w-[220px] sm:max-w-xs">
+            <!-- Populated dynamically by app.ts -->
           </select>
         </div>
 
@@ -114,6 +111,11 @@
         </button>
 
       </div>
+    </div>
+
+    <!-- MODEL DETAILS & PRICING SUBBAR -->
+    <div id="model-details-bar" class="max-w-6xl mx-auto mt-2 pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+      <!-- Rendered dynamically by app.ts -->
     </div>
   </header>
 
@@ -157,12 +159,12 @@
   <div id="settings-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-        <h3 class="font-orbitron font-bold text-white text-base">Gemini API Settings</h3>
+        <h3 class="font-orbitron font-bold text-white text-base">Google Gemini & Vertex Settings</h3>
         <button id="close-settings-btn" class="text-slate-400 hover:text-white">&times;</button>
       </div>
       <div class="py-4 space-y-4">
         <div>
-          <label class="block text-xs font-mono text-slate-300 mb-1">Google Gemini API Key</label>
+          <label class="block text-xs font-mono text-slate-300 mb-1">Google Gemini API Key (Google AI Pro)</label>
           <input
             type="password"
             id="api-key-input"
@@ -170,7 +172,7 @@
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-cyan-300 font-mono focus:outline-none focus:border-cyan-500"
           />
           <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
-            Obtain your API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-cyan-400 underline">Google AI Studio</a> using your Google AI Pro account. Your key is stored only locally in your browser's <code class="text-slate-300">localStorage</code>.
+            Obtain your API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-cyan-400 underline">Google AI Studio</a> using your Google AI Pro account. Your key is saved locally in browser <code class="text-slate-300">localStorage</code>.
           </p>
         </div>
       </div>

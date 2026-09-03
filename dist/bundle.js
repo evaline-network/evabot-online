@@ -1,63 +1,219 @@
 // src/models/ModelRegistry.ts
-var GEMINI_MODELS = [
+var COMPLETE_GOOGLE_MODEL_CATALOG = [
+  // 1. Google Gemini 2.5 Series (State of the Art)
   {
     id: "gemini-2.5-flash",
     name: "Gemini 2.5 Flash",
-    description: "Ultra-fast, high-capability flagship model with native multimodal and reasoning skills.",
+    provider: "Google DeepMind",
+    category: "Gemini Next-Gen",
+    description: "Fastest flagship model with native reasoning, multimodal comprehension, and superior real-time speed.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: true,
-    tier: "Flash"
+    tier: "Free Quota + Paid",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio: 15 Requests/Min, 1,000,000 Tokens/Min, 1,500 Requests/Day for $0.00",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.075 (Paid tier)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.30 (Paid tier)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.070 (Paid tier)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.280 (Paid tier)"
+    }
   },
   {
     id: "gemini-2.5-pro",
     name: "Gemini 2.5 Pro",
-    description: "Google\u2019s most powerful reasoning and coding model for complex engineering and analytical tasks.",
+    provider: "Google DeepMind",
+    category: "Gemini Next-Gen",
+    description: "Google\u2019s premier reasoning, code generation, and complex multi-step analytical engine.",
     contextWindow: 2097152,
     maxOutputTokens: 8192,
     recommended: false,
-    tier: "Pro"
+    tier: "Free Quota + Paid",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio: 2 Requests/Min, 32,000 Tokens/Min, 50 Requests/Day for $0.00",
+      inputPer1MTokensUSD: "$0.00 (Free) / $1.25 (Paid tier)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $5.00 (Paid tier)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC1.17 (Paid tier)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC4.68 (Paid tier)"
+    }
   },
+  // 2. Google Gemini 2.0 Series
   {
     id: "gemini-2.0-flash",
     name: "Gemini 2.0 Flash",
-    description: "Next-generation low-latency model optimized for real-time interactive tasks.",
+    provider: "Google DeepMind",
+    category: "Gemini Next-Gen",
+    description: "Ultra-low latency streaming model engineered for high-frequency interactive dialogues and agent tool calls.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: false,
-    tier: "Flash"
+    tier: "Free Quota + Paid",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio: 15 Requests/Min, 1,000,000 Tokens/Min, 1,500 Requests/Day for $0.00",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.10 (Paid tier)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.40 (Paid tier)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.093 (Paid tier)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.375 (Paid tier)"
+    }
   },
+  {
+    id: "gemini-2.0-flash-lite",
+    name: "Gemini 2.0 Flash Lite",
+    provider: "Google DeepMind",
+    category: "Gemini Next-Gen",
+    description: "Cost-optimized, ultra-efficient lightweight model designed for high-scale agent throughput.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio: 30 Requests/Min, 1,500 Requests/Day for $0.00",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.075 (Paid tier)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.30 (Paid tier)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.070 (Paid tier)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.280 (Paid tier)"
+    }
+  },
+  // 3. Google Gemini 1.5 Series (Long Context)
   {
     id: "gemini-1.5-pro",
     name: "Gemini 1.5 Pro",
-    description: "Established reasoning model featuring a 2-million-token context window for massive documents.",
+    provider: "Google DeepMind",
+    category: "Gemini Long-Context",
+    description: "Groundbreaking 2,000,000 token context window capable of ingesting whole codebases and video archives.",
     contextWindow: 2097152,
     maxOutputTokens: 8192,
     recommended: false,
-    tier: "Pro"
+    tier: "Free Quota + Paid",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio: 2 Requests/Min, 32,000 Tokens/Min, 50 Requests/Day for $0.00",
+      inputPer1MTokensUSD: "$0.00 (Free) / $1.25 (Paid tier)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $5.00 (Paid tier)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC1.17 (Paid tier)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC4.68 (Paid tier)"
+    }
   },
   {
     id: "gemini-1.5-flash",
     name: "Gemini 1.5 Flash",
-    description: "Lightweight, rapid response model optimized for high throughput and general assistant queries.",
+    provider: "Google DeepMind",
+    category: "Gemini Long-Context",
+    description: "High-speed, cost-effective multimodal workhorse with 1M context support.",
     contextWindow: 1048576,
     maxOutputTokens: 8192,
     recommended: false,
-    tier: "Flash"
+    tier: "Free Quota + Paid",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio: 15 Requests/Min, 1,000,000 Tokens/Min for $0.00",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.075 (Paid tier)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.30 (Paid tier)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.070 (Paid tier)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.280 (Paid tier)"
+    }
+  },
+  // 4. Anthropic Claude on Google Cloud (Vertex AI Model Garden)
+  {
+    id: "claude-3-7-sonnet",
+    name: "Claude 3.7 Sonnet (Vertex AI)",
+    provider: "Anthropic (Google Vertex AI)",
+    category: "Claude via Vertex AI",
+    description: "Hybrid reasoning and instant response model available through Google Cloud Vertex AI Model Garden.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Vertex AI Enterprise",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "Direct Google Cloud billing (no free quota tier on Vertex AI)",
+      inputPer1MTokensUSD: "$3.00",
+      outputPer1MTokensUSD: "$15.00",
+      inputPer1MTokensEUR: "\u20AC2.80",
+      outputPer1MTokensEUR: "\u20AC14.00"
+    }
+  },
+  {
+    id: "claude-3-5-sonnet",
+    name: "Claude 3.5 Sonnet (Vertex AI)",
+    provider: "Anthropic (Google Vertex AI)",
+    category: "Claude via Vertex AI",
+    description: "Industry-standard coding and analytical model hosted on Google Cloud Vertex AI infrastructure.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Vertex AI Enterprise",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "Direct Google Cloud billing (no free quota tier on Vertex AI)",
+      inputPer1MTokensUSD: "$3.00",
+      outputPer1MTokensUSD: "$15.00",
+      inputPer1MTokensEUR: "\u20AC2.80",
+      outputPer1MTokensEUR: "\u20AC14.00"
+    }
+  },
+  {
+    id: "claude-3-5-haiku",
+    name: "Claude 3.5 Haiku (Vertex AI)",
+    provider: "Anthropic (Google Vertex AI)",
+    category: "Claude via Vertex AI",
+    description: "High-speed compact model by Anthropic running inside Google Cloud Vertex AI.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Vertex AI Enterprise",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "Direct Google Cloud billing (no free quota tier on Vertex AI)",
+      inputPer1MTokensUSD: "$0.80",
+      outputPer1MTokensUSD: "$4.00",
+      inputPer1MTokensEUR: "\u20AC0.75",
+      outputPer1MTokensEUR: "\u20AC3.75"
+    }
+  },
+  // 5. Open Gemma Models (Google DeepMind)
+  {
+    id: "gemma-2-27b",
+    name: "Gemma 2 (27B Open Model)",
+    provider: "Google DeepMind",
+    category: "Open Gemma",
+    description: "Google\u2019s state-of-the-art open-weights model deliverable via Vertex AI or self-hosted GPU.",
+    contextWindow: 8192,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "Open Weights",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Free open weights or standard Vertex AI prediction compute rate",
+      inputPer1MTokensUSD: "$0.27",
+      outputPer1MTokensUSD: "$0.27",
+      inputPer1MTokensEUR: "\u20AC0.25",
+      outputPer1MTokensEUR: "\u20AC0.25"
+    }
   }
 ];
 var ModelRegistry = class {
   static getAllModels() {
-    return [...GEMINI_MODELS];
+    return [...COMPLETE_GOOGLE_MODEL_CATALOG];
   }
   static getModelById(id) {
-    return GEMINI_MODELS.find((m) => m.id === id);
+    return COMPLETE_GOOGLE_MODEL_CATALOG.find((m) => m.id === id);
   }
   static isValidModel(id) {
-    return GEMINI_MODELS.some((m) => m.id === id);
+    return COMPLETE_GOOGLE_MODEL_CATALOG.some((m) => m.id === id);
   }
   static getDefaultModel() {
-    return GEMINI_MODELS.find((m) => m.recommended) || GEMINI_MODELS[0];
+    return COMPLETE_GOOGLE_MODEL_CATALOG.find((m) => m.recommended) || COMPLETE_GOOGLE_MODEL_CATALOG[0];
+  }
+  static getFreeModels() {
+    return COMPLETE_GOOGLE_MODEL_CATALOG.filter((m) => m.pricing.freeTierStatus === "100% Free Quota Available");
+  }
+  static getPaidOnlyModels() {
+    return COMPLETE_GOOGLE_MODEL_CATALOG.filter((m) => m.pricing.freeTierStatus === "Paid / Pay-As-You-Go Only");
   }
 };
 
@@ -75,6 +231,7 @@ var EvaBotWebApp = class {
     this.setupEventListeners();
     await this.checkHealth();
     this.populateModelSelector();
+    this.updateModelDetailsBar();
     this.updateKeyStatusUI();
     this.renderWelcomeMessage();
   }
@@ -99,7 +256,9 @@ var EvaBotWebApp = class {
     });
     modelSelect?.addEventListener("change", (e) => {
       this.currentModel = e.target.value;
-      this.addSystemNotification(`Switched active model to **${this.currentModel}**`);
+      this.updateModelDetailsBar();
+      const m = ModelRegistry.getModelById(this.currentModel);
+      this.addSystemNotification(`Switched active model to **${m?.name || this.currentModel}** [${m?.pricing.freeTierStatus}]`);
     });
     clearBtn?.addEventListener("click", () => {
       this.messages = [];
@@ -146,24 +305,59 @@ var EvaBotWebApp = class {
     const select = document.getElementById("model-select");
     if (!select) return;
     select.innerHTML = "";
-    const models = ModelRegistry.getAllModels();
-    for (const m of models) {
+    const freeModels = ModelRegistry.getFreeModels();
+    const paidModels = ModelRegistry.getPaidOnlyModels();
+    const freeGroup = document.createElement("optgroup");
+    freeGroup.label = "\u{1F7E2} Free Quota Available (Google AI Studio / Pro)";
+    for (const m of freeModels) {
       const opt = document.createElement("option");
       opt.value = m.id;
-      opt.textContent = `${m.name} (${m.tier})${m.recommended ? " \u2605" : ""}`;
+      opt.textContent = `${m.name}${m.recommended ? " \u2605 [Recommended]" : ""}`;
       if (m.id === this.currentModel) opt.selected = true;
-      select.appendChild(opt);
+      freeGroup.appendChild(opt);
     }
+    select.appendChild(freeGroup);
+    const paidGroup = document.createElement("optgroup");
+    paidGroup.label = "\u{1F7E1} Paid Only (Vertex AI Enterprise & Claude)";
+    for (const m of paidModels) {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = `${m.name} [Paid / Vertex AI]`;
+      if (m.id === this.currentModel) opt.selected = true;
+      paidGroup.appendChild(opt);
+    }
+    select.appendChild(paidGroup);
+  }
+  updateModelDetailsBar() {
+    const bar = document.getElementById("model-details-bar");
+    if (!bar) return;
+    const m = ModelRegistry.getModelById(this.currentModel);
+    if (!m) return;
+    const isFree = m.pricing.freeTierStatus === "100% Free Quota Available";
+    const badgeClass = isFree ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-amber-500/20 text-amber-300 border-amber-500/40";
+    bar.innerHTML = `
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded border ${badgeClass} font-bold text-[10px] tracking-wider uppercase">${m.pricing.freeTierStatus}</span>
+        <span class="text-slate-400">Context: <strong class="text-white">${m.contextWindow.toLocaleString()}</strong> tokens</span>
+        <span class="text-slate-600">|</span>
+        <span class="text-slate-400">Max Out: <strong class="text-white">${m.maxOutputTokens.toLocaleString()}</strong></span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-300">
+        <span class="text-cyan-400">Input: <strong>${m.pricing.inputPer1MTokensUSD}</strong></span>
+        <span class="text-slate-600">|</span>
+        <span class="text-purple-400">Output: <strong>${m.pricing.outputPer1MTokensUSD}</strong></span>
+      </div>
+    `;
   }
   updateKeyStatusUI() {
     const badge = document.getElementById("key-status-badge");
     if (!badge) return;
     const customKey = localStorage.getItem("evabot_gemini_key");
     if (customKey) {
-      badge.textContent = "Custom API Key Active";
+      badge.textContent = "Custom Key Active";
       badge.className = "text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono";
     } else if (this.serverHasApiKey) {
-      badge.textContent = "Server API Key Ready";
+      badge.textContent = "Server Key Ready";
       badge.className = "text-xs px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono";
     } else {
       badge.textContent = "API Key Required";
@@ -173,7 +367,7 @@ var EvaBotWebApp = class {
   renderWelcomeMessage() {
     this.appendMessage({
       role: "model",
-      text: "\u{1F44B} **Welcome to EvaBot Online!**\n\nI am your autonomous AI assistant powered by Google Gemini. You can choose any model from the dropdown above (such as `gemini-2.5-flash` or `gemini-2.5-pro`) and start chatting immediately.\n\n*All currency values strictly adhere to USD ($) and EUR (\u20AC).*"
+      text: "\u{1F44B} **Welcome to EvaBot Online \u2014 Google Model Garden Gateway!**\n\nI am connected to the full catalog of models available across Google AI Studio and Vertex AI Model Garden.\n\n- **Free Quota Tier:** Gemini 2.5 Flash, Gemini 2.5 Pro, Gemini 2.0 Flash (Included with Google AI Studio / Google AI Pro).\n- **Paid / Vertex AI Tier:** Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku via Google Cloud Vertex AI.\n\nSelect any model from the dropdown above to view pricing (strictly in USD `$` and EUR `\u20AC`) and token consumption rates."
     });
   }
   async handleSend() {

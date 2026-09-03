@@ -18,16 +18,21 @@ const C = {
   red: '\x1b[31m',
   gray: '\x1b[90m',
   white: '\x1b[97m',
+  bgDark: '\x1b[40m',
 };
 
 function printBanner(session: ChatSession): void {
+  const current = ModelRegistry.getModelById(session.getModel());
+  const isFree = current?.pricing.freeTierStatus === '100% Free Quota Available';
+  const tierBadge = isFree ? `${C.green}[FREE QUOTA AVAILABLE]${C.reset}` : `${C.yellow}[PAID / VERTEX AI ONLY]${C.reset}`;
+
   console.log(`
 ${C.cyan}${C.bold}╔════════════════════════════════════════════════════════════════════════════════╗
 ║                     ⚡ EVABOT MODULAR GEMINI LLM CHAT ⚡                       ║
-║                           UNIVERSAL TERMINAL CLI                               ║
+║                      GOOGLE MODEL GARDEN COMPREHENSIVE CLI                     ║
 ╠════════════════════════════════════════════════════════════════════════════════╣${C.reset}
-║ ${C.yellow}Active Model:${C.reset}   ${C.bold}${session.getModel().padEnd(30)}${C.reset} ${C.gray}│ Commands: /help, /models, /model${C.reset} ║
-║ ${C.green}API Status:${C.reset}     ${(session.hasApiKey() ? 'API Key Configured' : 'No Key (use /key)').padEnd(30)} ${C.gray}│ Strict Currency: USD ($) & EUR (€)${C.reset}║
+║ ${C.yellow}Active Model:${C.reset}   ${C.bold}${session.getModel().padEnd(25)}${C.reset} ${tierBadge.padEnd(35)}║
+║ ${C.green}API Status:${C.reset}     ${(session.hasApiKey() ? 'API Key Configured' : 'No Key (use /key)').padEnd(25)} ${C.gray}│ Strict Currency: USD ($) & EUR (€)${C.reset}║
 ${C.cyan}${C.bold}╚════════════════════════════════════════════════════════════════════════════════╝${C.reset}
 `);
 }
@@ -35,8 +40,8 @@ ${C.cyan}${C.bold}╚═══════════════════�
 function printHelp(): void {
   console.log(`
 ${C.yellow}${C.bold}Available Commands:${C.reset}
-  ${C.cyan}/models${C.reset}              - List all available Gemini models
-  ${C.cyan}/model <id>${C.reset}          - Switch active model (e.g. /model gemini-2.5-pro)
+  ${C.cyan}/models${C.reset}              - List all available models with pricing ($/€), token limits, and free/paid status
+  ${C.cyan}/model <id>${C.reset}          - Switch active model (e.g. /model gemini-2.5-pro or /model claude-3-7-sonnet)
   ${C.cyan}/clear${C.reset}               - Clear current conversation memory
   ${C.cyan}/history${C.reset}             - Show number of messages in current session
   ${C.cyan}/key <apiKey>${C.reset}        - Set or change Gemini API key in session
@@ -47,18 +52,36 @@ ${C.yellow}${C.bold}Available Commands:${C.reset}
 }
 
 function printModels(): void {
-  console.log(`\n${C.yellow}${C.bold}Supported Google Gemini Models:${C.reset}`);
-  for (const m of ModelRegistry.getAllModels()) {
-    const recTag = m.recommended ? `${C.green}[RECOMMENDED]${C.reset}` : '';
-    console.log(`  ${C.cyan}${C.bold}${m.id.padEnd(20)}${C.reset} ${recTag} [Tier: ${m.tier}]`);
-    console.log(`    ${C.gray}${m.description}${C.reset}`);
+  console.log(`\n${C.yellow}${C.bold}════════════════════════════════════════════════════════════════════════════════${C.reset}`);
+  console.log(`${C.cyan}${C.bold}GOOGLE CLOUD & GOOGLE AI COMPREHENSIVE MODEL CATALOG${C.reset}`);
+  console.log(`${C.yellow}${C.bold}════════════════════════════════════════════════════════════════════════════════${C.reset}\n`);
+
+  console.log(`${C.green}${C.bold}🟢 1. FREE TIER AVAILABLE (Google AI Studio Free Quota / Google AI Pro)${C.reset}`);
+  console.log(`${C.gray}Zero cost under standard rate limits. Pay-as-you-go applies only after quota exhaustion.${C.reset}\n`);
+
+  for (const m of ModelRegistry.getFreeModels()) {
+    const recTag = m.recommended ? ` ${C.green}${C.bold}[RECOMMENDED]${C.reset}` : '';
+    console.log(`  ${C.cyan}${C.bold}${m.name.padEnd(28)}${C.reset} ID: ${C.yellow}${m.id}${C.reset}${recTag}`);
+    console.log(`    ${C.white}Context Window:${C.reset} ${m.contextWindow.toLocaleString()} tokens  ${C.gray}│${C.reset} ${C.white}Max Output:${C.reset} ${m.maxOutputTokens} tokens`);
+    console.log(`    ${C.green}Free Quota:${C.reset} ${m.pricing.freeTierDetails}`);
+    console.log(`    ${C.magenta}Paid Pricing:${C.reset} Input: ${m.pricing.inputPer1MTokensUSD} (${m.pricing.inputPer1MTokensEUR}) │ Output: ${m.pricing.outputPer1MTokensUSD} (${m.pricing.outputPer1MTokensEUR})`);
+    console.log(`    ${C.gray}${m.description}${C.reset}\n`);
   }
-  console.log();
+
+  console.log(`${C.yellow}${C.bold}🟡 2. PAID / ENTERPRISE ONLY (Google Cloud Vertex AI & Anthropic Claude)${C.reset}`);
+  console.log(`${C.gray}Billed directly to Google Cloud project. No free tier available.${C.reset}\n`);
+
+  for (const m of ModelRegistry.getPaidOnlyModels()) {
+    console.log(`  ${C.cyan}${C.bold}${m.name.padEnd(28)}${C.reset} ID: ${C.yellow}${m.id}${C.reset} [${m.provider}]`);
+    console.log(`    ${C.white}Context Window:${C.reset} ${m.contextWindow.toLocaleString()} tokens  ${C.gray}│${C.reset} ${C.white}Max Output:${C.reset} ${m.maxOutputTokens} tokens`);
+    console.log(`    ${C.yellow}Tier Status:${C.reset} ${m.pricing.freeTierStatus} (${m.pricing.freeTierDetails})`);
+    console.log(`    ${C.magenta}Pricing:${C.reset} Input: ${m.pricing.inputPer1MTokensUSD} / 1M (${m.pricing.inputPer1MTokensEUR}) │ Output: ${m.pricing.outputPer1MTokensUSD} / 1M (${m.pricing.outputPer1MTokensEUR})`);
+    console.log(`    ${C.gray}${m.description}${C.reset}\n`);
+  }
+
+  console.log(`${C.yellow}${C.bold}════════════════════════════════════════════════════════════════════════════════${C.reset}\n`);
 }
 
-/**
- * Parses command-line arguments for one-shot mode or non-interactive usage
- */
 function parseArgs(): { prompt?: string; model?: string; system?: string; apiKey?: string } {
   const args = process.argv.slice(2);
   const result: any = {};
@@ -120,7 +143,7 @@ async function main(): Promise<void> {
   });
 
   const promptUser = (): void => {
-    rl.question(`${C.green}${C.bold}You > ${C.reset}`, async (input) => {
+    rl.question(`${C.green}${C.bold}You > ${C.reset}`, async (input: string) => {
       const line = input.trim();
 
       if (!line) {
@@ -150,12 +173,15 @@ async function main(): Promise<void> {
       if (line.startsWith('/model')) {
         const parts = line.split(' ');
         if (parts.length < 2) {
-          console.log(`${C.yellow}Active model:${C.reset} ${session.getModel()}`);
+          const cur = ModelRegistry.getModelById(session.getModel());
+          console.log(`${C.yellow}Active model:${C.reset} ${session.getModel()} [${cur?.pricing.freeTierStatus}]`);
           console.log(`Use: /model <model-id> to switch. Example: /model gemini-2.5-pro`);
         } else {
           const newModel = parts[1].trim();
           if (session.setModel(newModel)) {
-            console.log(`${C.green}Successfully switched to ${newModel}${C.reset}`);
+            const m = ModelRegistry.getModelById(newModel);
+            console.log(`${C.green}Successfully switched to ${newModel}${C.reset} (${m?.name})`);
+            console.log(`${C.gray}Status: ${m?.pricing.freeTierStatus} │ Pricing: ${m?.pricing.inputPer1MTokensUSD} input${C.reset}`);
           } else {
             console.log(`${C.red}Invalid model: "${newModel}". Type /models to see valid options.${C.reset}`);
           }
@@ -185,7 +211,7 @@ async function main(): Promise<void> {
       }
 
       if (line === '/history') {
-        console.log(`History turns: ${session.getHistory().length / 2}`);
+        console.log(`History messages: ${session.getHistory().length}`);
         promptUser();
         return;
       }
@@ -202,7 +228,7 @@ async function main(): Promise<void> {
         return;
       }
 
-      // Normal prompt to Gemini
+      // Normal prompt to LLM
       if (!session.hasApiKey()) {
         console.log(`${C.red}Please provide your GEMINI_API_KEY first using /key <api_key>${C.reset}`);
         promptUser();
@@ -211,7 +237,7 @@ async function main(): Promise<void> {
 
       process.stdout.write(`${C.magenta}${C.bold}EvaBot (${session.getModel()}) > ${C.reset}`);
       try {
-        await session.sendMessage(line, (chunk) => {
+        await session.sendMessage(line, (chunk: string) => {
           process.stdout.write(chunk);
         });
         process.stdout.write('\n\n');

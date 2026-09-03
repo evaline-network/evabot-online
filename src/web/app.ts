@@ -20,6 +20,7 @@ class EvaBotWebApp {
     this.setupEventListeners();
     await this.checkHealth();
     this.populateModelSelector();
+    this.updateModelDetailsBar();
     this.updateKeyStatusUI();
     this.renderWelcomeMessage();
   }
@@ -48,7 +49,9 @@ class EvaBotWebApp {
 
     modelSelect?.addEventListener('change', (e) => {
       this.currentModel = (e.target as HTMLSelectElement).value;
-      this.addSystemNotification(`Switched active model to **${this.currentModel}**`);
+      this.updateModelDetailsBar();
+      const m = ModelRegistry.getModelById(this.currentModel);
+      this.addSystemNotification(`Switched active model to **${m?.name || this.currentModel}** [${m?.pricing.freeTierStatus}]`);
     });
 
     clearBtn?.addEventListener('click', () => {
@@ -102,15 +105,58 @@ class EvaBotWebApp {
     if (!select) return;
 
     select.innerHTML = '';
-    const models = ModelRegistry.getAllModels();
 
-    for (const m of models) {
+    const freeModels = ModelRegistry.getFreeModels();
+    const paidModels = ModelRegistry.getPaidOnlyModels();
+
+    // 1. Free Quota Available Group
+    const freeGroup = document.createElement('optgroup');
+    freeGroup.label = '🟢 Free Quota Available (Google AI Studio / Pro)';
+    for (const m of freeModels) {
       const opt = document.createElement('option');
       opt.value = m.id;
-      opt.textContent = `${m.name} (${m.tier})${m.recommended ? ' ★' : ''}`;
+      opt.textContent = `${m.name}${m.recommended ? ' ★ [Recommended]' : ''}`;
       if (m.id === this.currentModel) opt.selected = true;
-      select.appendChild(opt);
+      freeGroup.appendChild(opt);
     }
+    select.appendChild(freeGroup);
+
+    // 2. Paid / Vertex AI Enterprise Group
+    const paidGroup = document.createElement('optgroup');
+    paidGroup.label = '🟡 Paid Only (Vertex AI Enterprise & Claude)';
+    for (const m of paidModels) {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = `${m.name} [Paid / Vertex AI]`;
+      if (m.id === this.currentModel) opt.selected = true;
+      paidGroup.appendChild(opt);
+    }
+    select.appendChild(paidGroup);
+  }
+
+  private updateModelDetailsBar(): void {
+    const bar = document.getElementById('model-details-bar');
+    if (!bar) return;
+
+    const m = ModelRegistry.getModelById(this.currentModel);
+    if (!m) return;
+
+    const isFree = m.pricing.freeTierStatus === '100% Free Quota Available';
+    const badgeClass = isFree ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+
+    bar.innerHTML = `
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded border ${badgeClass} font-bold text-[10px] tracking-wider uppercase">${m.pricing.freeTierStatus}</span>
+        <span class="text-slate-400">Context: <strong class="text-white">${m.contextWindow.toLocaleString()}</strong> tokens</span>
+        <span class="text-slate-600">|</span>
+        <span class="text-slate-400">Max Out: <strong class="text-white">${m.maxOutputTokens.toLocaleString()}</strong></span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-300">
+        <span class="text-cyan-400">Input: <strong>${m.pricing.inputPer1MTokensUSD}</strong></span>
+        <span class="text-slate-600">|</span>
+        <span class="text-purple-400">Output: <strong>${m.pricing.outputPer1MTokensUSD}</strong></span>
+      </div>
+    `;
   }
 
   private updateKeyStatusUI(): void {
@@ -119,10 +165,10 @@ class EvaBotWebApp {
 
     const customKey = localStorage.getItem('evabot_gemini_key');
     if (customKey) {
-      badge.textContent = 'Custom API Key Active';
+      badge.textContent = 'Custom Key Active';
       badge.className = 'text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono';
     } else if (this.serverHasApiKey) {
-      badge.textContent = 'Server API Key Ready';
+      badge.textContent = 'Server Key Ready';
       badge.className = 'text-xs px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono';
     } else {
       badge.textContent = 'API Key Required';
@@ -133,7 +179,7 @@ class EvaBotWebApp {
   private renderWelcomeMessage(): void {
     this.appendMessage({
       role: 'model',
-      text: "👋 **Welcome to EvaBot Online!**\n\nI am your autonomous AI assistant powered by Google Gemini. You can choose any model from the dropdown above (such as `gemini-2.5-flash` or `gemini-2.5-pro`) and start chatting immediately.\n\n*All currency values strictly adhere to USD ($) and EUR (€).*",
+      text: "👋 **Welcome to EvaBot Online — Google Model Garden Gateway!**\n\nI am connected to the full catalog of models available across Google AI Studio and Vertex AI Model Garden.\n\n- **Free Quota Tier:** Gemini 2.5 Flash, Gemini 2.5 Pro, Gemini 2.0 Flash (Included with Google AI Studio / Google AI Pro).\n- **Paid / Vertex AI Tier:** Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku via Google Cloud Vertex AI.\n\nSelect any model from the dropdown above to view pricing (strictly in USD `$` and EUR `€`) and token consumption rates.",
     });
   }
 
