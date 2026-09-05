@@ -1,5 +1,7 @@
 import { LlmProvider } from './UniversalLlmClient.js';
-export type ConsiliumMode = 'solo' | 'broadcast' | 'dialogue' | 'consilium';
+import { TokenCostEstimate } from '../models/ModelRegistry.js';
+export type ConsiliumMode = 'chat' | 'dialog' | 'interview' | 'consilium' | 'solo' | 'broadcast' | 'dialogue';
+export type PersonaId = 'eva' | 'adam' | 'dual';
 export interface ConsiliumParticipant {
     id: string;
     model: string;
@@ -19,6 +21,10 @@ export interface ConsiliumTurn {
     content: string;
     timestamp: string;
     durationMs: number;
+    promptTokens?: number;
+    completionTokens?: number;
+    totalTokens?: number;
+    cost?: TokenCostEstimate;
 }
 export interface ConsiliumProgressEvent {
     type: 'turn_start' | 'turn_complete' | 'round_complete' | 'synthesis_start' | 'synthesis_complete' | 'error';
@@ -29,10 +35,12 @@ export interface ConsiliumProgressEvent {
 }
 export interface ConsiliumRunOptions {
     mode: ConsiliumMode;
+    persona?: PersonaId;
     prompt: string;
     models?: string[];
     participants?: ConsiliumParticipant[];
     rounds?: number;
+    preset?: 'top10_paid' | 'top10_free';
     synthesizerModel?: string;
     systemInstruction?: string;
     apiKey?: string;
@@ -49,6 +57,28 @@ export interface ConsiliumResult {
     totalRounds: number;
     durationMs: number;
     knowledgeBaseContextIncluded: boolean;
+    totalPromptTokens?: number;
+    totalCompletionTokens?: number;
+    totalTokens?: number;
+    totalCostUSD?: number;
+    totalCostEUR?: number;
+    costSummary?: {
+        totalPromptTokens: number;
+        totalCompletionTokens: number;
+        totalTokens: number;
+        totalCostUSD: number;
+        totalCostEUR: number;
+        formattedUSD: string;
+        formattedEUR: string;
+        models: Array<{
+            model: string;
+            tokens: number;
+            costUSD: number;
+            costEUR: number;
+            formattedUSD: string;
+            formattedEUR: string;
+        }>;
+    };
 }
 export declare class ConsiliumEngine {
     private client;
@@ -71,6 +101,10 @@ export declare class ConsiliumEngine {
      */
     private runSolo;
     /**
+     * Mode: Interview Mode (Structured technical or executive interview)
+     */
+    private runInterview;
+    /**
      * Mode 2: Broadcast Mode (Query N models concurrently)
      */
     private runBroadcast;
@@ -82,4 +116,6 @@ export declare class ConsiliumEngine {
      * Mode 4: Consilium Mode (3 to 10 models discuss in rounds, then synthesizer produces consensus)
      */
     private runConsilium;
+    private createTurn;
+    private calculateCostSummary;
 }

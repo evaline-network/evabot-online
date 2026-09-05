@@ -22,10 +22,7 @@ export class UniversalLlmClient {
             return 'opencode';
         }
         if (m.startsWith('openrouter/') ||
-            m.endsWith(':free') ||
-            m.includes('deepseek-r1:free') ||
-            m.includes('llama-3.3-70b:free') ||
-            m.includes('gemini-2.0-flash-exp:free')) {
+            m.endsWith(':free')) {
             return 'openrouter';
         }
         const modelInfo = ModelRegistry.getModelById(model);

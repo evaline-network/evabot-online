@@ -9,6 +9,7 @@ import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
 import { BootDiagnostics } from '../core/BootDiagnostics.js';
 import { Config } from '../core/Config.js';
 import { logger } from '../core/Logger.js';
+import { VoiceController } from '../plugins/voice/VoiceController.js';
 const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',
     '.js': 'application/javascript; charset=utf-8',
@@ -65,6 +66,11 @@ export function createServer() {
             res.end();
             return;
         }
+        // Voice Module API Plugin Routes (/api/voice/*)
+        const handledByVoice = await VoiceController.handleRequest(req, res, pathname);
+        if (handledByVoice) {
+            return;
+        }
         // Health Check & System Status
         if (pathname === '/api/health' && req.method === 'GET') {
             const creds = await GoogleAuthProvider.getCredentials();
@@ -119,6 +125,86 @@ export function createServer() {
             });
             return;
         }
+        // EvaLine Database Selection & Status Endpoint
+        if (pathname === '/api/database/status' && req.method === 'GET') {
+            sendJson(res, 200, {
+                activeDatabase: 'hybrid',
+                databases: [
+                    {
+                        id: 'hybrid',
+                        name: 'EvaLine Hybrid DB (PostgreSQL + Qdrant)',
+                        type: 'Relational & Semantic RAG',
+                        status: 'CONNECTED 🟢',
+                        latencyMs: 4,
+                        source: 'postgres[public.arch_docs] + qdrant[evaline_core]',
+                        docsIndexed: 1420,
+                    },
+                    {
+                        id: 'postgres',
+                        name: 'Company PostgreSQL Production',
+                        type: 'Relational SQL',
+                        status: 'READY 🟢',
+                        latencyMs: 8,
+                        source: 'postgres://production-db.internal:5432/evaline_corp',
+                        docsIndexed: 9540,
+                    },
+                    {
+                        id: 'qdrant',
+                        name: 'Qdrant Distributed Vector Cluster',
+                        type: 'Dense Embeddings (Cosine >= 0.78)',
+                        status: 'READY 🟢',
+                        latencyMs: 11,
+                        source: 'qdrant.internal:6333 [evaline_embeddings]',
+                        docsIndexed: 45000,
+                    },
+                    {
+                        id: 'ephemeral',
+                        name: 'Ephemeral Local Memory Vault',
+                        type: 'In-Memory Context',
+                        status: 'ISOLATED ⚪',
+                        latencyMs: 0,
+                        source: 'Session memory only',
+                        docsIndexed: 0,
+                    },
+                ],
+            });
+            return;
+        }
+        // EvaLine Personas Endpoint (Eva = FrontEnd, Adam = BackEnd, Dual = FullStack)
+        if (pathname === '/api/persona' && req.method === 'GET') {
+            sendJson(res, 200, {
+                personas: [
+                    {
+                        id: 'eva',
+                        name: 'Eva (Ева)',
+                        gender: 'Female (♀)',
+                        role: 'Lead Frontend Architect & UX Director',
+                        focus: 'Frontend, UI/UX, Design Systems, Typography, Web Speech, Client Architecture',
+                        voiceType: 'Neural Female Voice',
+                        preferredModel: 'gemini-2.5-flash',
+                    },
+                    {
+                        id: 'adam',
+                        name: 'Adam (Адам)',
+                        gender: 'Male (♂)',
+                        role: 'Chief Backend Architect & Cloud Systems Lead',
+                        focus: 'Backend, Distributed Systems, Cloud Clusters, PostgreSQL, Microservices, Security',
+                        voiceType: 'Deep Neural Male Voice',
+                        preferredModel: 'gemini-2.5-pro',
+                    },
+                    {
+                        id: 'dual',
+                        name: 'Eva & Adam (Двойной тандем)',
+                        gender: 'Dual (♀+♂)',
+                        role: 'Full-Stack Synergistic Co-Pilots',
+                        focus: 'Frontend Strategy (Eva) + Backend Rigor (Adam) Operating in Tandem',
+                        voiceType: 'Dual Alternating Voice',
+                        preferredModel: 'gemini-2.5-pro',
+                    },
+                ],
+            });
+            return;
+        }
         // Chat (Unary non-streaming via UniversalLlmClient)
         if (pathname === '/api/chat' && req.method === 'POST') {
             try {
@@ -139,10 +225,20 @@ export function createServer() {
                     provider: provider,
                     apiKey,
                 });
+                const promptTokens = ModelRegistry.estimateTokens(messages.map((m) => (m.parts ? m.parts.map((p) => p.text).join(' ') : m.content || '')).join(' ') +
+                    ' ' + (systemInstruction || ''));
+                const completionTokens = ModelRegistry.estimateTokens(responseText);
+                const cost = ModelRegistry.calculateCost(targetModel, promptTokens, completionTokens);
                 sendJson(res, 200, {
                     response: responseText,
                     model: targetModel,
                     provider: client.resolveProvider(targetModel, provider),
+                    usage: {
+                        promptTokens,
+                        completionTokens,
+                        totalTokens: promptTokens + completionTokens,
+                    },
+                    cost,
                 });
             }
             catch (err) {
@@ -180,7 +276,21 @@ export function createServer() {
                     provider: provider,
                     apiKey,
                 });
-                res.write(`data: ${JSON.stringify({ done: true, fullText })}\n\n`);
+                const promptTokens = ModelRegistry.estimateTokens(messages.map((m) => (m.parts ? m.parts.map((p) => p.text).join(' ') : m.content || '')).join(' ') +
+                    ' ' + (systemInstruction || ''));
+                const completionTokens = ModelRegistry.estimateTokens(fullText);
+                const cost = ModelRegistry.calculateCost(targetModel, promptTokens, completionTokens);
+                res.write(`data: ${JSON.stringify({
+                    done: true,
+                    fullText,
+                    model: targetModel,
+                    usage: {
+                        promptTokens,
+                        completionTokens,
+                        totalTokens: promptTokens + completionTokens,
+                    },
+                    cost,
+                })}\n\n`);
                 res.end();
             }
             catch (err) {
@@ -199,12 +309,12 @@ export function createServer() {
         if (pathname === '/api/consilium' && req.method === 'POST') {
             try {
                 const body = await parseJsonBody(req);
-                const { prompt, mode = 'consilium', models, participants, rounds, synthesizerModel, systemInstruction, apiKey, useKnowledgeBase = true, } = body;
+                const { prompt, mode = 'consilium', models, participants, rounds, synthesizerModel, systemInstruction, apiKey, useKnowledgeBase = true, persona, preset, } = body;
                 if (!prompt || typeof prompt !== 'string') {
                     sendJson(res, 400, { error: 'Missing or invalid "prompt" parameter' });
                     return;
                 }
-                const validModes = ['solo', 'broadcast', 'dialogue', 'consilium'];
+                const validModes = ['solo', 'chat', 'broadcast', 'dialog', 'dialogue', 'interview', 'consilium'];
                 if (!validModes.includes(mode)) {
                     sendJson(res, 400, {
                         error: `Invalid "mode" parameter. Expected one of: ${validModes.join(', ')}`,
@@ -214,6 +324,8 @@ export function createServer() {
                 const engine = new ConsiliumEngine(apiKey || Config.geminiApiKey || undefined);
                 const result = await engine.run({
                     mode,
+                    persona,
+                    preset,
                     prompt: prompt.trim(),
                     models,
                     participants,

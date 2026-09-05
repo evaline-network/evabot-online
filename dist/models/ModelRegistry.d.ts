@@ -6,6 +6,20 @@ export interface ModelPricing {
     freeTierStatus: '100% Free Quota Available' | 'Paid / Pay-As-You-Go Only';
     freeTierDetails: string;
 }
+export interface TokenCostEstimate {
+    modelId: string;
+    modelName: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    costUSD: number;
+    costEUR: number;
+    commercialValueUSD: number;
+    commercialValueEUR: number;
+    formattedUSD: string;
+    formattedEUR: string;
+    isFreeTier: boolean;
+}
 export interface GeminiModelInfo {
     id: string;
     name: string;
@@ -34,4 +48,15 @@ export declare class ModelRegistry {
     static getGoogleModels(): GeminiModelInfo[];
     static getOpenRouterModels(): GeminiModelInfo[];
     static getTopCodingModels(): GeminiModelInfo[];
+    static getTop10PaidSmartestModels(): GeminiModelInfo[];
+    static getTop10FreeModels(): GeminiModelInfo[];
+    /**
+     * Estimates token count based on text length (~3.8 chars per token for code & multilingual)
+     */
+    static estimateTokens(text: string): number;
+    private static parseRate;
+    /**
+     * Calculates exact cost and commercial token valuation in USD ($) and EUR (€)
+     */
+    static calculateCost(modelId: string, promptTokens: number, completionTokens: number): TokenCostEstimate;
 }

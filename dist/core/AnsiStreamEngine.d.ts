@@ -114,6 +114,70 @@ export declare class TableFormatter {
      */
     static render<T extends Record<string, any>>(rows: T[], options: TableOptions<T>): string;
 }
+export interface SgrMouseEvent {
+    button: number;
+    pressed: boolean;
+    col: number;
+    row: number;
+    isRelease: boolean;
+}
+export interface ClickableArea {
+    id: string;
+    row: number;
+    startCol: number;
+    endCol: number;
+    label: string;
+    action: () => void | Promise<void>;
+}
+export declare class MouseTracker {
+    private clickables;
+    private enabled;
+    private onData?;
+    constructor(onData?: (event: SgrMouseEvent) => void);
+    /**
+     * Enable SGR mouse mode 1003 (all events) + mode 1006 (SGR coordinates)
+     */
+    enable(): void;
+    /**
+     * Disable SGR mouse tracking and restore terminal
+     */
+    disable(): void;
+    isEnabled(): boolean;
+    /**
+     * Parse raw input bytes for SGR mouse events.
+     * SGR format: ESC [ < Cb ; Cc ; Cd M / m
+     *   Cb = button (0-3 normal, 64=scroll up, 65=scroll down)
+     *   Cc = column (1-based)
+     *   Cd = row (1-based)
+     *   M = press, m = release
+     */
+    parseBuffer(data: Buffer): SgrMouseEvent[];
+    /**
+     * Register a clickable area
+     */
+    registerClickable(area: ClickableArea): void;
+    /**
+     * Clear all registered clickables (call on each render cycle)
+     */
+    clearClickables(): void;
+    /**
+     * Check if a mouse event hits a registered clickable
+     */
+    private checkClickable;
+    /**
+     * Setup raw mode stdin listener for mouse events
+     */
+    attachStdin(stdin: NodeJS.ReadStream): void;
+    /**
+     * Detach stdin listener
+     */
+    detachStdin(stdin: NodeJS.ReadStream): void;
+}
+/**
+ * Helper: render a clickable text span that registers coordinates for mouse hit-testing.
+ * Returns the plain text (for screen output) and registers the clickable area.
+ */
+export declare function clickableText(tracker: MouseTracker, text: string, row: number, startCol: number, id: string, action: () => void | Promise<void>): string;
 export interface AnsiStreamWriterOptions {
     prefix?: string;
     writeToStdout?: boolean;
@@ -215,5 +279,7 @@ export declare const AnsiStreamEngine: {
     formatTable: typeof TableFormatter.render;
     TableFormatter: typeof TableFormatter;
     AnsiStreamWriter: typeof AnsiStreamWriter;
+    MouseTracker: typeof MouseTracker;
+    clickableText: typeof clickableText;
 };
 export default AnsiStreamEngine;

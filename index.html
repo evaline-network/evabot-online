@@ -4,639 +4,365 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- ANTI-CACHING HEADERS -->
+  <!-- Anti-caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <title>Evabot Online v0.0.1 MVP // Cyber-Terminal</title>
+  <title>EvaBot Online // Cyber-Terminal & Neural Voice Hub</title>
 
-  <!-- TAILWIND CSS CDN & JETBRAINS MONO FONT -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            mono: ['"JetBrains Mono"', 'monospace', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas'],
-          },
-          colors: {
-            black: '#000000',
-          }
-        }
-      }
-    }
-  </script>
-
-  <style>
-    html {
-      scroll-behavior: smooth;
-      background-color: #000000;
-      color: #ffffff;
-    }
-    body {
-      background-color: #000000;
-      color: #ffffff;
-      font-family: 'JetBrains Mono', monospace;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-    }
-    /* Monospace Terminal Custom Scrollbars */
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #000000;
-      border-left: 1px solid #18181b;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #27272a;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #ffffff;
-    }
-    /* Cyber blinking cursor animation */
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-    .cursor-blink {
-      animation: blink 1s infinite;
-    }
-  </style>
+  <!-- Zero-CDN Autonomous CSS -->
+  <link rel="stylesheet" href="/terminal.css">
 </head>
-<body class="bg-black text-white font-mono antialiased min-h-screen">
+<body>
 
   <!-- ========================================================================= -->
-  <!-- SCREEN 1: CYBER-TERMINAL CHAT INTERFACE                                  -->
+  <!-- SCREEN 1: PRIMARY CYBER-TERMINAL & VOICE COMM VIEWPORT (100vh)            -->
   <!-- ========================================================================= -->
-  <section id="screen-terminal" class="min-h-screen flex flex-col justify-between bg-black border-b border-zinc-800 relative">
+  <section id="screen-terminal">
     
-    <!-- TOP TERMINAL BAR -->
-    <header class="border-b border-zinc-800 bg-black/95 px-3 sm:px-6 py-2.5 z-20 flex flex-wrap items-center justify-between gap-3">
-      
-      <!-- LOGO & STATUS LIGHT -->
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 border border-zinc-800 px-2 py-1 bg-black">
-          <span id="telemetry-status-light" class="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#22c55e]"></span>
-          <span class="font-bold text-xs tracking-wider text-white">EVABOT<span class="text-zinc-500">//</span>CORE <span class="text-zinc-400 text-[10px] ml-1 border border-zinc-700 px-1 py-0.5">v0.0.1 MVP</span></span>
+    <!-- Top Bar -->
+    <header class="terminal-header">
+      <div class="header-left">
+        <div class="logo-badge">
+          <span>EVABOT<span style="color:var(--fg-muted);">//</span>CORE</span>
+          <span style="font-size:10px; color:var(--fg-dim); border:1px solid var(--border-dim); padding:1px 4px;">v0.0.1</span>
         </div>
-        <div class="hidden sm:flex items-center gap-1.5 text-xs">
-          <span id="telemetry-status-text" class="text-emerald-400 font-bold">🟢 ONLINE // IDLE</span>
+        <div style="display:flex; align-items:center; gap:6px; font-size:11px;">
+          <span id="telemetry-status-light" class="led-green"></span>
+          <span id="telemetry-status-text" style="color:var(--clr-green); font-weight:700;">ONLINE</span>
         </div>
       </div>
 
-      <!-- ACTIVE TELEMETRY CHIPS -->
-      <div class="hidden md:flex items-center gap-2">
-        <span id="header-mode-badge" class="px-2 py-0.5 border border-zinc-800 text-[11px] text-zinc-400">MODE: SOLO</span>
-        <span id="header-role-badge" class="px-2 py-0.5 border border-zinc-800 text-[11px] text-zinc-400">ROLE: CEO</span>
-        <button id="header-model-pill" title="Inspect model in control deck" class="flex items-center gap-1.5 px-2 py-0.5 border border-zinc-800 hover:border-zinc-500 text-[11px] text-zinc-300 transition-colors">
-          <span id="header-model-name">Gemini 2.5 Flash</span>
-          <span id="header-model-badge" class="px-1.5 py-0.2 bg-emerald-950 text-emerald-400 border border-emerald-700 text-[10px] font-bold">🟢 FREE</span>
+      <div class="header-center">
+        <!-- Persona Indicator Chip -->
+        <button id="header-persona-pill" class="persona-pill" title="Toggle Co-Pilot Persona (Eva / Adam / Dual)">
+          <span id="header-persona-name">[DUAL] EVA & ADAM [FullStack]</span>
+        </button>
+
+        <!-- Mode & Model Chips -->
+        <span id="header-mode-badge" style="border:1px solid var(--border-dim); padding:2px 6px; font-size:10px; color:var(--fg-muted);">MODE: CHAT</span>
+        <button id="header-model-pill" class="persona-pill" title="Inspect model">
+          <span id="header-model-name">gemini-2.5-flash</span>
+          <span id="header-model-badge" style="color:var(--clr-green); font-size:9px;">[FREE]</span>
         </button>
       </div>
 
-      <!-- ACTIONS & TRILINGUAL SWITCHER -->
-      <div class="flex items-center gap-2">
-        <!-- TRILINGUAL SWITCHER [ EN | UK | RU ] -->
-        <div class="flex items-center border border-zinc-800 p-0.5 bg-black">
-          <button id="lang-btn-en" class="px-2 py-0.5 text-xs font-bold bg-white text-black border border-white">EN</button>
-          <button id="lang-btn-uk" class="px-2 py-0.5 text-xs font-bold bg-black text-zinc-400 hover:text-white border border-transparent">UK</button>
-          <button id="lang-btn-ru" class="px-2 py-0.5 text-xs font-bold bg-black text-zinc-400 hover:text-white border border-transparent">RU</button>
+      <div class="header-right">
+        <!-- Trilingual Switcher [ EN | UK | RU ] -->
+        <div class="lang-switch">
+          <button id="lang-btn-en" class="lang-btn active">EN</button>
+          <button id="lang-btn-uk" class="lang-btn">UK</button>
+          <button id="lang-btn-ru" class="lang-btn">RU</button>
         </div>
 
-        <!-- CLEAR BUTTON -->
-        <button id="clear-btn" title="Purge terminal conversation" class="px-2.5 py-1 text-xs font-bold border border-zinc-800 hover:border-zinc-500 text-zinc-400 hover:text-white transition-colors">
+        <button id="clear-btn" title="Purge terminal screen" class="persona-pill" style="padding:2px 6px;">
           [ CLR ]
         </button>
       </div>
     </header>
 
-    <!-- CHAT MESSAGES SCROLL REGION -->
-    <main id="chat-scroll-area" class="flex-1 overflow-y-auto px-3 sm:px-6 py-4 bg-black">
-      <!-- 1. COLLAPSIBLE LIVE BOOT INITIALIZATION ACCORDION -->
-      <div class="max-w-5xl mx-auto mb-4 w-full">
-        <details id="accordion-boot" open class="border border-zinc-800 bg-black group transition-all">
-          <summary class="flex justify-between items-center px-3 py-2 cursor-pointer select-none bg-zinc-950 border-b border-zinc-900 hover:bg-zinc-900 transition-colors">
-            <div class="flex items-center gap-2">
-              <span class="text-white font-mono text-xs font-bold">┌── [ 1. BOOT SEQUENCE & LIVE DIAGNOSTICS LOG ]</span>
-              <span id="boot-status-pill" class="text-[10px] text-emerald-400 border border-emerald-800 px-1.5 py-0.2 bg-emerald-950/40">🟢 NOMINAL</span>
-            </div>
-            <span id="boot-toggle-label" class="text-zinc-500 font-mono text-xs">[ - COLLAPSE ]</span>
-          </summary>
-          <div id="boot-log-container" class="p-3 font-mono text-xs space-y-1.5 bg-black border-b border-zinc-900">
-            <div class="text-zinc-500">Initialising dual-server diagnostic probe...</div>
-            <div class="flex items-start gap-2 text-zinc-300">
-              <span class="text-emerald-400 font-bold">✔ 🟢</span>
-              <div>
-                <span class="text-white font-bold">Probe Web Server / Micro Server (evaline-micro-vm)</span>
-                <div class="text-zinc-500 text-[11px]">HTTP/2 SSL Edge nominal. Caddy reverse-proxy active. Compute load: 0%.</div>
-              </div>
-            </div>
-            <div class="flex items-start gap-2 text-zinc-300">
-              <span class="text-emerald-400 font-bold">✔ 🟢</span>
-              <div>
-                <span class="text-white font-bold">Probe Agent Server & Compute Organs (evabot-agent-vm)</span>
-                <div class="text-zinc-500 text-[11px]">8 vCPUs & 32 GB DDR5 active. Port 3000, 20128, 9090, 8080 healthy.</div>
-              </div>
-            </div>
-            <div class="flex items-start gap-2 text-zinc-300">
-              <span class="text-emerald-400 font-bold">✔ 🟢</span>
-              <div>
-                <span class="text-white font-bold">Google Ambient Cloud Authentication (evabot.online@gmail.com)</span>
-                <div class="text-zinc-500 text-[11px]">Service Account tokens active with zero manual key requirement.</div>
-              </div>
-            </div>
-            <div class="flex items-start gap-2 text-zinc-300">
-              <span class="text-emerald-400 font-bold">✔ 🟢</span>
-              <div>
-                <span class="text-white font-bold">Audit Model Registry & Frontier Fleet</span>
-                <div class="text-zinc-500 text-[11px]">Registered 34 models across 11 categories (21 Free Quota / 13 Paid). Frontier Gemini 3.x online.</div>
-              </div>
-            </div>
-            <div class="flex items-start gap-2 text-zinc-300">
-              <span class="text-emerald-400 font-bold">✔ 🟢</span>
-              <div>
-                <span class="text-white font-bold">Verify API Quotas & Token Balance</span>
-                <div class="text-zinc-500 text-[11px]">Google AI Pro: 15 RPM / 1M TPM free quota active ($0.00). OpenRouter Free models ready.</div>
-              </div>
-            </div>
-          </div>
-          <div class="px-3 py-1 bg-black text-[10px] text-zinc-600 font-mono">
-            └── ALL DIAGNOSTIC CHECKS PASSED • STRICT FINANCIAL COMPLIANCE: USD ($) & EUR (€)
-          </div>
-        </details>
+    <!-- Diagnostics Ticker -->
+    <div class="diagnostics-ticker">
+      <div id="boot-ticker-msg">
+        <span style="color:var(--clr-green); font-weight:700;">[OK] INITIALIZED:</span>
+        <span>Dual Cloud Nodes Active * Zero-Trust Mesh * Frankfurt [c3-std-8] & Iowa [e2-micro] Healthy</span>
+      </div>
+      <div style="font-size:10px;">
+        <span>PING: </span><span id="ticker-latency" style="color:var(--clr-green); font-weight:700;">4ms</span>
+        <span style="margin:0 4px; color:var(--border-bright);">|</span>
+        <span>DB: </span><span id="ticker-db" style="color:var(--clr-cyan); font-weight:700;">HYBRID RAG</span>
+        <span style="margin:0 4px; color:var(--border-bright);">|</span>
+        <span>TOKENS: </span><span id="ticker-tokens" style="color:var(--clr-yellow); font-weight:700;">0</span>
+        <span style="margin:0 4px; color:var(--border-bright);">|</span>
+        <span>COST: </span><span id="ticker-cost" style="color:var(--clr-green); font-weight:700;">$0.00 / €0.00</span>
+      </div>
+    </div>
+
+    <!-- Main Viewport Area: Continuous Linear Cyber-Terminal Stream -->
+    <main class="terminal-main-area">
+      <!-- Voice Audio Engine Bar (Linear, Monospace, Non-blocking) -->
+      <div class="voice-linear-bar">
+        <button type="button" id="voice-orb" class="voice-linear-btn" title="Click to activate voice communication">
+          <span id="orb-icon" class="orb-icon-ascii">[MIC]</span>
+          <span id="orb-label">TAP TO SPEAK</span>
+          <span id="orb-sublabel">[ LIVE NEURAL VOICE ]</span>
+        </button>
+        <div id="voice-status-feedback" class="voice-linear-feedback">
+          Eva (Lead Frontend) & Adam (Chief Backend) listening * Web Speech API Ready
+        </div>
       </div>
 
-      <div id="messages-container" class="max-w-5xl mx-auto flex flex-col space-y-3">
-        <!-- Dynamic terminal bubbles rendered by app.ts -->
+      <!-- Terminal Chat Stream Buffer (Always active, continuous line-by-line flow) -->
+      <div id="chat-stream-region" class="chat-stream-region">
+        <div id="messages-container" style="display:flex; flex-direction:column; gap:8px;">
+          <!-- Populated line-by-line starting with boot diagnostics & status bar -->
+        </div>
       </div>
     </main>
 
-    <!-- PROMPT INPUT & CONTROL PANEL ANCHOR BAR -->
-    <footer class="border-t border-zinc-800 bg-black/95 px-3 sm:px-6 py-3 z-10">
-      <form id="chat-form" class="max-w-5xl mx-auto">
-        <div class="border border-zinc-800 bg-black p-2 focus-within:border-zinc-400 transition-colors">
-          <div class="flex items-start gap-2">
-            <span class="text-zinc-600 select-none font-bold pt-1.5">></span>
+    <!-- Input Bar & Footer -->
+    <footer class="terminal-footer">
+      <form id="chat-form">
+        <div class="input-container-row">
+          <!-- MENU BUTTON (Smooth scrolls to Screen 2) -->
+          <button type="button" id="scroll-to-deck-btn" class="menu-trigger-btn" title="Open Settings & System Deck (100vh down)">
+            <span>[=] MENU</span>
+            <span style="color:var(--clr-green);">v</span>
+          </button>
+
+          <!-- Command & Prompt Line -->
+          <div class="input-box">
+            <span class="prompt-prefix">evabot&gt;</span>
             <textarea
               id="user-input"
-              rows="2"
-              data-i18n-placeholder="inputPlaceholder"
-              placeholder="Enter cyber command or query prompt (Enter to send, Shift+Enter for newline)..."
-              class="flex-1 bg-transparent text-sm text-white placeholder-zinc-600 focus:outline-none resize-none font-mono"
+              rows="1"
+              placeholder="Enter prompt or command (e.g. /help, /persona, /mode, /models)..."
+              class="terminal-textarea"
             ></textarea>
-            <button
-              type="submit"
-              id="send-btn"
-              class="px-4 py-2 border border-white bg-white text-black font-bold text-xs tracking-wider transition-all hover:bg-zinc-200 active:scale-95 font-mono flex-none"
-            >
-              [ TRANSMIT ↵ ]
-            </button>
           </div>
+
+          <!-- TRANSMIT BUTTON -->
+          <button type="submit" id="send-btn" class="transmit-btn">
+            [ TRANSMIT ↵ ]
+          </button>
         </div>
-        
-        <div class="flex flex-wrap justify-between items-center text-[10px] sm:text-[11px] text-zinc-600 px-1 pt-1.5 gap-2">
-          <span data-i18n="inputLegend">Enter: Transmit • Shift+Enter: Linebreak • Evabot Online v0.0.1 MVP</span>
-          <span class="text-zinc-500 font-mono">STATUS: <span class="text-emerald-400">NOMINAL</span></span>
+
+        <div class="footer-legend">
+          <span>Enter: Transmit * Shift+Enter: Linebreak * [ [=] MENU ]: Settings & Telemetry</span>
+          <span>EvaBot Online // Based in Odesa, Ukraine // Strictly USD ($) & EUR (€)</span>
         </div>
       </form>
-
-      <!-- SLEEK CONTROL PANEL TRANSITION BUTTON -->
-      <div class="max-w-5xl mx-auto pt-3 pb-1 text-center">
-        <button
-          id="scroll-to-deck-btn"
-          class="w-full py-2 px-4 border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 hover:border-zinc-500 text-zinc-300 hover:text-white transition-all text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 group cursor-pointer"
-        >
-          <span class="text-zinc-600 group-hover:text-emerald-400 transition-colors">▼</span>
-          <span id="control-panel-btn-label">[ ↓ CONTROL PANEL // SYSTEM DECK ]</span>
-          <span class="text-zinc-600 group-hover:text-emerald-400 transition-colors">▼</span>
-        </button>
-      </div>
     </footer>
   </section>
 
   <!-- ========================================================================= -->
-  <!-- SCREEN 2: CONTROL DECK (SYSTEM CONFIGURATION & TELEMETRY)                 -->
+  <!-- SCREEN 2: SYSTEM DECK // LINE-BY-LINE SETTINGS & TELEMETRY (100vh)        -->
   <!-- ========================================================================= -->
-  <section id="screen-control-deck" class="min-h-screen bg-black text-white px-4 sm:px-8 py-6 flex flex-col border-t border-zinc-800">
-    
-    <!-- TOP DECK NAVIGATION BAR -->
-    <div class="max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 pb-4 mb-6 border-b border-zinc-800">
-      <button
-        id="scroll-to-terminal-btn"
-        class="py-1.5 px-3 border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 hover:border-zinc-400 text-zinc-300 hover:text-white transition-all text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 cursor-pointer"
-      >
-        <span class="text-emerald-400">▲</span>
-        <span id="return-terminal-btn-label">[ ↑ RETURN TO TERMINAL ]</span>
-      </button>
-
-      <h2 data-i18n="secDeckTitle" class="text-xs sm:text-sm font-bold tracking-widest text-zinc-300">
-        EVA CONTROL DECK // CONFIGURATION & TELEMETRY
-      </h2>
-
-      <div class="text-xs text-emerald-400 border border-emerald-900 bg-emerald-950/40 px-2.5 py-1 font-bold">
-        🟢 SYSTEM READY
-      </div>
-    </div>
-
-    <!-- MAIN CONTROL DECK GRID -->
-    <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-      <!-- ===================================================================== -->
-      <!-- MODULE 1: NEURAL PROVIDERS (6 cols)                                  -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-          <h3 data-i18n="secProviders" class="text-xs font-bold text-white tracking-wider">
-            1. NEURAL PROVIDERS
-          </h3>
-          <span class="text-[10px] text-zinc-500 font-mono">[4 NODES]</span>
+  <section id="screen-control-deck">
+    <div class="deck-container">
+      
+      <!-- Top Navigation Bar (Return to Terminal) -->
+      <div class="deck-nav-bar">
+        <button id="scroll-to-terminal-btn" class="return-btn" title="Return to Terminal (Smooth scroll up)">
+          <span style="color:var(--clr-green);">^</span>
+          <span>[ ^ RETURN TO TERMINAL ]</span>
+        </button>
+        <div style="font-size:12px; font-weight:800; letter-spacing:0.1em; color:#ffffff;">
+          EVA CONTROL DECK // CONFIGURATION & TELEMETRY
         </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-          <!-- Google Cloud -->
-          <div data-provider="google" class="border border-white bg-zinc-900 text-white p-3 cursor-pointer hover:border-zinc-400 transition-all flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span data-i18n="provGoogleName" class="font-bold text-xs">Google Cloud</span>
-                <span data-i18n="badgeActive" class="text-[10px] text-emerald-400 font-bold border border-emerald-800 bg-emerald-950/60 px-1">🟢 ACTIVE</span>
-              </div>
-              <p data-i18n="provGoogleDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Native Google DeepMind Gemini and enterprise partner models with low-latency direct API dispatch.
-              </p>
-            </div>
-            <div class="mt-2 text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-1">
-              ROUTE: vertex.googleapis.com
-            </div>
-          </div>
-
-          <!-- OmniRoute -->
-          <div data-provider="omniroute" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span data-i18n="provOmniName" class="font-bold text-xs text-white">OmniRoute</span>
-                <span data-i18n="badgeReady" class="text-[10px] text-emerald-400 font-bold border border-emerald-800 bg-emerald-950/60 px-1">🟢 READY</span>
-              </div>
-              <p data-i18n="provOmniDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Dynamic multi-cloud neural router featuring intelligent load-balancing, failover, and prompt routing.
-              </p>
-            </div>
-            <div class="mt-2 text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-1">
-              ROUTE: mesh.omniroute.internal
-            </div>
-          </div>
-
-          <!-- OpenRouter -->
-          <div data-provider="openrouter" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span data-i18n="provOpenRouterName" class="font-bold text-xs text-white">OpenRouter</span>
-                <span data-i18n="badgeStandby" class="text-[10px] text-amber-400 font-bold border border-amber-800 bg-amber-950/60 px-1">🟡 STANDBY</span>
-              </div>
-              <p data-i18n="provOpenRouterDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Decentralized gateway granting access to global open-weights clusters and specialized reasoning engines.
-              </p>
-            </div>
-            <div class="mt-2 text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-1">
-              ROUTE: openrouter.ai/api/v1
-            </div>
-          </div>
-
-          <!-- OpenCode Go -->
-          <div data-provider="opencode" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span data-i18n="provOpenCodeName" class="font-bold text-xs text-white">OpenCode Go</span>
-                <span data-i18n="badgeReady" class="text-[10px] text-emerald-400 font-bold border border-emerald-800 bg-emerald-950/60 px-1">🟢 READY</span>
-              </div>
-              <p data-i18n="provOpenCodeDesc" class="text-[11px] text-zinc-400 leading-normal">
-                High-throughput code inference node designed for private syntax generation, refactoring, and AST analysis.
-              </p>
-            </div>
-            <div class="mt-2 text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-1">
-              ROUTE: opencode.dev/cluster-edge
-            </div>
-          </div>
+        <div style="font-size:11px; color:var(--clr-green); font-weight:700;">
+          [OK] ALL NODES NOMINAL
         </div>
       </div>
 
-      <!-- ===================================================================== -->
-      <!-- MODULE 2: MODEL SELECTION & QUOTAS (6 cols)                           -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col justify-between">
+      <!-- ROW 1: PERSONA / CO-PILOT -->
+      <div class="deck-row">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[01] CO-PILOT PERSONA & GENDER:</span>
+          <span style="font-size:10px; color:var(--fg-muted);">[ACTIVE: DUAL FULL-STACK]</span>
+        </div>
+        <div class="deck-row-items" id="persona-selector-group">
+          <button type="button" data-persona="eva" class="config-btn">
+            [F] EVA // Lead Frontend & UX Director (Strategic)
+          </button>
+          <button type="button" data-persona="adam" class="config-btn">
+            [M] ADAM // Chief Backend Architect & Cloud Systems (Technical)
+          </button>
+          <button type="button" data-persona="dual" class="config-btn active">
+            [DUAL] EVA & ADAM // Synergistic Full-Stack Co-Pilots (Dual)
+          </button>
+        </div>
+      </div>
+
+      <!-- ROW 2: OPERATIONAL MODES -->
+      <div class="deck-row">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[02] OPERATIONAL MODES:</span>
+          <span style="font-size:10px; color:var(--fg-muted);">[4 TOPOLOGIES]</span>
+        </div>
+        <div class="deck-row-items" id="mode-selector-group">
+          <button type="button" data-mode="chat" class="config-btn active">
+            (*) CHAT // Direct Model Interaction
+          </button>
+          <button type="button" data-mode="dialog" class="config-btn">
+            ( ) DIALOG // Bilateral Debate (Eva vs Adam)
+          </button>
+          <button type="button" data-mode="interview" class="config-btn">
+            ( ) INTERVIEW // Structured Technical/Executive Q&A
+          </button>
+          <button type="button" data-mode="consilium" class="config-btn">
+            ( ) CONSILIUM // Multi-Agent Executive Council
+          </button>
+        </div>
+      </div>
+
+      <!-- ROW 3: CONSILIUM PRESETS & PARTICIPANT COUNT -->
+      <div class="deck-row" id="consilium-options-row">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[03] CONSILIUM COUNCIL CONFIGURATION:</span>
+          <span style="font-size:10px; color:var(--fg-muted);">[SCALE: 3 TO 10 PARTICIPANTS]</span>
+        </div>
+        <div class="deck-row-items" style="align-items:center; gap:12px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:11px; color:var(--fg-muted);">Participants:</span>
+            <input type="range" id="deck-consilium-count" min="3" max="10" value="5" style="width:100px; accent-color:var(--clr-green); cursor:pointer;">
+            <span id="consilium-count-val" style="font-weight:700; color:var(--clr-green); font-size:11px;">5</span>
+          </div>
+          <button type="button" id="btn-preset-top10-paid" class="config-btn">
+            [*] PRESET: TOP-10 SMARTEST PAID MODELS
+          </button>
+          <button type="button" id="btn-preset-top10-free" class="config-btn">
+            [*] PRESET: TOP-10 FREE QUOTA MODELS
+          </button>
+        </div>
+      </div>
+
+      <!-- ROW 4: ACTIVE NEURAL MODEL -->
+      <div class="deck-row">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[04] ACTIVE NEURAL MODEL (CATALOG 55+):</span>
+          <span id="model-tier-badge" style="font-size:10px; color:var(--clr-green); font-weight:700;">[FREE] 100% FREE QUOTA ($0.00)</span>
+        </div>
         <div>
-          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-            <h3 data-i18n="secModels" class="text-xs font-bold text-white tracking-wider">
-              2. MODEL SELECTION & QUOTAS
-            </h3>
-            <span class="text-[10px] text-zinc-500 font-mono">[CATALOG: 55+ LLMS]</span>
-          </div>
-
-          <!-- MODEL DROPDOWN SELECTOR -->
-          <div class="mb-3">
-            <label class="block text-[11px] text-zinc-400 mb-1">Active Neural Engine:</label>
-            <select
-              id="deck-model-select"
-              class="w-full bg-zinc-950 border border-zinc-700 text-white text-xs px-3 py-2 font-mono focus:outline-none focus:border-white cursor-pointer"
-            >
-              <!-- Dynamically populated -->
-            </select>
-          </div>
-
-          <!-- MODEL SPECIFICATION VIEW CARD -->
-          <div class="border border-zinc-800 bg-zinc-950/60 p-3 text-xs space-y-2">
-            <div class="flex items-center justify-between border-b border-zinc-800 pb-1.5">
-              <span id="model-spec-name" class="font-bold text-white text-sm">Gemini 2.5 Flash</span>
-              <span id="model-spec-badge" class="px-2 py-0.5 border border-emerald-600 text-emerald-400 font-bold text-xs">🟢 FREE QUOTA</span>
-            </div>
-            <div class="grid grid-cols-2 gap-2 text-[11px] text-zinc-400">
-              <div>Provider: <span id="model-spec-provider" class="text-white font-bold">Google DeepMind</span></div>
-              <div>Context: <span id="model-spec-context" class="text-white font-bold">1,048,576 tokens</span></div>
-              <div>Max Output: <span id="model-spec-maxout" class="text-white font-bold">8,192 tokens</span></div>
-              <div>Quota: <span id="model-spec-quota" class="text-emerald-400 font-mono">1,500 RPD ($0.00)</span></div>
-            </div>
-            <div class="border-t border-zinc-800 pt-1.5 text-[11px] text-zinc-400 space-y-0.5">
-              <div>USD ($): <span id="model-spec-usd" class="text-zinc-200 font-mono">$0.00 (Free) / $0.075 (Paid)</span></div>
-              <div>EUR (€): <span id="model-spec-eur" class="text-zinc-200 font-mono">€0.00 (Free) / €0.070 (Paid)</span></div>
-            </div>
-            <div class="border-t border-zinc-800 pt-1.5 text-[11px] text-zinc-400">
-              <div>Coding Strengths: <span id="model-spec-coding" class="text-zinc-300 font-mono">High-throughput code transformations, CI/CD pipeline automation...</span></div>
-            </div>
-          </div>
+          <select id="deck-model-select" class="deck-select">
+            <!-- Populated dynamically by app.ts -->
+          </select>
         </div>
-
-        <div class="mt-3 text-[10px] text-zinc-500">
-          • Real-time model tiering strictly in USD ($) and EUR (€). Global currency compliance active.
+        <div id="deck-model-pricing-info" style="font-size:10px; color:var(--fg-muted); display:flex; gap:16px;">
+          <span>USD ($): <strong id="spec-usd" style="color:#ffffff;">$0.00 (Free) / $0.075 (Paid)</strong></span>
+          <span>EUR (€): <strong id="spec-eur" style="color:#ffffff;">€0.00 (Free) / €0.070 (Paid)</strong></span>
+          <span>Context: <strong id="spec-context" style="color:#ffffff;">1,048,576 tokens</strong></span>
         </div>
       </div>
 
-      <!-- ===================================================================== -->
-      <!-- MODULE 3: OPERATIONAL MODES (6 cols)                                 -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-          <h3 data-i18n="secModes" class="text-xs font-bold text-white tracking-wider">
-            3. OPERATIONAL MODES
-          </h3>
-          <span class="text-[10px] text-zinc-500 font-mono">[4 TOPOLOGIES]</span>
+      <!-- ROW 5: DATABASE & KNOWLEDGE BASE SELECTION -->
+      <div class="deck-row">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[05] COMPANY DATABASE & KNOWLEDGE BASE:</span>
+          <span style="font-size:10px; color:var(--clr-green); font-weight:700;">[OK] CONNECTED</span>
         </div>
+        <div class="deck-row-items" id="db-selector-group">
+          <button type="button" data-db="hybrid" class="config-btn active">
+            (*) EvaLine Hybrid Core (PostgreSQL + Qdrant RAG) [OK 4ms]
+          </button>
+          <button type="button" data-db="postgres" class="config-btn">
+            ( ) Company PostgreSQL Production [OK 8ms]
+          </button>
+          <button type="button" data-db="qdrant" class="config-btn">
+            ( ) Qdrant Vector Cluster (Dense Embeddings) [OK 11ms]
+          </button>
+          <button type="button" data-db="ephemeral" class="config-btn">
+            ( ) Ephemeral Session Memory (Isolated) [-- 0ms]
+          </button>
+        </div>
+        <div style="margin-top:4px;">
+          <input
+            type="text"
+            id="custom-db-uri-input"
+            placeholder="Custom Company Database URI: postgres://user:password@host:5432/dbname"
+            class="deck-input"
+          />
+        </div>
+      </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-          <!-- Solo -->
-          <div data-mode="solo" class="border border-white bg-zinc-900 text-white p-3 cursor-pointer hover:border-zinc-400 transition-all flex flex-col justify-between">
-            <div>
-              <div class="font-bold text-xs text-white mb-1 flex items-center justify-between">
-                <span data-i18n="modeSoloName">SOLO</span>
-                <span class="text-[10px] text-zinc-400">[DIRECT]</span>
-              </div>
-              <p data-i18n="modeSoloDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Direct single LLM execution focused strictly on active corporate persona directives.
-              </p>
-            </div>
+      <!-- ROW 6: TOP-10 PROFESSIONS & ROLES -->
+      <div class="deck-row">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[06] EVALINE TOP-10 PROFESSIONS & AGENTS:</span>
+          <span style="font-size:10px; color:var(--fg-muted);">[10 SPECIALIZED ROLES]</span>
+        </div>
+        <div class="deck-row-items" id="roles-selector-group">
+          <button type="button" data-role="eva_frontend" class="config-btn active">Eva (FrontEnd)</button>
+          <button type="button" data-role="adam_backend" class="config-btn">Adam (BackEnd)</button>
+          <button type="button" data-role="ceo" class="config-btn">CEO</button>
+          <button type="button" data-role="cto" class="config-btn">CTO</button>
+          <button type="button" data-role="ciso" class="config-btn">CISO</button>
+          <button type="button" data-role="cfo" class="config-btn">CFO</button>
+          <button type="button" data-role="devops_sre" class="config-btn">DevOps SRE</button>
+          <button type="button" data-role="data_ai_lead" class="config-btn">Data AI Lead</button>
+          <button type="button" data-role="qa_automation" class="config-btn">QA Lead</button>
+          <button type="button" data-role="legal_compliance" class="config-btn">Legal Counsel</button>
+        </div>
+      </div>
+
+      <!-- ROW 7: LIVE TELEMETRY & DIAGNOSTICS -->
+      <div class="deck-row">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[07] REAL-TIME CLUSTER TELEMETRY & METRICS:</span>
+          <span style="font-size:10px; color:var(--clr-green); font-weight:700;">[LIVE 1000ms]</span>
+        </div>
+        <div class="telemetry-grid">
+          <div class="telem-cell">
+            <span class="telem-label">Server:</span>
+            <span id="telem-server" class="telem-val">evabot-agent-vm</span>
           </div>
-
-          <!-- Broadcast -->
-          <div data-mode="broadcast" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="font-bold text-xs text-white mb-1 flex items-center justify-between">
-                <span data-i18n="modeBroadcastName">BROADCAST</span>
-                <span class="text-[10px] text-zinc-400">[MULTI]</span>
-              </div>
-              <p data-i18n="modeBroadcastDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Multi-perspective analysis broadcasting your prompt across core architectural dimensions.
-              </p>
-            </div>
+          <div class="telem-cell">
+            <span class="telem-label">Uptime:</span>
+            <span id="telem-uptime" class="telem-val">0h 0m</span>
           </div>
-
-          <!-- Dialogue -->
-          <div data-mode="dialogue" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="font-bold text-xs text-white mb-1 flex items-center justify-between">
-                <span data-i18n="modeDialogueName">DIALOGUE</span>
-                <span class="text-[10px] text-zinc-400">[STREAM]</span>
-              </div>
-              <p data-i18n="modeDialogueDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Rapid-cadence conversational cyber-stream with continuous state retention and feedback.
-              </p>
-            </div>
+          <div class="telem-cell">
+            <span class="telem-label">Memory:</span>
+            <span id="telem-memory" class="telem-val">32 MB</span>
           </div>
-
-          <!-- Consilium -->
-          <div data-mode="consilium" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="font-bold text-xs text-white mb-1 flex items-center justify-between">
-                <span data-i18n="modeConsiliumName">CONSILIUM</span>
-                <span class="text-[10px] text-zinc-400">[COUNCIL]</span>
-              </div>
-              <p data-i18n="modeConsiliumDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Autonomous corporate council deliberation synthesizing executive viewpoints into consensus.
-              </p>
-            </div>
+          <div class="telem-cell">
+            <span class="telem-label">Latency:</span>
+            <span id="telem-latency" class="telem-val" style="color:var(--clr-green);">-- ms</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Frankfurt (c3-std-8):</span>
+            <span class="telem-val" style="color:var(--clr-green);">[ONLINE]</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Iowa (e2-micro):</span>
+            <span class="telem-val" style="color:var(--clr-green);">[ONLINE]</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Session Tokens:</span>
+            <span id="telem-tokens" class="telem-val" style="color:var(--clr-yellow);">0</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Session Cost (USD/EUR):</span>
+            <span id="telem-cost" class="telem-val" style="color:var(--clr-green);">$0.00 / €0.00</span>
           </div>
         </div>
       </div>
 
-      <!-- ===================================================================== -->
-      <!-- MODULE 4: CORPORATE ROLES (6 cols)                                   -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-          <h3 data-i18n="secRoles" class="text-xs font-bold text-white tracking-wider">
-            4. CORPORATE ROLES & PERSONAS
-          </h3>
-          <span class="text-[10px] text-zinc-500 font-mono">[8 PERSONAS]</span>
+      <!-- ROW 8: SECURITY & API CREDENTIALS -->
+      <div class="deck-row">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[08] SECURITY & GOOGLE CLOUD CREDENTIALS:</span>
+          <span id="deck-key-status" style="font-size:10px; color:var(--clr-green); font-weight:700;">[OK] GOOGLE AMBIENT AUTH</span>
         </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 max-h-72 overflow-y-auto pr-1">
-          <!-- CEO -->
-          <div data-role="ceo" class="border border-white bg-zinc-900 text-white p-2 cursor-pointer hover:border-zinc-400 transition-all">
-            <div data-i18n="roleCeoName" class="font-bold text-xs">CEO // Executive Strategist</div>
-            <div data-i18n="roleCeoDesc" class="text-[10px] text-zinc-400">High-level corporate strategy & ROI.</div>
-          </div>
-
-          <!-- CTO -->
-          <div data-role="cto" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleCtoName" class="font-bold text-xs text-white">CTO // Principal Architect</div>
-            <div data-i18n="roleCtoDesc" class="text-[10px] text-zinc-400">Distributed systems & fault tolerance.</div>
-          </div>
-
-          <!-- CISO -->
-          <div data-role="ciso" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleCisoName" class="font-bold text-xs text-white">CISO // Cyber Security</div>
-            <div data-i18n="roleCisoDesc" class="text-[10px] text-zinc-400">Zero-trust threat modeling & defense.</div>
-          </div>
-
-          <!-- CFO -->
-          <div data-role="cfo" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleCfoName" class="font-bold text-xs text-white">CFO // Financial Analyst</div>
-            <div data-i18n="roleCfoDesc" class="text-[10px] text-zinc-400">Fiscal budgeting in USD ($) and EUR (€).</div>
-          </div>
-
-          <!-- UX -->
-          <div data-role="ux" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleUxName" class="font-bold text-xs text-white">UX/DES // Creative Director</div>
-            <div data-i18n="roleUxDesc" class="text-[10px] text-zinc-400">Minimalist monochrome ergonomics.</div>
-          </div>
-
-          <!-- DEV -->
-          <div data-role="dev" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleDevName" class="font-bold text-xs text-white">DEV // Full-Stack Engineer</div>
-            <div data-i18n="roleDevDesc" class="text-[10px] text-zinc-400">Production-grade code & tests.</div>
-          </div>
-
-          <!-- RSCH -->
-          <div data-role="rsch" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleRschName" class="font-bold text-xs text-white">RSCH // AI Scientist</div>
-            <div data-i18n="roleRschDesc" class="text-[10px] text-zinc-400">Attention loops & token heuristics.</div>
-          </div>
-
-          <!-- LEGAL -->
-          <div data-role="legal" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleLegalName" class="font-bold text-xs text-white">LEGAL // Compliance Counsel</div>
-            <div data-i18n="roleLegalDesc" class="text-[10px] text-zinc-400">GDPR, EU AI Act, risk governance.</div>
-          </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input
+            type="password"
+            id="deck-api-key-input"
+            placeholder="Custom API Key (AIzaSy...)"
+            class="deck-input"
+            style="flex:1;"
+          />
+          <button type="button" id="deck-save-key-btn" class="return-btn">
+            [ SAVE ]
+          </button>
+          <button type="button" id="deck-clear-key-btn" class="return-btn" style="background:transparent;">
+            [ USE AMBIENT ]
+          </button>
+        </div>
+        <div style="font-size:10px; color:var(--fg-dim);">
+          * Based in Odesa, Ukraine (UA) * Financial compliance: strictly USD ($) and EUR (€) * Zero tolerance for aggressor state.
         </div>
       </div>
 
-      <!-- ===================================================================== -->
-      <!-- MODULE 5: REAL-TIME SYSTEM TELEMETRY (6 cols)                        -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-            <h3 data-i18n="secTelemetry" class="text-xs font-bold text-white tracking-wider">
-              5. REAL-TIME SYSTEM TELEMETRY
-            </h3>
-            <span class="text-[10px] text-emerald-400 font-mono font-bold">🟢 NOMINAL</span>
-          </div>
-
-          <div class="space-y-2 text-xs font-mono">
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemServerLabel" class="text-zinc-500">Edge Server:</span>
-              <span id="telem-server" class="text-white font-bold">evabot-online-edge</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemUptimeLabel" class="text-zinc-500">Uptime:</span>
-              <span id="telem-uptime" class="text-zinc-200">0h 0m 0s</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemMemoryLabel" class="text-zinc-500">Memory (RSS):</span>
-              <span id="telem-memory" class="text-zinc-200">0 MB</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemLatencyLabel" class="text-zinc-500">API Latency:</span>
-              <span id="telem-latency" class="text-emerald-400">-- ms</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemProviderLabel" class="text-zinc-500">Provider:</span>
-              <span id="telem-provider" class="text-white font-bold">GOOGLE</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemModelLabel" class="text-zinc-500">Active Model:</span>
-              <span id="telem-model" class="text-white font-bold">gemini-2.5-flash</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span class="text-zinc-500">Role:</span>
-              <span id="telem-role" class="text-white font-bold">CEO</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span class="text-zinc-500">Mode:</span>
-              <span id="telem-mode" class="text-white font-bold">SOLO</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemQuotaLabel" class="text-zinc-500">Quota Status:</span>
-              <span id="telem-quota" class="text-emerald-400 font-bold">🟢 FREE QUOTA</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemAuthLabel" class="text-zinc-500">Auth Source:</span>
-              <span id="telem-auth" class="text-zinc-200">Google Cloud Ambient</span>
-            </div>
-            <div class="flex justify-between">
-              <span data-i18n="telemAccountLabel" class="text-zinc-500">Account:</span>
-              <span id="telem-account" class="text-zinc-300">evabot.online@gmail.com</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 pt-2 border-t border-zinc-800 text-[10px] text-zinc-500">
-          Telemetry stream updated dynamically every 1000ms.
-        </div>
-      </div>
-
-      <!-- ===================================================================== -->
-      <!-- MODULE 6: SECURITY & CREDENTIALS (6 cols)                             -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-            <h3 data-i18n="secSecurity" class="text-xs font-bold text-white tracking-wider">
-              6. SECURITY & CREDENTIALS
-            </h3>
-            <span id="deck-key-status" class="text-[10px] text-emerald-400 font-bold border border-emerald-800 bg-emerald-950/40 px-2 py-0.5">
-              🟢 GOOGLE AMBIENT AUTH
-            </span>
-          </div>
-
-          <div class="space-y-3">
-            <div>
-              <label data-i18n="apiKeyLabel" class="block text-xs text-zinc-300 mb-1">
-                Google Gemini / Vertex API Key
-              </label>
-              <input
-                type="password"
-                id="deck-api-key-input"
-                data-i18n-placeholder="apiKeyPlaceholder"
-                placeholder="AIzaSy..."
-                class="w-full bg-zinc-950 border border-zinc-700 text-white font-mono px-3 py-2 text-xs focus:outline-none focus:border-white"
-              />
-              <p data-i18n="apiKeyHelp" class="text-[11px] text-zinc-500 mt-1.5 leading-normal">
-                Enter your custom key to override server ambient credentials. Stored securely in browser localStorage.
-              </p>
-            </div>
-
-            <div class="flex flex-wrap gap-2 pt-2">
-              <button
-                type="button"
-                id="deck-save-key-btn"
-                data-i18n="saveKeyBtn"
-                class="px-3 py-1.5 border border-white bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-all cursor-pointer font-mono"
-              >
-                [ SAVE CREDENTIALS ]
-              </button>
-              <button
-                type="button"
-                id="deck-clear-key-btn"
-                data-i18n="clearKeyBtn"
-                class="px-3 py-1.5 border border-zinc-800 bg-black text-zinc-400 hover:text-white hover:border-zinc-500 font-bold text-xs transition-all cursor-pointer font-mono"
-              >
-                [ USE AMBIENT AUTO-AUTH ]
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 pt-2 border-t border-zinc-800 text-[10px] text-zinc-500">
-          Encrypted local vault configuration. No key data is persisted to third-party cookies.
-        </div>
+      <!-- Deck Footer -->
+      <div style="display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid var(--border-dim); font-size:11px; color:var(--fg-muted);">
+        <span>EVABOT ONLINE // LINE-BY-LINE CYBER DECK</span>
+        <button onclick="document.getElementById('screen-terminal').scrollIntoView({behavior:'smooth'})" class="return-btn" style="font-size:10px;">
+          [ ^ TOP OF TERMINAL ]
+        </button>
       </div>
 
     </div>
-
-    <!-- CONTROL DECK FOOTER -->
-    <div class="max-w-6xl w-full mx-auto mt-8 pt-4 border-t border-zinc-900 flex flex-wrap justify-between items-center text-[11px] text-zinc-600 gap-2">
-      <span>EVABOT ONLINE V0.0.1 MVP • HYBRID AGENT CYBER DECK</span>
-      <button onclick="document.getElementById('screen-terminal').scrollIntoView({behavior:'smooth'})" class="text-zinc-400 hover:text-white cursor-pointer">
-        [ ↑ TOP OF TERMINAL ]
-      </button>
-    </div>
-
   </section>
 
   <!-- ESBUILD COMPILED CLIENT BUNDLE -->

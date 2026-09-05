@@ -537,6 +537,198 @@ export class TableFormatter {
 }
 
 // ============================================================================
+// SGR Mouse Tracking (Mode 1006)
+// ============================================================================
+
+export interface SgrMouseEvent {
+  button: number;       // 0=left, 1=middle, 2=right, 64=scroll-up, 65=scroll-down, 3=release
+  pressed: boolean;     // true = press, false = release
+  col: number;          // 1-based column
+  row: number;          // 1-based row
+  isRelease: boolean;
+}
+
+export interface ClickableArea {
+  id: string;
+  row: number;          // 1-based row (viewport)
+  startCol: number;     // 1-based inclusive
+  endCol: number;       // 1-based inclusive
+  label: string;
+  action: () => void | Promise<void>;
+}
+
+export class MouseTracker {
+  private clickables: ClickableArea[] = [];
+  private enabled = false;
+  private onData?: (event: SgrMouseEvent) => void;
+
+  constructor(onData?: (event: SgrMouseEvent) => void) {
+    this.onData = onData;
+  }
+
+  /**
+   * Enable SGR mouse mode 1003 (all events) + mode 1006 (SGR coordinates)
+   */
+  public enable(): void {
+    if (this.enabled) return;
+    this.enabled = true;
+    process.stdout.write('\x1b[?1003h\x1b[?1006h');
+  }
+
+  /**
+   * Disable SGR mouse tracking and restore terminal
+   */
+  public disable(): void {
+    if (!this.enabled) return;
+    this.enabled = false;
+    process.stdout.write('\x1b[?1003l\x1b[?1006l');
+  }
+
+  public isEnabled(): boolean {
+    return this.enabled;
+  }
+
+  /**
+   * Parse raw input bytes for SGR mouse events.
+   * SGR format: ESC [ < Cb ; Cc ; Cd M / m
+   *   Cb = button (0-3 normal, 64=scroll up, 65=scroll down)
+   *   Cc = column (1-based)
+   *   Cd = row (1-based)
+   *   M = press, m = release
+   */
+  public parseBuffer(data: Buffer): SgrMouseEvent[] {
+    const events: SgrMouseEvent[] = [];
+    const str = data.toString('utf-8');
+
+    let i = 0;
+    while (i < str.length) {
+      // Look for ESC [ <
+      if (str[i] === '\x1b' && i + 2 < str.length && str[i + 1] === '[' && str[i + 2] === '<') {
+        i += 3;
+        let cbStr = '';
+        let ccStr = '';
+        let cdStr = '';
+        let phase = 0;
+
+        while (i < str.length) {
+          const ch = str[i];
+          if (ch === ';') {
+            phase++;
+            i++;
+            continue;
+          }
+          if (ch === 'M' || ch === 'm') {
+            const isRelease = ch === 'm';
+            const cb = parseInt(cbStr, 10) || 0;
+            const cc = parseInt(ccStr, 10) || 0;
+            const cd = parseInt(cdStr, 10) || 0;
+
+            const event: SgrMouseEvent = {
+              button: cb,
+              pressed: !isRelease,
+              col: cc,
+              row: cd,
+              isRelease,
+            };
+
+            events.push(event);
+            this.onData?.(event);
+            this.checkClickable(event);
+            i++;
+            break;
+          }
+          if (ch >= '0' && ch <= '9') {
+            if (phase === 0) cbStr += ch;
+            else if (phase === 1) ccStr += ch;
+            else if (phase === 2) cdStr += ch;
+          }
+          i++;
+        }
+      } else {
+        i++;
+      }
+    }
+
+    return events;
+  }
+
+  /**
+   * Register a clickable area
+   */
+  public registerClickable(area: ClickableArea): void {
+    this.clickables.push(area);
+  }
+
+  /**
+   * Clear all registered clickables (call on each render cycle)
+   */
+  public clearClickables(): void {
+    this.clickables = [];
+  }
+
+  /**
+   * Check if a mouse event hits a registered clickable
+   */
+  private checkClickable(event: SgrMouseEvent): void {
+    if (event.isRelease) return;
+
+    const hit = this.clickables.find(
+      (c) => event.row === c.row && event.col >= c.startCol && event.col <= c.endCol
+    );
+
+    if (hit) {
+      hit.action();
+    }
+  }
+
+  /**
+   * Setup raw mode stdin listener for mouse events
+   */
+  public attachStdin(stdin: NodeJS.ReadStream): void {
+    if (stdin.isTTY) {
+      stdin.setRawMode(true);
+    }
+    stdin.resume();
+    stdin.on('data', (data: Buffer) => {
+      this.parseBuffer(data);
+    });
+  }
+
+  /**
+   * Detach stdin listener
+   */
+  public detachStdin(stdin: NodeJS.ReadStream): void {
+    stdin.removeAllListeners('data');
+    if (stdin.isTTY) {
+      stdin.setRawMode(false);
+    }
+  }
+}
+
+/**
+ * Helper: render a clickable text span that registers coordinates for mouse hit-testing.
+ * Returns the plain text (for screen output) and registers the clickable area.
+ */
+export function clickableText(
+  tracker: MouseTracker,
+  text: string,
+  row: number,
+  startCol: number,
+  id: string,
+  action: () => void | Promise<void>
+): string {
+  tracker.registerClickable({
+    id,
+    row,
+    startCol,
+    endCol: startCol + visibleWidth(text) - 1,
+    label: text,
+    action,
+  });
+  return text;
+}
+
+// ============================================================================
 // Reactive Stream Engine (Line-by-line & progressive streaming)
 // ============================================================================
 
@@ -715,6 +907,8 @@ export const AnsiStreamEngine = {
   formatTable: TableFormatter.render,
   TableFormatter,
   AnsiStreamWriter,
+  MouseTracker,
+  clickableText,
 };
 
 export default AnsiStreamEngine;

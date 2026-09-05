@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvaBot Voice Demo (Web Speech API)</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #121212; color: #fff; }
+        select, button, input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; font-size: 16px; }
+        button { background: #007bff; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        #chat { border: 1px solid #333; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; margin-bottom: 15px; background: #1a1a1a; }
+        .msg { margin-bottom: 10px; line-height: 1.4; }
+        .user { color: #00a8ff; }
+        .bot { color: #4cd137; }
+    </style>
+</head>
+<body>
+
+    <h2>🗣 EvaBot Voice Demo</h2>
+    <p>Для премиум-голосов Google Cloud (Studio/WaveNet) нужен платный API-ключ. Этот прототип использует встроенные голоса вашего браузера (в Chrome это бесплатные голоса Google).</p>
+
+    <select id="voiceSelect"></select>
+    
+    <div id="chat"></div>
+
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="textInput" placeholder="Напишите сообщение..." style="flex: 1; margin: 0;">
+        <button id="speakBtn" style="width: auto;">Отправить</button>
+    </div>
+    <button id="micBtn" style="background: #e84118; margin-top: 15px;">🎤 Сказать голосом (Вкл/Выкл)</button>
+
+    <script>
+        const synth = window.speechSynthesis;
+        const voiceSelect = document.getElementById('voiceSelect');
+        const chat = document.getElementById('chat');
+        const textInput = document.getElementById('textInput');
+        const speakBtn = document.getElementById('speakBtn');
+        const micBtn = document.getElementById('micBtn');
+
+        let voices = [];
+
+        function populateVoiceList() {
+            voices = synth.getVoices().filter(v => ['ru', 'uk', 'en', 'pl', 'ro'].some(lang => v.lang.includes(lang)));
+            voiceSelect.innerHTML = '';
+            voices.forEach((voice, i) => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.value = i;
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        populateVoiceList();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+
+        function addMessage(sender, text) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + (sender === 'Вы' ? 'user' : 'bot');
+            div.innerHTML = `<strong>${sender}:</strong> ${text}`;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function speak(text) {
+            if (synth.speaking) synth.cancel();
+            
+            // Простая эмуляция ответа ИИ для демо
+            let botReply = text;
+            if(text.toLowerCase().includes('привет')) botReply = 'Привет! Я тестовый голос EvaBot.';
+            if(text.toLowerCase().includes('как дела')) botReply = 'У меня отлично! Как ваши дела?';
+
+            addMessage('EvaBot', botReply);
+
+            const utterThis = new SpeechSynthesisUtterance(botReply);
+            const selectedOption = voiceSelect.selectedOptions[0].value;
+            utterThis.voice = voices[selectedOption];
+            utterThis.rate = 1.0;
+            utterThis.pitch = 1.0;
+            synth.speak(utterThis);
+        }
+
+        speakBtn.addEventListener('click', () => {
+            if (textInput.value) {
+                addMessage('Вы', textInput.value);
+                speak(textInput.value);
+                textInput.value = '';
+            }
+        });
+
+        // Speech Recognition (Микрофон)
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'ru-RU';
+
+            let isListening = false;
+
+            micBtn.addEventListener('click', () => {
+                if(isListening) {
+                    recognition.stop();
+                    micBtn.textContent = '🎤 Сказать голосом (Вкл/Выкл)';
+                    isListening = false;
+                } else {
+                    recognition.start();
+                    micBtn.textContent = '🛑 Слушаю...';
+                    isListening = true;
+                }
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                textInput.value = transcript;
+                speakBtn.click();
+                micBtn.textContent = '🎤 Сказать голосом (Вкл/Выкл)';
+                isListening = false;
+            };
+
+            recognition.onerror = () => {
+                micBtn.textContent = '🎤 Ошибка. Попробуйте еще раз';
+                isListening = false;
+            };
+        } else {
+            micBtn.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

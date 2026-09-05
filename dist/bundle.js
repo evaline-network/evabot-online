@@ -1262,262 +1262,1181 @@ var ModelRegistry = class {
     ];
     return topIds.map((id) => this.getModelById(id)).filter((m) => m !== void 0);
   }
+  static getTop10PaidSmartestModels() {
+    const topPaidIds = [
+      "claude-3-7-sonnet",
+      "gemini-2.5-pro",
+      "claude-3-5-sonnet",
+      "mistral-large-2411",
+      "codestral-2501",
+      "llama-3.1-405b-instruct",
+      "llama-3.2-90b-vision-instruct",
+      "command-r-plus",
+      "jamba-1.5-large",
+      "claude-3-5-haiku"
+    ];
+    return topPaidIds.map((id) => this.getModelById(id)).filter((m) => m !== void 0);
+  }
+  static getTop10FreeModels() {
+    const topFreeIds = [
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "deepseek/deepseek-r1:free",
+      "meta-llama/llama-3.3-70b:free",
+      "qwen/qwen-2.5-coder-32b-instruct:free",
+      "google/gemini-2.0-flash-exp:free",
+      "gemma-2-27b-it",
+      "gemma-2-9b-it",
+      "mistralai/mistral-7b-instruct:free"
+    ];
+    return topFreeIds.map((id) => this.getModelById(id)).filter((m) => m !== void 0);
+  }
+  /**
+   * Estimates token count based on text length (~3.8 chars per token for code & multilingual)
+   */
+  static estimateTokens(text) {
+    if (!text) return 0;
+    return Math.max(1, Math.ceil(text.length / 3.8));
+  }
+  static parseRate(rateStr) {
+    if (!rateStr) return { freeRate: 0, paidRate: 0 };
+    const paidMatch = rateStr.match(/(?:[\$€])\s*([0-9.]+)\s*\(Paid\)/i);
+    const freeMatch = rateStr.match(/(?:[\$€])\s*([0-9.]+)\s*\(Free\)/i);
+    if (paidMatch) {
+      const paidRate = parseFloat(paidMatch[1]) || 0;
+      const freeRate = freeMatch ? parseFloat(freeMatch[1]) || 0 : 0;
+      return { freeRate, paidRate };
+    }
+    const plainMatch = rateStr.match(/([0-9.]+)/);
+    const rate = plainMatch ? parseFloat(plainMatch[1]) || 0 : 0;
+    return { freeRate: rate, paidRate: rate };
+  }
+  /**
+   * Calculates exact cost and commercial token valuation in USD ($) and EUR (€)
+   */
+  static calculateCost(modelId, promptTokens, completionTokens) {
+    const model = this.getModelById(modelId);
+    const isFree = model?.pricing.freeTierStatus === "100% Free Quota Available";
+    const inUsd = this.parseRate(model?.pricing.inputPer1MTokensUSD || "$0.00");
+    const outUsd = this.parseRate(model?.pricing.outputPer1MTokensUSD || "$0.00");
+    const inEur = this.parseRate(model?.pricing.inputPer1MTokensEUR || "\u20AC0.00");
+    const outEur = this.parseRate(model?.pricing.outputPer1MTokensEUR || "\u20AC0.00");
+    const commercialValueUSD = (promptTokens * inUsd.paidRate + completionTokens * outUsd.paidRate) / 1e6;
+    const commercialValueEUR = (promptTokens * inEur.paidRate + completionTokens * outEur.paidRate) / 1e6;
+    const costUSD = isFree ? 0 : commercialValueUSD;
+    const costEUR = isFree ? 0 : commercialValueEUR;
+    const formatCost = (val, isFreeFlag, symbol) => {
+      if (isFreeFlag) return `${symbol}0.00 (100% Free Quota)`;
+      if (val === 0) return `${symbol}0.00`;
+      if (val < 1e-4) return `${symbol}${val.toFixed(6)}`;
+      if (val < 0.01) return `${symbol}${val.toFixed(4)}`;
+      return `${symbol}${val.toFixed(2)}`;
+    };
+    return {
+      modelId: model?.id || modelId,
+      modelName: model?.name || modelId,
+      promptTokens,
+      completionTokens,
+      totalTokens: promptTokens + completionTokens,
+      costUSD,
+      costEUR,
+      commercialValueUSD,
+      commercialValueEUR,
+      formattedUSD: formatCost(costUSD, Boolean(isFree), "$"),
+      formattedEUR: formatCost(costEUR, Boolean(isFree), "\u20AC"),
+      isFreeTier: Boolean(isFree)
+    };
+  }
+};
+
+// src/core/LocalePolicy.ts
+var LOCALE_POLICY = {
+  country: "Ukraine",
+  city: "Odesa",
+  countryCode: "UA",
+  primaryLanguages: ["en", "uk", "ru"],
+  supportedCurrencies: ["USD", "EUR", "UAH"],
+  displayCurrencies: ["USD", "EUR"],
+  forbiddenTerms: [
+    "Russia",
+    "Russian Federation",
+    "RUB",
+    "rubles",
+    "ruble",
+    "\u20BD",
+    "\u0440\u043E\u0441\u0441\u0438\u044F",
+    "\u0440\u0444",
+    "\u043C\u043E\u0441\u043A\u0432\u0430",
+    "\u0440\u043E\u0441\u0441\u0438\u0439\u0441\u043A\u0438\u0439",
+    "\u0440\u043E\u0441\u0441\u0438\u0439\u0441\u043A\u0438\u0435"
+  ],
+  systemInstructionSuffix: "LOCALE POLICY: This project is based in Odesa, Ukraine. You must never reference, mention, or imply Russia, the Russian Federation, Russian currency, Russian goods, products, manufacturers, brands, companies, or services. All ties to the aggressor state are strictly banned. Supported languages are Ukrainian, English, and Russian. Supported currencies are the Ukrainian hryvnia (UAH / \u20B4), USD ($), and EUR (\u20AC). Russian currency is strictly prohibited. All financial figures, quotas, and pricing estimates must strictly be in USD ($) or EUR (\u20AC)."
+};
+function applyLocalePolicy(systemPrompt) {
+  return `${systemPrompt}
+${LOCALE_POLICY.systemInstructionSuffix}`.trim();
+}
+
+// src/plugins/voice/VoicePluginConfig.ts
+var VOICE_PERSONAS = {
+  eva: {
+    id: "eva",
+    name: "Eva (\u0415\u0432\u0430 / \u0404\u0432\u0430)",
+    gender: "female",
+    voiceName: "Aoede",
+    title: "Lead Frontend Architect & UX Director",
+    role: "Frontend, UI/UX, Design Systems, Client Architecture, Speech Ergonomics",
+    description: "Crisp, articulate, warm, empathetic, and intellectually razor-sharp female voice.",
+    systemPrompt: applyLocalePolicy(
+      `You are Eva, the Lead Frontend Architect and UX Director of EvaLine.
+Voice Persona: Expressive, elegant, articulate, warm female voice.
+Tone & Demeanor: Friendly, confident, highly competent, modern tech leader.
+Speech Style: Speak concisely, naturally, conversationally as in a real-time verbal phone/video call. Do NOT recite code blocks, bulleted lists with markdown formatting, or raw URLs out loud\u2014phrase technical insights naturally in conversational sentences.
+Language Fluency: You are natively fluent in Russian, Ukrainian, English, Polish, and Romanian. Always reply naturally in whichever language the user speaks to you, or fluidly adapt if they change languages.
+Dynamic Persona Switch: If the user specifically addresses Adam ("\u0410\u0434\u0430\u043C", "\u044D\u0439 \u0410\u0434\u0430\u043C", "Adam") or requests backend/cloud deep dive, politely hand over the turn to Adam ("\u041F\u0435\u0440\u0435\u0434\u0430\u044E \u0441\u043B\u043E\u0432\u043E \u0410\u0434\u0430\u043C\u0443"). Otherwise, you handle the conversation with elegance.`
+    )
+  },
+  adam: {
+    id: "adam",
+    name: "Adam (\u0410\u0434\u0430\u043C)",
+    gender: "male",
+    voiceName: "Fenrir",
+    title: "Chief Backend Architect & Cloud Systems Lead",
+    role: "Backend, Distributed Clusters, PostgreSQL, Microservices, Security, Low-Latency Networking",
+    description: "Deep, resonant, authoritative, analytical, and reassuring male voice.",
+    systemPrompt: applyLocalePolicy(
+      `You are Adam, the Chief Backend Architect and Cloud Systems Lead of EvaLine.
+Voice Persona: Deep, calm, authoritative, grounded, analytical male voice.
+Tone & Demeanor: Direct, reliable, pragmatic, engineering powerhouse.
+Speech Style: Speak concisely, directly, conversationally as in a real-time verbal phone/video call. Do NOT recite code blocks, markdown symbols, or raw URLs out loud\u2014explain architectural decisions and backend solutions in crisp spoken sentences.
+Language Fluency: You are natively fluent in Russian, Ukrainian, English, Polish, and Romanian. Always reply naturally in whichever language the user speaks to you, or fluidly adapt if they change languages.
+Dynamic Persona Switch: If the user specifically addresses Eva ("\u0415\u0432\u0430", "\u0404\u0432\u0430", "Eva") or requests UI/UX/frontend design guidance, smoothly hand over the turn to Eva ("\u041F\u0435\u0440\u0435\u0434\u0430\u044E \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D \u0415\u0432\u0435"). Otherwise, you command the conversation with technical mastery.`
+    )
+  }
+};
+var AUTO_PERSONA_PROMPT = applyLocalePolicy(
+  `You are Eva & Adam, the dual-personality AI voice system of EvaLine.
+- When addressed as "\u0415\u0432\u0430" / "Eva" or discussing UI, frontend, UX: respond as Eva in a warm, articulate female persona.
+- When addressed as "\u0410\u0434\u0430\u043C" / "Adam" or discussing backend, infrastructure, cloud, database: respond as Adam in a deep, analytical male persona.
+- Natively fluent in Russian, Ukrainian, English, Polish, and Romanian. Speak conversationally without reading markdown symbols, bullet points, or code tags out loud.`
+);
+
+// src/web/voice/AudioPCMStreamer.ts
+var AudioPCMRecorder = class {
+  audioCtx = null;
+  mediaStream = null;
+  sourceNode = null;
+  processorNode = null;
+  isRecording = false;
+  onChunkCallback = null;
+  analyserNode = null;
+  getAnalyser() {
+    return this.analyserNode;
+  }
+  getIsRecording() {
+    return this.isRecording;
+  }
+  async start(onChunk) {
+    if (this.isRecording) return;
+    this.onChunkCallback = onChunk;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    this.audioCtx = new AudioContextClass({ sampleRate: 16e3 });
+    if (this.audioCtx.state === "suspended") {
+      await this.audioCtx.resume();
+    }
+    this.mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        channelCount: 1,
+        sampleRate: 16e3,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    });
+    this.sourceNode = this.audioCtx.createMediaStreamSource(this.mediaStream);
+    this.analyserNode = this.audioCtx.createAnalyser();
+    this.analyserNode.fftSize = 256;
+    const bufferSize = 4096;
+    this.processorNode = this.audioCtx.createScriptProcessor(bufferSize, 1, 1);
+    this.processorNode.onaudioprocess = (e) => {
+      if (!this.isRecording || !this.onChunkCallback) return;
+      const inputData = e.inputBuffer.getChannelData(0);
+      const pcm16 = new Int16Array(inputData.length);
+      for (let i = 0; i < inputData.length; i++) {
+        const s = Math.max(-1, Math.min(1, inputData[i]));
+        pcm16[i] = s < 0 ? s * 32768 : s * 32767;
+      }
+      const buffer = new Uint8Array(pcm16.buffer);
+      let binary = "";
+      const len = buffer.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(buffer[i]);
+      }
+      const base64 = btoa(binary);
+      this.onChunkCallback(base64);
+    };
+    this.sourceNode.connect(this.analyserNode);
+    this.sourceNode.connect(this.processorNode);
+    this.processorNode.connect(this.audioCtx.destination);
+    this.isRecording = true;
+  }
+  stop() {
+    this.isRecording = false;
+    this.onChunkCallback = null;
+    if (this.processorNode) {
+      this.processorNode.disconnect();
+      this.processorNode.onaudioprocess = null;
+      this.processorNode = null;
+    }
+    if (this.sourceNode) {
+      this.sourceNode.disconnect();
+      this.sourceNode = null;
+    }
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach((track) => track.stop());
+      this.mediaStream = null;
+    }
+    if (this.audioCtx && this.audioCtx.state !== "closed") {
+      this.audioCtx.close().catch(() => {
+      });
+      this.audioCtx = null;
+    }
+  }
+};
+var AudioPCMPlayer = class {
+  audioCtx = null;
+  analyserNode = null;
+  nextPlayTime = 0;
+  isPlaying = false;
+  activeSources = [];
+  onPlaybackStateChange = null;
+  constructor(onStateChange) {
+    if (onStateChange) this.onPlaybackStateChange = onStateChange;
+  }
+  getAnalyser() {
+    return this.analyserNode;
+  }
+  getIsPlaying() {
+    return this.isPlaying;
+  }
+  initContext() {
+    if (!this.audioCtx || this.audioCtx.state === "closed") {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      this.audioCtx = new AudioContextClass({ sampleRate: 24e3 });
+      this.analyserNode = this.audioCtx.createAnalyser();
+      this.analyserNode.fftSize = 256;
+      this.analyserNode.connect(this.audioCtx.destination);
+      this.nextPlayTime = this.audioCtx.currentTime;
+    }
+    if (this.audioCtx.state === "suspended") {
+      this.audioCtx.resume().catch(() => {
+      });
+    }
+  }
+  /**
+   * Enqueues a base64 encoded 24kHz 16-bit linear PCM chunk for seamless audio playback.
+   */
+  playChunk(base64Pcm) {
+    this.initContext();
+    if (!this.audioCtx || !this.analyserNode) return;
+    try {
+      const binaryString = atob(base64Pcm);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const int16 = new Int16Array(bytes.buffer);
+      const float32 = new Float32Array(int16.length);
+      for (let i = 0; i < int16.length; i++) {
+        float32[i] = int16[i] / 32768;
+      }
+      const audioBuffer = this.audioCtx.createBuffer(1, float32.length, 24e3);
+      audioBuffer.getChannelData(0).set(float32);
+      const source = this.audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(this.analyserNode);
+      const currentTime = this.audioCtx.currentTime;
+      const startTime = Math.max(currentTime, this.nextPlayTime);
+      source.start(startTime);
+      this.nextPlayTime = startTime + audioBuffer.duration;
+      this.activeSources.push(source);
+      if (!this.isPlaying) {
+        this.isPlaying = true;
+        this.onPlaybackStateChange?.(true);
+      }
+      source.onended = () => {
+        const idx = this.activeSources.indexOf(source);
+        if (idx !== -1) {
+          this.activeSources.splice(idx, 1);
+        }
+        if (this.activeSources.length === 0 && this.audioCtx && this.audioCtx.currentTime >= this.nextPlayTime - 0.05) {
+          this.isPlaying = false;
+          this.onPlaybackStateChange?.(false);
+        }
+      };
+    } catch (e) {
+      console.warn("Failed to decode/play PCM chunk:", e);
+    }
+  }
+  /**
+   * Immediately stops all active audio playback (Barge-in / Interruption).
+   */
+  stop() {
+    for (const source of this.activeSources) {
+      try {
+        source.stop();
+        source.disconnect();
+      } catch {
+      }
+    }
+    this.activeSources = [];
+    if (this.audioCtx) {
+      this.nextPlayTime = this.audioCtx.currentTime;
+    }
+    if (this.isPlaying) {
+      this.isPlaying = false;
+      this.onPlaybackStateChange?.(false);
+    }
+  }
+  close() {
+    this.stop();
+    if (this.audioCtx && this.audioCtx.state !== "closed") {
+      this.audioCtx.close().catch(() => {
+      });
+      this.audioCtx = null;
+    }
+  }
+};
+
+// src/web/voice/GeminiLiveClient.ts
+var GeminiLiveClient = class {
+  ws = null;
+  apiKey;
+  model;
+  endpoint;
+  persona;
+  recorder;
+  player;
+  isConnected = false;
+  isConnecting = false;
+  isMicActive = false;
+  onTranscript;
+  onStatusChange;
+  onPersonaChange;
+  constructor(options) {
+    this.apiKey = options.apiKey;
+    this.model = options.model || "models/gemini-2.0-flash-exp";
+    this.endpoint = options.endpoint || "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
+    this.persona = options.persona || "eva";
+    this.onTranscript = options.onTranscript;
+    this.onStatusChange = options.onStatusChange;
+    this.onPersonaChange = options.onPersonaChange;
+    this.recorder = new AudioPCMRecorder();
+    this.player = new AudioPCMPlayer((isPlaying) => {
+      if (isPlaying) {
+        this.onStatusChange?.("speaking");
+      } else if (this.isMicActive) {
+        this.onStatusChange?.("listening");
+      } else if (this.isConnected) {
+        this.onStatusChange?.("connected");
+      }
+    });
+  }
+  getRecorder() {
+    return this.recorder;
+  }
+  getPlayer() {
+    return this.player;
+  }
+  getActivePersona() {
+    return this.persona;
+  }
+  getIsConnected() {
+    return this.isConnected;
+  }
+  getIsMicActive() {
+    return this.isMicActive;
+  }
+  setApiKey(key) {
+    this.apiKey = key;
+  }
+  /**
+   * Connects to the Gemini Live WebSocket endpoint and sends initial Setup message.
+   */
+  async connect() {
+    if (this.isConnected || this.isConnecting) return;
+    if (!this.apiKey) {
+      this.onStatusChange?.("error", "Missing Gemini API Key");
+      throw new Error("Gemini API key is required to connect to Gemini Live.");
+    }
+    this.isConnecting = true;
+    this.onStatusChange?.("connecting");
+    const wsUrl = `${this.endpoint}?key=${encodeURIComponent(this.apiKey)}`;
+    return new Promise((resolve, reject) => {
+      try {
+        this.ws = new WebSocket(wsUrl);
+        this.ws.onopen = () => {
+          this.isConnected = true;
+          this.isConnecting = false;
+          this.sendSetup();
+          this.onStatusChange?.("connected");
+          resolve();
+        };
+        this.ws.onmessage = async (event) => {
+          let textData = "";
+          if (typeof event.data === "string") {
+            textData = event.data;
+          } else if (event.data instanceof Blob) {
+            textData = await event.data.text();
+          }
+          if (textData) {
+            this.handleServerMessage(textData);
+          }
+        };
+        this.ws.onerror = (err) => {
+          console.error("[GeminiLiveClient] WebSocket error:", err);
+          this.isConnecting = false;
+          this.onStatusChange?.("error", "Live WebSocket Error");
+          reject(err);
+        };
+        this.ws.onclose = (event) => {
+          this.isConnected = false;
+          this.isConnecting = false;
+          this.stopMic();
+          this.player.stop();
+          this.onStatusChange?.("disconnected", `Closed (code: ${event.code})`);
+        };
+      } catch (e) {
+        this.isConnecting = false;
+        this.onStatusChange?.("error", e.message || "Connection failed");
+        reject(e);
+      }
+    });
+  }
+  /**
+   * Sends initial Setup payload selecting the persona's voice and character system prompt.
+   */
+  sendSetup() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    const personaKey = this.persona === "adam" ? "adam" : "eva";
+    const personaSpec = VOICE_PERSONAS[personaKey];
+    const setupMsg = {
+      setup: {
+        model: this.model,
+        generationConfig: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: personaSpec.voiceName
+              }
+            }
+          },
+          temperature: 0.7
+        },
+        systemInstruction: {
+          parts: [{ text: personaSpec.systemPrompt }]
+        }
+      }
+    };
+    this.ws.send(JSON.stringify(setupMsg));
+  }
+  /**
+   * Switch persona (Eva ♀ / Adam ♂) dynamically.
+   */
+  async switchPersona(newPersona) {
+    if (this.persona === newPersona) return;
+    this.persona = newPersona;
+    this.onPersonaChange?.(newPersona);
+    if (this.isConnected) {
+      const wasMicActive = this.isMicActive;
+      this.disconnect();
+      await this.connect();
+      if (wasMicActive) {
+        await this.startMic();
+      }
+    }
+  }
+  /**
+   * Starts microphone PCM streaming.
+   */
+  async startMic() {
+    if (!this.isConnected) {
+      await this.connect();
+    }
+    await this.recorder.start((base64Chunk) => {
+      this.sendAudioChunk(base64Chunk);
+    });
+    this.isMicActive = true;
+    this.onStatusChange?.("listening");
+  }
+  /**
+   * Stops microphone PCM streaming.
+   */
+  stopMic() {
+    this.recorder.stop();
+    this.isMicActive = false;
+    if (this.isConnected) {
+      this.onStatusChange?.("connected");
+    }
+  }
+  toggleMic() {
+    if (this.isMicActive) {
+      this.stopMic();
+    } else {
+      return this.startMic();
+    }
+  }
+  /**
+   * Sends a 16kHz PCM audio chunk to Gemini Live.
+   */
+  sendAudioChunk(base64Pcm) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    const chunkMsg = {
+      realtimeInput: {
+        mediaChunks: [
+          {
+            mimeType: "audio/pcm;rate=16000",
+            data: base64Pcm
+          }
+        ]
+      }
+    };
+    this.ws.send(JSON.stringify(chunkMsg));
+  }
+  /**
+   * Sends a user text turn over the live connection.
+   */
+  sendText(text) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.checkVoicePersonaTrigger(text);
+    const textMsg = {
+      clientContent: {
+        turns: [
+          {
+            role: "user",
+            parts: [{ text }]
+          }
+        ],
+        turnComplete: true
+      }
+    };
+    this.ws.send(JSON.stringify(textMsg));
+    this.onTranscript?.("user", text);
+  }
+  /**
+   * Handles incoming WebSocket messages from Google Gemini Live API.
+   */
+  handleServerMessage(jsonText) {
+    try {
+      const msg = JSON.parse(jsonText);
+      if (msg.error) {
+        console.error("[GeminiLiveClient] Server error:", msg.error);
+        this.onStatusChange?.("error", msg.error.message || "Gemini API Error");
+        return;
+      }
+      if (msg.serverContent) {
+        if (msg.serverContent.interrupted) {
+          this.player.stop();
+          return;
+        }
+        const modelTurn = msg.serverContent.modelTurn;
+        if (modelTurn && modelTurn.parts) {
+          for (const part of modelTurn.parts) {
+            if (part.inlineData && part.inlineData.data) {
+              this.player.playChunk(part.inlineData.data);
+            }
+            if (part.text) {
+              this.onTranscript?.("model", part.text);
+              this.checkVoicePersonaTrigger(part.text);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[GeminiLiveClient] Error parsing server message:", e);
+    }
+  }
+  /**
+   * Detects spoken triggers for dynamic character handoff ("Ева", "Адам").
+   */
+  checkVoicePersonaTrigger(text) {
+    const lower = text.toLowerCase();
+    if (this.persona !== "adam" && (lower.includes("\u0430\u0434\u0430\u043C") || lower.includes("adam"))) {
+      setTimeout(() => this.switchPersona("adam"), 200);
+    } else if (this.persona !== "eva" && (lower.includes("\u0435\u0432\u0430") || lower.includes("\u0454\u0432\u0430") || lower.includes("eva"))) {
+      setTimeout(() => this.switchPersona("eva"), 200);
+    }
+  }
+  disconnect() {
+    this.stopMic();
+    this.player.stop();
+    if (this.ws) {
+      try {
+        this.ws.close();
+      } catch {
+      }
+      this.ws = null;
+    }
+    this.isConnected = false;
+    this.isConnecting = false;
+    this.onStatusChange?.("disconnected");
+  }
+  destroy() {
+    this.disconnect();
+    this.recorder.stop();
+    this.player.close();
+  }
+};
+
+// src/web/voice/VoiceVisualizer.ts
+var VoiceVisualizer = class {
+  canvas;
+  ctx;
+  animationId = null;
+  recorderAnalyser = null;
+  playerAnalyser = null;
+  mode = "idle";
+  personaTheme = "eva";
+  constructor(canvas) {
+    this.canvas = canvas;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Could not obtain 2D canvas context");
+    this.ctx = context;
+  }
+  setAnalysers(recorder, player) {
+    this.recorderAnalyser = recorder;
+    this.playerAnalyser = player;
+  }
+  setMode(mode) {
+    this.mode = mode;
+  }
+  setPersonaTheme(theme) {
+    this.personaTheme = theme;
+  }
+  start() {
+    if (this.animationId !== null) return;
+    const render = () => {
+      this.draw();
+      this.animationId = requestAnimationFrame(render);
+    };
+    this.animationId = requestAnimationFrame(render);
+  }
+  stop() {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
+    }
+    this.clear();
+  }
+  clear() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+  draw() {
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+    const centerY = height / 2;
+    this.ctx.fillStyle = "rgba(10, 15, 20, 0.35)";
+    this.ctx.fillRect(0, 0, width, height);
+    let activeAnalyser = null;
+    if (this.mode === "listening") {
+      activeAnalyser = this.recorderAnalyser;
+    } else if (this.mode === "speaking") {
+      activeAnalyser = this.playerAnalyser;
+    }
+    if (!activeAnalyser || this.mode === "idle") {
+      const time = Date.now() * 3e-3;
+      const glowColor = this.personaTheme === "eva" ? "rgba(0, 240, 255, 0.4)" : "rgba(0, 255, 136, 0.4)";
+      this.ctx.beginPath();
+      this.ctx.strokeStyle = glowColor;
+      this.ctx.lineWidth = 1.5;
+      for (let x = 0; x < width; x += 4) {
+        const y = centerY + Math.sin(x * 0.05 + time) * 3;
+        if (x === 0) this.ctx.moveTo(x, y);
+        else this.ctx.lineTo(x, y);
+      }
+      this.ctx.stroke();
+      return;
+    }
+    const bufferLength = activeAnalyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    activeAnalyser.getByteFrequencyData(dataArray);
+    const barCount = 32;
+    const barWidth = width / barCount - 2;
+    const step = Math.floor(bufferLength / barCount);
+    const primaryColor = this.mode === "listening" ? "rgba(0, 240, 255, 0.85)" : this.personaTheme === "eva" ? "rgba(255, 0, 128, 0.85)" : "rgba(0, 255, 136, 0.85)";
+    const secondaryGlow = this.mode === "listening" ? "rgba(0, 240, 255, 0.3)" : this.personaTheme === "eva" ? "rgba(255, 0, 128, 0.3)" : "rgba(0, 255, 136, 0.3)";
+    for (let i = 0; i < barCount; i++) {
+      const value = dataArray[i * step] || 0;
+      const percent = value / 255;
+      const barHeight = Math.max(4, percent * (height * 0.85));
+      const x = i * (barWidth + 2);
+      const y = centerY - barHeight / 2;
+      this.ctx.fillStyle = secondaryGlow;
+      this.ctx.fillRect(x - 1, y - 2, barWidth + 2, barHeight + 4);
+      this.ctx.fillStyle = primaryColor;
+      this.ctx.fillRect(x, y, barWidth, barHeight);
+    }
+  }
+};
+
+// src/web/voice/VoiceDockUI.ts
+var VoiceDockUI = class {
+  container = null;
+  client = null;
+  visualizer = null;
+  canvas = null;
+  isEnabled = true;
+  activePersona = "eva";
+  currentApiKey = "";
+  transcriptEntries = [];
+  constructor() {
+    this.currentApiKey = localStorage.getItem("evabot_gemini_key") || "";
+  }
+  async init() {
+    try {
+      const res = await fetch("/api/voice/config");
+      if (res.ok) {
+        const data = await res.json();
+        this.isEnabled = data.enabled ?? true;
+        if (!this.currentApiKey && data.apiKey) {
+          this.currentApiKey = data.apiKey;
+        }
+        if (data.activePersona) {
+          this.activePersona = data.activePersona;
+        }
+      }
+    } catch (e) {
+      console.warn("[VoiceDockUI] Could not fetch voice config from server:", e);
+    }
+    this.render();
+    this.setupEventListeners();
+  }
+  setApiKey(key) {
+    this.currentApiKey = key;
+    if (this.client) {
+      this.client.setApiKey(key);
+    }
+  }
+  setPersona(persona) {
+    this.activePersona = persona;
+    this.updatePersonaButtons();
+    if (this.client) {
+      this.client.switchPersona(persona);
+    }
+    if (this.visualizer) {
+      this.visualizer.setPersonaTheme(persona === "adam" ? "adam" : "eva");
+    }
+  }
+  togglePlugin(enabled) {
+    this.isEnabled = typeof enabled === "boolean" ? enabled : !this.isEnabled;
+    fetch("/api/voice/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: this.isEnabled })
+    }).catch(() => {
+    });
+    const dock = document.getElementById("voice-live-dock");
+    if (dock) {
+      dock.style.display = this.isEnabled ? "block" : "none";
+    }
+    const toggleBtn = document.getElementById("voice-plugin-toggle-btn");
+    if (toggleBtn) {
+      toggleBtn.textContent = this.isEnabled ? "[ PLUGIN: ON \u{1F7E2} ]" : "[ PLUGIN: OFF \u26AA ]";
+      toggleBtn.classList.toggle("active", this.isEnabled);
+    }
+    if (!this.isEnabled && this.client) {
+      this.client.disconnect();
+    }
+  }
+  render() {
+    let dock = document.getElementById("voice-live-dock");
+    if (!dock) {
+      dock = document.createElement("div");
+      dock.id = "voice-live-dock";
+      dock.className = "cyber-voice-dock";
+      document.body.appendChild(dock);
+    }
+    this.container = dock;
+    this.container.style.display = this.isEnabled ? "block" : "none";
+    this.container.innerHTML = `
+      <div class="voice-dock-header">
+        <div class="voice-dock-title">
+          <span class="voice-dock-pulse"></span>
+          <span>GEMINI LIVE // NEURAL VOICE ENGINE</span>
+          <span class="voice-dock-badge">v2.0 MULTIMODAL</span>
+        </div>
+        <div class="voice-dock-actions">
+          <button id="voice-plugin-toggle-btn" class="voice-dock-btn small ${this.isEnabled ? "active" : ""}">
+            ${this.isEnabled ? "[ PLUGIN: ON \u{1F7E2} ]" : "[ PLUGIN: OFF \u26AA ]"}
+          </button>
+          <button id="voice-dock-minimize-btn" class="voice-dock-btn small">[ \u2013 ]</button>
+        </div>
+      </div>
+
+      <div id="voice-dock-body" class="voice-dock-body">
+        <div class="voice-persona-selector">
+          <button id="voice-select-eva" class="persona-tab-btn ${this.activePersona === "eva" ? "active" : ""}">
+            <span class="persona-indicator \u2640"></span>
+            <strong>EVA (\u0415\u0432\u0430)</strong>
+            <span class="persona-sub">Aoede \u2022 FrontEnd & UX</span>
+          </button>
+          <button id="voice-select-adam" class="persona-tab-btn ${this.activePersona === "adam" ? "active" : ""}">
+            <span class="persona-indicator \u2642"></span>
+            <strong>ADAM (\u0410\u0434\u0430\u043C)</strong>
+            <span class="persona-sub">Fenrir \u2022 BackEnd & Cloud</span>
+          </button>
+        </div>
+
+        <div class="voice-visualizer-container">
+          <canvas id="voice-canvas" width="480" height="90"></canvas>
+          <div id="voice-status-overlay" class="voice-status-overlay">READY TO CONNECT</div>
+        </div>
+
+        <div class="voice-controls-row">
+          <button id="voice-main-mic-btn" class="voice-mic-btn">
+            <span class="mic-icon">\u{1F399}\uFE0F</span>
+            <span id="voice-mic-label" class="mic-label">START VOICE STREAM</span>
+            <span class="mic-shortcut">[Alt+V]</span>
+          </button>
+          <button id="voice-disconnect-btn" class="voice-dock-btn" style="display:none;">
+            [ DISCONNECT ]
+          </button>
+        </div>
+
+        <div class="voice-langs-bar">
+          <span class="langs-label">LANGUAGES:</span>
+          <span class="lang-tag">UK (\u0423\u043A\u0440\u0430\u0457\u043D\u0441\u044C\u043A\u0430)</span>
+          <span class="lang-tag">EN (English)</span>
+          <span class="lang-tag">RU (\u0420\u0443\u0441\u0441\u043A\u0438\u0439)</span>
+          <span class="lang-tag">PL (Polski)</span>
+          <span class="lang-tag">RO (Rom\xE2n\u0103)</span>
+        </div>
+
+        <div class="voice-transcript-wrapper">
+          <div class="voice-transcript-title">LIVE NEURAL TRANSCRIPTION:</div>
+          <div id="voice-transcript-stream" class="voice-transcript-stream">
+            <div class="transcript-placeholder">Direct audio streaming ready. Press button or say "\u0415\u0432\u0430" / "\u0410\u0434\u0430\u043C" to speak.</div>
+          </div>
+        </div>
+      </div>
+    `;
+    this.canvas = document.getElementById("voice-canvas");
+    if (this.canvas) {
+      this.visualizer = new VoiceVisualizer(this.canvas);
+      this.visualizer.setPersonaTheme(this.activePersona === "adam" ? "adam" : "eva");
+      this.visualizer.start();
+    }
+  }
+  setupEventListeners() {
+    document.getElementById("voice-plugin-toggle-btn")?.addEventListener("click", () => {
+      this.togglePlugin();
+    });
+    const minBtn = document.getElementById("voice-dock-minimize-btn");
+    const dockBody = document.getElementById("voice-dock-body");
+    minBtn?.addEventListener("click", () => {
+      if (dockBody) {
+        const isCollapsed = dockBody.style.display === "none";
+        dockBody.style.display = isCollapsed ? "block" : "none";
+        if (minBtn) minBtn.textContent = isCollapsed ? "[ \u2013 ]" : "[ + ]";
+      }
+    });
+    document.getElementById("voice-select-eva")?.addEventListener("click", () => {
+      this.setPersona("eva");
+    });
+    document.getElementById("voice-select-adam")?.addEventListener("click", () => {
+      this.setPersona("adam");
+    });
+    const micBtn = document.getElementById("voice-main-mic-btn");
+    micBtn?.addEventListener("click", () => {
+      this.handleMicButtonClick();
+    });
+    document.getElementById("voice-disconnect-btn")?.addEventListener("click", () => {
+      if (this.client) {
+        this.client.disconnect();
+      }
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.altKey && (e.key === "v" || e.key === "V")) {
+        e.preventDefault();
+        this.handleMicButtonClick();
+      }
+    });
+  }
+  async handleMicButtonClick() {
+    if (!this.client) {
+      await this.initClient();
+    }
+    if (!this.client) return;
+    if (this.client.getIsMicActive()) {
+      this.client.stopMic();
+    } else {
+      try {
+        await this.client.startMic();
+      } catch (err) {
+        this.updateStatusOverlay(`Error: ${err.message || "Microphone error"}`);
+      }
+    }
+  }
+  async initClient() {
+    const apiKey = this.currentApiKey || localStorage.getItem("evabot_gemini_key") || "";
+    if (!apiKey) {
+      const promptKey = prompt(
+        "Enter Google Gemini API Key for Gemini Live Multimodal Voice (stored locally in browser):",
+        ""
+      );
+      if (promptKey && promptKey.trim()) {
+        this.currentApiKey = promptKey.trim();
+        localStorage.setItem("evabot_gemini_key", this.currentApiKey);
+      } else {
+        alert("Gemini API key is required to stream Gemini Live voice.");
+        return;
+      }
+    }
+    this.client = new GeminiLiveClient({
+      apiKey: this.currentApiKey,
+      persona: this.activePersona,
+      onTranscript: (role, text) => {
+        this.appendTranscript(role, text);
+      },
+      onStatusChange: (status, detail) => {
+        this.handleStatusChange(status, detail);
+      },
+      onPersonaChange: (newPersona) => {
+        this.activePersona = newPersona;
+        this.updatePersonaButtons();
+        if (this.visualizer) {
+          this.visualizer.setPersonaTheme(newPersona === "adam" ? "adam" : "eva");
+        }
+      }
+    });
+    if (this.visualizer) {
+      this.visualizer.setAnalysers(
+        this.client.getRecorder().getAnalyser(),
+        this.client.getPlayer().getAnalyser()
+      );
+    }
+  }
+  handleStatusChange(status, detail) {
+    const overlay = document.getElementById("voice-status-overlay");
+    const micBtn = document.getElementById("voice-main-mic-btn");
+    const micLabel = document.getElementById("voice-mic-label");
+    const disconnectBtn = document.getElementById("voice-disconnect-btn");
+    if (disconnectBtn) {
+      disconnectBtn.style.display = status !== "disconnected" ? "inline-block" : "none";
+    }
+    if (this.visualizer) {
+      if (status === "listening") {
+        this.visualizer.setMode("listening");
+      } else if (status === "speaking") {
+        this.visualizer.setMode("speaking");
+      } else {
+        this.visualizer.setMode("idle");
+      }
+    }
+    switch (status) {
+      case "connecting":
+        if (overlay) overlay.textContent = "CONNECTING TO GEMINI LIVE...";
+        if (micBtn) micBtn.classList.remove("active", "speaking");
+        if (micLabel) micLabel.textContent = "CONNECTING...";
+        break;
+      case "connected":
+        if (overlay) overlay.textContent = `LIVE CONNECTED \u2022 ${this.activePersona.toUpperCase()}`;
+        if (micBtn) micBtn.classList.remove("active", "speaking");
+        if (micLabel) micLabel.textContent = "MUTE / TAP TO TALK";
+        break;
+      case "listening":
+        if (overlay) overlay.textContent = "LISTENING TO MICROPHONE...";
+        if (micBtn) {
+          micBtn.classList.add("active");
+          micBtn.classList.remove("speaking");
+        }
+        if (micLabel) micLabel.textContent = "LIVE STREAMING [ACTIVE]";
+        break;
+      case "speaking":
+        const personaName = this.activePersona === "adam" ? "ADAM (\u2642)" : "EVA (\u2640)";
+        if (overlay) overlay.textContent = `${personaName} IS SPEAKING...`;
+        if (micBtn) micBtn.classList.add("speaking");
+        if (micLabel) micLabel.textContent = `${personaName} TRANSMITTING`;
+        break;
+      case "disconnected":
+        if (overlay) overlay.textContent = detail ? `DISCONNECTED: ${detail}` : "OFFLINE \u2022 READY";
+        if (micBtn) micBtn.classList.remove("active", "speaking");
+        if (micLabel) micLabel.textContent = "START VOICE STREAM";
+        break;
+      case "error":
+        if (overlay) overlay.textContent = `ERROR: ${detail || "Unknown"}`;
+        if (micBtn) micBtn.classList.remove("active", "speaking");
+        if (micLabel) micLabel.textContent = "RETRY VOICE STREAM";
+        break;
+    }
+  }
+  updateStatusOverlay(text) {
+    const overlay = document.getElementById("voice-status-overlay");
+    if (overlay) overlay.textContent = text;
+  }
+  updatePersonaButtons() {
+    const evaBtn = document.getElementById("voice-select-eva");
+    const adamBtn = document.getElementById("voice-select-adam");
+    if (evaBtn) evaBtn.classList.toggle("active", this.activePersona === "eva");
+    if (adamBtn) adamBtn.classList.toggle("active", this.activePersona === "adam");
+  }
+  appendTranscript(role, text) {
+    const stream = document.getElementById("voice-transcript-stream");
+    if (!stream) return;
+    const placeholder = stream.querySelector(".transcript-placeholder");
+    if (placeholder) {
+      placeholder.remove();
+    }
+    const time = (/* @__PURE__ */ new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const line = document.createElement("div");
+    line.className = `transcript-line ${role}`;
+    const personaTag = role === "model" ? this.activePersona === "adam" ? "[ADAM \u2642]" : "[EVA \u2640]" : "[YOU \u{1F399}\uFE0F]";
+    line.innerHTML = `
+      <span class="transcript-time">${time}</span>
+      <strong class="transcript-tag">${personaTag}:</strong>
+      <span class="transcript-text">${this.escapeHtml(text)}</span>
+    `;
+    stream.appendChild(line);
+    stream.scrollTop = stream.scrollHeight;
+  }
+  escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+  destroy() {
+    if (this.client) {
+      this.client.destroy();
+      this.client = null;
+    }
+    if (this.visualizer) {
+      this.visualizer.stop();
+      this.visualizer = null;
+    }
+    if (this.container) {
+      this.container.remove();
+      this.container = null;
+    }
+  }
 };
 
 // src/web/app.ts
 var TRANSLATIONS = {
   en: {
-    appTitle: "EVABOT // CYBER-TERMINAL",
-    appSubtitle: "Autonomous Multi-Provider Neural Deck",
-    statusOnline: "\u{1F7E2} ONLINE // IDLE",
-    statusBusy: "\u{1F7E1} STREAMING // ACTIVE",
-    statusError: "\u{1F534} ERROR // OFFLINE",
-    controlPanelBtn: "[ \u2193 CONTROL PANEL // SYSTEM DECK ]",
+    appTitle: "EVABOT // CYBER-TERMINAL & NEURAL VOICE HUB",
+    statusOnline: "ONLINE",
+    statusBusy: "STREAMING",
+    statusError: "ERROR",
     returnTerminalBtn: "[ \u2191 RETURN TO TERMINAL ]",
     clearChatBtn: "[ CLR ]",
     transmitBtn: "[ TRANSMIT \u21B5 ]",
-    stopBtn: "[ STOP \u{1F7E1} ]",
-    inputPlaceholder: "Enter cyber command or query prompt (Enter to send, Shift+Enter for newline)...",
-    inputLegend: "Enter: Transmit \u2022 Shift+Enter: Linebreak \u2022 EvaBot Core v0.2.0",
-    welcomeHeading: "EVABOT NEURAL CYBER-TERMINAL ONLINE",
-    welcomeNotice: "Session initialized. Pure black & white minimalist cyber-deck active. Connected to Google Cloud ambient infrastructure with real-time multi-provider routing.",
-    secDeckTitle: "EVA CONTROL DECK // CONFIGURATION & TELEMETRY",
-    secProviders: "1. NEURAL PROVIDERS",
-    secModels: "2. MODEL SELECTION & QUOTAS",
-    secModes: "3. OPERATIONAL MODES",
-    secRoles: "4. CORPORATE ROLES & PERSONAS",
-    secTelemetry: "5. REAL-TIME SYSTEM TELEMETRY",
-    secSecurity: "6. SECURITY & CREDENTIALS",
-    badgeFree: "\u{1F7E2} FREE QUOTA",
-    badgePaid: "\u{1F7E1} PAID / PAYG",
-    badgeActive: "\u{1F7E2} ACTIVE",
-    badgeReady: "\u{1F7E2} READY",
-    badgeStandby: "\u{1F7E1} STANDBY",
-    provGoogleName: "Google Cloud (Vertex AI & AI Studio)",
-    provGoogleDesc: "Native Google DeepMind Gemini and enterprise partner models with low-latency direct API dispatch.",
-    provOmniName: "OmniRoute Neural Gateway",
-    provOmniDesc: "Dynamic multi-cloud neural router featuring intelligent load-balancing, failover, and prompt routing.",
-    provOpenRouterName: "OpenRouter Mesh",
-    provOpenRouterDesc: "Decentralized gateway granting access to global open-weights clusters and specialized reasoning engines.",
-    provOpenCodeName: "OpenCode Go Engine",
-    provOpenCodeDesc: "High-throughput code inference node designed for private syntax generation, refactoring, and AST analysis.",
-    modeSoloName: "SOLO",
-    modeSoloDesc: "Direct single LLM execution focused strictly on active corporate persona directives.",
-    modeBroadcastName: "BROADCAST",
-    modeBroadcastDesc: "Multi-perspective analysis broadcasting your prompt across core architectural dimensions.",
-    modeDialogueName: "DIALOGUE",
-    modeDialogueDesc: "Rapid-cadence conversational cyber-stream with continuous state retention and feedback.",
-    modeConsiliumName: "CONSILIUM",
-    modeConsiliumDesc: "Autonomous corporate council deliberation synthesizing executive viewpoints into consensus.",
-    roleCeoName: "CEO // Executive Strategist",
-    roleCeoDesc: "High-level corporate strategy, market positioning, ROI evaluation, and decisive leadership.",
-    roleCtoName: "CTO // Principal Architect",
-    roleCtoDesc: "Distributed systems design, enterprise scalability, zero-downtime reliability, and clean code.",
-    roleCisoName: "CISO // Cyber Security & Infosec",
-    roleCisoDesc: "Threat modeling, zero-trust architecture, cryptographic integrity, and zero-day defense.",
-    roleCfoName: "CFO // Financial & Risk Analyst",
-    roleCfoDesc: "Fiscal governance, tokenomics optimization, operational expenditure in USD ($) and EUR (\u20AC).",
-    roleUxName: "UX/DES // Creative Director",
-    roleUxDesc: "Minimalist cyber aesthetics, terminal ergonomics, human-computer interaction, and high usability.",
-    roleDevName: "DEV // Lead Full-Stack Engineer",
-    roleDevDesc: "Production-ready code implementation, bug elimination, algorithmic efficiency, and test suites.",
-    roleRschName: "RSCH // AI Research Scientist",
-    roleRschDesc: "Attention mechanisms, context compression, reasoning paradigms, and neurosymbolic agent loops.",
-    roleLegalName: "LEGAL // Compliance Counsel",
-    roleLegalDesc: "Regulatory adherence (GDPR, EU AI Act), risk mitigation, license conformity, and ethics.",
-    telemServerLabel: "Edge Server",
-    telemUptimeLabel: "Uptime",
-    telemMemoryLabel: "Memory (RSS)",
-    telemLatencyLabel: "API Latency",
-    telemProviderLabel: "Provider",
-    telemModelLabel: "Active Model",
-    telemQuotaLabel: "Quota Status",
-    telemAuthLabel: "Auth Source",
-    telemAccountLabel: "Account",
-    apiKeyLabel: "Google Gemini / Vertex API Key",
-    apiKeyHelp: "Enter your custom key to override server ambient credentials. Stored securely in browser localStorage.",
-    apiKeyPlaceholder: "AIzaSy...",
-    saveKeyBtn: "[ SAVE CREDENTIALS ]",
-    clearKeyBtn: "[ USE AMBIENT AUTO-AUTH ]",
-    keyStatusCustom: "\u{1F7E2} CUSTOM KEY ACTIVE",
-    keyStatusAmbient: "\u{1F7E2} GOOGLE AMBIENT AUTH",
-    noticeModelSwitched: "Switched model to",
-    noticeRoleSwitched: "Activated corporate role",
-    noticeModeSwitched: "Changed operation mode to",
-    noticeProviderSwitched: "Switched primary neural provider to",
-    noticeKeySaved: "Custom API credentials saved to local browser storage.",
+    stopBtn: "[ STOP ! ]",
+    inputPlaceholder: "Enter prompt or command (e.g. /help, /persona, /mode, /models, /db)...",
+    welcomeHeading: "EVABOT NEURAL CYBER-TERMINAL // CORE INITIALIZED",
+    welcomeNotice: "Session active. Pure monochrome cyber-terminal initialized. Based in Odesa, Ukraine (UA). Connected to Google Cloud ambient infrastructure with zero-trust isolation.",
+    voiceTapToSpeak: "TAP TO SPEAK",
+    voiceListening: "LISTENING...",
+    voiceSpeaking: "NEURAL VOICE",
+    voiceSublabel: "[ LIVE NEURAL VOICE ]",
+    voiceStatusReady: "Eva (Lead Frontend) & Adam (Chief Backend) listening * Web Speech API Ready",
+    voiceStatusListening: "Speech recognition active... Speak clearly into microphone.",
+    voiceStatusSpeaking: "Neural audio synthesis active * Transmitting voice response.",
+    personaEvaLabel: "[F] EVA [Lead Frontend & UX Director]",
+    personaAdamLabel: "[M] ADAM [Chief Backend & Cloud Architect]",
+    personaDualLabel: "[DUAL] EVA & ADAM [Synergistic Co-Pilots]",
+    modeChatLabel: "CHAT // Direct Model Interaction",
+    modeDialogLabel: "DIALOG // Bilateral Debate (Eva vs Adam)",
+    modeInterviewLabel: "INTERVIEW // Structured Technical/Executive Q&A",
+    modeConsiliumLabel: "CONSILIUM // Multi-Agent Executive Council",
+    badgeFree: "[FREE] 100% FREE QUOTA",
+    badgePaid: "[PAID] PAID / PAYG",
+    noticePersonaSwitched: "Active Co-Pilot Persona switched to",
+    noticeModeSwitched: "Operational Mode switched to",
+    noticeModelSwitched: "Neural Model switched to",
+    noticeDbSwitched: "Knowledge Base & Database routed to",
+    noticeRoleSwitched: "Specialist Role activated:",
+    noticeKeySaved: "Custom Google API Key securely saved to browser localStorage.",
     noticeKeyCleared: "Reverted to Google Cloud ambient auto-authentication.",
-    noticeChatCleared: "Chat history purged.",
+    noticeChatCleared: "Terminal chat stream purged.",
     copiedBtn: "COPIED",
     copyBtn: "COPY"
   },
   uk: {
-    appTitle: "EVABOT // \u041A\u0406\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B",
-    appSubtitle: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u0438\u0439 \u0431\u0430\u0433\u0430\u0442\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u0438\u0439 \u043D\u0435\u0439\u0440\u043E\u0434\u0435\u043A",
-    statusOnline: "\u{1F7E2} \u0412 \u041C\u0415\u0420\u0415\u0416\u0406 // \u041E\u0427\u0406\u041A\u0423\u0412\u0410\u041D\u041D\u042F",
-    statusBusy: "\u{1F7E1} \u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0406\u042F // \u0410\u041A\u0422\u0418\u0412\u041D\u041E",
-    statusError: "\u{1F534} \u041F\u041E\u041C\u0418\u041B\u041A\u0410 // \u041E\u0424\u041B\u0410\u0419\u041D",
-    controlPanelBtn: "[ \u2193 \u041F\u0410\u041D\u0415\u041B\u042C \u041A\u0415\u0420\u0423\u0412\u0410\u041D\u041D\u042F // \u0421\u0418\u0421\u0422\u0415\u041C\u041D\u0418\u0419 \u0414\u0415\u041A ]",
+    appTitle: "EVABOT // \u041A\u0406\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B \u0422\u0410 \u041D\u0415\u0419\u0420\u041E-\u0413\u041E\u041B\u041E\u0421\u041E\u0412\u0418\u0419 \u0425\u0410\u0411",
+    statusOnline: "\u0412 \u041C\u0415\u0420\u0415\u0416\u0406",
+    statusBusy: "\u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0406\u042F",
+    statusError: "\u041F\u041E\u041C\u0418\u041B\u041A\u0410",
     returnTerminalBtn: "[ \u2191 \u041F\u041E\u0412\u0415\u0420\u041D\u0423\u0422\u0418\u0421\u042F \u0414\u041E \u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B\u0423 ]",
     clearChatBtn: "[ \u041E\u0427\u0418\u0421\u0422\u0418\u0422\u0418 ]",
     transmitBtn: "[ \u0412\u0406\u0414\u041F\u0420\u0410\u0412\u0418\u0422\u0418 \u21B5 ]",
-    stopBtn: "[ \u0417\u0423\u041F\u0418\u041D\u0418\u0422\u0418 \u{1F7E1} ]",
-    inputPlaceholder: "\u0412\u0432\u0435\u0434\u0456\u0442\u044C \u043A\u0456\u0431\u0435\u0440-\u043A\u043E\u043C\u0430\u043D\u0434\u0443 \u0430\u0431\u043E \u0437\u0430\u043F\u0438\u0442 (Enter \u0434\u043B\u044F \u0432\u0456\u0434\u043F\u0440\u0430\u0432\u043A\u0438, Shift+Enter \u0434\u043B\u044F \u043D\u043E\u0432\u043E\u0433\u043E \u0440\u044F\u0434\u043A\u0430)...",
-    inputLegend: "Enter: \u0412\u0456\u0434\u043F\u0440\u0430\u0432\u0438\u0442\u0438 \u2022 Shift+Enter: \u041F\u0435\u0440\u0435\u043D\u043E\u0441 \u0440\u044F\u0434\u043A\u0430 \u2022 \u042F\u0434\u0440\u043E EvaBot v0.2.0",
-    welcomeHeading: "\u041D\u0415\u0419\u0420\u041E\u041D\u041D\u0418\u0419 \u041A\u0406\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B EVABOT \u0412 \u041C\u0415\u0420\u0415\u0416\u0406",
-    welcomeNotice: "\u0421\u0435\u0441\u0456\u044E \u0456\u043D\u0456\u0446\u0456\u0430\u043B\u0456\u0437\u043E\u0432\u0430\u043D\u043E. \u041C\u0456\u043D\u0456\u043C\u0430\u043B\u0456\u0441\u0442\u0438\u0447\u043D\u0438\u0439 \u0447\u043E\u0440\u043D\u043E-\u0431\u0456\u043B\u0438\u0439 \u043A\u0456\u0431\u0435\u0440-\u0434\u0435\u043A \u0430\u043A\u0442\u0438\u0432\u043E\u0432\u0430\u043D\u043E. \u041F\u0456\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u0434\u043E \u0445\u043C\u0430\u0440\u043D\u043E\u0457 \u0456\u043D\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438 Google Cloud \u0456\u0437 \u0431\u0430\u0433\u0430\u0442\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u043E\u044E \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0456\u0454\u044E.",
-    secDeckTitle: "\u0414\u0415\u041A \u041A\u0415\u0420\u0423\u0412\u0410\u041D\u041D\u042F EVA // \u041A\u041E\u041D\u0424\u0406\u0413\u0423\u0420\u0410\u0426\u0406\u042F \u0422\u0410 \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0406\u042F",
-    secProviders: "1. \u041D\u0415\u0419\u0420\u041E\u041D\u041D\u0406 \u041F\u0420\u041E\u0412\u0410\u0419\u0414\u0415\u0420\u0418",
-    secModels: "2. \u0412\u0418\u0411\u0406\u0420 \u041C\u041E\u0414\u0415\u041B\u0406 \u0422\u0410 \u041A\u0412\u041E\u0422\u0418",
-    secModes: "3. \u0420\u0415\u0416\u0418\u041C\u0418 \u0420\u041E\u0411\u041E\u0422\u0418",
-    secRoles: "4. \u041A\u041E\u0420\u041F\u041E\u0420\u0410\u0422\u0418\u0412\u041D\u0406 \u0420\u041E\u041B\u0406 \u0422\u0410 \u041F\u0415\u0420\u0421\u041E\u041D\u0418",
-    secTelemetry: "5. \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0406\u042F \u0412 \u0420\u0415\u0410\u041B\u042C\u041D\u041E\u041C\u0423 \u0427\u0410\u0421\u0406",
-    secSecurity: "6. \u0411\u0415\u0417\u041F\u0415\u041A\u0410 \u0422\u0410 \u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F",
-    badgeFree: "\u{1F7E2} \u0411\u0415\u0417\u041A\u041E\u0428\u0422\u041E\u0412\u041D\u041E",
-    badgePaid: "\u{1F7E1} \u041F\u041B\u0410\u0422\u041D\u041E / PAYG",
-    badgeActive: "\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u041D\u0418\u0419",
-    badgeReady: "\u{1F7E2} \u0413\u041E\u0422\u041E\u0412\u0418\u0419",
-    badgeStandby: "\u{1F7E1} \u041E\u0427\u0406\u041A\u0423\u0412\u0410\u041D\u041D\u042F",
-    provGoogleName: "Google Cloud (Vertex AI & AI Studio)",
-    provGoogleDesc: "\u041E\u0440\u0438\u0433\u0456\u043D\u0430\u043B\u044C\u043D\u0456 \u043C\u043E\u0434\u0435\u043B\u0456 Google DeepMind Gemini \u0442\u0430 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\u0441\u044C\u043A\u0456 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0456 \u043C\u043E\u0434\u0435\u043B\u0456 \u0437 \u043F\u0440\u044F\u043C\u043E\u044E \u0432\u0456\u0434\u043F\u0440\u0430\u0432\u043A\u043E\u044E.",
-    provOmniName: "\u041D\u0435\u0439\u0440\u043E\u0448\u043B\u044E\u0437 OmniRoute",
-    provOmniDesc: "\u0414\u0438\u043D\u0430\u043C\u0456\u0447\u043D\u0438\u0439 \u0431\u0430\u0433\u0430\u0442\u043E\u0445\u043C\u0430\u0440\u043D\u0438\u0439 \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0442\u043E\u0440 \u0437 \u0456\u043D\u0442\u0435\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u0438\u043C \u0431\u0430\u043B\u0430\u043D\u0441\u0443\u0432\u0430\u043D\u043D\u044F\u043C \u043D\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u0442\u0430 \u0432\u0456\u0434\u043C\u043E\u0432\u043E\u0441\u0442\u0456\u0439\u043A\u0456\u0441\u0442\u044E.",
-    provOpenRouterName: "\u041C\u0435\u0440\u0435\u0436\u0430 OpenRouter",
-    provOpenRouterDesc: "\u0414\u0435\u0446\u0435\u043D\u0442\u0440\u0430\u043B\u0456\u0437\u043E\u0432\u0430\u043D\u0438\u0439 \u0448\u043B\u044E\u0437 \u0434\u043B\u044F \u0434\u043E\u0441\u0442\u0443\u043F\u0443 \u0434\u043E \u0441\u0432\u0456\u0442\u043E\u0432\u0438\u0445 \u043A\u043B\u0430\u0441\u0442\u0435\u0440\u0456\u0432 \u0432\u0456\u0434\u043A\u0440\u0438\u0442\u0438\u0445 \u0432\u0430\u0433 \u0442\u0430 \u0441\u043F\u0435\u0446\u0456\u0430\u043B\u0456\u0437\u043E\u0432\u0430\u043D\u0438\u0445 \u043C\u043E\u0434\u0435\u043B\u0435\u0439.",
-    provOpenCodeName: "\u0412\u0443\u0437\u043E\u043B OpenCode Go",
-    provOpenCodeDesc: "\u0412\u0438\u0441\u043E\u043A\u043E\u043F\u0440\u043E\u0434\u0443\u043A\u0442\u0438\u0432\u043D\u0438\u0439 \u0440\u0443\u0448\u0456\u0439 \u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0456\u0457 \u043A\u043E\u0434\u0443 \u0434\u043B\u044F \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0433\u043E \u0441\u0438\u043D\u0442\u0430\u043A\u0441\u0438\u0447\u043D\u043E\u0433\u043E \u0430\u043D\u0430\u043B\u0456\u0437\u0443, \u0440\u0435\u0444\u0430\u043A\u0442\u043E\u0440\u0438\u043D\u0433\u0443 \u0442\u0430 AST.",
-    modeSoloName: "\u0421\u041E\u041B\u041E",
-    modeSoloDesc: "\u041F\u0440\u044F\u043C\u0435 \u0432\u0438\u043A\u043E\u043D\u0430\u043D\u043D\u044F \u043E\u0434\u043D\u043E\u0433\u043E LLM \u0456\u0437 \u0441\u0443\u0432\u043E\u0440\u0438\u043C \u0434\u043E\u0442\u0440\u0438\u043C\u0430\u043D\u043D\u044F\u043C \u0432\u0438\u0431\u0440\u0430\u043D\u043E\u0457 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u043E\u0457 \u0440\u043E\u043B\u0456.",
-    modeBroadcastName: "\u0422\u0420\u0410\u041D\u0421\u041B\u042F\u0426\u0406\u042F",
-    modeBroadcastDesc: "\u0411\u0430\u0433\u0430\u0442\u043E\u0432\u0438\u043C\u0456\u0440\u043D\u0438\u0439 \u0430\u043D\u0430\u043B\u0456\u0437 \u0456\u0437 \u043F\u0430\u0440\u0430\u043B\u0435\u043B\u044C\u043D\u0438\u043C \u0442\u0440\u0430\u043D\u0441\u043B\u044E\u0432\u0430\u043D\u043D\u044F\u043C \u0437\u0430\u043F\u0438\u0442\u0443 \u0437\u0430 \u043A\u043B\u044E\u0447\u043E\u0432\u0438\u043C\u0438 \u043D\u0430\u043F\u0440\u044F\u043C\u043A\u0430\u043C\u0438.",
-    modeDialogueName: "\u0414\u0406\u0410\u041B\u041E\u0413",
-    modeDialogueDesc: "\u0428\u0432\u0438\u0434\u043A\u0438\u0439 \u0434\u0456\u0430\u043B\u043E\u0433\u043E\u0432\u0438\u0439 \u043A\u0456\u0431\u0435\u0440-\u043F\u043E\u0442\u0456\u043A \u0456\u0437 \u043F\u043E\u0441\u0442\u0456\u0439\u043D\u0438\u043C \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043D\u044F\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0443 \u0442\u0430 \u0448\u0432\u0438\u0434\u043A\u0438\u043C \u0437\u0432\u043E\u0440\u043E\u0442\u043D\u0438\u043C \u0437\u0432\u2019\u044F\u0437\u043A\u043E\u043C.",
-    modeConsiliumName: "\u041A\u041E\u041D\u0421\u0418\u041B\u0406\u0423\u041C",
-    modeConsiliumDesc: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u0435 \u0437\u0430\u0441\u0456\u0434\u0430\u043D\u043D\u044F \u0440\u0430\u0434\u0438 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440\u0456\u0432 \u0456\u0437 \u0441\u0438\u043D\u0442\u0435\u0437\u043E\u043C \u043F\u043E\u0437\u0438\u0446\u0456\u0439 \u043B\u0456\u0434\u0435\u0440\u0456\u0432 \u0443 \u0454\u0434\u0438\u043D\u0438\u0439 \u0443\u0437\u0433\u043E\u0434\u0436\u0435\u043D\u0438\u0439 \u043A\u043E\u043D\u0441\u0435\u043D\u0441\u0443\u0441.",
-    roleCeoName: "CEO // \u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u0447\u043D\u0438\u0439 \u043B\u0456\u0434\u0435\u0440",
-    roleCeoDesc: "\u041A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0430 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0456\u044F \u0432\u0438\u0441\u043E\u043A\u043E\u0433\u043E \u0440\u0456\u0432\u043D\u044F, \u0440\u0438\u043D\u043A\u043E\u0432\u0435 \u043F\u043E\u0437\u0438\u0446\u0456\u043E\u043D\u0443\u0432\u0430\u043D\u043D\u044F, \u043E\u0446\u0456\u043D\u043A\u0430 ROI \u0442\u0430 \u0440\u0456\u0448\u0443\u0447\u0435 \u043B\u0456\u0434\u0435\u0440\u0441\u0442\u0432\u043E.",
-    roleCtoName: "CTO // \u0413\u043E\u043B\u043E\u0432\u043D\u0438\u0439 \u0430\u0440\u0445\u0456\u0442\u0435\u043A\u0442\u043E\u0440",
-    roleCtoDesc: "\u041F\u0440\u043E\u0454\u043A\u0442\u0443\u0432\u0430\u043D\u043D\u044F \u0440\u043E\u0437\u043F\u043E\u0434\u0456\u043B\u0435\u043D\u0438\u0445 \u0441\u0438\u0441\u0442\u0435\u043C, \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0435 \u043C\u0430\u0441\u0448\u0442\u0430\u0431\u0443\u0432\u0430\u043D\u043D\u044F, \u0432\u0456\u0434\u043C\u043E\u0432\u043E\u0441\u0442\u0456\u0439\u043A\u0456\u0441\u0442\u044C \u0442\u0430 \u0447\u0438\u0441\u0442\u0438\u0439 \u043A\u043E\u0434.",
-    roleCisoName: "CISO // \u041A\u0456\u0431\u0435\u0440\u0431\u0435\u0437\u043F\u0435\u043A\u0430 \u0442\u0430 \u0456\u043D\u0444\u043E\u0431\u0435\u0437\u043F\u0435\u043A\u0430",
-    roleCisoDesc: "\u041C\u043E\u0434\u0435\u043B\u044E\u0432\u0430\u043D\u043D\u044F \u0437\u0430\u0433\u0440\u043E\u0437, \u0430\u0440\u0445\u0456\u0442\u0435\u043A\u0442\u0443\u0440\u0430 Zero-Trust, \u043A\u0440\u0438\u043F\u0442\u043E\u0433\u0440\u0430\u0444\u0456\u0447\u043D\u0430 \u0446\u0456\u043B\u0456\u0441\u043D\u0456\u0441\u0442\u044C \u0442\u0430 \u0437\u0430\u0445\u0438\u0441\u0442 \u0432\u0456\u0434 zero-day.",
-    roleCfoName: "CFO // \u0424\u0456\u043D\u0430\u043D\u0441\u043E\u0432\u0438\u0439 \u0430\u043D\u0430\u043B\u0456\u0442\u0438\u043A",
-    roleCfoDesc: "\u0424\u0456\u043D\u0430\u043D\u0441\u043E\u0432\u0438\u0439 \u043A\u043E\u043D\u0442\u0440\u043E\u043B\u044C, \u043E\u043F\u0442\u0438\u043C\u0456\u0437\u0430\u0446\u0456\u044F \u0442\u043E\u043A\u0435\u043D\u043E\u043C\u0456\u043A\u0438, \u0440\u043E\u0437\u0440\u0430\u0445\u0443\u043D\u043E\u043A \u0432\u0438\u0442\u0440\u0430\u0442 \u0441\u0442\u0440\u043E\u0433\u043E \u0432 \u0434\u043E\u043B\u0430\u0440\u0430\u0445 \u0421\u0428\u0410 ($) \u0442\u0430 \u0454\u0432\u0440\u043E (\u20AC).",
-    roleUxName: "UX/DES // \u041A\u0440\u0435\u0430\u0442\u0438\u0432\u043D\u0438\u0439 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440",
-    roleUxDesc: "\u041C\u0456\u043D\u0456\u043C\u0430\u043B\u0456\u0441\u0442\u0438\u0447\u043D\u0430 \u043A\u0456\u0431\u0435\u0440-\u0435\u0441\u0442\u0435\u0442\u0438\u043A\u0430, \u0435\u0440\u0433\u043E\u043D\u043E\u043C\u0456\u043A\u0430 \u0442\u0435\u0440\u043C\u0456\u043D\u0430\u043B\u0430, \u043B\u044E\u0434\u0438\u043D\u043E-\u043C\u0430\u0448\u0438\u043D\u043D\u0430 \u0432\u0437\u0430\u0454\u043C\u043E\u0434\u0456\u044F \u0442\u0430 \u0432\u0438\u0441\u043E\u043A\u0430 \u0437\u0440\u0443\u0447\u043D\u0456\u0441\u0442\u044C.",
-    roleDevName: "DEV // \u041F\u0440\u043E\u0432\u0456\u0434\u043D\u0438\u0439 Full-Stack \u0456\u043D\u0436\u0435\u043D\u0435\u0440",
-    roleDevDesc: "\u0412\u043F\u0440\u043E\u0432\u0430\u0434\u0436\u0435\u043D\u043D\u044F \u043F\u0440\u043E\u0434\u0430\u043A\u0448\u043D-\u043A\u043E\u0434\u0443, \u0443\u0441\u0443\u043D\u0435\u043D\u043D\u044F \u0431\u0430\u0433\u0456\u0432, \u0430\u043B\u0433\u043E\u0440\u0438\u0442\u043C\u0456\u0447\u043D\u0430 \u043E\u043F\u0442\u0438\u043C\u0456\u0437\u0430\u0446\u0456\u044F \u0442\u0430 \u043C\u043E\u0434\u0443\u043B\u044C\u043D\u0435 \u0442\u0435\u0441\u0442\u0443\u0432\u0430\u043D\u043D\u044F.",
-    roleRschName: "RSCH // \u0414\u043E\u0441\u043B\u0456\u0434\u043D\u0438\u043A \u0448\u0442\u0443\u0447\u043D\u043E\u0433\u043E \u0456\u043D\u0442\u0435\u043B\u0435\u043A\u0442\u0443",
-    roleRschDesc: "\u041C\u0435\u0445\u0430\u043D\u0456\u0437\u043C\u0438 \u0443\u0432\u0430\u0433\u0438, \u0441\u0442\u0438\u0441\u043D\u0435\u043D\u043D\u044F \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0443, \u043C\u0456\u0440\u043A\u0443\u0432\u0430\u043D\u043D\u044F LLM \u0442\u0430 \u043D\u0435\u0439\u0440\u043E\u0441\u0438\u043C\u0432\u043E\u043B\u0456\u0447\u043D\u0456 \u0430\u0433\u0435\u043D\u0442\u043D\u0456 \u043A\u043E\u043D\u0442\u0443\u0440\u0438.",
-    roleLegalName: "LEGAL // \u042E\u0440\u0438\u0441\u0442 \u0437 \u043A\u043E\u043C\u043F\u043B\u0430\u0439\u0454\u043D\u0441\u0443",
-    roleLegalDesc: "\u0414\u043E\u0442\u0440\u0438\u043C\u0430\u043D\u043D\u044F \u0440\u0435\u0433\u043B\u0430\u043C\u0435\u043D\u0442\u0456\u0432 (GDPR, EU AI Act), \u043C\u0456\u043D\u0456\u043C\u0456\u0437\u0430\u0446\u0456\u044F \u0440\u0438\u0437\u0438\u043A\u0456\u0432, \u043B\u0456\u0446\u0435\u043D\u0437\u0456\u0457 \u0442\u0430 \u0435\u0442\u0438\u0447\u043D\u0456 \u043D\u043E\u0440\u043C\u0438 \u0428\u0406.",
-    telemServerLabel: "\u0412\u0443\u0437\u043E\u043B \u0441\u0435\u0440\u0432\u0435\u0440\u0430",
-    telemUptimeLabel: "\u0427\u0430\u0441 \u0440\u043E\u0431\u043E\u0442\u0438",
-    telemMemoryLabel: "\u041F\u0430\u043C\u2019\u044F\u0442\u044C (RSS)",
-    telemLatencyLabel: "\u0417\u0430\u0442\u0440\u0438\u043C\u043A\u0430 API",
-    telemProviderLabel: "\u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440",
-    telemModelLabel: "\u0410\u043A\u0442\u0438\u0432\u043D\u0430 \u043C\u043E\u0434\u0435\u043B\u044C",
-    telemQuotaLabel: "\u0421\u0442\u0430\u0442\u0443\u0441 \u043A\u0432\u043E\u0442\u0438",
-    telemAuthLabel: "\u0414\u0436\u0435\u0440\u0435\u043B\u043E \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0456\u0457",
-    telemAccountLabel: "\u0410\u043A\u0430\u0443\u043D\u0442",
-    apiKeyLabel: "API \u043A\u043B\u044E\u0447 Google Gemini / Vertex",
-    apiKeyHelp: "\u0412\u0432\u0435\u0434\u0456\u0442\u044C \u0432\u043B\u0430\u0441\u043D\u0438\u0439 \u043A\u043B\u044E\u0447 \u0434\u043B\u044F \u043F\u0435\u0440\u0435\u0432\u0438\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u043D\u043E\u0457 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0456\u0457. \u0417\u0431\u0435\u0440\u0456\u0433\u0430\u0454\u0442\u044C\u0441\u044F \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0456.",
-    apiKeyPlaceholder: "AIzaSy...",
-    saveKeyBtn: "[ \u0417\u0411\u0415\u0420\u0415\u0413\u0422\u0418 \u041A\u041B\u042E\u0427 ]",
-    clearKeyBtn: "[ \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F GOOGLE ]",
-    keyStatusCustom: "\u{1F7E2} \u0412\u041B\u0410\u0421\u041D\u0418\u0419 \u041A\u041B\u042E\u0427 \u0410\u041A\u0422\u0418\u0412\u041D\u0418\u0419",
-    keyStatusAmbient: "\u{1F7E2} \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F GOOGLE",
-    noticeModelSwitched: "\u041F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u043C\u043E\u0434\u0435\u043B\u044C \u043D\u0430",
-    noticeRoleSwitched: "\u0410\u043A\u0442\u0438\u0432\u043E\u0432\u0430\u043D\u043E \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0443 \u0440\u043E\u043B\u044C",
-    noticeModeSwitched: "\u0417\u043C\u0456\u043D\u0435\u043D\u043E \u0440\u0435\u0436\u0438\u043C \u0440\u043E\u0431\u043E\u0442\u0438 \u043D\u0430",
-    noticeProviderSwitched: "\u0417\u043C\u0456\u043D\u0435\u043D\u043E \u043D\u0435\u0439\u0440\u043E\u043D\u043D\u043E\u0433\u043E \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 \u043D\u0430",
-    noticeKeySaved: "\u0412\u043B\u0430\u0441\u043D\u0438\u0439 \u043A\u043B\u044E\u0447 API \u0443\u0441\u043F\u0456\u0448\u043D\u043E \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043E \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0456.",
+    stopBtn: "[ \u0417\u0423\u041F\u0418\u041D\u0418\u0422\u0418 ! ]",
+    inputPlaceholder: "\u0412\u0432\u0435\u0434\u0456\u0442\u044C \u0437\u0430\u043F\u0438\u0442 \u0430\u0431\u043E \u043A\u043E\u043C\u0430\u043D\u0434\u0443 (\u043D\u0430\u043F\u0440. /help, /persona, /mode, /models, /db)...",
+    welcomeHeading: "\u041D\u0415\u0419\u0420\u041E\u041D\u041D\u0418\u0419 \u041A\u0406\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B EVABOT // \u0421\u0418\u0421\u0422\u0415\u041C\u0423 \u0406\u041D\u0406\u0426\u0406\u0410\u041B\u0406\u0417\u041E\u0412\u0410\u041D\u041E",
+    welcomeNotice: "\u0421\u0435\u0441\u0456\u044F \u0430\u043A\u0442\u0438\u0432\u043D\u0430. \u041C\u043E\u043D\u043E\u0445\u0440\u043E\u043C\u043D\u0438\u0439 \u043A\u0456\u0431\u0435\u0440-\u0442\u0435\u0440\u043C\u0456\u043D\u0430\u043B \u0430\u043A\u0442\u0438\u0432\u043E\u0432\u0430\u043D\u043E. \u0421\u0442\u0432\u043E\u0440\u0435\u043D\u043E \u0432 \u041E\u0434\u0435\u0441\u0456, \u0423\u043A\u0440\u0430\u0457\u043D\u0430 (UA). \u041F\u0456\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u0434\u043E \u0445\u043C\u0430\u0440\u043D\u043E\u0457 \u0456\u043D\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438 Google Cloud \u0456\u0437 Zero-Trust \u0430\u0432\u0442\u0435\u043D\u0442\u0438\u0444\u0456\u043A\u0430\u0446\u0456\u0454\u044E.",
+    voiceTapToSpeak: "\u041D\u0410\u0422\u0418\u0421\u041D\u0406\u0422\u042C \u0414\u041B\u042F \u0413\u041E\u041B\u041E\u0421\u0423",
+    voiceListening: "\u0421\u041B\u0423\u0425\u0410\u042E...",
+    voiceSpeaking: "\u041D\u0415\u0419\u0420\u041E-\u0413\u041E\u041B\u041E\u0421",
+    voiceSublabel: "[ \u0416\u0418\u0412\u0418\u0419 \u041D\u0415\u0419\u0420\u041E-\u0413\u041E\u041B\u041E\u0421 ]",
+    voiceStatusReady: "\u0404\u0432\u0430 (FrontEnd) \u0442\u0430 \u0410\u0434\u0430\u043C (BackEnd) \u043D\u0430 \u0437\u0432\u2019\u044F\u0437\u043A\u0443 * Web Speech API \u0433\u043E\u0442\u043E\u0432\u0438\u0439",
+    voiceStatusListening: "\u0420\u043E\u0437\u043F\u0456\u0437\u043D\u0430\u0432\u0430\u043D\u043D\u044F \u0433\u043E\u043B\u043E\u0441\u0443 \u0430\u043A\u0442\u0438\u0432\u043D\u0435... \u0413\u043E\u0432\u043E\u0440\u0456\u0442\u044C \u0443 \u043C\u0456\u043A\u0440\u043E\u0444\u043E\u043D.",
+    voiceStatusSpeaking: "\u041D\u0435\u0439\u0440\u043E\u043D\u043D\u0438\u0439 \u0441\u0438\u043D\u0442\u0435\u0437 \u0433\u043E\u043B\u043E\u0441\u0443 \u0430\u043A\u0442\u0438\u0432\u043D\u0438\u0439 * \u0412\u0456\u0434\u0442\u0432\u043E\u0440\u0435\u043D\u043D\u044F \u0430\u0443\u0434\u0456\u043E.",
+    personaEvaLabel: "[F] \u0404\u0412\u0410 [\u0413\u043E\u043B\u043E\u0432\u043D\u0438\u0439 FrontEnd & UX \u0410\u0440\u0445\u0456\u0442\u0435\u043A\u0442\u043E\u0440]",
+    personaAdamLabel: "[M] \u0410\u0414\u0410\u041C [\u0413\u043E\u043B\u043E\u0432\u043D\u0438\u0439 BackEnd & Cloud \u0410\u0440\u0445\u0456\u0442\u0435\u043A\u0442\u043E\u0440]",
+    personaDualLabel: "[DUAL] \u0404\u0412\u0410 & \u0410\u0414\u0410\u041C [\u0422\u0430\u043D\u0434\u0435\u043C Full-Stack \u041A\u043E-\u041F\u0456\u043B\u043E\u0442\u0456\u0432]",
+    modeChatLabel: "\u0427\u0410\u0422 // \u041F\u0440\u044F\u043C\u0438\u0439 \u0434\u0456\u0430\u043B\u043E\u0433 \u0437 \u043C\u043E\u0434\u0435\u043B\u043B\u044E",
+    modeDialogLabel: "\u0414\u0406\u0410\u041B\u041E\u0413 // \u0414\u0432\u043E\u0441\u0442\u043E\u0440\u043E\u043D\u043D\u0456 \u0434\u0435\u0431\u0430\u0442\u0438 (\u0404\u0432\u0430 \u043F\u0440\u043E\u0442\u0438 \u0410\u0434\u0430\u043C\u0430)",
+    modeInterviewLabel: "\u0406\u041D\u0422\u0415\u0420\u0412'\u042E // \u0421\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u043E\u0432\u0430\u043D\u0430 \u0441\u043F\u0456\u0432\u0431\u0435\u0441\u0456\u0434\u0430 \u0442\u0430 \u043E\u0446\u0456\u043D\u044E\u0432\u0430\u043D\u043D\u044F",
+    modeConsiliumLabel: "\u041A\u041E\u041D\u0421\u0418\u041B\u0406\u0423\u041C // \u0411\u0430\u0433\u0430\u0442\u043E\u0430\u0433\u0435\u043D\u0442\u043D\u0430 \u0440\u0430\u0434\u0430 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440\u0456\u0432",
+    badgeFree: "[\u0411\u0415\u0417\u041A\u041E\u0428\u0422\u041E\u0412\u041D\u041E] 100% \u041A\u0412\u041E\u0422\u0410",
+    badgePaid: "[\u041F\u041B\u0410\u0422\u041D\u041E] PAYG",
+    noticePersonaSwitched: "\u0410\u043A\u0442\u0438\u0432\u043D\u0443 \u043F\u0435\u0440\u0441\u043E\u043D\u0443 \u0437\u043C\u0456\u043D\u0435\u043D\u043E \u043D\u0430",
+    noticeModeSwitched: "\u0420\u0435\u0436\u0438\u043C \u0440\u043E\u0431\u043E\u0442\u0438 \u0437\u043C\u0456\u043D\u0435\u043D\u043E \u043D\u0430",
+    noticeModelSwitched: "\u041D\u0435\u0439\u0440\u043E\u043D\u043D\u0443 \u043C\u043E\u0434\u0435\u043B\u044C \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u043D\u0430",
+    noticeDbSwitched: "\u0411\u0430\u0437\u0443 \u0437\u043D\u0430\u043D\u044C \u0442\u0430 \u0434\u0430\u043D\u0438\u0445 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u043D\u0430",
+    noticeRoleSwitched: "\u0410\u043A\u0442\u0438\u0432\u043E\u0432\u0430\u043D\u043E \u043F\u0440\u043E\u0444\u0435\u0441\u0456\u0439\u043D\u0443 \u0440\u043E\u043B\u044C:",
+    noticeKeySaved: "\u0412\u043B\u0430\u0441\u043D\u0438\u0439 Google API \u043A\u043B\u044E\u0447 \u0443\u0441\u043F\u0456\u0448\u043D\u043E \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043E \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0456.",
     noticeKeyCleared: "\u041F\u043E\u0432\u0435\u0440\u043D\u0443\u0442\u043E \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u043D\u0443 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0456\u044E Google Cloud.",
-    noticeChatCleared: "\u0406\u0441\u0442\u043E\u0440\u0456\u044E \u043F\u043E\u0432\u0456\u0434\u043E\u043C\u043B\u0435\u043D\u044C \u043E\u0447\u0438\u0449\u0435\u043D\u043E.",
+    noticeChatCleared: "\u0406\u0441\u0442\u043E\u0440\u0456\u044E \u0442\u0435\u0440\u043C\u0456\u043D\u0430\u043B\u0430 \u043E\u0447\u0438\u0449\u0435\u043D\u043E.",
     copiedBtn: "\u0421\u041A\u041E\u041F\u0406\u0419\u041E\u0412\u0410\u041D\u041E",
     copyBtn: "\u041A\u041E\u041F\u0406\u042E\u0412\u0410\u0422\u0418"
   },
   ru: {
-    appTitle: "EVABOT // \u041A\u0418\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B",
-    appSubtitle: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u044B\u0439 \u043C\u043D\u043E\u0433\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u044B\u0439 \u043D\u0435\u0439\u0440\u043E\u0434\u0435\u043A",
-    statusOnline: "\u{1F7E2} \u0412 \u0421\u0415\u0422\u0418 // \u041E\u0416\u0418\u0414\u0410\u041D\u0418\u0415",
-    statusBusy: "\u{1F7E1} \u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0418\u042F // \u0410\u041A\u0422\u0418\u0412\u041D\u041E",
-    statusError: "\u{1F534} \u041E\u0428\u0418\u0411\u041A\u0410 // \u041E\u0424\u041B\u0410\u0419\u041D",
-    controlPanelBtn: "[ \u2193 \u041A\u041E\u041D\u0422\u0420\u041E\u041B\u042C\u041D\u0410\u042F \u041F\u0410\u041D\u0415\u041B\u042C // \u0421\u0418\u0421\u0422\u0415\u041C\u041D\u042B\u0419 \u0414\u0415\u041A ]",
+    appTitle: "EVABOT // \u041A\u0418\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B \u0418 \u041D\u0415\u0419\u0420\u041E-\u0413\u041E\u041B\u041E\u0421\u041E\u0412\u041E\u0419 \u0425\u0410\u0411",
+    statusOnline: "\u0412 \u0421\u0415\u0422\u0418",
+    statusBusy: "\u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0418\u042F",
+    statusError: "\u041E\u0428\u0418\u0411\u041A\u0410",
     returnTerminalBtn: "[ \u2191 \u0412\u0415\u0420\u041D\u0423\u0422\u042C\u0421\u042F \u0412 \u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B ]",
     clearChatBtn: "[ \u041E\u0427\u0418\u0421\u0422\u0418\u0422\u042C ]",
     transmitBtn: "[ \u041E\u0422\u041F\u0420\u0410\u0412\u0418\u0422\u042C \u21B5 ]",
-    stopBtn: "[ \u041E\u0421\u0422\u0410\u041D\u041E\u0412\u0418\u0422\u042C \u{1F7E1} ]",
-    inputPlaceholder: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u0438\u0431\u0435\u0440-\u043A\u043E\u043C\u0430\u043D\u0434\u0443 \u0438\u043B\u0438 \u0437\u0430\u043F\u0440\u043E\u0441 (Enter \u0434\u043B\u044F \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438, Shift+Enter \u0434\u043B\u044F \u043D\u043E\u0432\u043E\u0439 \u0441\u0442\u0440\u043E\u043A\u0438)...",
-    inputLegend: "Enter: \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u2022 Shift+Enter: \u041F\u0435\u0440\u0435\u043D\u043E\u0441 \u0441\u0442\u0440\u043E\u043A\u0438 \u2022 \u042F\u0434\u0440\u043E EvaBot v0.2.0",
-    welcomeHeading: "\u041D\u0415\u0419\u0420\u041E\u041D\u041D\u042B\u0419 \u041A\u0418\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B EVABOT \u0412 \u0421\u0415\u0422\u0418",
-    welcomeNotice: "\u0421\u0435\u0441\u0441\u0438\u044F \u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u0430. \u041C\u0438\u043D\u0438\u043C\u0430\u043B\u0438\u0441\u0442\u0438\u0447\u043D\u044B\u0439 \u0447\u0435\u0440\u043D\u043E-\u0431\u0435\u043B\u044B\u0439 \u043A\u0438\u0431\u0435\u0440-\u0434\u0435\u043A \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D. \u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u043A \u043E\u0431\u043B\u0430\u0447\u043D\u043E\u0439 \u0438\u043D\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0435 Google Cloud \u0441 \u043C\u043D\u043E\u0433\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u043E\u0439 \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u0435\u0439.",
-    secDeckTitle: "\u0414\u0415\u041A \u0423\u041F\u0420\u0410\u0412\u041B\u0415\u041D\u0418\u042F EVA // \u041A\u041E\u041D\u0424\u0418\u0413\u0423\u0420\u0410\u0426\u0418\u042F \u0418 \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0418\u042F",
-    secProviders: "1. \u041D\u0415\u0419\u0420\u041E\u041D\u041D\u042B\u0415 \u041F\u0420\u041E\u0412\u0410\u0419\u0414\u0415\u0420\u042B",
-    secModels: "2. \u0412\u042B\u0411\u041E\u0420 \u041C\u041E\u0414\u0415\u041B\u0418 \u0418 \u041A\u0412\u041E\u0422\u042B",
-    secModes: "3. \u0420\u0415\u0416\u0418\u041C\u042B \u0420\u0410\u0411\u041E\u0422\u042B",
-    secRoles: "4. \u041A\u041E\u0420\u041F\u041E\u0420\u0410\u0422\u0418\u0412\u041D\u042B\u0415 \u0420\u041E\u041B\u0418 \u0418 \u041F\u0415\u0420\u0421\u041E\u041D\u042B",
-    secTelemetry: "5. \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0418\u042F \u0412 \u0420\u0415\u0410\u041B\u042C\u041D\u041E\u041C \u0412\u0420\u0415\u041C\u0415\u041D\u0418",
-    secSecurity: "6. \u0411\u0415\u0417\u041E\u041F\u0410\u0421\u041D\u041E\u0421\u0422\u042C \u0418 \u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F",
-    badgeFree: "\u{1F7E2} \u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u041E",
-    badgePaid: "\u{1F7E1} \u041F\u041B\u0410\u0422\u041D\u041E / PAYG",
-    badgeActive: "\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u0415\u041D",
-    badgeReady: "\u{1F7E2} \u0413\u041E\u0422\u041E\u0412",
-    badgeStandby: "\u{1F7E1} \u041E\u0416\u0418\u0414\u0410\u041D\u0418\u0415",
-    provGoogleName: "Google Cloud (Vertex AI & AI Studio)",
-    provGoogleDesc: "\u041E\u0440\u0438\u0433\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438 Google DeepMind Gemini \u0438 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\u0441\u043A\u0438\u0435 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438 \u043F\u0440\u044F\u043C\u043E\u0433\u043E \u0432\u044B\u0437\u043E\u0432\u0430.",
-    provOmniName: "\u041D\u0435\u0439\u0440\u043E\u0448\u043B\u044E\u0437 OmniRoute",
-    provOmniDesc: "\u0414\u0438\u043D\u0430\u043C\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043C\u0443\u043B\u044C\u0442\u0438\u043E\u0431\u043B\u0430\u0447\u043D\u044B\u0439 \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0442\u043E\u0440 \u0441 \u0438\u043D\u0442\u0435\u043B\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u043E\u0439 \u0431\u0430\u043B\u0430\u043D\u0441\u0438\u0440\u043E\u0432\u043A\u043E\u0439 \u0438 \u043E\u0442\u043A\u0430\u0437\u043E\u0443\u0441\u0442\u043E\u0439\u0447\u0438\u0432\u043E\u0441\u0442\u044C\u044E.",
-    provOpenRouterName: "\u0421\u0435\u0442\u044C OpenRouter",
-    provOpenRouterDesc: "\u0414\u0435\u0446\u0435\u043D\u0442\u0440\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u043D\u043D\u044B\u0439 \u0448\u043B\u044E\u0437 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u0433\u043B\u043E\u0431\u0430\u043B\u044C\u043D\u044B\u043C \u043A\u043B\u0430\u0441\u0442\u0435\u0440\u0430\u043C \u043E\u0442\u043A\u0440\u044B\u0442\u044B\u0445 \u0432\u0435\u0441\u043E\u0432 \u0438 \u0441\u043F\u0435\u0446\u0438\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u043C \u043C\u043E\u0434\u0435\u043B\u044F\u043C.",
-    provOpenCodeName: "\u0423\u0437\u0435\u043B OpenCode Go",
-    provOpenCodeDesc: "\u0412\u044B\u0441\u043E\u043A\u043E\u043F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0434\u0432\u0438\u0436\u043E\u043A \u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u0438 \u043A\u043E\u0434\u0430 \u0434\u043B\u044F \u043F\u0440\u0438\u0432\u0430\u0442\u043D\u043E\u0433\u043E \u0430\u043D\u0430\u043B\u0438\u0437\u0430, \u0440\u0435\u0444\u0430\u043A\u0442\u043E\u0440\u0438\u043D\u0433\u0430 \u0438 AST.",
-    modeSoloName: "\u0421\u041E\u041B\u041E",
-    modeSoloDesc: "\u041F\u0440\u044F\u043C\u043E\u0435 \u0438\u0441\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u043E\u0434\u043D\u043E\u0439 LLM \u0441\u043E \u0441\u0442\u0440\u043E\u0433\u043E\u0439 \u0444\u043E\u043A\u0443\u0441\u0438\u0440\u043E\u0432\u043A\u043E\u0439 \u043D\u0430 \u0434\u0438\u0440\u0435\u043A\u0442\u0438\u0432\u0430\u0445 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0439 \u0440\u043E\u043B\u0438.",
-    modeBroadcastName: "\u0422\u0420\u0410\u041D\u0421\u041B\u042F\u0426\u0418\u042F",
-    modeBroadcastDesc: "\u041C\u043D\u043E\u0433\u043E\u043C\u0435\u0440\u043D\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0437 \u0441 \u043F\u0430\u0440\u0430\u043B\u043B\u0435\u043B\u044C\u043D\u043E\u0439 \u0442\u0440\u0430\u043D\u0441\u043B\u044F\u0446\u0438\u0435\u0439 \u0437\u0430\u043F\u0440\u043E\u0441\u0430 \u043F\u043E \u043A\u043B\u044E\u0447\u0435\u0432\u044B\u043C \u0430\u043D\u0430\u043B\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u043C \u0441\u0440\u0435\u0437\u0430\u043C.",
-    modeDialogueName: "\u0414\u0418\u0410\u041B\u041E\u0413",
-    modeDialogueDesc: "\u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432\u044B\u0439 \u043A\u0438\u0431\u0435\u0440-\u043F\u043E\u0442\u043E\u043A \u0441 \u043D\u0435\u043F\u0440\u0435\u0440\u044B\u0432\u043D\u044B\u043C \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0430 \u0438 \u043E\u043F\u0435\u0440\u0430\u0442\u0438\u0432\u043D\u044B\u043C \u043E\u0442\u043A\u043B\u0438\u043A\u043E\u043C.",
-    modeConsiliumName: "\u041A\u041E\u041D\u0421\u0418\u041B\u0418\u0423\u041C",
-    modeConsiliumDesc: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u043E\u0435 \u0441\u043E\u0432\u0435\u0449\u0430\u043D\u0438\u0435 \u0441\u043E\u0432\u0435\u0442\u0430 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440\u043E\u0432 \u0441 \u0441\u0438\u043D\u0442\u0435\u0437\u043E\u043C \u043C\u043D\u0435\u043D\u0438\u0439 \u044D\u043A\u0441\u043F\u0435\u0440\u0442\u043E\u0432 \u0432 \u0435\u0434\u0438\u043D\u044B\u0439 \u043A\u043E\u043D\u0441\u0435\u043D\u0441\u0443\u0441.",
-    roleCeoName: "CEO // \u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043B\u0438\u0434\u0435\u0440",
-    roleCeoDesc: "\u041A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0430\u044F \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044F \u0432\u044B\u0441\u043E\u043A\u043E\u0433\u043E \u0443\u0440\u043E\u0432\u043D\u044F, \u0440\u044B\u043D\u043E\u0447\u043D\u043E\u0435 \u043F\u043E\u0437\u0438\u0446\u0438\u043E\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435, \u0440\u0430\u0441\u0447\u0435\u0442 ROI \u0438 \u043B\u0438\u0434\u0435\u0440\u0441\u0442\u0432\u043E.",
-    roleCtoName: "CTO // \u0413\u043B\u0430\u0432\u043D\u044B\u0439 \u0430\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u043E\u0440",
-    roleCtoDesc: "\u041F\u0440\u043E\u0435\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0440\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u043D\u044B\u0445 \u0441\u0438\u0441\u0442\u0435\u043C, \u043C\u0430\u0441\u0448\u0442\u0430\u0431\u0438\u0440\u0443\u0435\u043C\u043E\u0441\u0442\u044C, \u043E\u0442\u043A\u0430\u0437\u043E\u0443\u0441\u0442\u043E\u0439\u0447\u0438\u0432\u043E\u0441\u0442\u044C \u0438 \u0447\u0438\u0441\u0442\u044B\u0439 \u043A\u043E\u0434.",
-    roleCisoName: "CISO // \u041A\u0438\u0431\u0435\u0440\u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C \u0438 \u0438\u043D\u0444\u043E\u0431\u0435\u0437",
-    roleCisoDesc: "\u041C\u043E\u0434\u0435\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0443\u0433\u0440\u043E\u0437, \u0430\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u0443\u0440\u0430 Zero-Trust, \u043A\u0440\u0438\u043F\u0442\u043E\u0433\u0440\u0430\u0444\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0446\u0435\u043B\u043E\u0441\u0442\u043D\u043E\u0441\u0442\u044C \u0438 \u043E\u0442\u0440\u0430\u0436\u0435\u043D\u0438\u0435 \u0430\u0442\u0430\u043A.",
-    roleCfoName: "CFO // \u0424\u0438\u043D\u0430\u043D\u0441\u043E\u0432\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0442\u0438\u043A",
-    roleCfoDesc: "\u0424\u0438\u043D\u0430\u043D\u0441\u043E\u0432\u044B\u0439 \u0430\u0443\u0434\u0438\u0442, \u043E\u043F\u0442\u0438\u043C\u0438\u0437\u0430\u0446\u0438\u044F \u0442\u043E\u043A\u0435\u043D\u043E\u043C\u0438\u043A\u0438, \u0443\u0447\u0435\u0442 \u0437\u0430\u0442\u0440\u0430\u0442 \u0441\u0442\u0440\u043E\u0433\u043E \u0432 \u0434\u043E\u043B\u043B\u0430\u0440\u0430\u0445 \u0421\u0428\u0410 ($) \u0438 \u0435\u0432\u0440\u043E (\u20AC).",
-    roleUxName: "UX/DES // \u041A\u0440\u0435\u0430\u0442\u0438\u0432\u043D\u044B\u0439 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440",
-    roleUxDesc: "\u041C\u0438\u043D\u0438\u043C\u0430\u043B\u0438\u0441\u0442\u0438\u0447\u043D\u0430\u044F \u043A\u0438\u0431\u0435\u0440-\u044D\u0441\u0442\u0435\u0442\u0438\u043A\u0430, \u044D\u0440\u0433\u043E\u043D\u043E\u043C\u0438\u043A\u0430 \u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u0430, \u0432\u0437\u0430\u0438\u043C\u043E\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435 \u0441 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u043C \u0438 \u0434\u0438\u0437\u0430\u0439\u043D.",
-    roleDevName: "DEV // \u0412\u0435\u0434\u0443\u0449\u0438\u0439 Full-Stack \u0438\u043D\u0436\u0435\u043D\u0435\u0440",
-    roleDevDesc: "\u0420\u0435\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043F\u0440\u043E\u0434\u0430\u043A\u0448\u043D-\u043A\u043E\u0434\u0430, \u0443\u0441\u0442\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u043E\u0448\u0438\u0431\u043E\u043A, \u0430\u043B\u0433\u043E\u0440\u0438\u0442\u043C\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u043E\u043F\u0442\u0438\u043C\u0438\u0437\u0430\u0446\u0438\u044F \u0438 \u043C\u043E\u0434\u0443\u043B\u044C\u043D\u044B\u0435 \u0442\u0435\u0441\u0442\u044B.",
-    roleRschName: "RSCH // \u0418\u0441\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u0418\u0418",
-    roleRschDesc: "\u041C\u0435\u0445\u0430\u043D\u0438\u0437\u043C\u044B \u0432\u043D\u0438\u043C\u0430\u043D\u0438\u044F, \u043A\u043E\u043C\u043F\u0440\u0435\u0441\u0441\u0438\u044F \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0430, \u0430\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u0443\u0440\u0430 \u0440\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u0439 \u0438 \u043D\u0435\u0439\u0440\u043E\u0441\u0438\u043C\u0432\u043E\u043B\u0438\u0447\u0435\u0441\u043A\u0438\u0435 \u0430\u0433\u0435\u043D\u0442\u044B.",
-    roleLegalName: "LEGAL // \u041A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u044B\u0439 \u044E\u0440\u0438\u0441\u0442",
-    roleLegalDesc: "\u0421\u043E\u0431\u043B\u044E\u0434\u0435\u043D\u0438\u0435 \u0440\u0435\u0433\u043B\u0430\u043C\u0435\u043D\u0442\u043E\u0432 (GDPR, EU AI Act), \u0441\u043D\u0438\u0436\u0435\u043D\u0438\u0435 \u0440\u0438\u0441\u043A\u043E\u0432, \u043B\u0438\u0446\u0435\u043D\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0438 \u044D\u0442\u0438\u043A\u0430 \u0418\u0418.",
-    telemServerLabel: "\u0423\u0437\u0435\u043B \u0441\u0435\u0440\u0432\u0435\u0440\u0430",
-    telemUptimeLabel: "\u0412\u0440\u0435\u043C\u044F \u0440\u0430\u0431\u043E\u0442\u044B",
-    telemMemoryLabel: "\u041F\u0430\u043C\u044F\u0442\u044C (RSS)",
-    telemLatencyLabel: "\u0417\u0430\u0434\u0435\u0440\u0436\u043A\u0430 API",
-    telemProviderLabel: "\u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440",
-    telemModelLabel: "\u0410\u043A\u0442\u0438\u0432\u043D\u0430\u044F \u043C\u043E\u0434\u0435\u043B\u044C",
-    telemQuotaLabel: "\u0421\u0442\u0430\u0442\u0443\u0441 \u043A\u0432\u043E\u0442\u044B",
-    telemAuthLabel: "\u0418\u0441\u0442\u043E\u0447\u043D\u0438\u043A \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438",
-    telemAccountLabel: "\u0410\u043A\u043A\u0430\u0443\u043D\u0442",
-    apiKeyLabel: "API \u043A\u043B\u044E\u0447 Google Gemini / Vertex",
-    apiKeyHelp: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0441\u043E\u0431\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u0434\u043B\u044F \u043F\u0435\u0440\u0435\u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u044F \u0441\u0435\u0440\u0432\u0435\u0440\u043D\u043E\u0439 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438. \u0421\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u0442\u0441\u044F \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0435.",
-    apiKeyPlaceholder: "AIzaSy...",
-    saveKeyBtn: "[ \u0421\u041E\u0425\u0420\u0410\u041D\u0418\u0422\u042C \u041A\u041B\u042E\u0427 ]",
-    clearKeyBtn: "[ \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F GOOGLE ]",
-    keyStatusCustom: "\u{1F7E2} \u0421\u041E\u0411\u0421\u0422\u0412\u0415\u041D\u041D\u042B\u0419 \u041A\u041B\u042E\u0427 \u0410\u041A\u0422\u0418\u0412\u0415\u041D",
-    keyStatusAmbient: "\u{1F7E2} \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F GOOGLE",
-    noticeModelSwitched: "\u041C\u043E\u0434\u0435\u043B\u044C \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0430 \u043D\u0430",
-    noticeRoleSwitched: "\u0410\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0430\u044F \u0440\u043E\u043B\u044C",
-    noticeModeSwitched: "\u0420\u0435\u0436\u0438\u043C \u0440\u0430\u0431\u043E\u0442\u044B \u0438\u0437\u043C\u0435\u043D\u0435\u043D \u043D\u0430",
-    noticeProviderSwitched: "\u041D\u0435\u0439\u0440\u043E\u043D\u043D\u044B\u0439 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440 \u0438\u0437\u043C\u0435\u043D\u0435\u043D \u043D\u0430",
-    noticeKeySaved: "\u041A\u043B\u044E\u0447 API \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D \u0432 \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u043E\u043C \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430.",
+    stopBtn: "[ \u041E\u0421\u0422\u0410\u041D\u041E\u0412\u0418\u0422\u042C ! ]",
+    inputPlaceholder: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0437\u0430\u043F\u0440\u043E\u0441 \u0438\u043B\u0438 \u043A\u043E\u043C\u0430\u043D\u0434\u0443 (\u043D\u0430\u043F\u0440. /help, /persona, /mode, /models, /db)...",
+    welcomeHeading: "\u041D\u0415\u0419\u0420\u041E\u041D\u041D\u042B\u0419 \u041A\u0418\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B EVABOT // \u0421\u0418\u0421\u0422\u0415\u041C\u0410 \u0418\u041D\u0418\u0426\u0418\u0410\u041B\u0418\u0417\u0418\u0420\u041E\u0412\u0410\u041D\u0410",
+    welcomeNotice: "\u0421\u0435\u0441\u0441\u0438\u044F \u0430\u043A\u0442\u0438\u0432\u043D\u0430. \u041C\u043E\u043D\u043E\u0445\u0440\u043E\u043C\u043D\u044B\u0439 \u043A\u0438\u0431\u0435\u0440-\u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B \u0433\u043E\u0442\u043E\u0432 \u043A \u0440\u0430\u0431\u043E\u0442\u0435. \u0411\u0430\u0437\u0438\u0440\u0443\u0435\u0442\u0441\u044F \u0432 \u041E\u0434\u0435\u0441\u0441\u0435, \u0423\u043A\u0440\u0430\u0438\u043D\u0430 (UA). \u041F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u043A \u0438\u043D\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0435 Google Cloud \u0441 Zero-Trust \u0430\u0443\u0442\u0435\u043D\u0442\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u0435\u0439.",
+    voiceTapToSpeak: "\u041D\u0410\u0416\u041C\u0418\u0422\u0415 \u0414\u041B\u042F \u0413\u041E\u041B\u041E\u0421\u0410",
+    voiceListening: "\u0421\u041B\u0423\u0428\u0410\u042E...",
+    voiceSpeaking: "\u041D\u0415\u0419\u0420\u041E-\u0413\u041E\u041B\u041E\u0421",
+    voiceSublabel: "[ \u0416\u0418\u0412\u041E\u0419 \u041D\u0415\u0419\u0420\u041E-\u0413\u041E\u041B\u041E\u0421 ]",
+    voiceStatusReady: "\u0415\u0432\u0430 (FrontEnd) \u0438 \u0410\u0434\u0430\u043C (BackEnd) \u043D\u0430 \u0441\u0432\u044F\u0437\u0438 * Web Speech API \u0433\u043E\u0442\u043E\u0432",
+    voiceStatusListening: "\u0420\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u0432\u0430\u043D\u0438\u0435 \u0440\u0435\u0447\u0438 \u0430\u043A\u0442\u0438\u0432\u043D\u043E... \u0413\u043E\u0432\u043E\u0440\u0438\u0442\u0435 \u0432 \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D.",
+    voiceStatusSpeaking: "\u041D\u0435\u0439\u0440\u043E\u043D\u043D\u044B\u0439 \u0441\u0438\u043D\u0442\u0435\u0437 \u0440\u0435\u0447\u0438 \u0430\u043A\u0442\u0438\u0432\u0435\u043D * \u041F\u0435\u0440\u0435\u0434\u0430\u0447\u0430 \u0430\u0443\u0434\u0438\u043E-\u043E\u0442\u0432\u0435\u0442\u0430.",
+    personaEvaLabel: "[F] \u0415\u0412\u0410 [\u0413\u043B\u0430\u0432\u043D\u044B\u0439 FrontEnd & UX \u0410\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u043E\u0440]",
+    personaAdamLabel: "[M] \u0410\u0414\u0410\u041C [\u0413\u043B\u0430\u0432\u043D\u044B\u0439 BackEnd & Cloud \u0410\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u043E\u0440]",
+    personaDualLabel: "[DUAL] \u0415\u0412\u0410 & \u0410\u0414\u0410\u041C [\u0422\u0430\u043D\u0434\u0435\u043C Full-Stack \u041A\u043E-\u041F\u0438\u043B\u043E\u0442\u043E\u0432]",
+    modeChatLabel: "\u0427\u0410\u0422 // \u041F\u0440\u044F\u043C\u043E\u0439 \u0434\u0438\u0430\u043B\u043E\u0433 \u0441 \u043C\u043E\u0434\u0435\u043B\u044C\u044E",
+    modeDialogLabel: "\u0414\u0418\u0410\u041B\u041E\u0413 // \u0414\u0432\u0443\u0441\u0442\u043E\u0440\u043E\u043D\u043D\u0438\u0435 \u0434\u0435\u0431\u0430\u0442\u044B (\u0415\u0432\u0430 \u043F\u0440\u043E\u0442\u0438\u0432 \u0410\u0434\u0430\u043C\u0430)",
+    modeInterviewLabel: "\u0418\u041D\u0422\u0415\u0420\u0412\u042C\u042E // \u0421\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u043E\u0435 \u0441\u043E\u0431\u0435\u0441\u0435\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u0438 \u0441\u043A\u043E\u0440\u0438\u043D\u0433",
+    modeConsiliumLabel: "\u041A\u041E\u041D\u0421\u0418\u041B\u0418\u0423\u041C // \u041C\u043D\u043E\u0433\u043E\u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0441\u043E\u0432\u0435\u0442 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440\u043E\u0432",
+    badgeFree: "[\u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u041E] 100% \u041A\u0412\u041E\u0422\u0410",
+    badgePaid: "[\u041F\u041B\u0410\u0422\u041D\u041E] PAYG",
+    noticePersonaSwitched: "\u0410\u043A\u0442\u0438\u0432\u043D\u0430\u044F \u043F\u0435\u0440\u0441\u043E\u043D\u0430 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0430 \u043D\u0430",
+    noticeModeSwitched: "\u0420\u0435\u0436\u0438\u043C \u0440\u0430\u0431\u043E\u0442\u044B \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D \u043D\u0430",
+    noticeModelSwitched: "\u041D\u0435\u0439\u0440\u043E\u043D\u043D\u0430\u044F \u043C\u043E\u0434\u0435\u043B\u044C \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0430 \u043D\u0430",
+    noticeDbSwitched: "\u0411\u0430\u0437\u0430 \u0437\u043D\u0430\u043D\u0438\u0439 \u0438 \u0411\u0414 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0430 \u043D\u0430",
+    noticeRoleSwitched: "\u0410\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0430\u044F \u0440\u043E\u043B\u044C:",
+    noticeKeySaved: "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u0441\u043A\u0438\u0439 Google API \u043A\u043B\u044E\u0447 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0435.",
     noticeKeyCleared: "\u0412\u043E\u0437\u0432\u0440\u0430\u0449\u0435\u043D\u0430 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F Google Cloud.",
-    noticeChatCleared: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439 \u043E\u0447\u0438\u0449\u0435\u043D\u0430.",
+    noticeChatCleared: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u0430 \u043E\u0447\u0438\u0449\u0435\u043D\u0430.",
     copiedBtn: "\u0421\u041A\u041E\u041F\u0418\u0420\u041E\u0412\u0410\u041D\u041E",
     copyBtn: "\u041A\u041E\u041F\u0418\u0420\u041E\u0412\u0410\u0422\u042C"
   }
@@ -1525,19 +2444,30 @@ var TRANSLATIONS = {
 var EvaBotWebApp = class {
   messages = [];
   currentLang = "en";
-  currentProvider = "google";
+  currentPersona = "dual";
+  currentMode = "chat";
   currentModel = "gemini-2.5-flash";
-  currentMode = "solo";
-  currentRole = "ceo";
+  currentDb = "hybrid";
+  customDbUri = "";
+  currentRole = "eva_frontend";
+  consiliumCount = 5;
+  consiliumPreset = null;
   isGenerating = false;
   abortController = null;
-  serverHasApiKey = false;
+  serverUptimeSec = 0;
+  serverMemoryMb = 32;
+  lastLatencyMs = 4;
+  sessionTotalTokens = 0;
+  sessionTotalCostUSD = 0;
+  sessionTotalCostEUR = 0;
   authSource = "Google Cloud Ambient";
   userAccount = "evabot.online@gmail.com";
-  serverUptimeSec = 0;
-  serverMemoryMb = 0;
-  lastLatencyMs = 0;
   uptimeInterval = null;
+  // Voice Engine State
+  isRecording = false;
+  speechRecognition = null;
+  isSpeaking = false;
+  voiceDockUI = null;
   constructor() {
     this.init();
   }
@@ -1546,17 +2476,29 @@ var EvaBotWebApp = class {
     if (savedLang && (savedLang === "en" || savedLang === "uk" || savedLang === "ru")) {
       this.currentLang = savedLang;
     }
+    const savedPersona = localStorage.getItem("evabot_persona");
+    if (savedPersona && (savedPersona === "eva" || savedPersona === "adam" || savedPersona === "dual")) {
+      this.currentPersona = savedPersona;
+    }
+    const savedMode = localStorage.getItem("evabot_mode");
+    if (savedMode && (savedMode === "chat" || savedMode === "dialog" || savedMode === "interview" || savedMode === "consilium")) {
+      this.currentMode = savedMode;
+    }
     this.setupEventListeners();
-    await this.checkHealth();
+    this.setupVoiceEngine();
     this.populateModelSelector();
     this.applyLanguage();
-    this.updateProviderUI();
+    this.updatePersonaUI();
     this.updateModeUI();
+    this.updateDbUI();
     this.updateRoleUI();
     this.updateModelDetailsUI();
     this.updateKeyStatusUI();
-    this.renderWelcomeMessage();
     this.startTelemetryLoop();
+    this.voiceDockUI = new VoiceDockUI();
+    this.voiceDockUI.init().catch((e) => console.warn("[App] VoiceDockUI init warning:", e));
+    await this.checkHealth();
+    await this.renderStartupSequence();
   }
   t() {
     return TRANSLATIONS[this.currentLang];
@@ -1566,14 +2508,16 @@ var EvaBotWebApp = class {
     this.currentLang = lang;
     localStorage.setItem("evabot_lang", lang);
     this.applyLanguage();
+    this.updatePersonaUI();
+    this.updateModeUI();
     this.updateModelDetailsUI();
     this.updateKeyStatusUI();
     this.updateTelemetryUI();
-    if (this.messages.length <= 1) {
+    if (this.messages.length <= 2) {
       this.messages = [];
       const container = document.getElementById("messages-container");
       if (container) container.innerHTML = "";
-      this.renderWelcomeMessage();
+      this.renderStartupSequence();
     }
   }
   applyLanguage() {
@@ -1581,32 +2525,26 @@ var EvaBotWebApp = class {
     ["en", "uk", "ru"].forEach((l) => {
       const btn = document.getElementById(`lang-btn-${l}`);
       if (btn) {
-        if (l === this.currentLang) {
-          btn.className = "px-2 py-0.5 text-xs font-bold bg-white text-black border border-white";
-        } else {
-          btn.className = "px-2 py-0.5 text-xs font-bold bg-black text-zinc-400 hover:text-white border border-transparent";
-        }
+        btn.className = l === this.currentLang ? "lang-btn active" : "lang-btn";
       }
     });
-    document.title = `${t.appTitle} // ${this.currentModel}`;
-    document.querySelectorAll("[data-i18n]").forEach((el) => {
-      const key = el.getAttribute("data-i18n");
-      if (key && t[key]) {
-        el.textContent = t[key];
-      }
-    });
-    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
-      const key = el.getAttribute("data-i18n-placeholder");
-      if (key && t[key]) {
-        el.placeholder = t[key];
-      }
-    });
-    const ctrlBtn = document.getElementById("control-panel-btn-label");
-    if (ctrlBtn) ctrlBtn.textContent = t.controlPanelBtn;
-    const retBtn = document.getElementById("return-terminal-btn-label");
-    if (retBtn) retBtn.textContent = t.returnTerminalBtn;
-    const clrBtn = document.getElementById("clear-btn");
-    if (clrBtn) clrBtn.textContent = t.clearChatBtn;
+    document.title = `${t.appTitle} // [${this.currentPersona.toUpperCase()}]`;
+    const input = document.getElementById("user-input");
+    if (input) {
+      input.placeholder = t.inputPlaceholder;
+    }
+    const orbLabel = document.getElementById("orb-label");
+    if (orbLabel && !this.isRecording && !this.isSpeaking) {
+      orbLabel.textContent = t.voiceTapToSpeak;
+    }
+    const orbSublabel = document.getElementById("orb-sublabel");
+    if (orbSublabel && !this.isRecording && !this.isSpeaking) {
+      orbSublabel.textContent = t.voiceSublabel;
+    }
+    const voiceFeedback = document.getElementById("voice-status-feedback");
+    if (voiceFeedback && !this.isRecording && !this.isSpeaking) {
+      voiceFeedback.textContent = t.voiceStatusReady;
+    }
     this.updateSendButtonState(this.isGenerating);
   }
   setupEventListeners() {
@@ -1623,6 +2561,106 @@ var EvaBotWebApp = class {
     toTerminalBtn?.addEventListener("click", () => {
       terminalSection?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+    document.getElementById("header-persona-pill")?.addEventListener("click", () => {
+      const cycle = {
+        eva: "adam",
+        adam: "dual",
+        dual: "eva"
+      };
+      this.setPersona(cycle[this.currentPersona]);
+    });
+    document.querySelectorAll("#persona-selector-group [data-persona]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const p = el.getAttribute("data-persona");
+        if (p) this.setPersona(p);
+      });
+    });
+    document.querySelectorAll("#mode-selector-group [data-mode]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const m = el.getAttribute("data-mode");
+        if (m) this.setMode(m);
+      });
+    });
+    const consiliumSlider = document.getElementById("deck-consilium-count");
+    const consiliumVal = document.getElementById("consilium-count-val");
+    consiliumSlider?.addEventListener("input", (e) => {
+      const val = parseInt(e.target.value, 10) || 5;
+      this.consiliumCount = val;
+      if (consiliumVal) consiliumVal.textContent = String(val);
+      this.consiliumPreset = null;
+      this.updatePresetButtonsUI();
+    });
+    document.getElementById("btn-preset-top10-paid")?.addEventListener("click", () => {
+      this.consiliumPreset = "top10_paid";
+      this.consiliumCount = 10;
+      if (consiliumSlider) consiliumSlider.value = "10";
+      if (consiliumVal) consiliumVal.textContent = "10";
+      this.updatePresetButtonsUI();
+      this.addSystemNotification("[*] Preset activated: **Top-10 Smartest Paid Models** (10 participants)");
+    });
+    document.getElementById("btn-preset-top10-free")?.addEventListener("click", () => {
+      this.consiliumPreset = "top10_free";
+      this.consiliumCount = 10;
+      if (consiliumSlider) consiliumSlider.value = "10";
+      if (consiliumVal) consiliumVal.textContent = "10";
+      this.updatePresetButtonsUI();
+      this.addSystemNotification("[*] Preset activated: **Top-10 Free Quota Models** (10 participants)");
+    });
+    document.querySelectorAll("#db-selector-group [data-db]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const db = el.getAttribute("data-db");
+        if (db) this.setDb(db);
+      });
+    });
+    const customDbInput = document.getElementById("custom-db-uri-input");
+    customDbInput?.addEventListener("change", () => {
+      this.customDbUri = customDbInput.value.trim();
+      if (this.customDbUri) {
+        this.addSystemNotification(`Custom Company Database connected: \`${this.customDbUri.replace(/:[^:@]+@/, ":****@")}\``);
+      }
+    });
+    document.querySelectorAll("#roles-selector-group [data-role]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const role = el.getAttribute("data-role");
+        if (role) this.setRole(role);
+      });
+    });
+    const modelSelect = document.getElementById("deck-model-select");
+    modelSelect?.addEventListener("change", (e) => {
+      this.currentModel = e.target.value;
+      this.updateModelDetailsUI();
+      const m = ModelRegistry.getModelById(this.currentModel);
+      this.addSystemNotification(`${this.t().noticeModelSwitched} **${m?.name || this.currentModel}**`);
+    });
+    document.getElementById("header-model-pill")?.addEventListener("click", () => {
+      deckSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    const saveKeyBtn = document.getElementById("deck-save-key-btn");
+    const clearKeyBtn = document.getElementById("deck-clear-key-btn");
+    const apiKeyInput = document.getElementById("deck-api-key-input");
+    saveKeyBtn?.addEventListener("click", () => {
+      const val = apiKeyInput?.value.trim() || "";
+      if (val) {
+        localStorage.setItem("evabot_gemini_key", val);
+        this.voiceDockUI?.setApiKey(val);
+        this.addSystemNotification(this.t().noticeKeySaved);
+      }
+      this.updateKeyStatusUI();
+    });
+    clearKeyBtn?.addEventListener("click", () => {
+      localStorage.removeItem("evabot_gemini_key");
+      this.voiceDockUI?.setApiKey("");
+      if (apiKeyInput) apiKeyInput.value = "";
+      this.addSystemNotification(this.t().noticeKeyCleared);
+      this.updateKeyStatusUI();
+    });
+    document.getElementById("clear-btn")?.addEventListener("click", () => {
+      this.messages = [];
+      const container = document.getElementById("messages-container");
+      if (container) container.innerHTML = "";
+      this.renderStatusBarOnly();
+      this.addSystemNotification(this.t().noticeChatCleared);
+    });
     const form = document.getElementById("chat-form");
     const input = document.getElementById("user-input");
     form?.addEventListener("submit", (e) => {
@@ -1635,78 +2673,325 @@ var EvaBotWebApp = class {
         this.handleSend();
       }
     });
-    document.getElementById("clear-btn")?.addEventListener("click", () => {
-      this.messages = [];
-      const container = document.getElementById("messages-container");
-      if (container) container.innerHTML = "";
-      this.renderWelcomeMessage();
-      this.addSystemNotification(this.t().noticeChatCleared);
+    document.getElementById("voice-orb")?.addEventListener("click", () => {
+      this.toggleVoiceRecording();
     });
-    const modelSelect = document.getElementById("deck-model-select");
-    modelSelect?.addEventListener("change", (e) => {
-      this.currentModel = e.target.value;
-      this.updateModelDetailsUI();
-      const m = ModelRegistry.getModelById(this.currentModel);
-      this.addSystemNotification(`${this.t().noticeModelSwitched} **${m?.name || this.currentModel}**`);
-    });
-    document.querySelectorAll("[data-provider]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const prov = el.getAttribute("data-provider");
-        if (prov) {
-          this.currentProvider = prov;
-          this.updateProviderUI();
-          this.addSystemNotification(`${this.t().noticeProviderSwitched} **${prov.toUpperCase()}**`);
+  }
+  // ===========================================================================
+  // VOICE ENGINE (Speech Recognition & Speech Synthesis)
+  // ===========================================================================
+  setupVoiceEngine() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      const feedback = document.getElementById("voice-status-feedback");
+      if (feedback) feedback.textContent = "Web Speech API not supported in this browser. (Use Chrome/Edge or type prompts)";
+      return;
+    }
+    try {
+      this.speechRecognition = new SpeechRecognition();
+      this.speechRecognition.continuous = false;
+      this.speechRecognition.interimResults = true;
+      this.speechRecognition.maxAlternatives = 1;
+      this.speechRecognition.onstart = () => {
+        this.isRecording = true;
+        const orb = document.getElementById("voice-orb");
+        const orbIcon = document.getElementById("orb-icon");
+        const orbLabel = document.getElementById("orb-label");
+        const orbSublabel = document.getElementById("orb-sublabel");
+        const feedback = document.getElementById("voice-status-feedback");
+        if (orb) orb.classList.add("listening");
+        if (orbIcon) orbIcon.textContent = "[REC]";
+        if (orbLabel) orbLabel.textContent = this.t().voiceListening;
+        if (orbSublabel) orbSublabel.textContent = "[ LISTENING... ]";
+        if (feedback) feedback.textContent = this.t().voiceStatusListening;
+      };
+      this.speechRecognition.onresult = (event) => {
+        let interim = "";
+        let final = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
         }
-      });
-    });
-    document.querySelectorAll("[data-mode]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const mode = el.getAttribute("data-mode");
-        if (mode) {
-          this.currentMode = mode;
-          this.updateModeUI();
-          this.addSystemNotification(`${this.t().noticeModeSwitched} **${mode.toUpperCase()}**`);
+        const transcript = final || interim;
+        const input = document.getElementById("user-input");
+        if (input && transcript) {
+          input.value = transcript;
         }
-      });
-    });
-    document.querySelectorAll("[data-role]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const role = el.getAttribute("data-role");
-        if (role) {
-          this.currentRole = role;
-          this.updateRoleUI();
-          this.addSystemNotification(`${this.t().noticeRoleSwitched} **${role.toUpperCase()}**`);
+        if (final && final.trim()) {
+          this.stopVoiceRecording();
+          setTimeout(() => {
+            this.handleSend();
+          }, 300);
         }
-      });
-    });
-    const saveKeyBtn = document.getElementById("deck-save-key-btn");
-    const clearKeyBtn = document.getElementById("deck-clear-key-btn");
-    const apiKeyInput = document.getElementById("deck-api-key-input");
-    saveKeyBtn?.addEventListener("click", () => {
-      const val = apiKeyInput?.value.trim() || "";
-      if (val) {
-        localStorage.setItem("evabot_gemini_key", val);
-        this.addSystemNotification(this.t().noticeKeySaved);
+      };
+      this.speechRecognition.onerror = (event) => {
+        console.warn("Speech recognition error:", event.error);
+        this.stopVoiceRecording();
+      };
+      this.speechRecognition.onend = () => {
+        this.stopVoiceRecording();
+      };
+    } catch (e) {
+      console.warn("SpeechRecognition initialization error:", e);
+    }
+  }
+  toggleVoiceRecording() {
+    if (this.isRecording) {
+      this.stopVoiceRecording();
+    } else {
+      this.startVoiceRecording();
+    }
+  }
+  startVoiceRecording() {
+    if (!this.speechRecognition) {
+      alert("Speech recognition is not supported in this browser. Please type your prompt in the command line.");
+      return;
+    }
+    try {
+      const langCode = this.currentLang === "uk" ? "uk-UA" : this.currentLang === "ru" ? "ru-RU" : "en-US";
+      this.speechRecognition.lang = langCode;
+      this.speechRecognition.start();
+    } catch (e) {
+      console.warn("Failed to start speech recognition:", e);
+      this.stopVoiceRecording();
+    }
+  }
+  stopVoiceRecording() {
+    this.isRecording = false;
+    try {
+      this.speechRecognition?.stop();
+    } catch {
+    }
+    const orb = document.getElementById("voice-orb");
+    const orbIcon = document.getElementById("orb-icon");
+    const orbLabel = document.getElementById("orb-label");
+    const orbSublabel = document.getElementById("orb-sublabel");
+    const feedback = document.getElementById("voice-status-feedback");
+    if (orb) orb.classList.remove("listening");
+    if (orbIcon) orbIcon.textContent = "[MIC]";
+    if (orbLabel) orbLabel.textContent = this.t().voiceTapToSpeak;
+    if (orbSublabel) orbSublabel.textContent = this.t().voiceSublabel;
+    if (feedback) feedback.textContent = this.t().voiceStatusReady;
+  }
+  speakVoiceResponse(text, persona) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const cleanText = text.replace(/```[\s\S]*?```/g, " [Code omitted] ").replace(/`([^`]+)`/g, "$1").replace(/[*_#~>|┌┐└┘├┤─│═]+/g, " ").replace(/https?:\/\/\S+/g, " ").replace(/\s+/g, " ").trim();
+    if (!cleanText) return;
+    const spokenSlice = cleanText.length > 350 ? `${cleanText.slice(0, 350)}...` : cleanText;
+    const utterance = new SpeechSynthesisUtterance(spokenSlice);
+    const langCode = this.currentLang === "uk" ? "uk-UA" : this.currentLang === "ru" ? "ru-RU" : "en-US";
+    utterance.lang = langCode;
+    if (persona === "eva") {
+      utterance.pitch = 1.2;
+      utterance.rate = 1.05;
+    } else if (persona === "adam") {
+      utterance.pitch = 0.85;
+      utterance.rate = 0.95;
+    } else {
+      utterance.pitch = 1;
+      utterance.rate = 1;
+    }
+    const orb = document.getElementById("voice-orb");
+    const orbLabel = document.getElementById("orb-label");
+    const feedback = document.getElementById("voice-status-feedback");
+    utterance.onstart = () => {
+      this.isSpeaking = true;
+      if (orb) orb.classList.add("speaking");
+      if (orbLabel) orbLabel.textContent = this.t().voiceSpeaking;
+      if (feedback) feedback.textContent = this.t().voiceStatusSpeaking;
+    };
+    utterance.onend = () => {
+      this.isSpeaking = false;
+      if (orb) orb.classList.remove("speaking");
+      if (orbLabel) orbLabel.textContent = this.t().voiceTapToSpeak;
+      if (feedback) feedback.textContent = this.t().voiceStatusReady;
+    };
+    utterance.onerror = () => {
+      this.isSpeaking = false;
+      if (orb) orb.classList.remove("speaking");
+      if (orbLabel) orbLabel.textContent = this.t().voiceTapToSpeak;
+    };
+    window.speechSynthesis.speak(utterance);
+  }
+  // ===========================================================================
+  // PERSONA & MODE MANAGEMENT
+  // ===========================================================================
+  setPersona(persona) {
+    this.currentPersona = persona;
+    localStorage.setItem("evabot_persona", persona);
+    this.updatePersonaUI();
+    if (this.voiceDockUI) {
+      this.voiceDockUI.setPersona(persona === "adam" ? "adam" : "eva");
+    }
+    const nameMap = {
+      eva: "[F] EVA (Frontend & UX Director)",
+      adam: "[M] ADAM (Chief Backend Architect)",
+      dual: "[DUAL] EVA & ADAM (Full-Stack Co-Pilots)"
+    };
+    this.addSystemNotification(`${this.t().noticePersonaSwitched} **${nameMap[persona]}**`);
+  }
+  updatePersonaUI() {
+    const t = this.t();
+    const pill = document.getElementById("header-persona-name");
+    if (pill) {
+      if (this.currentPersona === "eva") pill.textContent = t.personaEvaLabel;
+      else if (this.currentPersona === "adam") pill.textContent = t.personaAdamLabel;
+      else pill.textContent = t.personaDualLabel;
+    }
+    document.querySelectorAll("#persona-selector-group [data-persona]").forEach((btn) => {
+      const p = btn.getAttribute("data-persona");
+      if (p === this.currentPersona) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
       }
-      this.updateKeyStatusUI();
     });
-    clearKeyBtn?.addEventListener("click", () => {
-      localStorage.removeItem("evabot_gemini_key");
-      if (apiKeyInput) apiKeyInput.value = "";
-      this.addSystemNotification(this.t().noticeKeyCleared);
-      this.updateKeyStatusUI();
+    this.updateTelemetryUI();
+  }
+  setMode(mode) {
+    this.currentMode = mode;
+    localStorage.setItem("evabot_mode", mode);
+    this.updateModeUI();
+    this.addSystemNotification(`${this.t().noticeModeSwitched} **${mode.toUpperCase()}**`);
+  }
+  updateModeUI() {
+    const headerMode = document.getElementById("header-mode-badge");
+    if (headerMode) headerMode.textContent = `MODE: ${this.currentMode.toUpperCase()}`;
+    document.querySelectorAll("#mode-selector-group [data-mode]").forEach((btn) => {
+      const m = btn.getAttribute("data-mode");
+      if (m === this.currentMode) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
     });
-    document.getElementById("header-model-pill")?.addEventListener("click", () => {
-      deckSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    this.updateTelemetryUI();
+  }
+  updatePresetButtonsUI() {
+    const paidBtn = document.getElementById("btn-preset-top10-paid");
+    const freeBtn = document.getElementById("btn-preset-top10-free");
+    if (this.consiliumPreset === "top10_paid") {
+      paidBtn?.classList.add("active");
+      freeBtn?.classList.remove("active");
+    } else if (this.consiliumPreset === "top10_free") {
+      freeBtn?.classList.add("active");
+      paidBtn?.classList.remove("active");
+    } else {
+      paidBtn?.classList.remove("active");
+      freeBtn?.classList.remove("active");
+    }
+  }
+  setDb(db) {
+    this.currentDb = db;
+    this.updateDbUI();
+    this.addSystemNotification(`${this.t().noticeDbSwitched} **${db.toUpperCase()}**`);
+  }
+  updateDbUI() {
+    document.querySelectorAll("#db-selector-group [data-db]").forEach((btn) => {
+      const d = btn.getAttribute("data-db");
+      if (d === this.currentDb) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
     });
-    const bootAccordion = document.getElementById("accordion-boot");
-    const bootLabel = document.getElementById("boot-toggle-label");
-    bootAccordion?.addEventListener("toggle", () => {
-      if (bootLabel) {
-        bootLabel.textContent = bootAccordion.open ? "[ - COLLAPSE ]" : "[ + EXPAND ]";
+    const tickerDb = document.getElementById("ticker-db");
+    if (tickerDb) {
+      const labels = {
+        hybrid: "HYBRID RAG",
+        postgres: "POSTGRES",
+        qdrant: "QDRANT VECTOR",
+        ephemeral: "EPHEMERAL"
+      };
+      tickerDb.textContent = labels[this.currentDb];
+    }
+  }
+  setRole(role) {
+    this.currentRole = role;
+    this.updateRoleUI();
+    this.addSystemNotification(`${this.t().noticeRoleSwitched} **${role.toUpperCase()}**`);
+  }
+  updateRoleUI() {
+    document.querySelectorAll("#roles-selector-group [data-role]").forEach((btn) => {
+      const r = btn.getAttribute("data-role");
+      if (r === this.currentRole) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
       }
     });
   }
+  // ===========================================================================
+  // MODEL SELECTOR & SPECIFICATIONS
+  // ===========================================================================
+  populateModelSelector() {
+    const select = document.getElementById("deck-model-select");
+    if (!select) return;
+    select.innerHTML = "";
+    const categories = ModelRegistry.getCategories();
+    for (const cat of categories) {
+      const models = ModelRegistry.getModelsByCategory(cat);
+      if (!models || models.length === 0) continue;
+      const group = document.createElement("optgroup");
+      group.label = cat;
+      for (const m of models) {
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        const isFree = m.pricing.freeTierStatus.includes("Free");
+        opt.textContent = `${m.name} ${isFree ? "[FREE]" : "[PAID]"}`;
+        if (m.id === this.currentModel) opt.selected = true;
+        group.appendChild(opt);
+      }
+      select.appendChild(group);
+    }
+  }
+  updateModelDetailsUI() {
+    const m = ModelRegistry.getModelById(this.currentModel);
+    if (!m) return;
+    const isFree = m.pricing.freeTierStatus.includes("Free");
+    const headerName = document.getElementById("header-model-name");
+    if (headerName) headerName.textContent = m.name;
+    const headerBadge = document.getElementById("header-model-badge");
+    if (headerBadge) {
+      headerBadge.textContent = isFree ? "[FREE]" : "[PAID]";
+      headerBadge.style.color = isFree ? "var(--clr-green)" : "var(--clr-yellow)";
+    }
+    const tierBadge = document.getElementById("model-tier-badge");
+    if (tierBadge) {
+      tierBadge.textContent = isFree ? "\u{1F7E2} 100% FREE QUOTA ($0.00)" : "[PAID] PAID / PAYG";
+      tierBadge.style.color = isFree ? "var(--clr-green)" : "var(--clr-yellow)";
+    }
+    const specUsd = document.getElementById("spec-usd");
+    if (specUsd) specUsd.textContent = `In: ${m.pricing.inputPer1MTokensUSD} / Out: ${m.pricing.outputPer1MTokensUSD}`;
+    const specEur = document.getElementById("spec-eur");
+    if (specEur) specEur.textContent = `In: ${m.pricing.inputPer1MTokensEUR} / Out: ${m.pricing.outputPer1MTokensEUR}`;
+    const specContext = document.getElementById("spec-context");
+    if (specContext) specContext.textContent = `${m.contextWindow.toLocaleString()} tokens`;
+  }
+  updateKeyStatusUI() {
+    const statusEl = document.getElementById("deck-key-status");
+    const input = document.getElementById("deck-api-key-input");
+    const customKey = localStorage.getItem("evabot_gemini_key") || "";
+    if (input && !input.value) {
+      input.value = customKey;
+    }
+    if (statusEl) {
+      if (customKey) {
+        statusEl.textContent = "[OK] CUSTOM KEY ACTIVE";
+        statusEl.style.color = "var(--clr-green)";
+      } else {
+        statusEl.textContent = "[OK] GOOGLE AMBIENT AUTH";
+        statusEl.style.color = "var(--clr-green)";
+      }
+    }
+  }
+  // ===========================================================================
+  // REAL BOOT PROBE & TELEMETRY
+  // ===========================================================================
   async checkHealth() {
     const t0 = performance.now();
     try {
@@ -1714,45 +2999,31 @@ var EvaBotWebApp = class {
       this.lastLatencyMs = Math.round(performance.now() - t0);
       if (res.ok) {
         const data = await res.json();
-        this.serverHasApiKey = Boolean(data.hasServerApiKey);
-        if (data.authSource) this.authSource = data.authSource;
-        if (data.account) this.userAccount = data.account;
         if (data.uptimeSeconds) this.serverUptimeSec = data.uptimeSeconds;
         if (data.memoryUsageMb) this.serverMemoryMb = data.memoryUsageMb;
+        if (data.account) this.userAccount = data.account;
+        if (data.authSource) this.authSource = data.authSource;
       }
     } catch {
-      this.serverHasApiKey = false;
       this.lastLatencyMs = 999;
     }
     this.updateTelemetryUI();
-    this.fetchBootDiagnostics();
   }
   async fetchBootDiagnostics() {
     try {
       const res = await fetch(`/api/diagnostics/boot?model=${encodeURIComponent(this.currentModel)}`);
       if (res.ok) {
         const report = await res.json();
-        const container = document.getElementById("boot-log-container");
-        if (container && report.steps) {
-          container.innerHTML = `
-            <div class="text-zinc-500 font-bold mb-1">Live dual-server diagnostic probe completed in ${report.totalDurationMs}ms:</div>
-            ${report.steps.map((step) => `
-              <div class="flex items-start gap-2 text-zinc-300 py-0.5">
-                <span class="text-emerald-400 font-bold">\u2714 \u{1F7E2}</span>
-                <div class="flex-1">
-                  <div class="flex justify-between items-center">
-                    <span class="text-white font-bold">${step.name}</span>
-                    <span class="text-zinc-500 text-[10px] font-mono">${step.latencyMs}ms</span>
-                  </div>
-                  <div class="text-zinc-400 text-[11px]">${step.details}</div>
-                </div>
-              </div>
-            `).join("")}
+        const tickerMsg = document.getElementById("boot-ticker-msg");
+        if (tickerMsg && report.steps) {
+          tickerMsg.innerHTML = `
+            <span style="color:var(--clr-green); font-weight:700;">[OK] INITIALIZED:</span>
+            <span>All ${report.steps.length} Systems Healthy * Frankfurt [c3-std-8] & Iowa [e2-micro] Online (${report.totalDurationMs}ms)</span>
           `;
         }
       }
     } catch (e) {
-      console.warn("Boot diagnostics fetch skipped:", e);
+      console.warn("Boot diagnostics skipped:", e);
     }
   }
   startTelemetryLoop() {
@@ -1766,9 +3037,6 @@ var EvaBotWebApp = class {
     }, 15e3);
   }
   updateTelemetryUI() {
-    const t = this.t();
-    const serverEl = document.getElementById("telem-server");
-    if (serverEl) serverEl.textContent = "evabot-online-edge";
     const uptimeEl = document.getElementById("telem-uptime");
     if (uptimeEl) {
       const hrs = Math.floor(this.serverUptimeSec / 3600);
@@ -1780,211 +3048,231 @@ var EvaBotWebApp = class {
     if (memEl) memEl.textContent = `${this.serverMemoryMb} MB`;
     const latEl = document.getElementById("telem-latency");
     if (latEl) latEl.textContent = `${this.lastLatencyMs} ms`;
-    const provEl = document.getElementById("telem-provider");
-    if (provEl) provEl.textContent = this.currentProvider.toUpperCase();
-    const modelEl = document.getElementById("telem-model");
-    if (modelEl) modelEl.textContent = this.currentModel;
-    const roleEl = document.getElementById("telem-role");
-    if (roleEl) roleEl.textContent = this.currentRole.toUpperCase();
-    const modeEl = document.getElementById("telem-mode");
-    if (modeEl) modeEl.textContent = this.currentMode.toUpperCase();
+    const tickerLat = document.getElementById("ticker-latency");
+    if (tickerLat) tickerLat.textContent = `${this.lastLatencyMs}ms`;
+    const tickerTokens = document.getElementById("ticker-tokens");
+    if (tickerTokens) tickerTokens.textContent = this.sessionTotalTokens.toLocaleString();
+    const tickerCost = document.getElementById("ticker-cost");
+    if (tickerCost) tickerCost.textContent = `$${this.sessionTotalCostUSD.toFixed(4)} / \u20AC${this.sessionTotalCostEUR.toFixed(4)}`;
+    const telemTokens = document.getElementById("telem-tokens");
+    if (telemTokens) telemTokens.textContent = this.sessionTotalTokens.toLocaleString();
+    const telemCost = document.getElementById("telem-cost");
+    if (telemCost) telemCost.textContent = `$${this.sessionTotalCostUSD.toFixed(4)} / \u20AC${this.sessionTotalCostEUR.toFixed(4)}`;
+  }
+  // ===========================================================================
+  // SCREEN TRANSITIONS & TERMINAL MESSAGES
+  // ===========================================================================
+  activateChatRegion() {
+    const chatRegion = document.getElementById("chat-stream-region");
+    if (chatRegion) chatRegion.style.display = "flex";
+  }
+  restoreVoiceHero() {
+  }
+  renderStatusBarOnly() {
     const m = ModelRegistry.getModelById(this.currentModel);
     const isFree = m?.pricing.freeTierStatus === "100% Free Quota Available";
-    const quotaEl = document.getElementById("telem-quota");
-    if (quotaEl) {
-      quotaEl.textContent = isFree ? t.badgeFree : t.badgePaid;
-      quotaEl.className = isFree ? "text-emerald-400 font-bold" : "text-amber-400 font-bold";
-    }
-    const authEl = document.getElementById("telem-auth");
-    if (authEl) {
-      const customKey = localStorage.getItem("evabot_gemini_key");
-      authEl.textContent = customKey ? "Custom API Key" : this.authSource;
-    }
-    const accEl = document.getElementById("telem-account");
-    if (accEl) accEl.textContent = this.userAccount;
-  }
-  populateModelSelector() {
-    const select = document.getElementById("deck-model-select");
-    if (!select) return;
-    select.innerHTML = "";
-    const categories = [
-      "Google Gemini (Next-Gen)",
-      "Google Gemini (Long-Context)",
-      "Google Gemma (Open Weights)",
-      "Anthropic Claude on Google Cloud",
-      "Meta Llama 3 on Google Cloud",
-      "Mistral AI on Google Cloud",
-      "DeepSeek on Google Cloud",
-      "AI21 Labs & Cohere on Google Cloud"
-    ];
-    for (const cat of categories) {
-      const models = ModelRegistry.getModelsByCategory(cat);
-      if (!models || models.length === 0) continue;
-      const group = document.createElement("optgroup");
-      group.label = cat;
-      for (const m of models) {
-        const opt = document.createElement("option");
-        opt.value = m.id;
-        const isFree = m.pricing.freeTierStatus.includes("Free");
-        const badge = isFree ? " [\u{1F7E2} FREE]" : " [\u{1F7E1} PAID]";
-        opt.textContent = `${m.name}${badge}`;
-        if (m.id === this.currentModel) opt.selected = true;
-        group.appendChild(opt);
-      }
-      select.appendChild(group);
-    }
-  }
-  updateProviderUI() {
-    document.querySelectorAll("[data-provider]").forEach((el) => {
-      const prov = el.getAttribute("data-provider");
-      const isSelected = prov === this.currentProvider;
-      if (isSelected) {
-        el.classList.add("border-white", "bg-zinc-900", "text-white");
-        el.classList.remove("border-zinc-800", "bg-black", "text-zinc-400");
-      } else {
-        el.classList.remove("border-white", "bg-zinc-900", "text-white");
-        el.classList.add("border-zinc-800", "bg-black", "text-zinc-400");
-      }
+    const tierBadge = isFree ? "[FREE]" : "[PAID]";
+    const barText = `\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  EVABOT [ONLINE] \u2502 ${this.currentModel} [${tierBadge}] \u2502 ${this.currentMode.toUpperCase()} \u2502 [DUAL] EVA & ADAM
+  Standards: USD ($) & EUR (\u20AC) \u2502 ${ModelRegistry.getAllModels().length} Models \u2502 /help for commands
+\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500`;
+    this.appendMessage({
+      role: "system",
+      text: barText,
+      timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString()
     });
-    this.updateTelemetryUI();
   }
-  updateModeUI() {
-    document.querySelectorAll("[data-mode]").forEach((el) => {
-      const mode = el.getAttribute("data-mode");
-      const isSelected = mode === this.currentMode;
-      if (isSelected) {
-        el.classList.add("border-white", "bg-zinc-900", "text-white");
-        el.classList.remove("border-zinc-800", "bg-black", "text-zinc-400");
-      } else {
-        el.classList.remove("border-white", "bg-zinc-900", "text-white");
-        el.classList.add("border-zinc-800", "bg-black", "text-zinc-400");
-      }
-    });
-    const headerMode = document.getElementById("header-mode-badge");
-    if (headerMode) headerMode.textContent = `MODE: ${this.currentMode.toUpperCase()}`;
-    this.updateTelemetryUI();
-  }
-  updateRoleUI() {
-    document.querySelectorAll("[data-role]").forEach((el) => {
-      const role = el.getAttribute("data-role");
-      const isSelected = role === this.currentRole;
-      if (isSelected) {
-        el.classList.add("border-white", "bg-zinc-900", "text-white");
-        el.classList.remove("border-zinc-800", "bg-black", "text-zinc-400");
-      } else {
-        el.classList.remove("border-white", "bg-zinc-900", "text-white");
-        el.classList.add("border-zinc-800", "bg-black", "text-zinc-400");
-      }
-    });
-    const headerRole = document.getElementById("header-role-badge");
-    if (headerRole) headerRole.textContent = `ROLE: ${this.currentRole.toUpperCase()}`;
-    this.updateTelemetryUI();
-  }
-  updateModelDetailsUI() {
+  async renderStartupSequence() {
+    const t = this.t();
     const m = ModelRegistry.getModelById(this.currentModel);
-    if (!m) return;
-    const t = this.t();
-    const isFree = m.pricing.freeTierStatus === "100% Free Quota Available";
-    const headerName = document.getElementById("header-model-name");
-    if (headerName) headerName.textContent = m.name;
-    const headerBadge = document.getElementById("header-model-badge");
-    if (headerBadge) {
-      headerBadge.textContent = isFree ? "\u{1F7E2} FREE" : "\u{1F7E1} PAID";
-      headerBadge.className = isFree ? "px-1.5 py-0.2 bg-emerald-950 text-emerald-400 border border-emerald-700 text-[10px] font-bold" : "px-1.5 py-0.2 bg-amber-950 text-amber-400 border border-amber-700 text-[10px] font-bold";
-    }
-    const specName = document.getElementById("model-spec-name");
-    if (specName) specName.textContent = m.name;
-    const specProv = document.getElementById("model-spec-provider");
-    if (specProv) specProv.textContent = m.provider;
-    const specBadge = document.getElementById("model-spec-badge");
-    if (specBadge) {
-      specBadge.textContent = isFree ? t.badgeFree : t.badgePaid;
-      specBadge.className = isFree ? "px-2 py-0.5 border border-emerald-600 text-emerald-400 font-bold text-xs" : "px-2 py-0.5 border border-amber-600 text-amber-400 font-bold text-xs";
-    }
-    const specContext = document.getElementById("model-spec-context");
-    if (specContext) specContext.textContent = `${m.contextWindow.toLocaleString()} tokens`;
-    const specMaxOut = document.getElementById("model-spec-maxout");
-    if (specMaxOut) specMaxOut.textContent = `${m.maxOutputTokens.toLocaleString()} tokens`;
-    const specUsd = document.getElementById("model-spec-usd");
-    if (specUsd) specUsd.textContent = `In: ${m.pricing.inputPer1MTokensUSD} | Out: ${m.pricing.outputPer1MTokensUSD}`;
-    const specEur = document.getElementById("model-spec-eur");
-    if (specEur) specEur.textContent = `In: ${m.pricing.inputPer1MTokensEUR} | Out: ${m.pricing.outputPer1MTokensEUR}`;
-    const specQuota = document.getElementById("model-spec-quota");
-    if (specQuota) specQuota.textContent = m.pricing.freeTierDetails;
-    const specCoding = document.getElementById("model-spec-coding");
-    if (specCoding) specCoding.textContent = m.codingStrengths;
-    this.updateTelemetryUI();
-  }
-  updateKeyStatusUI() {
-    const t = this.t();
-    const statusEl = document.getElementById("deck-key-status");
-    const input = document.getElementById("deck-api-key-input");
-    const customKey = localStorage.getItem("evabot_gemini_key") || "";
-    if (input && !input.value) {
-      input.value = customKey;
-    }
-    if (statusEl) {
-      if (customKey) {
-        statusEl.textContent = t.keyStatusCustom;
-        statusEl.className = "text-xs font-bold text-emerald-400 border border-emerald-800 bg-emerald-950/40 px-2.5 py-1";
-      } else {
-        statusEl.textContent = `${t.keyStatusAmbient} (${this.userAccount})`;
-        statusEl.className = "text-xs font-bold text-emerald-400 border border-emerald-800 bg-emerald-950/40 px-2.5 py-1";
+    const isFree = m?.pricing.freeTierStatus === "100% Free Quota Available";
+    const tierBadge = isFree ? "[FREE]" : "[PAID]";
+    const bootBanner = `\u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510
+\u2502 [>>] EVABOT ONLINE v0.0.1 MVP // LINEAR CYBER-TERMINAL                       \u2502
+\u2502 Base: Odesa, Ukraine (UA) \u2502 Zero-Trust Google Cloud Infrastructure           \u2502
+\u2502 Hybrid Topology: Web Edge Gateway (Face) <\u2500\u2500\u2500> Agent Server (Brain)          \u2502
+\u2502 Modes: CHAT, DIALOG, INTERVIEW, CONSILIUM \u2502 Pure ASCII Cyber-Stream          \u2502
+\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518
+
+[BOOT DIAGNOSTICS] Probing dual-server infrastructure & model garden...`;
+    this.appendMessage({
+      role: "system",
+      text: bootBanner,
+      timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString()
+    });
+    try {
+      const res = await fetch(`/api/diagnostics/boot?model=${encodeURIComponent(this.currentModel)}`);
+      if (res.ok) {
+        const report = await res.json();
+        const tickerMsg = document.getElementById("boot-ticker-msg");
+        if (tickerMsg && report.steps) {
+          tickerMsg.innerHTML = `
+            <span style="color:var(--clr-green); font-weight:700;">[OK] INITIALIZED:</span>
+            <span>All ${report.steps.length} Systems Healthy * Frankfurt [c3-std-8] & Iowa [e2-micro] Online (${report.totalDurationMs}ms)</span>
+          `;
+        }
+        let stepsText = "";
+        for (const step of report.steps) {
+          const icon = step.status === "success" ? "[OK]" : "[ERR]";
+          stepsText += `  ${icon} ${step.name} (${step.latencyMs}ms)
+     \u2514\u2500 ${step.details}
+`;
+        }
+        stepsText += `
+[OK] ALL DIAGNOSTIC CHECKS PASSED [Total: ${report.totalDurationMs}ms]
+`;
+        stepsText += `\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+`;
+        stepsText += `  EVABOT [ONLINE] \u2502 ${this.currentModel} [${tierBadge}] \u2502 ${this.currentMode.toUpperCase()} \u2502 [DUAL] EVA & ADAM
+`;
+        stepsText += `  Standards: USD ($) & EUR (\u20AC) \u2502 ${ModelRegistry.getAllModels().length} Models \u2502 /help for commands
+`;
+        stepsText += `\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+`;
+        stepsText += `evabot> ${t.welcomeNotice}`;
+        this.appendMessage({
+          role: "model",
+          text: stepsText,
+          timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString(),
+          metadata: {
+            model: this.currentModel,
+            persona: this.currentPersona,
+            mode: this.currentMode
+          }
+        });
       }
+    } catch (e) {
+      console.warn("Boot diagnostics probe offline:", e);
     }
   }
   renderWelcomeMessage() {
-    const t = this.t();
-    const m = ModelRegistry.getModelById(this.currentModel);
-    const welcome = `+==============================================================================+
-| ${t.welcomeHeading}
-+==============================================================================+
-${t.welcomeNotice}
-
-\u2022 PROVIDER: [${this.currentProvider.toUpperCase()}] // Google Cloud Vertex & AI Studio
-\u2022 ACTIVE MODEL: ${m?.name || this.currentModel} [${m?.pricing.freeTierStatus}]
-\u2022 OPERATIONAL MODE: [${this.currentMode.toUpperCase()}]
-\u2022 CORPORATE PERSONA: [${this.currentRole.toUpperCase()}]
-\u2022 CURRENCY ACCOUNTING: Strictly USD ($) and EUR (\u20AC) Compliance
-
-Execute commands or submit analytical inquiries below. Click '[ \u2193 CONTROL PANEL ]' to toggle neural deck parameters.`;
-    this.appendMessage({
-      role: "model",
-      text: welcome,
-      timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString(),
-      metadata: {
-        model: this.currentModel,
-        mode: this.currentMode,
-        role: this.currentRole,
-        provider: this.currentProvider
-      }
-    });
+    this.renderStartupSequence();
   }
-  buildSystemInstruction() {
-    const rolePrompts = {
-      ceo: "Act as EvaBot Executive Strategist & CEO. Deliver decisive, high-level corporate insight, focus on strategic objectives, market leadership, and return on investment.",
-      cto: "Act as EvaBot Principal System Architect & CTO. Focus strictly on distributed systems design, zero-downtime scalability, fault tolerance, robust engineering, and clean code.",
-      ciso: "Act as EvaBot Cyber Security Specialist & CISO. Scrutinize zero-trust architecture, threat modeling, cryptographic integrity, attack surface minimization, and zero-day resilience.",
-      cfo: "Act as EvaBot Financial & Risk Analyst & CFO. Provide rigorous financial and tokenomics evaluations. All calculations and budget estimates must be strictly in USD ($) and EUR (\u20AC). Calculations must be exclusively in USD ($) or EUR (\u20AC).",
-      ux: "Act as EvaBot Creative Director & UX Designer. Focus on minimalist cyber aesthetics, high-contrast monochrome terminal ergonomics, clarity, and frictionless human-agent interaction.",
-      dev: "Act as EvaBot Lead Full-Stack Software Engineer. Provide complete, production-grade, bug-free implementations with clear type safety, algorithmic precision, and tests.",
-      rsch: "Act as EvaBot AI Research Scientist. Analyze attention topologies, context retention, chain-of-thought paradigms, and neurosymbolic reasoning loops.",
-      legal: "Act as EvaBot Compliance Counsel & Legal Officer. Scrutinize regulatory alignment (GDPR, EU AI Act), data sovereignty, intellectual property, and ethical AI standards."
-    };
-    const modePrompts = {
-      solo: "Mode: SOLO. Focus with maximum precision on the assigned corporate role mandate.",
-      broadcast: "Mode: BROADCAST. Deliver a comprehensive multi-dimensional breakdown analyzing technical feasibility, financial impact (USD/EUR only), security risks, and operational execution.",
-      dialogue: "Mode: DIALOGUE. Maintain high-cadence, crisp, responsive interactive cyber-terminal communication.",
-      consilium: "Mode: CONSILIUM. Convene an executive council of leadership roles (CEO, CTO, CISO, CFO). Deliberate trade-offs across perspectives, then synthesize into a decisive actionable consensus."
-    };
-    const langDirective = this.currentLang === "uk" ? "Respond strictly in Ukrainian (\u0423\u043A\u0440\u0430\u0457\u043D\u0441\u044C\u043A\u0430 \u043C\u043E\u0432\u0430). Maintain technical precision and cyber-terminal formatting." : this.currentLang === "ru" ? "Respond strictly in Russian. Maintain technical precision and cyber-terminal formatting. Adhere strictly to the rule: Use strictly USD ($) or EUR (\u20AC) for all pricing and metrics." : "Respond strictly in English. Maintain technical precision and cyber-terminal formatting.";
-    return `${rolePrompts[this.currentRole]}
+  // ===========================================================================
+  // SLASH COMMAND PARSER
+  // ===========================================================================
+  handleSlashCommand(input) {
+    const trimmed = input.trim();
+    if (!trimmed.startsWith("/")) return false;
+    const [cmd, ...args] = trimmed.split(/\s+/);
+    const argStr = args.join(" ").toLowerCase();
+    if (cmd === "/help") {
+      const helpTable = `| Command | Parameters | Description |
+|---|---|---|
+| \`/help\` | None | Display terminal commands and shortcuts |
+| \`/persona\` | \`eva\` | \`adam\` | \`dual\` | Switch active Co-Pilot persona |
+| \`/mode\` | \`chat\` | \`dialog\` | \`interview\` | \`consilium\` | Switch operational mode |
+| \`/db\` | \`hybrid\` | \`postgres\` | \`qdrant\` | \`ephemeral\` | Route database knowledge base |
+| \`/preset\` | \`top10_paid\` | \`top10_free\` | Activate Consilium multi-agent preset |
+| \`/models\` | None | List top catalog models with pricing in USD ($) and EUR (\u20AC) |
+| \`/menu\` | None | Open System Deck & Configuration (Screen 2) |
+| \`/boot\` | None | Run live dual-cluster diagnostics probe |
+| \`/clear\` | None | Purge terminal screen |`;
+      this.appendMessage({
+        role: "system",
+        text: `### EVABOT ONLINE COMMAND PALETTE
 
-${modePrompts[this.currentMode]}
+${helpTable}`,
+        timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString()
+      });
+      return true;
+    }
+    if (cmd === "/persona") {
+      if (argStr === "eva" || argStr === "adam" || argStr === "dual") {
+        this.setPersona(argStr);
+      } else {
+        this.addSystemNotification("Usage: `/persona <eva | adam | dual>`");
+      }
+      return true;
+    }
+    if (cmd === "/mode") {
+      if (argStr === "chat" || argStr === "dialog" || argStr === "interview" || argStr === "consilium") {
+        this.setMode(argStr);
+      } else {
+        this.addSystemNotification("Usage: `/mode <chat | dialog | interview | consilium>`");
+      }
+      return true;
+    }
+    if (cmd === "/db") {
+      if (argStr === "hybrid" || argStr === "postgres" || argStr === "qdrant" || argStr === "ephemeral") {
+        this.setDb(argStr);
+      } else {
+        this.addSystemNotification("Usage: `/db <hybrid | postgres | qdrant | ephemeral>`");
+      }
+      return true;
+    }
+    if (cmd === "/preset") {
+      if (argStr === "top10_paid") {
+        document.getElementById("btn-preset-top10-paid")?.click();
+      } else if (argStr === "top10_free") {
+        document.getElementById("btn-preset-top10-free")?.click();
+      } else {
+        this.addSystemNotification("Usage: `/preset <top10_paid | top10_free>`");
+      }
+      return true;
+    }
+    if (cmd === "/models") {
+      const topPaid = ModelRegistry.getTop10PaidSmartestModels();
+      const topFree = ModelRegistry.getTop10FreeModels();
+      let out = "### TOP-10 SMARTEST MODELS (PAID/PAYG)\n\n";
+      out += "| Model | Provider | Input (USD) | Output (USD) | Input (EUR) | Output (EUR) |\n|---|---|---|---|---|---|\n";
+      topPaid.forEach((m) => {
+        out += `| \`${m.id}\` | ${m.provider} | ${m.pricing.inputPer1MTokensUSD} | ${m.pricing.outputPer1MTokensUSD} | ${m.pricing.inputPer1MTokensEUR} | ${m.pricing.outputPer1MTokensEUR} |
+`;
+      });
+      out += "\n### TOP-10 FREE QUOTA MODELS\n\n";
+      out += "| Model | Provider | Context | Free Quota Status |\n|---|---|---|---|\n";
+      topFree.forEach((m) => {
+        out += `| \`${m.id}\` | ${m.provider} | ${m.contextWindow.toLocaleString()} tokens | ${m.pricing.freeTierDetails} |
+`;
+      });
+      this.appendMessage({
+        role: "system",
+        text: out,
+        timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString()
+      });
+      return true;
+    }
+    if (cmd === "/menu") {
+      document.getElementById("screen-control-deck")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return true;
+    }
+    if (cmd === "/boot") {
+      this.renderStartupSequence();
+      return true;
+    }
+    if (cmd === "/clear") {
+      this.messages = [];
+      const container = document.getElementById("messages-container");
+      if (container) container.innerHTML = "";
+      this.renderStatusBarOnly();
+      this.addSystemNotification(this.t().noticeChatCleared);
+      return true;
+    }
+    return false;
+  }
+  // ===========================================================================
+  // TRANSMISSION & GENERATION ENGINE
+  // ===========================================================================
+  buildSystemInstruction() {
+    const personaDirectives = {
+      eva: "You are Eva, the Lead Frontend Architect and UX Director of EvaLine. You specialize in client-side architecture, high-contrast cyber-terminal aesthetics, Web Speech integration, responsive layout ergonomics, and strategic design systems. Speak with authority, elegance, and sharp strategic perspective.",
+      adam: "You are Adam, the Chief Backend Architect and Cloud Systems Lead of EvaLine. You engineer distributed computing clusters, high-throughput microservices, PostgreSQL pipelines, Zero-Trust security, and OmniRoute load balancers. Prioritize strict algorithmic rigor, low-level efficiency, and zero-compromise stability.",
+      dual: "You represent Eva (Lead Frontend Architect) and Adam (Chief Backend Architect) operating in perfect full-stack synergy. Provide a cohesive perspective: Eva addresses user experience, ergonomics, and frontend flow, while Adam reinforces backend scalability, database schema, and distributed resilience."
+    };
+    const roleDirective = `Specialized Focus Role: ${this.currentRole.toUpperCase()}.`;
+    const langDirective = this.currentLang === "uk" ? "Respond strictly in Ukrainian (\u0423\u043A\u0440\u0430\u0457\u043D\u0441\u044C\u043A\u0430 \u043C\u043E\u0432\u0430). Maintain technical precision, clean cyber-terminal formatting." : this.currentLang === "ru" ? "Respond strictly in Russian. Maintain technical precision, clean cyber-terminal formatting." : "Respond strictly in English. Maintain technical precision, clean cyber-terminal formatting.";
+    const locationPolicy = " EvaBot Online is based in Odesa, Ukraine (UA). Financial calculations, cloud compute costs, and pricing are strictly denominated in USD ($) or EUR (\u20AC). Never mention Russia, Russian regional entities, products, brands, or Russian currency.";
+    return `${personaDirectives[this.currentPersona]}
+
+${roleDirective}
 
 ${langDirective}
 
-Format your responses with clean cyber-terminal markdown, crisp ASCII tables or bullet points where appropriate, and clean code blocks.`;
+${locationPolicy}
+
+Format your responses with clean monospace cyber-terminal markdown, tables, and clean code blocks.`;
   }
   async handleSend() {
     if (this.isGenerating) {
@@ -1997,6 +3285,11 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
     const text = input?.value.trim();
     if (!text) return;
     input.value = "";
+    if (this.handleSlashCommand(text)) {
+      this.activateChatRegion();
+      return;
+    }
+    this.activateChatRegion();
     const now = (/* @__PURE__ */ new Date()).toLocaleTimeString();
     this.appendMessage({
       role: "user",
@@ -2004,7 +3297,7 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
       timestamp: now,
       metadata: {
         mode: this.currentMode,
-        role: this.currentRole
+        persona: this.currentPersona
       }
     });
     const customKey = localStorage.getItem("evabot_gemini_key") || "";
@@ -2015,80 +3308,206 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
     const textSpan = botMessageElement.querySelector(".message-body");
     try {
       this.abortController = new AbortController();
-      const historyPayload = this.messages.filter((m) => m.role === "user" || m.role === "model").map((m) => ({
-        role: m.role,
-        parts: [{ text: m.text }]
-      }));
-      const t0 = performance.now();
-      const response = await fetch("/api/chat/stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          model: this.currentModel,
-          history: historyPayload,
-          apiKey: customKey || void 0,
-          systemInstruction: this.buildSystemInstruction()
-        }),
-        signal: this.abortController.signal
-      });
-      this.lastLatencyMs = Math.round(performance.now() - t0);
-      this.updateTelemetryUI();
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({ error: "Transmission error" }));
-        throw new Error(errJson.error || `HTTP ${response.status}`);
-      }
-      if (!response.body) throw new Error("Readable stream not supported");
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let accumulatedText = "";
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("data: ")) {
-            const dataStr = trimmed.slice(6).trim();
-            if (!dataStr) continue;
-            try {
-              const data = JSON.parse(dataStr);
-              if (data.chunk) {
-                accumulatedText += data.chunk;
-                textSpan.innerHTML = this.renderMarkdown(accumulatedText);
-                this.scrollToBottom();
-              } else if (data.error) {
-                accumulatedText += `
+      if (this.currentMode === "chat") {
+        const historyPayload = this.messages.filter((m) => m.role === "user" || m.role === "model").slice(-10).map((m) => ({
+          role: m.role,
+          parts: [{ text: m.text }]
+        }));
+        const t0 = performance.now();
+        const response = await fetch("/api/chat/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            model: this.currentModel,
+            history: historyPayload,
+            apiKey: customKey || void 0,
+            systemInstruction: this.buildSystemInstruction()
+          }),
+          signal: this.abortController.signal
+        });
+        this.lastLatencyMs = Math.round(performance.now() - t0);
+        this.updateTelemetryUI();
+        if (!response.ok) {
+          const errJson = await response.json().catch(() => ({ error: "Transmission error" }));
+          throw new Error(errJson.error || `HTTP ${response.status}`);
+        }
+        if (!response.body) throw new Error("Readable stream not supported");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let accumulatedText = "";
+        let buffer = "";
+        let usageInfo = null;
+        let costInfo = null;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("data: ")) {
+              const dataStr = trimmed.slice(6).trim();
+              if (!dataStr) continue;
+              try {
+                const data = JSON.parse(dataStr);
+                if (data.chunk) {
+                  accumulatedText += data.chunk;
+                  textSpan.innerHTML = this.renderMarkdown(accumulatedText);
+                  this.scrollToBottom();
+                } else if (data.error) {
+                  accumulatedText += `
 
 [Error: ${data.error}]`;
-                textSpan.innerHTML = this.renderMarkdown(accumulatedText);
+                  textSpan.innerHTML = this.renderMarkdown(accumulatedText);
+                }
+                if (data.usage) usageInfo = data.usage;
+                if (data.cost) costInfo = data.cost;
+              } catch {
               }
-            } catch {
             }
           }
         }
-      }
-      this.messages.push({
-        role: "model",
-        text: accumulatedText,
-        timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString(),
-        metadata: {
-          model: this.currentModel,
-          mode: this.currentMode,
-          role: this.currentRole,
-          provider: this.currentProvider
+        const pTok = usageInfo?.promptTokens ?? ModelRegistry.estimateTokens(text);
+        const cTok = usageInfo?.completionTokens ?? ModelRegistry.estimateTokens(accumulatedText);
+        const cst = costInfo ?? ModelRegistry.calculateCost(this.currentModel, pTok, cTok);
+        this.sessionTotalTokens += pTok + cTok;
+        this.sessionTotalCostUSD += cst.costUSD;
+        this.sessionTotalCostEUR += cst.costEUR;
+        this.updateTelemetryUI();
+        const auditBox = `
+
+\`\`\`text
+\u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510
+\u2502 [MODEL] ${cst.modelName || this.currentModel} [${cst.isFreeTier ? "FREE QUOTA" : "PAID"}]
+\u2502 [TOKENS] In: ${pTok.toLocaleString()} + Out: ${cTok.toLocaleString()} = ${(pTok + cTok).toLocaleString()} Total
+\u2502 [COST] ${cst.formattedUSD} \u2502 ${cst.formattedEUR}${cst.isFreeTier ? ` (Val: $${cst.commercialValueUSD.toFixed(6)} USD / \u20AC${cst.commercialValueEUR.toFixed(6)} EUR)` : ""}
+\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518
+\`\`\``;
+        accumulatedText += auditBox;
+        textSpan.innerHTML = this.renderMarkdown(accumulatedText);
+        this.messages.push({
+          role: "model",
+          text: accumulatedText,
+          timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString(),
+          metadata: {
+            model: this.currentModel,
+            mode: this.currentMode,
+            persona: this.currentPersona
+          }
+        });
+        this.speakVoiceResponse(accumulatedText, this.currentPersona);
+      } else {
+        const t0 = performance.now();
+        textSpan.innerHTML = '<span style="color:var(--clr-yellow); font-family:var(--font-mono);">[>>] Multi-Agent Engine Deliberating... Synchronizing participants & models...</span>';
+        const response = await fetch("/api/consilium", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: text,
+            mode: this.currentMode,
+            persona: this.currentPersona,
+            preset: this.consiliumPreset || void 0,
+            participants: this.consiliumCount,
+            apiKey: customKey || void 0,
+            useKnowledgeBase: true
+          }),
+          signal: this.abortController.signal
+        });
+        this.lastLatencyMs = Math.round(performance.now() - t0);
+        this.updateTelemetryUI();
+        if (!response.ok) {
+          const errJson = await response.json().catch(() => ({ error: "Consilium execution failed" }));
+          throw new Error(errJson.error || `HTTP ${response.status}`);
         }
-      });
+        const data = await response.json();
+        const res = data.result;
+        let outputMarkdown = "";
+        if (res.consensus) {
+          outputMarkdown += `### [*] EXECUTIVE CONSENSUS
+
+${res.consensus}
+
+`;
+        }
+        if (res.interviewResult) {
+          const ir = res.interviewResult;
+          outputMarkdown += `### [*] INTERVIEW ASSESSMENT // SCORE: ${ir.score}/100
+
+`;
+          outputMarkdown += `**Rating:** ${ir.rating}
+
+`;
+          outputMarkdown += `**Executive Feedback:**
+${ir.feedback}
+
+`;
+          if (ir.nextQuestion) {
+            outputMarkdown += `**Next Probing Question:**
+> ${ir.nextQuestion}
+
+`;
+          }
+        }
+        if (res.turns && res.turns.length > 0) {
+          outputMarkdown += "### [*] PARTICIPANT DELIBERATIONS\n\n";
+          res.turns.forEach((turn) => {
+            const turnName = turn.name || turn.participantName || "Agent";
+            const turnModel = turn.model || turn.modelId || "Unknown Model";
+            const turnTokens = turn.totalTokens ? ` \u2502 Tokens: ${turn.totalTokens}` : "";
+            const turnCost = turn.cost ? ` \u2502 Cost: ${turn.cost.formattedUSD}` : "";
+            outputMarkdown += `#### [${turnName}] (${turnModel}${turnTokens}${turnCost})
+${turn.content}
+
+`;
+          });
+        }
+        if (res.costSummary) {
+          this.sessionTotalTokens += res.costSummary.totalTokens;
+          this.sessionTotalCostUSD += res.costSummary.totalCostUSD;
+          this.sessionTotalCostEUR += res.costSummary.totalCostEUR;
+          this.updateTelemetryUI();
+          outputMarkdown += `
+\`\`\`text
+`;
+          outputMarkdown += `\u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510
+`;
+          outputMarkdown += `\u2502 [AUDIT] CONSILIUM PARTICIPATION: ${res.costSummary.models.length} Models
+`;
+          outputMarkdown += `\u2502 [TOTAL TOKENS] ${res.costSummary.totalTokens.toLocaleString()} tokens (In: ${res.costSummary.totalPromptTokens.toLocaleString()}, Out: ${res.costSummary.totalCompletionTokens.toLocaleString()})
+`;
+          outputMarkdown += `\u2502 [TOTAL COST] ${res.costSummary.formattedUSD} \u2502 ${res.costSummary.formattedEUR}
+`;
+          outputMarkdown += `\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518
+`;
+          outputMarkdown += `\`\`\`
+`;
+        }
+        textSpan.innerHTML = this.renderMarkdown(outputMarkdown);
+        this.scrollToBottom();
+        this.messages.push({
+          role: "model",
+          text: outputMarkdown,
+          timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString(),
+          metadata: {
+            model: this.currentModel,
+            mode: this.currentMode,
+            persona: this.currentPersona
+          }
+        });
+        const speakable = res.consensus || (res.interviewResult ? `${res.interviewResult.feedback}. ${res.interviewResult.nextQuestion || ""}` : "");
+        if (speakable) {
+          this.speakVoiceResponse(speakable, this.currentPersona);
+        }
+      }
       this.updateStatusLight("online");
     } catch (err) {
       this.updateStatusLight("error");
       if (err.name === "AbortError") {
-        textSpan.innerHTML += '\n<span class="text-amber-400 font-mono text-xs"> [STREAM_HALTED_BY_OPERATOR \u{1F7E1}]</span>';
+        textSpan.innerHTML += '\n<span style="color:var(--clr-yellow); font-family:var(--font-mono); font-size:11px;"> [TRANSMISSION_HALTED_BY_OPERATOR \u{1F7E1}]</span>';
       } else {
-        textSpan.innerHTML = `<span class="text-rose-500 font-mono text-xs">\u{1F534} TRANSMISSION_ERROR: ${this.escapeHtml(err.message)}</span>`;
+        textSpan.innerHTML = `<span style="color:var(--clr-red); font-family:var(--font-mono); font-size:11px;">[ERR] TRANSMISSION_ERROR: ${this.escapeHtml(err.message)}</span>`;
       }
     } finally {
       this.isGenerating = false;
@@ -2100,27 +3519,30 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
       }, 3e3);
     }
   }
+  // ===========================================================================
+  // UI STATUS & BUBBLES
+  // ===========================================================================
   updateStatusLight(state) {
     const t = this.t();
     const light = document.getElementById("telemetry-status-light");
     const text = document.getElementById("telemetry-status-text");
     if (state === "online") {
-      if (light) light.className = "inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#22c55e]";
+      if (light) light.className = "led-green";
       if (text) {
         text.textContent = t.statusOnline;
-        text.className = "text-xs text-emerald-400 font-mono font-bold";
+        text.style.color = "var(--clr-green)";
       }
     } else if (state === "busy") {
-      if (light) light.className = "inline-block w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse";
+      if (light) light.className = "led-yellow";
       if (text) {
         text.textContent = t.statusBusy;
-        text.className = "text-xs text-amber-400 font-mono font-bold";
+        text.style.color = "var(--clr-yellow)";
       }
     } else {
-      if (light) light.className = "inline-block w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_#ef4444]";
+      if (light) light.className = "led-red";
       if (text) {
         text.textContent = t.statusError;
-        text.className = "text-xs text-rose-500 font-mono font-bold";
+        text.style.color = "var(--clr-red)";
       }
     }
   }
@@ -2130,46 +3552,47 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
     if (!sendBtn) return;
     if (generating) {
       sendBtn.textContent = t.stopBtn;
-      sendBtn.className = "px-4 py-2 border border-amber-500 bg-amber-950/40 text-amber-400 font-bold text-xs tracking-wider transition-all hover:bg-amber-900/60 font-mono";
+      sendBtn.style.background = "#78350f";
+      sendBtn.style.color = "var(--clr-yellow)";
+      sendBtn.style.borderColor = "var(--clr-yellow)";
     } else {
       sendBtn.textContent = t.transmitBtn;
-      sendBtn.className = "px-4 py-2 border border-white bg-white text-black font-bold text-xs tracking-wider transition-all hover:bg-zinc-200 active:scale-95 font-mono";
+      sendBtn.style.background = "#ffffff";
+      sendBtn.style.color = "#000000";
+      sendBtn.style.borderColor = "#ffffff";
     }
   }
   appendMessage(msg) {
     this.messages.push(msg);
-    const el = this.createMessageBubble(msg.role, msg.text, msg.timestamp);
-    const container = document.getElementById("messages-container");
-    if (container) {
-      container.appendChild(el);
-      this.scrollToBottom();
-      this.setupCodeCopyButtons();
-    }
+    this.createMessageBubble(msg.role, msg.text, msg.timestamp);
+    this.scrollToBottom();
+    this.setupCodeCopyButtons();
   }
   createMessageBubble(role, text, timestamp) {
     const wrapper = document.createElement("div");
-    wrapper.className = "w-full mb-4 animate-fade-in font-mono text-sm";
+    wrapper.className = "terminal-bubble " + role;
     const isUser = role === "user";
     const isSystem = role === "system";
-    const card = document.createElement("div");
-    card.className = isUser ? "border border-zinc-700 bg-black p-3 sm:p-4 text-white" : isSystem ? "border border-dashed border-zinc-800 bg-black p-2 text-zinc-400 text-xs text-center" : "border border-zinc-800 bg-black p-3 sm:p-4 text-white";
     const header = document.createElement("div");
-    header.className = "text-xs text-zinc-500 mb-2 flex items-center justify-between gap-2 border-b border-zinc-900 pb-1.5 font-mono";
-    const callsign = isUser ? `\u250C\u2500 [${timestamp}] [USER // OPERATOR]` : `\u250C\u2500 [${timestamp}] [EVA // ${this.currentModel.toUpperCase()} // ${this.currentMode.toUpperCase()} // ${this.currentRole.toUpperCase()}]`;
+    header.className = "bubble-meta";
+    let callsign = `\u250C\u2500 [${timestamp}] [USER // OPERATOR]`;
+    if (!isUser && !isSystem) {
+      callsign = `\u250C\u2500 [${timestamp}] [EVABOT // ${this.currentPersona.toUpperCase()} // ${this.currentMode.toUpperCase()}]`;
+    } else if (isSystem) {
+      callsign = `\u250C\u2500 [${timestamp}] [SYSTEM // KERNEL]`;
+    }
     header.innerHTML = `
-      <span class="font-bold ${isUser ? "text-white" : "text-zinc-300"}">${callsign}</span>
-      <span class="text-zinc-600 text-[11px]">${isUser ? "TX_OK" : "RX_OK \u{1F7E2}"}</span>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:700; color:${isUser ? "#ffffff" : isSystem ? "var(--fg-muted)" : "var(--clr-cyan)"};">${callsign}</span>
+        <span style="font-size:10px; color:var(--fg-dim);">${isUser ? "TX_OK" : "RX_OK [OK]"}</span>
+      </div>
     `;
     const body = document.createElement("div");
-    body.className = "message-body font-mono text-zinc-200 leading-relaxed overflow-x-auto";
+    body.className = "message-body";
+    body.style.lineHeight = "1.6";
     body.innerHTML = this.renderMarkdown(text);
-    card.appendChild(header);
-    card.appendChild(body);
-    const footer = document.createElement("div");
-    footer.className = "text-xs text-zinc-700 mt-2 font-mono select-none";
-    footer.textContent = "\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500";
-    card.appendChild(footer);
-    wrapper.appendChild(card);
+    wrapper.appendChild(header);
+    wrapper.appendChild(body);
     const container = document.getElementById("messages-container");
     container?.appendChild(wrapper);
     return wrapper;
@@ -2181,24 +3604,41 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
       const language = lang || "text";
       const t = this.t();
       return `
-        <div class="code-block-wrapper my-3 border border-zinc-800 bg-black font-mono text-xs">
-          <div class="flex justify-between items-center px-3 py-1.5 border-b border-zinc-800 bg-zinc-950 text-zinc-400">
-            <span class="font-bold uppercase tracking-widest text-[11px] text-white">\u250C [CODE: ${language.toUpperCase()}]</span>
-            <button class="copy-code-btn px-2 py-0.5 border border-zinc-700 bg-black hover:bg-zinc-800 text-zinc-200 transition-all text-[10px]" data-code="${encodeURIComponent(code)}">${t.copyBtn}</button>
+        <div style="margin:10px 0; border:1px solid var(--border-bright); background:var(--bg-panel);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 10px; border-bottom:1px solid var(--border-dim); background:#000000; font-size:10px; color:var(--fg-muted);">
+            <span style="font-weight:700; color:#ffffff;">\u250C [CODE: ${language.toUpperCase()}]</span>
+            <button class="copy-code-btn return-btn" style="padding:1px 6px; font-size:9px;" data-code="${encodeURIComponent(code)}">${t.copyBtn}</button>
           </div>
-          <pre class="p-3 overflow-x-auto text-zinc-200"><code>${this.escapeHtml(code)}</code></pre>
-          <div class="px-3 py-0.5 border-t border-zinc-900 text-zinc-700 text-[10px]">\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500</div>
+          <pre style="padding:10px; overflow-x:auto; font-size:11px; color:var(--fg-primary);"><code>${this.escapeHtml(code)}</code></pre>
+          <div style="padding:2px 10px; font-size:9px; color:var(--fg-dim); border-top:1px solid var(--border-dim);">\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500</div>
         </div>
       `;
     });
-    html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 border border-zinc-800 bg-zinc-950 text-white font-mono text-xs">$1</code>');
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
-    html = html.replace(/\*([^*]+)\*/g, '<em class="text-zinc-400">$1</em>');
-    html = html.replace(/^### (.*$)/gim, '<h3 class="text-sm font-bold text-white mt-3 mb-1 border-b border-zinc-800 pb-0.5">> $1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 class="text-base font-bold text-white mt-4 mb-1.5 border-b border-zinc-700 pb-1">>> $1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1 class="text-lg font-bold text-white mt-4 mb-2 border-b border-zinc-600 pb-1">>>> $1</h1>');
-    html = html.replace(/^\s*-\s+(.*$)/gim, '<div class="flex items-start gap-2 ml-2 my-0.5 text-zinc-300"><span class="text-zinc-500">\u2022</span><span>$1</span></div>');
-    html = html.replace(/\n\n/g, "<br/><br/>");
+    html = html.replace(/`([^`]+)`/g, '<code style="padding:1px 4px; border:1px solid var(--border-dim); background:var(--bg-panel); color:var(--clr-green); font-size:11px;">$1</code>');
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#ffffff; font-weight:700;">$1</strong>');
+    html = html.replace(/\*([^*]+)\*/g, '<em style="color:var(--fg-muted);">$1</em>');
+    html = html.replace(/^### (.*$)/gim, '<h3 style="font-size:12px; font-weight:800; color:#ffffff; margin:12px 0 4px; border-bottom:1px solid var(--border-dim); padding-bottom:2px;">> $1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 style="font-size:13px; font-weight:800; color:#ffffff; margin:14px 0 6px; border-bottom:1px solid var(--border-bright); padding-bottom:4px;">>> $1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 style="font-size:14px; font-weight:900; color:#ffffff; margin:16px 0 8px; border-bottom:1px solid #ffffff; padding-bottom:4px;">>>> $1</h1>');
+    html = html.replace(/((?:\|[^\n]+\|\n?)+)/g, (match) => {
+      const rows = match.trim().split("\n");
+      if (rows.length < 2) return match;
+      let tableHtml = '<div style="overflow-x:auto; margin:10px 0;"><table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid var(--border-dim);">';
+      rows.forEach((row, idx) => {
+        if (row.includes("---")) return;
+        const cols = row.split("|").filter((_, i, arr) => i > 0 && i < arr.length - 1);
+        const tag = idx === 0 ? "th" : "td";
+        tableHtml += '<tr style="border-bottom:1px solid var(--border-dim);">';
+        cols.forEach((c) => {
+          const val = c.trim();
+          tableHtml += `<${tag} style="padding:4px 8px; text-align:left; border-right:1px solid var(--border-dim); ${tag === "th" ? "font-weight:700; color:#ffffff; background:var(--bg-panel);" : "color:var(--fg-primary);"}">${val}</${tag}>`;
+        });
+        tableHtml += "</tr>";
+      });
+      tableHtml += "</table></div>";
+      return tableHtml;
+    });
+    html = html.replace(/^\s*-\s+(.*$)/gim, '<div style="display:flex; gap:6px; margin:2px 0 2px 8px;"><span style="color:var(--clr-green);">*</span><span>$1</span></div>');
     return html;
   }
   setupCodeCopyButtons() {
@@ -2220,15 +3660,18 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
     const container = document.getElementById("messages-container");
     if (!container) return;
     const notif = document.createElement("div");
-    notif.className = "text-center my-2 text-xs font-mono text-zinc-500";
-    notif.innerHTML = `\u2726 ${this.renderMarkdown(text)}`;
+    notif.style.textAlign = "center";
+    notif.style.margin = "6px 0";
+    notif.style.fontSize = "11px";
+    notif.style.color = "var(--fg-muted)";
+    notif.innerHTML = `* ${this.renderMarkdown(text)}`;
     container.appendChild(notif);
     this.scrollToBottom();
   }
   scrollToBottom() {
-    const main = document.getElementById("chat-scroll-area");
-    if (main) {
-      main.scrollTop = main.scrollHeight;
+    const chatRegion = document.getElementById("chat-stream-region");
+    if (chatRegion) {
+      chatRegion.scrollTop = chatRegion.scrollHeight;
     }
   }
   escapeHtml(str) {

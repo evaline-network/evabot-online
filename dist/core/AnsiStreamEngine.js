@@ -421,6 +421,156 @@ export class TableFormatter {
         return out.join('\n');
     }
 }
+export class MouseTracker {
+    clickables = [];
+    enabled = false;
+    onData;
+    constructor(onData) {
+        this.onData = onData;
+    }
+    /**
+     * Enable SGR mouse mode 1003 (all events) + mode 1006 (SGR coordinates)
+     */
+    enable() {
+        if (this.enabled)
+            return;
+        this.enabled = true;
+        process.stdout.write('\x1b[?1003h\x1b[?1006h');
+    }
+    /**
+     * Disable SGR mouse tracking and restore terminal
+     */
+    disable() {
+        if (!this.enabled)
+            return;
+        this.enabled = false;
+        process.stdout.write('\x1b[?1003l\x1b[?1006l');
+    }
+    isEnabled() {
+        return this.enabled;
+    }
+    /**
+     * Parse raw input bytes for SGR mouse events.
+     * SGR format: ESC [ < Cb ; Cc ; Cd M / m
+     *   Cb = button (0-3 normal, 64=scroll up, 65=scroll down)
+     *   Cc = column (1-based)
+     *   Cd = row (1-based)
+     *   M = press, m = release
+     */
+    parseBuffer(data) {
+        const events = [];
+        const str = data.toString('utf-8');
+        let i = 0;
+        while (i < str.length) {
+            // Look for ESC [ <
+            if (str[i] === '\x1b' && i + 2 < str.length && str[i + 1] === '[' && str[i + 2] === '<') {
+                i += 3;
+                let cbStr = '';
+                let ccStr = '';
+                let cdStr = '';
+                let phase = 0;
+                while (i < str.length) {
+                    const ch = str[i];
+                    if (ch === ';') {
+                        phase++;
+                        i++;
+                        continue;
+                    }
+                    if (ch === 'M' || ch === 'm') {
+                        const isRelease = ch === 'm';
+                        const cb = parseInt(cbStr, 10) || 0;
+                        const cc = parseInt(ccStr, 10) || 0;
+                        const cd = parseInt(cdStr, 10) || 0;
+                        const event = {
+                            button: cb,
+                            pressed: !isRelease,
+                            col: cc,
+                            row: cd,
+                            isRelease,
+                        };
+                        events.push(event);
+                        this.onData?.(event);
+                        this.checkClickable(event);
+                        i++;
+                        break;
+                    }
+                    if (ch >= '0' && ch <= '9') {
+                        if (phase === 0)
+                            cbStr += ch;
+                        else if (phase === 1)
+                            ccStr += ch;
+                        else if (phase === 2)
+                            cdStr += ch;
+                    }
+                    i++;
+                }
+            }
+            else {
+                i++;
+            }
+        }
+        return events;
+    }
+    /**
+     * Register a clickable area
+     */
+    registerClickable(area) {
+        this.clickables.push(area);
+    }
+    /**
+     * Clear all registered clickables (call on each render cycle)
+     */
+    clearClickables() {
+        this.clickables = [];
+    }
+    /**
+     * Check if a mouse event hits a registered clickable
+     */
+    checkClickable(event) {
+        if (event.isRelease)
+            return;
+        const hit = this.clickables.find((c) => event.row === c.row && event.col >= c.startCol && event.col <= c.endCol);
+        if (hit) {
+            hit.action();
+        }
+    }
+    /**
+     * Setup raw mode stdin listener for mouse events
+     */
+    attachStdin(stdin) {
+        if (stdin.isTTY) {
+            stdin.setRawMode(true);
+        }
+        stdin.resume();
+        stdin.on('data', (data) => {
+            this.parseBuffer(data);
+        });
+    }
+    /**
+     * Detach stdin listener
+     */
+    detachStdin(stdin) {
+        stdin.removeAllListeners('data');
+        if (stdin.isTTY) {
+            stdin.setRawMode(false);
+        }
+    }
+}
+/**
+ * Helper: render a clickable text span that registers coordinates for mouse hit-testing.
+ * Returns the plain text (for screen output) and registers the clickable area.
+ */
+export function clickableText(tracker, text, row, startCol, id, action) {
+    tracker.registerClickable({
+        id,
+        row,
+        startCol,
+        endCol: startCol + visibleWidth(text) - 1,
+        label: text,
+        action,
+    });
+    return text;
+}
 export class AnsiStreamWriter extends EventEmitter {
     lineBuffer = '';
     fullAnsiBuffer = '';
@@ -570,5 +720,7 @@ export const AnsiStreamEngine = {
     formatTable: TableFormatter.render,
     TableFormatter,
     AnsiStreamWriter,
+    MouseTracker,
+    clickableText,
 };
 export default AnsiStreamEngine;

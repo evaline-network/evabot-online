@@ -1262,4 +1262,102 @@ export class ModelRegistry {
             .map((id) => this.getModelById(id))
             .filter((m) => m !== undefined);
     }
+    static getTop10PaidSmartestModels() {
+        const topPaidIds = [
+            'claude-3-7-sonnet',
+            'gemini-2.5-pro',
+            'claude-3-5-sonnet',
+            'mistral-large-2411',
+            'codestral-2501',
+            'llama-3.1-405b-instruct',
+            'llama-3.2-90b-vision-instruct',
+            'command-r-plus',
+            'jamba-1.5-large',
+            'claude-3-5-haiku',
+        ];
+        return topPaidIds
+            .map((id) => this.getModelById(id))
+            .filter((m) => m !== undefined);
+    }
+    static getTop10FreeModels() {
+        const topFreeIds = [
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-2.0-flash-lite',
+            'deepseek/deepseek-r1:free',
+            'meta-llama/llama-3.3-70b:free',
+            'qwen/qwen-2.5-coder-32b-instruct:free',
+            'google/gemini-2.0-flash-exp:free',
+            'gemma-2-27b-it',
+            'gemma-2-9b-it',
+            'mistralai/mistral-7b-instruct:free',
+        ];
+        return topFreeIds
+            .map((id) => this.getModelById(id))
+            .filter((m) => m !== undefined);
+    }
+    /**
+     * Estimates token count based on text length (~3.8 chars per token for code & multilingual)
+     */
+    static estimateTokens(text) {
+        if (!text)
+            return 0;
+        return Math.max(1, Math.ceil(text.length / 3.8));
+    }
+    static parseRate(rateStr) {
+        if (!rateStr)
+            return { freeRate: 0, paidRate: 0 };
+        const paidMatch = rateStr.match(/(?:[\$€])\s*([0-9.]+)\s*\(Paid\)/i);
+        const freeMatch = rateStr.match(/(?:[\$€])\s*([0-9.]+)\s*\(Free\)/i);
+        if (paidMatch) {
+            const paidRate = parseFloat(paidMatch[1]) || 0;
+            const freeRate = freeMatch ? parseFloat(freeMatch[1]) || 0 : 0;
+            return { freeRate, paidRate };
+        }
+        const plainMatch = rateStr.match(/([0-9.]+)/);
+        const rate = plainMatch ? parseFloat(plainMatch[1]) || 0 : 0;
+        return { freeRate: rate, paidRate: rate };
+    }
+    /**
+     * Calculates exact cost and commercial token valuation in USD ($) and EUR (€)
+     */
+    static calculateCost(modelId, promptTokens, completionTokens) {
+        const model = this.getModelById(modelId);
+        const isFree = model?.pricing.freeTierStatus === '100% Free Quota Available';
+        const inUsd = this.parseRate(model?.pricing.inputPer1MTokensUSD || '$0.00');
+        const outUsd = this.parseRate(model?.pricing.outputPer1MTokensUSD || '$0.00');
+        const inEur = this.parseRate(model?.pricing.inputPer1MTokensEUR || '€0.00');
+        const outEur = this.parseRate(model?.pricing.outputPer1MTokensEUR || '€0.00');
+        // Commercial valuation based on paid rates (per 1,000,000 tokens)
+        const commercialValueUSD = (promptTokens * inUsd.paidRate + completionTokens * outUsd.paidRate) / 1_000_000;
+        const commercialValueEUR = (promptTokens * inEur.paidRate + completionTokens * outEur.paidRate) / 1_000_000;
+        // Actual billing cost charged to user
+        const costUSD = isFree ? 0 : commercialValueUSD;
+        const costEUR = isFree ? 0 : commercialValueEUR;
+        const formatCost = (val, isFreeFlag, symbol) => {
+            if (isFreeFlag)
+                return `${symbol}0.00 (100% Free Quota)`;
+            if (val === 0)
+                return `${symbol}0.00`;
+            if (val < 0.0001)
+                return `${symbol}${val.toFixed(6)}`;
+            if (val < 0.01)
+                return `${symbol}${val.toFixed(4)}`;
+            return `${symbol}${val.toFixed(2)}`;
+        };
+        return {
+            modelId: model?.id || modelId,
+            modelName: model?.name || modelId,
+            promptTokens,
+            completionTokens,
+            totalTokens: promptTokens + completionTokens,
+            costUSD,
+            costEUR,
+            commercialValueUSD,
+            commercialValueEUR,
+            formattedUSD: formatCost(costUSD, Boolean(isFree), '$'),
+            formattedEUR: formatCost(costEUR, Boolean(isFree), '€'),
+            isFreeTier: Boolean(isFree),
+        };
+    }
 }

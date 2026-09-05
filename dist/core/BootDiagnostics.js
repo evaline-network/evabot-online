@@ -89,13 +89,14 @@ export class BootDiagnostics {
         const allModels = ModelRegistry.getAllModels();
         const freeModels = ModelRegistry.getFreeModels();
         const paidModels = ModelRegistry.getPaidOnlyModels();
-        const frontierModels = ['gemini-3.8-flash', 'gemini-3.1-pro', 'gemini-3.1-flash', 'gemini-2.5-flash', 'claude-3-7-sonnet', 'deepseek/deepseek-r1:free'];
+        const frontierModels = ['gemini-3.8-flash', 'gemini-3.8-flash-cyber', 'gemini-3.1-pro', 'gemini-3.1-flash', 'anthropic/claude-opus-5', 'openai/gpt-6-astra'];
+        const categoryCount = ModelRegistry.getCategories().length;
         steps.push({
             id: 'step-models',
             name: 'Audit Model Registry & Frontier Fleet',
             status: 'success',
             latencyMs: Date.now() - s4Start,
-            details: `Registered ${allModels.length} models across 11 categories (${freeModels.length} Free Quota / ${paidModels.length} Paid). Frontier 3.x online.`,
+            details: `Registered ${allModels.length} models across ${categoryCount} categories (${freeModels.length} Free Quota / ${paidModels.length} Paid). Frontier 3.x + 2026 fleet online.`,
             timestamp: new Date().toISOString(),
         });
         // Step 5: Quota & Token Account Status
@@ -132,7 +133,7 @@ export class BootDiagnostics {
             },
             quotas: {
                 googleAiPro: '15 RPM / 1M TPM / 1,500 RPD (Active $0.00 Free Tier)',
-                openRouterFree: '5 Community models with 0 token charge (:free)',
+                openRouterFree: '10 community models with 0 token charge (:free)',
                 currencyStandard: 'USD ($) & EUR (€)',
             },
             steps,

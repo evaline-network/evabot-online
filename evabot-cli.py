@@ -416,7 +416,7 @@ class EvaBotCore:
             )
 
         # Handle connected services queries
-        if any(w in q for w in ["service", "services", "сервис", "мессенджер", "чат", "telegram", "whatsapp"]):
+        if any(w in q for w in ["service", "services", "сервис", "messenger", "messengers", "мессенджер", "channel", "channels", "чат", "telegram", "whatsapp"]):
             return (
                 "EvaBot Omnichannel Status:\n"
                 "• Telegram (@EvalineSalesBot): ONLINE (32 ms)\n"

@@ -1,10 +1,12 @@
 import { UniversalLlmClient, UniversalMessage, LlmProvider } from './UniversalLlmClient.js';
-import { ModelRegistry, GeminiModelInfo } from '../models/ModelRegistry.js';
+import { ModelRegistry, GeminiModelInfo, TokenCostEstimate } from '../models/ModelRegistry.js';
 import { CORPORATE_ROLES, CorporateRole, KnowledgeBaseConnector } from './CorporateRoles.js';
+import { applyLocalePolicy } from './LocalePolicy.js';
 import { Config } from './Config.js';
 import { logger } from './Logger.js';
 
-export type ConsiliumMode = 'solo' | 'broadcast' | 'dialogue' | 'consilium';
+export type ConsiliumMode = 'chat' | 'dialog' | 'interview' | 'consilium' | 'solo' | 'broadcast' | 'dialogue';
+export type PersonaId = 'eva' | 'adam' | 'dual';
 
 export interface ConsiliumParticipant {
   id: string;
@@ -26,6 +28,10 @@ export interface ConsiliumTurn {
   content: string;
   timestamp: string;
   durationMs: number;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  cost?: TokenCostEstimate;
 }
 
 export interface ConsiliumProgressEvent {
@@ -38,10 +44,12 @@ export interface ConsiliumProgressEvent {
 
 export interface ConsiliumRunOptions {
   mode: ConsiliumMode;
+  persona?: PersonaId;
   prompt: string;
   models?: string[];
   participants?: ConsiliumParticipant[];
   rounds?: number;
+  preset?: 'top10_paid' | 'top10_free';
   synthesizerModel?: string;
   systemInstruction?: string;
   apiKey?: string;
@@ -59,6 +67,28 @@ export interface ConsiliumResult {
   totalRounds: number;
   durationMs: number;
   knowledgeBaseContextIncluded: boolean;
+  totalPromptTokens?: number;
+  totalCompletionTokens?: number;
+  totalTokens?: number;
+  totalCostUSD?: number;
+  totalCostEUR?: number;
+  costSummary?: {
+    totalPromptTokens: number;
+    totalCompletionTokens: number;
+    totalTokens: number;
+    totalCostUSD: number;
+    totalCostEUR: number;
+    formattedUSD: string;
+    formattedEUR: string;
+    models: Array<{
+      model: string;
+      tokens: number;
+      costUSD: number;
+      costEUR: number;
+      formattedUSD: string;
+      formattedEUR: string;
+    }>;
+  };
 }
 
 export class ConsiliumEngine {
@@ -98,14 +128,19 @@ export class ConsiliumEngine {
     let result: ConsiliumResult;
 
     switch (options.mode) {
+      case 'chat':
       case 'solo':
         result = await this.runSolo(options, participants, kbContext, startTime, kbIncluded);
         break;
       case 'broadcast':
         result = await this.runBroadcast(options, participants, kbContext, startTime, kbIncluded);
         break;
+      case 'dialog':
       case 'dialogue':
         result = await this.runDialogue(options, participants, kbContext, startTime, kbIncluded);
+        break;
+      case 'interview':
+        result = await this.runInterview(options, participants, kbContext, startTime, kbIncluded);
         break;
       case 'consilium':
         result = await this.runConsilium(options, participants, kbContext, startTime, kbIncluded);
@@ -130,16 +165,23 @@ export class ConsiliumEngine {
           roleId: p.roleId,
           name: p.name || role?.name || `Agent ${idx + 1}`,
           title: p.title || role?.title || 'Specialist',
-          systemPrompt: p.systemPrompt || role?.systemPrompt || Config.defaultSystemInstruction,
+          systemPrompt: applyLocalePolicy(p.systemPrompt || role?.systemPrompt || Config.defaultSystemInstruction),
           temperature: p.temperature ?? role?.suggestedTemperature ?? 0.5,
           provider: p.provider,
         };
       });
     }
 
-    const modelList = options.models && options.models.length > 0
-      ? options.models
-      : [Config.defaultModel];
+    let modelList: string[] = [];
+    if (options.preset === 'top10_paid') {
+      modelList = ModelRegistry.getTop10PaidSmartestModels().map((m) => m.id);
+    } else if (options.preset === 'top10_free') {
+      modelList = ModelRegistry.getTop10FreeModels().map((m) => m.id);
+    } else if (options.models && options.models.length > 0) {
+      modelList = options.models;
+    } else {
+      modelList = [Config.defaultModel];
+    }
 
     const defaultRoleKeys = Object.keys(CORPORATE_ROLES);
 
@@ -152,7 +194,7 @@ export class ConsiliumEngine {
         roleId: role.id,
         name: role.name,
         title: role.title,
-        systemPrompt: role.systemPrompt,
+        systemPrompt: applyLocalePolicy(role.systemPrompt),
         temperature: role.suggestedTemperature,
       };
     });
@@ -174,7 +216,7 @@ export class ConsiliumEngine {
           roleId: role.id,
           name: role.name,
           title: role.title,
-          systemPrompt: role.systemPrompt,
+        systemPrompt: applyLocalePolicy(role.systemPrompt),
           temperature: role.suggestedTemperature,
         });
       }
@@ -200,7 +242,7 @@ export class ConsiliumEngine {
       model: Config.defaultModel,
       name: 'EvaBot Solo Agent',
       title: 'AI Specialist',
-      systemPrompt: Config.defaultSystemInstruction,
+      systemPrompt: applyLocalePolicy(Config.defaultSystemInstruction),
       temperature: 0.7,
     };
 
@@ -231,16 +273,7 @@ export class ConsiliumEngine {
       response = `[Error querying model ${participant.model}: ${err.message}]`;
     }
 
-    const turn: ConsiliumTurn = {
-      round: 1,
-      participantId: participant.id,
-      name: participant.name || 'EvaBot',
-      model: participant.model,
-      role: participant.title,
-      content: response,
-      timestamp: new Date().toISOString(),
-      durationMs: Date.now() - turnStart,
-    };
+    const turn = this.createTurn(1, participant, effectivePrompt, response, Date.now() - turnStart);
 
     options.onProgress?.({
       type: 'turn_complete',
@@ -249,14 +282,131 @@ export class ConsiliumEngine {
       turn,
     });
 
+    const costSummary = this.calculateCostSummary([turn]);
+
     return {
-      mode: 'solo',
+      mode: options.mode === 'chat' ? 'chat' : 'solo',
       prompt: options.prompt,
       participants: [participant],
       turns: [turn],
       totalRounds: 1,
       durationMs: Date.now() - startTime,
       knowledgeBaseContextIncluded: kbIncluded,
+      ...costSummary,
+    };
+  }
+
+  /**
+   * Mode: Interview Mode (Structured technical or executive interview)
+   */
+  private async runInterview(
+    options: ConsiliumRunOptions,
+    participants: ConsiliumParticipant[],
+    kbContext: string,
+    startTime: number,
+    kbIncluded: boolean
+  ): Promise<ConsiliumResult> {
+    const persona = options.persona || 'eva';
+    let interviewer = participants[0];
+
+    if (persona === 'eva') {
+      interviewer = {
+        id: 'eva-interviewer',
+        model: interviewer?.model || 'gemini-2.5-flash',
+        name: 'Eva (Frontend & Strategic Interviewer)',
+        title: 'Lead Frontend Architect & UX Director',
+        systemPrompt: applyLocalePolicy(
+          'You are Eva, conducting a professional Frontend, UX, and Strategic Architecture interview for EvaLine (based in Odesa, Ukraine). ' +
+          'Evaluate the candidate response with constructive depth. ' +
+          'Format your reply in three clean sections:\n' +
+          '1. 💡 Feedback & Assessment: Strengths and gaps observed in candidate answer.\n' +
+          '2. 🎯 Score: Candidate competence rating (e.g. 85/100 or Seniority Level).\n' +
+          '3. ❓ Next Question / Scenario: Present the next targeted question or architectural trade-off challenge.'
+        ),
+        temperature: 0.4,
+      };
+    } else if (persona === 'adam') {
+      interviewer = {
+        id: 'adam-interviewer',
+        model: interviewer?.model || 'gemini-2.5-pro',
+        name: 'Adam (Backend & Systems Interviewer)',
+        title: 'Chief Backend Architect & Core Systems Lead',
+        systemPrompt: applyLocalePolicy(
+          'You are Adam, conducting an advanced Backend, Cloud Infrastructure, and Distributed Systems interview for EvaLine (based in Odesa, Ukraine). ' +
+          'Evaluate the candidate with technical rigor and zero tolerance for sloppy architecture. ' +
+          'Format your reply in three clean sections:\n' +
+          '1. 💡 Technical Critique: Algorithmic efficiency, scalability, and security posture.\n' +
+          '2. 🎯 Score: Technical rigor score (e.g. 90/100 or Staff Engineer Level).\n' +
+          '3. ❓ Next System Challenge: Present the next low-latency or high-throughput distributed system scenario.'
+        ),
+        temperature: 0.3,
+      };
+    } else if (persona === 'dual') {
+      interviewer = {
+        id: 'dual-interviewers',
+        model: interviewer?.model || 'gemini-2.5-pro',
+        name: 'Eva & Adam (Dual Co-Pilot Interview Board)',
+        title: 'Full-Stack Technical Interview Board',
+        systemPrompt: applyLocalePolicy(
+          'You are Eva (Lead Frontend Architect) and Adam (Chief Backend Architect), conducting a dual co-pilot technical interview for EvaLine (based in Odesa, Ukraine). ' +
+          'Both evaluate the candidate from your respective specialties:\n' +
+          '[Eva ♀]: Assess frontend ergonomics, API consumption, usability, and strategic clarity.\n' +
+          '[Adam ♂]: Assess backend architecture, database latency, security, and algorithmic performance.\n' +
+          'Conclude with the next joint full-stack architectural challenge.'
+        ),
+        temperature: 0.4,
+      };
+    }
+
+    const turnStart = Date.now();
+    const effectivePrompt = kbContext
+      ? `${kbContext}\n\nCandidate Input / Topic: ${options.prompt}`
+      : `Candidate Input / Topic: ${options.prompt}`;
+
+    options.onProgress?.({
+      type: 'turn_start',
+      round: 1,
+      participantId: interviewer.id,
+      message: `${interviewer.name} is evaluating response and drafting next question...`,
+    });
+
+    let response: string;
+    try {
+      response = await this.client.generateContent(
+        interviewer.model,
+        [{ role: 'user', content: effectivePrompt }],
+        {
+          temperature: interviewer.temperature,
+          systemInstruction: interviewer.systemPrompt,
+          apiKey: options.apiKey,
+          signal: options.signal,
+        }
+      );
+    } catch (err: any) {
+      logger.error('ConsiliumEngine', `Interview execution error on ${interviewer.model}: ${err.message}`);
+      response = `[Interview error querying model ${interviewer.model}: ${err.message}]`;
+    }
+
+    const turn = this.createTurn(1, interviewer, effectivePrompt, response, Date.now() - turnStart);
+
+    options.onProgress?.({
+      type: 'turn_complete',
+      round: 1,
+      participantId: interviewer.id,
+      turn,
+    });
+
+    const costSummary = this.calculateCostSummary([turn]);
+
+    return {
+      mode: 'interview',
+      prompt: options.prompt,
+      participants: [interviewer],
+      turns: [turn],
+      totalRounds: 1,
+      durationMs: Date.now() - startTime,
+      knowledgeBaseContextIncluded: kbIncluded,
+      ...costSummary,
     };
   }
 
@@ -299,16 +449,7 @@ export class ConsiliumEngine {
           }
         );
 
-        const turn: ConsiliumTurn = {
-          round: 1,
-          participantId: p.id,
-          name: p.name || p.id,
-          model: p.model,
-          role: p.title,
-          content,
-          timestamp: new Date().toISOString(),
-          durationMs: Date.now() - turnStart,
-        };
+        const turn = this.createTurn(1, p, effectivePrompt, content, Date.now() - turnStart);
 
         options.onProgress?.({
           type: 'turn_complete',
@@ -320,21 +461,19 @@ export class ConsiliumEngine {
         return turn;
       } catch (err: any) {
         logger.error('ConsiliumEngine', `Broadcast error on participant ${p.id} (${p.model}): ${err.message}`);
-        const failedTurn: ConsiliumTurn = {
-          round: 1,
-          participantId: p.id,
-          name: p.name || p.id,
-          model: p.model,
-          role: p.title,
-          content: `[Error querying model ${p.model}: ${err.message}]`,
-          timestamp: new Date().toISOString(),
-          durationMs: Date.now() - turnStart,
-        };
+        const failedTurn = this.createTurn(
+          1,
+          p,
+          effectivePrompt,
+          `[Error querying model ${p.model}: ${err.message}]`,
+          Date.now() - turnStart
+        );
         return failedTurn;
       }
     });
 
     const turns = await Promise.all(promises);
+    const costSummary = this.calculateCostSummary(turns);
 
     return {
       mode: 'broadcast',
@@ -344,6 +483,7 @@ export class ConsiliumEngine {
       totalRounds: 1,
       durationMs: Date.now() - startTime,
       knowledgeBaseContextIncluded: kbIncluded,
+      ...costSummary,
     };
   }
 
@@ -359,7 +499,7 @@ export class ConsiliumEngine {
   ): Promise<ConsiliumResult> {
     const p1 = participants[0] || {
       id: 'agent-1',
-      model: 'gemini-2.5-pro',
+      model: 'gemini-3.1-pro',
       name: 'Lead Proponent',
       title: 'Lead Architect',
       systemPrompt: CORPORATE_ROLES.architect.systemPrompt,
@@ -368,7 +508,7 @@ export class ConsiliumEngine {
 
     const p2 = participants[1] || {
       id: 'agent-2',
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.8-flash',
       name: 'Lead Challenger',
       title: 'Principal Security & Risk Auditor',
       systemPrompt: CORPORATE_ROLES.security_auditor.systemPrompt,
@@ -413,16 +553,7 @@ export class ConsiliumEngine {
         p1Response = `[Error generating argument from ${p1.name}: ${err.message}]`;
       }
 
-      const turn1: ConsiliumTurn = {
-        round,
-        participantId: p1.id,
-        name: p1.name || p1.id,
-        model: p1.model,
-        role: p1.title,
-        content: p1Response,
-        timestamp: new Date().toISOString(),
-        durationMs: Date.now() - t1Start,
-      };
+      const turn1 = this.createTurn(round, p1, p1Prompt, p1Response, Date.now() - t1Start);
       turns.push(turn1);
       dialogueHistory.push({ role: 'assistant', content: `[${p1.name}]: ${p1Response}` });
 
@@ -461,16 +592,7 @@ export class ConsiliumEngine {
         p2Response = `[Error generating argument from ${p2.name}: ${err.message}]`;
       }
 
-      const turn2: ConsiliumTurn = {
-        round,
-        participantId: p2.id,
-        name: p2.name || p2.id,
-        model: p2.model,
-        role: p2.title,
-        content: p2Response,
-        timestamp: new Date().toISOString(),
-        durationMs: Date.now() - t2Start,
-      };
+      const turn2 = this.createTurn(round, p2, p2Prompt, p2Response, Date.now() - t2Start);
       turns.push(turn2);
       dialogueHistory.push({ role: 'assistant', content: `[${p2.name}]: ${p2Response}` });
 
@@ -483,7 +605,7 @@ export class ConsiliumEngine {
     }
 
     // Synthesize final dialogue outcome
-    const synthModel = options.synthesizerModel || 'gemini-2.5-pro';
+    const synthModel = options.synthesizerModel || 'gemini-3.8-flash';
     options.onProgress?.({
       type: 'synthesis_start',
       message: `Synthesizing final dialogue conclusion with ${synthModel}...`,
@@ -520,6 +642,8 @@ export class ConsiliumEngine {
       message: 'Dialogue synthesis completed.',
     });
 
+    const costSummary = this.calculateCostSummary(turns, synthesis, synthModel, synthPrompt);
+
     return {
       mode: 'dialogue',
       prompt: options.prompt,
@@ -529,6 +653,7 @@ export class ConsiliumEngine {
       totalRounds,
       durationMs: Date.now() - startTime,
       knowledgeBaseContextIncluded: kbIncluded,
+      ...costSummary,
     };
   }
 
@@ -580,16 +705,7 @@ export class ConsiliumEngine {
           }
         );
 
-        const turn: ConsiliumTurn = {
-          round: 1,
-          participantId: p.id,
-          name: p.name || p.id,
-          model: p.model,
-          role: p.title,
-          content,
-          timestamp: new Date().toISOString(),
-          durationMs: Date.now() - turnStart,
-        };
+        const turn = this.createTurn(1, p, options.prompt, content, Date.now() - turnStart);
 
         options.onProgress?.({
           type: 'turn_complete',
@@ -601,16 +717,13 @@ export class ConsiliumEngine {
         return turn;
       } catch (err: any) {
         logger.error('ConsiliumEngine', `Consilium Round 1 error for ${p.name}: ${err.message}`);
-        return {
-          round: 1,
-          participantId: p.id,
-          name: p.name || p.id,
-          model: p.model,
-          role: p.title,
-          content: `[Perspective unavailable due to query error: ${err.message}]`,
-          timestamp: new Date().toISOString(),
-          durationMs: Date.now() - turnStart,
-        };
+        return this.createTurn(
+          1,
+          p,
+          options.prompt,
+          `[Perspective unavailable due to query error: ${err.message}]`,
+          Date.now() - turnStart
+        );
       }
     });
 
@@ -658,16 +771,7 @@ export class ConsiliumEngine {
             }
           );
 
-          const turn: ConsiliumTurn = {
-            round: r,
-            participantId: p.id,
-            name: p.name || p.id,
-            model: p.model,
-            role: p.title,
-            content,
-            timestamp: new Date().toISOString(),
-            durationMs: Date.now() - turnStart,
-          };
+          const turn = this.createTurn(r, p, prompt, content, Date.now() - turnStart);
 
           options.onProgress?.({
             type: 'turn_complete',
@@ -679,16 +783,13 @@ export class ConsiliumEngine {
           return turn;
         } catch (err: any) {
           logger.error('ConsiliumEngine', `Consilium Round ${r} error for ${p.name}: ${err.message}`);
-          return {
-            round: r,
-            participantId: p.id,
-            name: p.name || p.id,
-            model: p.model,
-            role: p.title,
-            content: `[Deliberation note unavailable: ${err.message}]`,
-            timestamp: new Date().toISOString(),
-            durationMs: Date.now() - turnStart,
-          };
+          return this.createTurn(
+            r,
+            p,
+            prompt,
+            `[Deliberation note unavailable: ${err.message}]`,
+            Date.now() - turnStart
+          );
         }
       });
 
@@ -697,7 +798,7 @@ export class ConsiliumEngine {
     }
 
     // Final Stage: Synthesizer produces authoritative corporate consensus
-    const synthModel = options.synthesizerModel || 'gemini-2.5-pro';
+    const synthModel = options.synthesizerModel || 'gemini-3.8-flash';
     logger.info('ConsiliumEngine', `Synthesizing final consensus with ${synthModel}`);
     options.onProgress?.({
       type: 'synthesis_start',
@@ -742,6 +843,8 @@ export class ConsiliumEngine {
       message: 'Consilium Consensus Report successfully generated.',
     });
 
+    const costSummary = this.calculateCostSummary(turns, synthesis, synthModel, synthesisPrompt);
+
     return {
       mode: 'consilium',
       prompt: options.prompt,
@@ -751,6 +854,130 @@ export class ConsiliumEngine {
       totalRounds,
       durationMs: Date.now() - startTime,
       knowledgeBaseContextIncluded: kbIncluded,
+      ...costSummary,
+    };
+  }
+
+  private createTurn(
+    round: number,
+    participant: ConsiliumParticipant,
+    prompt: string,
+    content: string,
+    durationMs: number
+  ): ConsiliumTurn {
+    const promptTokens = ModelRegistry.estimateTokens(prompt);
+    const completionTokens = ModelRegistry.estimateTokens(content);
+    const cost = ModelRegistry.calculateCost(participant.model, promptTokens, completionTokens);
+
+    return {
+      round,
+      participantId: participant.id,
+      name: participant.name || participant.id,
+      model: participant.model,
+      role: participant.title,
+      content,
+      timestamp: new Date().toISOString(),
+      durationMs,
+      promptTokens,
+      completionTokens,
+      totalTokens: promptTokens + completionTokens,
+      cost,
+    };
+  }
+
+  private calculateCostSummary(
+    turns: ConsiliumTurn[],
+    synthesis?: string,
+    synthModel?: string,
+    synthesisPrompt?: string
+  ): {
+    totalPromptTokens: number;
+    totalCompletionTokens: number;
+    totalTokens: number;
+    totalCostUSD: number;
+    totalCostEUR: number;
+    costSummary: {
+      totalPromptTokens: number;
+      totalCompletionTokens: number;
+      totalTokens: number;
+      totalCostUSD: number;
+      totalCostEUR: number;
+      formattedUSD: string;
+      formattedEUR: string;
+      models: Array<{
+        model: string;
+        tokens: number;
+        costUSD: number;
+        costEUR: number;
+        formattedUSD: string;
+        formattedEUR: string;
+      }>;
+    };
+  } {
+    let totalPromptTokens = 0;
+    let totalCompletionTokens = 0;
+    let totalCostUSD = 0;
+    let totalCostEUR = 0;
+    const modelStats = new Map<string, { tokens: number; costUSD: number; costEUR: number }>();
+
+    for (const t of turns) {
+      const p = t.promptTokens || 0;
+      const c = t.completionTokens || 0;
+      totalPromptTokens += p;
+      totalCompletionTokens += c;
+      if (t.cost) {
+        totalCostUSD += t.cost.costUSD;
+        totalCostEUR += t.cost.costEUR;
+      }
+      const st = modelStats.get(t.model) || { tokens: 0, costUSD: 0, costEUR: 0 };
+      st.tokens += (p + c);
+      st.costUSD += (t.cost?.costUSD || 0);
+      st.costEUR += (t.cost?.costEUR || 0);
+      modelStats.set(t.model, st);
+    }
+
+    if (synthesis && synthModel && synthesisPrompt) {
+      const sp = ModelRegistry.estimateTokens(synthesisPrompt);
+      const sc = ModelRegistry.estimateTokens(synthesis);
+      const sCost = ModelRegistry.calculateCost(synthModel, sp, sc);
+      totalPromptTokens += sp;
+      totalCompletionTokens += sc;
+      totalCostUSD += sCost.costUSD;
+      totalCostEUR += sCost.costEUR;
+
+      const st = modelStats.get(synthModel) || { tokens: 0, costUSD: 0, costEUR: 0 };
+      st.tokens += (sp + sc);
+      st.costUSD += sCost.costUSD;
+      st.costEUR += sCost.costEUR;
+      modelStats.set(synthModel, st);
+    }
+
+    const totalTokens = totalPromptTokens + totalCompletionTokens;
+    const models = Array.from(modelStats.entries()).map(([model, stat]) => ({
+      model,
+      tokens: stat.tokens,
+      costUSD: stat.costUSD,
+      costEUR: stat.costEUR,
+      formattedUSD: stat.costUSD === 0 ? '$0.00 (100% Free Quota)' : `$${stat.costUSD.toFixed(4)}`,
+      formattedEUR: stat.costEUR === 0 ? '€0.00 (100% Free Quota)' : `€${stat.costEUR.toFixed(4)}`,
+    }));
+
+    return {
+      totalPromptTokens,
+      totalCompletionTokens,
+      totalTokens,
+      totalCostUSD,
+      totalCostEUR,
+      costSummary: {
+        totalPromptTokens,
+        totalCompletionTokens,
+        totalTokens,
+        totalCostUSD,
+        totalCostEUR,
+        formattedUSD: totalCostUSD === 0 ? '$0.00 (100% Free Quota)' : `$${totalCostUSD.toFixed(4)}`,
+        formattedEUR: totalCostEUR === 0 ? '€0.00 (100% Free Quota)' : `€${totalCostEUR.toFixed(4)}`,
+        models,
+      },
     };
   }
 }

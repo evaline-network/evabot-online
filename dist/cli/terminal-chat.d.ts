@@ -8,7 +8,8 @@
  * - Zero pseudo-accordions
  * - Real-time startup banner with live boot checkmarks
  * - Clean monospace tabular view for /models with USD ($) and EUR (€) pricing
- * - Dynamic model switching across all 34+ models in Model Registry
+ * - Mouse interactive: SGR Mode 1006 click on models, commands, and UI elements
+ * - /compare — side-by-side top-10 coding models benchmark table
  * - Multi-agent Consilium & 2-model Dialogue debates
  * - Corporate roles and knowledge base integration
  * - Powered by AnsiStreamEngine for 1:1 parity with plain text and web

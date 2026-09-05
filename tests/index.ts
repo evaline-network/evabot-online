@@ -6,6 +6,7 @@ import { runUniversalClientTests } from './universal_client.test.js';
 import { runConsiliumTests } from './consilium.test.js';
 import { runRolesTests } from './roles.test.js';
 import { runAnsiStreamEngineTests } from './ansi_stream_engine.test.js';
+import { runVoicePluginTests } from './voice-plugin.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
@@ -21,6 +22,7 @@ async function runAllTests(): Promise<void> {
     await runConsiliumTests(),
     await runRolesTests(),
     await runAnsiStreamEngineTests(),
+    await runVoicePluginTests(),
   ];
 
   const testNames = [
@@ -32,6 +34,7 @@ async function runAllTests(): Promise<void> {
     'ConsiliumTests',
     'RolesTests',
     'AnsiStreamEngineTests',
+    'VoicePluginTests',
   ];
   results.forEach((res, i) => {
     if (!res) console.error(`❌ Suite FAILED: ${testNames[i]}`);
@@ -42,7 +45,7 @@ async function runAllTests(): Promise<void> {
 
   console.log('\n================================================================');
   if (allPassed) {
-    console.log('✅ ALL 8 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
+    console.log('✅ ALL 9 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
     console.log('================================================================\n');
     process.exit(0);
   } else {

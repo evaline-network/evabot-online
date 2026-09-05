@@ -7,6 +7,21 @@ Autonomous AI agent platform and cloud infrastructure deployed on **Google Cloud
 - **Compute Core:** `evabot-agent-vm` (c3-standard-8 Sapphire Rapids, Frankfurt, europe-west3-a)
 - **AI Core:** Google AI Pro (Gemini 2.0 / 1.5 Pro) with 2,000,000 token context window
 - **Security:** Private WireGuard Mesh (Tailscale 100.125.200.49), TLS 1.3, HTTP/3 QUIC (Caddy)
+- **Locale Policy:** based in Odesa, Ukraine (UA); finances strictly USD ($) / EUR (€).
+
+## Repository Layout (2026 refactor)
+
+Strict split between business logic and UI:
+
+- `backend/` — **FastAPI** (Python). All business logic: model registry, cost engine,
+  consilium engine, roles, chat/stream endpoints, voice config, locale policy, diagnostics.
+  Run: `python3 run.py` → `http://0.0.0.0:8000`
+- `frontend/` — **TypeScript + Vite** (no framework). Stateless UI that pulls models,
+  costs, roles, voice config from the backend. Run: `npx vite --port 5173`
+  (dev proxy `/api` → `http://127.0.0.1:8000`). Build: `npm run build` (`tsc --noEmit && vite build`).
+- `scripts/dev.sh` — starts backend + frontend together.
+- `scripts/archive.sh` — full snapshot tar.gz into `archive_full/`.
+- `archive_full/`, `legacy_archive/` — archived snapshots of the pre-refactor monolith.
 
 ## Architecture Overview
 
@@ -34,7 +49,6 @@ python3 evabot-cli.py --test
 ## Documentation
 
 - English: `evabot_modular_architecture.en.md`
-- Russian: `evabot_modular_architecture.ru.md`
 - Ukrainian: `evabot_modular_architecture.uk.md`
 
 ## License
