@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Anti-caching -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <title>EvaBot Online // Cyber-Terminal & Neural Voice Hub</title>
+
+  <!-- Zero-CDN Autonomous CSS -->
+  <link rel="stylesheet" href="/terminal.css">
+</head>
+<body>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 1: PRIMARY CYBER-TERMINAL & VOICE COMM VIEWPORT (100vh)            -->
+  <!-- ========================================================================= -->
+  <section id="screen-terminal">
+    
+    <!-- Top Bar -->
+    <header class="terminal-header">
+      <div class="header-left">
+        <div class="logo-badge">
+          <span>EVABOT<span style="color:var(--fg-muted);">//</span>CORE</span>
+          <span style="font-size:10px; color:var(--fg-dim); border:1px solid var(--border-dim); padding:1px 4px;">v0.0.1</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:11px;">
+          <span id="telemetry-status-light" class="led-green"></span>
+          <span id="telemetry-status-text" style="color:var(--clr-green); font-weight:700;">ONLINE</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <span id="dev-badge" class="dev-badge" title="Developer Mode status (client + server)">DEV:OFF</span>
+      </div>
+    </header>
+
+    <!-- Diagnostics Ticker -->
+    <div class="diagnostics-ticker">
+      <div id="boot-ticker-msg">
+        <span style="color:var(--clr-green); font-weight:700;">[OK] INITIALIZED:</span>
+        <span>Dual Cloud Nodes Active * Zero-Trust Mesh * Frankfurt [c3-std-8] & Iowa [e2-micro] Healthy</span>
+      </div>
+      <div style="font-size:10px;">
+        <span>PING: </span><span id="ticker-latency" style="color:var(--clr-green); font-weight:700;">4ms</span>
+        <span style="margin:0 4px; color:var(--border-bright);">|</span>
+        <span>DB: </span><span id="ticker-db" style="color:var(--clr-cyan); font-weight:700;">HYBRID RAG</span>
+        <span style="margin:0 4px; color:var(--border-bright);">|</span>
+        <span>TOKENS: </span><span id="ticker-tokens" style="color:var(--clr-yellow); font-weight:700;">0</span>
+        <span style="margin:0 4px; color:var(--border-bright);">|</span>
+        <span>COST: </span><span id="ticker-cost" style="color:var(--clr-green); font-weight:700;">$0.00 / €0.00</span>
+      </div>
+    </div>
+
+    <!-- Main Viewport Area: Continuous Linear Cyber-Terminal Stream -->
+    <main class="terminal-main-area">
+      <!-- Voice Audio Engine Bar (Linear, Monospace, Non-blocking) -->
+      <div class="voice-linear-bar">
+        <button type="button" id="voice-orb" class="voice-linear-btn" title="Click to activate voice communication">
+          <span id="orb-icon" class="orb-icon-ascii">[MIC]</span>
+          <span id="orb-label">TAP TO SPEAK</span>
+          <span id="orb-sublabel">[ LIVE NEURAL VOICE ]</span>
+        </button>
+        <div id="voice-status-feedback" class="voice-linear-feedback">
+          Eva (Lead Frontend) & Adam (Chief Backend) listening * Web Speech API Ready
+        </div>
+      </div>
+
+      <!-- Terminal Chat Stream Buffer (Always active, continuous line-by-line flow) -->
+      <div id="chat-stream-region" class="chat-stream-region">
+        <div id="messages-container" style="display:flex; flex-direction:column; gap:8px;">
+          <!-- Populated line-by-line starting with boot diagnostics & status bar -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Input Bar & Footer -->
+    <footer class="terminal-footer">
+      <form id="chat-form">
+        <div class="input-container-row">
+          <!-- MENU BUTTON (opens Quick Menu; everything else lives on Screen 2 deck) -->
+          <button type="button" id="menu-btn" class="menu-trigger-btn" title="Open Quick Menu & System Deck (Screen 2)">
+            <span>[=] MENU</span>
+          </button>
+
+          <!-- Command & Prompt Line -->
+          <div class="input-box">
+            <span class="prompt-prefix">evabot&gt;</span>
+            <textarea
+              id="user-input"
+              rows="1"
+              placeholder="Enter prompt or command (e.g. /help, /persona, /mode, /models)..."
+              class="terminal-textarea"
+            ></textarea>
+          </div>
+
+          <!-- TRANSMIT BUTTON -->
+          <button type="submit" id="send-btn" class="transmit-btn">
+            [ TRANSMIT ↵ ]
+          </button>
+        </div>
+
+        <!-- QUICK MENU (dropdown panel anchored to [=] MENU) -->
+        <div id="quick-menu" class="quick-menu">
+          <div class="qm-header">
+            <span>QUICK MENU // SYSTEM DECK</span>
+            <button type="button" class="return-btn" data-qm="close">[ X ]</button>
+          </div>
+          <div class="qm-grid">
+            <button type="button" class="qm-btn" data-qm="deck">[ OPEN FULL SYSTEM DECK → SCREEN 2 ]</button>
+            <button type="button" class="qm-btn" data-qm="row" data-qm-index="1">[01] CO-PILOT PERSONA</button>
+            <button type="button" class="qm-btn" data-qm="row" data-qm-index="2">[02] OPERATIONAL MODES</button>
+            <button type="button" class="qm-btn" data-qm="row" data-qm-index="3">[03] CONSILIUM COUNCIL</button>
+            <button type="button" class="qm-btn" data-qm="row" data-qm-index="4">[04] NEURAL MODEL</button>
+            <button type="button" class="qm-btn" data-qm="row" data-qm-index="5">[05] KNOWLEDGE BASE</button>
+            <button type="button" class="qm-btn" data-qm="row" data-qm-index="6">[06] TOP-10 ROLES</button>
+            <button type="button" class="qm-btn" data-qm="row" data-qm-index="7">[07] TELEMETRY & METRICS</button>
+            <button type="button" class="qm-btn" data-qm="row" data-qm-index="8">[08] SECURITY & KEYS</button>
+            <button type="button" class="qm-btn" data-qm="row" data-qm-index="9">[09] DEVELOPER MODE</button>
+            <button type="button" class="qm-btn" data-qm="onboarding">(*)= ONBOARDING // REPLAY 10 STEPS</button>
+            <button type="button" class="qm-btn" data-qm="clear">[ CLR ] PURGE TERMINAL</button>
+            <button type="button" class="qm-btn" data-qm-lang="en">LANGUAGE: EN</button>
+            <button type="button" class="qm-btn" data-qm-lang="uk">LANGUAGE: UK</button>
+            <button type="button" class="qm-btn" data-qm-lang="ru">LANGUAGE: RU</button>
+            <button type="button" class="qm-btn" data-dev-toggle data-qm="dev">DEV MODE: OFF (CLICK TO ON)</button>
+          </div>
+          <div class="qm-font">
+            <div class="qm-font-label">
+              <span>FONT SIZE</span>
+              <span class="qm-font-current" data-font-current>16px</span>
+            </div>
+            <div class="qm-font-grid">
+              <button type="button" class="qm-btn qm-font-btn" data-font-size="8">8</button>
+              <button type="button" class="qm-btn qm-font-btn" data-font-size="10">10</button>
+              <button type="button" class="qm-btn qm-font-btn" data-font-size="12">12</button>
+              <button type="button" class="qm-btn qm-font-btn" data-font-size="14">14</button>
+              <button type="button" class="qm-btn qm-font-btn" data-font-size="16">16</button>
+              <button type="button" class="qm-btn qm-font-btn" data-font-size="18">18</button>
+              <button type="button" class="qm-btn qm-font-btn" data-font-size="20">20</button>
+              <button type="button" class="qm-btn qm-font-btn" data-font-size="22">22</button>
+              <button type="button" class="qm-btn qm-font-btn" data-font-size="24">24</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-legend">
+          <span>Enter: Transmit * Shift+Enter: Linebreak * [ [=] MENU ]: Quick Menu + System Deck</span>
+          <span>EvaBot Online // Based in Odesa, Ukraine // Strictly USD ($) & EUR (€)</span>
+        </div>
+      </form>
+    </footer>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 2: SYSTEM DECK // LINE-BY-LINE SETTINGS & TELEMETRY (100vh)        -->
+  <!-- ========================================================================= -->
+  <section id="screen-control-deck">
+    <div class="deck-container">
+      
+      <!-- Top Navigation Bar (Return to Terminal) -->
+      <div class="deck-nav-bar">
+        <button id="scroll-to-terminal-btn" class="return-btn" title="Return to Terminal (Smooth scroll up)">
+          <span style="color:var(--clr-green);">^</span>
+          <span>[ ^ RETURN TO TERMINAL ]</span>
+        </button>
+        <div style="font-size:12px; font-weight:800; letter-spacing:0.1em; color:#ffffff;">
+          EVA CONTROL DECK // CONFIGURATION & TELEMETRY
+        </div>
+        <div class="deck-nav-actions">
+          <div class="lang-switch" style="display:inline-flex;">
+            <button id="lang-btn-en" class="lang-btn active">EN</button>
+            <button id="lang-btn-uk" class="lang-btn">UK</button>
+            <button id="lang-btn-ru" class="lang-btn">RU</button>
+          </div>
+          <button id="clear-btn" title="Purge terminal screen" class="return-btn">[ CLR ]</button>
+          <button id="btn-onboarding-replay" data-onb-replay title="Replay the 10 onboarding steps" class="return-btn">[ ONB ]</button>
+          <button type="button" id="devmode-toggle-deck" data-dev-toggle class="return-btn">DEV MODE: OFF (CLICK TO ON)</button>
+        </div>
+      </div>
+
+      <!-- ROW 1: PERSONA / CO-PILOT -->
+      <div class="deck-row" id="deck-row-01">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[01] CO-PILOT PERSONA & GENDER:</span>
+          <span style="font-size:10px; color:var(--fg-muted);">[ACTIVE: DUAL FULL-STACK]</span>
+        </div>
+        <div class="deck-row-items" id="persona-selector-group">
+          <button type="button" data-persona="eva" class="config-btn">
+            [F] EVA // Lead Frontend & UX Director (Strategic)
+          </button>
+          <button type="button" data-persona="adam" class="config-btn">
+            [M] ADAM // Chief Backend Architect & Cloud Systems (Technical)
+          </button>
+          <button type="button" data-persona="dual" class="config-btn active">
+            [DUAL] EVA & ADAM // Synergistic Full-Stack Co-Pilots (Dual)
+          </button>
+        </div>
+      </div>
+
+      <!-- ROW 2: OPERATIONAL MODES -->
+      <div class="deck-row" id="deck-row-02">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[02] OPERATIONAL MODES:</span>
+          <span style="font-size:10px; color:var(--fg-muted);">[4 TOPOLOGIES]</span>
+        </div>
+        <div class="deck-row-items" id="mode-selector-group">
+          <button type="button" data-mode="chat" class="config-btn active">
+            (*) CHAT // Direct Model Interaction
+          </button>
+          <button type="button" data-mode="dialog" class="config-btn">
+            ( ) DIALOG // Bilateral Debate (Eva vs Adam)
+          </button>
+          <button type="button" data-mode="interview" class="config-btn">
+            ( ) INTERVIEW // Structured Technical/Executive Q&A
+          </button>
+          <button type="button" data-mode="consilium" class="config-btn">
+            ( ) CONSILIUM // Multi-Agent Executive Council
+          </button>
+        </div>
+      </div>
+
+      <!-- ROW 3: CONSILIUM PRESETS & PARTICIPANT COUNT -->
+      <div class="deck-row" id="deck-row-03">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[03] CONSILIUM COUNCIL CONFIGURATION:</span>
+          <span style="font-size:10px; color:var(--fg-muted);">[SCALE: 3 TO 10 PARTICIPANTS]</span>
+        </div>
+        <div class="deck-row-items" style="align-items:center; gap:12px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:11px; color:var(--fg-muted);">Participants:</span>
+            <input type="range" id="deck-consilium-count" min="3" max="10" value="5" style="width:100px; accent-color:var(--clr-green); cursor:pointer;">
+            <span id="consilium-count-val" style="font-weight:700; color:var(--clr-green); font-size:11px;">5</span>
+          </div>
+          <button type="button" id="btn-preset-top10-paid" class="config-btn">
+            [*] PRESET: TOP-10 SMARTEST PAID MODELS
+          </button>
+          <button type="button" id="btn-preset-top10-free" class="config-btn">
+            [*] PRESET: TOP-10 FREE QUOTA MODELS
+          </button>
+        </div>
+      </div>
+
+      <!-- ROW 4: ACTIVE NEURAL MODEL -->
+      <div class="deck-row" id="deck-row-04">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[04] ACTIVE NEURAL MODEL (CATALOG 55+):</span>
+          <span id="model-tier-badge" style="font-size:10px; color:var(--clr-green); font-weight:700;">[FREE] 100% FREE QUOTA ($0.00)</span>
+        </div>
+        <div>
+          <select id="deck-model-select" class="deck-select">
+            <!-- Populated dynamically by app.ts -->
+          </select>
+        </div>
+        <div id="deck-model-pricing-info" style="font-size:10px; color:var(--fg-muted); display:flex; gap:16px;">
+          <span>USD ($): <strong id="spec-usd" style="color:#ffffff;">$0.00 (Free) / $0.075 (Paid)</strong></span>
+          <span>EUR (€): <strong id="spec-eur" style="color:#ffffff;">€0.00 (Free) / €0.070 (Paid)</strong></span>
+          <span>Context: <strong id="spec-context" style="color:#ffffff;">1,048,576 tokens</strong></span>
+        </div>
+      </div>
+
+      <!-- ROW 5: DATABASE & KNOWLEDGE BASE SELECTION -->
+      <div class="deck-row" id="deck-row-05">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[05] COMPANY DATABASE & KNOWLEDGE BASE:</span>
+          <span style="font-size:10px; color:var(--clr-green); font-weight:700;">[OK] CONNECTED</span>
+        </div>
+        <div class="deck-row-items" id="db-selector-group">
+          <button type="button" data-db="hybrid" class="config-btn active">
+            (*) EvaLine Hybrid Core (PostgreSQL + Qdrant RAG) [OK 4ms]
+          </button>
+          <button type="button" data-db="postgres" class="config-btn">
+            ( ) Company PostgreSQL Production [OK 8ms]
+          </button>
+          <button type="button" data-db="qdrant" class="config-btn">
+            ( ) Qdrant Vector Cluster (Dense Embeddings) [OK 11ms]
+          </button>
+          <button type="button" data-db="ephemeral" class="config-btn">
+            ( ) Ephemeral Session Memory (Isolated) [-- 0ms]
+          </button>
+        </div>
+        <div style="margin-top:4px;">
+          <input
+            type="text"
+            id="custom-db-uri-input"
+            placeholder="Custom Company Database URI: postgres://user:password@host:5432/dbname"
+            class="deck-input"
+          />
+        </div>
+      </div>
+
+      <!-- ROW 6: TOP-10 PROFESSIONS & ROLES -->
+      <div class="deck-row" id="deck-row-06">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[06] EVALINE TOP-10 PROFESSIONS & AGENTS:</span>
+          <span style="font-size:10px; color:var(--fg-muted);">[10 SPECIALIZED ROLES]</span>
+        </div>
+        <div class="deck-row-items" id="roles-selector-group">
+          <button type="button" data-role="eva_frontend" class="config-btn active">Eva (FrontEnd)</button>
+          <button type="button" data-role="adam_backend" class="config-btn">Adam (BackEnd)</button>
+          <button type="button" data-role="ceo" class="config-btn">CEO</button>
+          <button type="button" data-role="cto" class="config-btn">CTO</button>
+          <button type="button" data-role="ciso" class="config-btn">CISO</button>
+          <button type="button" data-role="cfo" class="config-btn">CFO</button>
+          <button type="button" data-role="devops_sre" class="config-btn">DevOps SRE</button>
+          <button type="button" data-role="data_ai_lead" class="config-btn">Data AI Lead</button>
+          <button type="button" data-role="qa_automation" class="config-btn">QA Lead</button>
+          <button type="button" data-role="legal_compliance" class="config-btn">Legal Counsel</button>
+        </div>
+      </div>
+
+      <!-- ROW 7: LIVE TELEMETRY & DIAGNOSTICS -->
+      <div class="deck-row" id="deck-row-07">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[07] REAL-TIME CLUSTER TELEMETRY & METRICS:</span>
+          <span style="font-size:10px; color:var(--clr-green); font-weight:700;">[LIVE 1000ms]</span>
+        </div>
+        <div class="telemetry-grid">
+          <div class="telem-cell">
+            <span class="telem-label">Server:</span>
+            <span id="telem-server" class="telem-val">evabot-agent-vm</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Uptime:</span>
+            <span id="telem-uptime" class="telem-val">0h 0m</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Memory:</span>
+            <span id="telem-memory" class="telem-val">32 MB</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Latency:</span>
+            <span id="telem-latency" class="telem-val" style="color:var(--clr-green);">-- ms</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Frankfurt (c3-std-8):</span>
+            <span class="telem-val" style="color:var(--clr-green);">[ONLINE]</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Iowa (e2-micro):</span>
+            <span class="telem-val" style="color:var(--clr-green);">[ONLINE]</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Session Tokens:</span>
+            <span id="telem-tokens" class="telem-val" style="color:var(--clr-yellow);">0</span>
+          </div>
+          <div class="telem-cell">
+            <span class="telem-label">Session Cost (USD/EUR):</span>
+            <span id="telem-cost" class="telem-val" style="color:var(--clr-green);">$0.00 / €0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 8: SECURITY & API CREDENTIALS -->
+      <div class="deck-row" id="deck-row-08">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[08] SECURITY & GOOGLE CLOUD CREDENTIALS:</span>
+          <span id="deck-key-status" style="font-size:10px; color:var(--clr-green); font-weight:700;">[OK] GOOGLE AMBIENT AUTH</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input
+            type="password"
+            id="deck-api-key-input"
+            placeholder="Custom API Key (AIzaSy...)"
+            class="deck-input"
+            style="flex:1;"
+          />
+          <button type="button" id="deck-save-key-btn" class="return-btn">
+            [ SAVE ]
+          </button>
+          <button type="button" id="deck-clear-key-btn" class="return-btn" style="background:transparent;">
+            [ USE AMBIENT ]
+          </button>
+        </div>
+        <div style="font-size:10px; color:var(--fg-dim);">
+          * Based in Odesa, Ukraine (UA) * Financial compliance: strictly USD ($) and EUR (€) * Zero tolerance for aggressor state.
+        </div>
+      </div>
+
+      <!-- ROW 9: DEVELOPER MODE -->
+      <div class="deck-row" id="deck-row-09">
+        <div class="deck-row-header">
+          <span class="deck-row-label">[09] DEVELOPER MODE & RAW ANSI:</span>
+          <span style="font-size:10px; color:var(--clr-yellow); font-weight:700;">[RUNTIME CLIENT+SERVER TOGGLE]</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:4px;">
+          <button type="button" class="config-btn" data-qm="dev" data-dev-toggle>DEV MODE: OFF (CLICK TO ON)</button>
+          <span style="font-size:11px; color:var(--fg-muted);">CLIENT: <strong data-dev-state style="color:var(--clr-yellow);">OFF</strong></span>
+          <span style="font-size:11px; color:var(--fg-muted);">SERVER: <strong data-dev-state style="color:var(--clr-yellow);">OFF</strong></span>
+        </div>
+        <div style="font-size:10px; color:var(--fg-dim); margin-top:4px;">
+          Whisper commands (active in DEV mode): /dev /ansi /config /onboarding. <span data-dev-cmd="" class="hidden">Use /online to exit hidden mode.</span>
+        </div>
+      </div>
+
+      <!-- Deck Footer -->
+      <div style="display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid var(--border-dim); font-size:11px; color:var(--fg-muted);">
+        <span>EVABOT ONLINE // LINE-BY-LINE CYBER DECK</span>
+        <button onclick="document.getElementById('screen-terminal').scrollIntoView({behavior:'smooth'})" class="return-btn" style="font-size:10px;">
+          [ ^ TOP OF TERMINAL ]
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- VITE COMPILED CLIENT BUNDLE -->
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
