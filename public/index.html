@@ -496,7 +496,7 @@
       VOCAB_CAP: 500,
 
       // All slash commands recognized locally or proxied via /api/models/command
-      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'search', 'find', 'services', 'servers', 'autocorrect', 'voice', 'tts'],
+      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'search', 'find', 'services', 'servers', 'health', 'debug', 'log', 'monitor', 'autocorrect', 'voice', 'tts'],
 
       // Short localized descriptions (condensed from the I18N help blocks)
       CMD_DESC: {
@@ -522,6 +522,10 @@
         servers: { en: 'Cluster: evabot-agent-vm + evaline-micro-vm', uk: 'Кластер: evabot-agent-vm + evaline-micro-vm', ru: 'Кластер: evabot-agent-vm + evaline-micro-vm' },
         products: { en: 'EvaLine product catalog: stats, categories, search', uk: 'Каталог продукції EvaLine: статистика, категорії, пошук', ru: 'Каталог продукции EvaLine: статистика, категории, поиск' },
         who: { en: 'Corporate knowledge matrix: who knows what', uk: 'Матриця знань компанії: хто що знає', ru: 'Матрица знаний компании: кто что знает' },
+        health: { en: 'LLM provider health (breakers)', uk: 'Здоров’я LLM-провайдерів (breakers)', ru: 'Здоровье LLM-провайдеров (breakers)' },
+        debug: { en: 'Debug mode: footer & diagnostics', uk: 'Режим налагодження: футер і діагностика', ru: 'Режим отладки: футер и диагностика' },
+        log: { en: 'Operation log tail [N] [filter]', uk: 'Журнал операцій [N] [фільтр]', ru: 'Журнал операций [N] [фильтр]' },
+        monitor: { en: 'Model monitor TOP-10', uk: 'Модельний монітор ТОП-10', ru: 'Модельный монитор ТОП-10' },
         autocorrect: { en: 'Toggle typo auto-correction', uk: 'Автокорекція описок', ru: 'Автокоррекция опечаток' },
         voice: { en: 'Voice input & persona', uk: 'Голосовий ввід і персона', ru: 'Голосовой ввод и персона' },
         tts: { en: 'Text-to-speech on/off', uk: 'Озвучення відповідей', ru: 'Озвучивание ответов' },

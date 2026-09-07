@@ -4,6 +4,7 @@ import { logger } from './Logger.js';
 import { ModelRegistry } from '../models/ModelRegistry.js';
 import { ModelRatings } from '../models/ModelRatings.js';
 import { withTimeout, getBreaker, LLM_CALL_TIMEOUT_MS, ProviderFallbackChain } from './Resilience.js';
+import { OpLog } from './OpLog.js';
 
 export type LlmProvider = 'google' | 'omniroute' | 'openrouter' | 'opencode';
 
@@ -202,12 +203,15 @@ export class UniversalLlmClient {
     const p = onChunk
       ? this.executeStream(model, universalMsgs, onChunk, options)
       : this.executeGenerate(model, universalMsgs, options);
+    const t0 = Date.now();
     try {
       const result = await withTimeout(p, LLM_CALL_TIMEOUT_MS, `llm:${provider}:${model}`);
       breaker.recordSuccess();
+      OpLog.getInstance().log('debug', 'llm', `provider=${provider} model=${model} latencyMs=${Date.now() - t0} ok`);
       return result;
     } catch (err: any) {
       breaker.recordFailure(err);
+      OpLog.getInstance().log('error', 'llm', `provider=${provider} model=${model} latencyMs=${Date.now() - t0} fail: ${err.message}`);
       throw err;
     }
   }

@@ -13,6 +13,7 @@ import { CompanyKnowledge } from '../core/CompanyKnowledge.js';
 import { NewsEngine, NewsTagId } from '../core/NewsEngine.js';
 import { ProviderFallbackChain } from '../core/Resilience.js';
 import { SephirotEngine, SEPHIROT_ROLES } from '../core/SephirotEngine.js';
+import { OpLog, isDebugOn, setDebugOn, opLog } from '../core/OpLog.js';
 
 export type ModelRatingDimension = 'quality' | 'speed' | 'context' | 'cost';
 
@@ -408,6 +409,18 @@ export const COMMAND_ALIASES: Record<string, string> = {
   '/дерево': '/sephirot',
   '/tetraxis': '/sephirot',
   '/тетраксис': '/sephirot',
+  // /debug
+  '/дебаг': '/debug',
+  '/отладка': '/debug',
+  '/наладка': '/debug',
+  // /log
+  '/лог': '/log',
+  '/журнал-лог': '/log',
+  '/логи': '/log',
+  // /monitor
+  '/монитор': '/monitor',
+  '/рейтинг': '/monitor',
+  '/топ-моделей': '/monitor',
 };
 
 /**
@@ -428,6 +441,7 @@ export function normalizeCommand(input: string): string {
 export class ModelCommand {
   public static execute(command: string): string {
     const cmd = normalizeCommand(command);
+    OpLog.getInstance().log('info', 'command', command);
     const parts = cmd.split(/\s+/);
     const action = parts[0];
 
@@ -486,8 +500,15 @@ export class ModelCommand {
         return this.handleWho(parts.slice(1));
       case '/sephirot':
         return this.handleSephirot(parts.slice(1));
+      case '/debug':
+        return this.handleDebug(parts.slice(1));
+      case '/log':
+        return this.handleLog(parts.slice(1));
+      case '/monitor':
+        return this.handleMonitor();
       default:
-        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /health, /products, /who, /sephirot, /free, /paid, or /help.`;
+        OpLog.getInstance().log('error', 'command', `unknown command: ${action}`);
+        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /health, /products, /who, /sephirot, /debug, /log, /monitor, /free, /paid, or /help.`;
     }
   }
 
@@ -1051,6 +1072,214 @@ export class ModelCommand {
     lines.push('  Stage 2: Chesed/Gevurah → Tiferet → Netzach → Hod (баланс і зв\'язок)');
     lines.push('  Stage 3: Yesod → Malkuth (дані → виконання)');
     lines.push('  Запуск: /sephirot <тема> | Статус: /sephirot status');
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  /**
+   * /debug [on|off|status|full] — debug mode + system diagnostics.
+   *  - on/off toggles the server-side debug flag (DebugContext in OpLog.ts):
+   *    while ON, 'debug'-level entries are recorded in OpLog and chat replies
+   *    (ChatRouter stream) get a `⚙ debug:` footer with model/provider/latency.
+   *  - full renders a full diagnostics dump (node, mem, breakers, OpLog stats,
+   *    DB file sizes, omniroute proxy reachability).
+   */
+  private static handleDebug(args: string[]): string {
+    const sub = args[0]?.toLowerCase() || 'status';
+
+    if (sub === 'on' || sub === 'off') {
+      const on = sub === 'on';
+      setDebugOn(on);
+      opLog.log('info', 'system', `debug mode ${on ? 'ON' : 'OFF'}`);
+      return `⚙ Debug mode ${on ? 'УВІМКНЕНО (ON)' : 'ВИМКНЕНО (OFF)'}.\n` +
+        (on
+          ? '  Тепер: (1) у відповідях чату з\'явиться футер ⚙ debug (model/provider/latency); (2) debug-записи пишуться в /log.'
+          : '  Debug-записи більше не пишуться в /log (крім помилок).');
+    }
+
+    if (sub === 'full') {
+      return this.handleDebugFull();
+    }
+
+    // status (default)
+    return [
+      `⚙ Debug mode: ${isDebugOn() ? 'ON' : 'OFF'}`,
+      '',
+      '  Що змінює debug:',
+      '    • Футер у відповідях чату: `⚙ debug: model=... provider=... latency=...ms fallback=...`',
+      '    • Debug-записи рівня "debug" пишуться в журнал операцій (див. /log)',
+      '    • /debug full — повна діагностика системи',
+      '',
+      '  Використання: /debug on | off | status | full',
+    ].join('\n');
+  }
+
+  /** /debug full — full system diagnostics dump (sync; omniroute probe via 3s-timeout child fetch). */
+  private static handleDebugFull(): string {
+    const mem = process.memoryUsage();
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  🛠️  DEBUG FULL — ДІАГНОСТИКА СИСТЕМИ');
+    lines.push('═'.repeat(78));
+    lines.push(`  Node          : ${process.version} (${process.platform}/${process.arch})`);
+    lines.push(`  Uptime        : proc ${(process.uptime() / 3600).toFixed(2)} h | OS ${(os.uptime() / 3600).toFixed(1)} h`);
+    lines.push(`  Memory        : rss ${(mem.rss / 1048576).toFixed(0)} MB | heap used ${(mem.heapUsed / 1048576).toFixed(0)}/${(mem.heapTotal / 1048576).toFixed(0)} MB`);
+    lines.push(`  Debug flag    : ${isDebugOn() ? 'ON' : 'OFF'}`);
+    lines.push('─'.repeat(78));
+
+    // Provider breaker health (reuses the /health renderer)
+    try {
+      lines.push(ProviderFallbackChain.getHealthReport());
+    } catch (err: any) {
+      lines.push(`  ⚠️ Breaker health недоступна: ${err.message}`);
+    }
+
+    // OpLog stats
+    try {
+      const st = opLog.stats();
+      lines.push('  📜 OPLOG (журнал операцій):');
+      lines.push(`    • Буфер           : ${st.bufferSize}/1000 записів`);
+      lines.push(`    • Рівні           : info ${st.byLevel.info} | warn ${st.byLevel.warn} | error ${st.byLevel.error} | debug ${st.byLevel.debug}`);
+      lines.push(`    • Типи            : command ${st.byKind.command} | llm ${st.byKind.llm} | breaker ${st.byKind.breaker} | system ${st.byKind.system} | chat ${st.byKind.chat}`);
+      if (st.lastError) {
+        lines.push(`    • Остання помилка : ${new Date(st.lastError.ts).toISOString().replace('T', ' ').substring(0, 19)} [${st.lastError.kind}] ${st.lastError.text.substring(0, 60)}`);
+      }
+      lines.push(`    • Файл            : ${st.filePath}${st.fileBytes !== undefined ? ` (${(st.fileBytes / 1024).toFixed(1)} KB)` : ' (ще не створено)'}`);
+    } catch (err: any) {
+      lines.push(`  ⚠️ OpLog stats недоступні: ${err.message}`);
+    }
+    lines.push('─'.repeat(78));
+
+    // DB paths + sizes
+    const ftsPath = '/var/www/evabot-backend/knowledge-base/evaline-knowledge-base/fts_index.db';
+    const productsPath = '/var/www/evabot-backend/data/products.json';
+    const opsPath = opLog.getPath();
+    const fmtSize = (p: string): string => {
+      try { return `${(fs.statSync(p).size / 1024).toFixed(1)} KB`; } catch { return 'not found'; }
+    };
+    let chatDbPath = 'unknown';
+    try { chatDbPath = ChatHistoryStore.getInstance().getPath(); } catch { /* store unavailable */ }
+    lines.push('  💾 ФАЙЛИ ДАНИХ:');
+    lines.push(`    • chat-history.db : ${fmtSize(chatDbPath)} — ${chatDbPath}`);
+    lines.push(`    • fts_index.db    : ${fmtSize(ftsPath)} — ${ftsPath}`);
+    lines.push(`    • products.json   : ${fmtSize(productsPath)} — ${productsPath}`);
+    lines.push(`    • operations.jsonl: ${fmtSize(opsPath)} — ${opsPath}`);
+    lines.push('─'.repeat(78));
+
+    // OmniRoute proxy reachability (3s timeout)
+    lines.push(`  🌐 OmniRoute proxy (http://100.66.98.4:20128/v1/models): ${this.probeOmniroute()}`);
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  /** Sync reachability probe of the omniroute edge proxy (3s hard deadline). */
+  private static probeOmniroute(): string {
+    try {
+      const out = execFileSync(
+        process.execPath,
+        ['-e', 'fetch("http://100.66.98.4:20128/v1/models",{signal:AbortSignal.timeout(2500)}).then(r=>console.log("HTTP "+r.status)).catch(()=>console.log("UNREACHABLE"))'],
+        { timeout: 3000, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
+      ).trim();
+      return out || 'unknown';
+    } catch {
+      return 'UNREACHABLE (timeout/помилка)';
+    }
+  }
+
+  /**
+   * /log [N] [filter] — tail of the operation log.
+   * Args are order-independent: a number is the limit; 'info'|'warn'|'error'|'debug'
+   * filter by level; 'command'|'llm'|'breaker'|'system'|'chat' filter by kind;
+   * anything else becomes a substring (textLike) filter.
+   */
+  private static handleLog(args: string[]): string {
+    const LEVELS = new Set(['info', 'warn', 'error', 'debug']);
+    const KINDS = new Set(['command', 'llm', 'breaker', 'system', 'chat']);
+    let limit = 20;
+    let level: 'info' | 'warn' | 'error' | 'debug' | undefined;
+    let kind: 'command' | 'llm' | 'breaker' | 'system' | 'chat' | undefined;
+    let textLike: string | undefined;
+
+    for (const raw of args) {
+      const a = raw.toLowerCase();
+      if (/^\d+$/.test(a)) {
+        limit = Math.max(1, Math.min(200, parseInt(a, 10)));
+      } else if (LEVELS.has(a)) {
+        level = a as any;
+      } else if (KINDS.has(a)) {
+        kind = a as any;
+      } else {
+        textLike = a;
+      }
+    }
+
+    const entries = opLog.query({ limit, level, kind, textLike });
+
+    const ICON: Record<string, string> = { info: 'ℹ️', warn: '⚠️', error: '✖️', debug: '🐞' };
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    const filters = [
+      level ? `level=${level}` : null,
+      kind ? `kind=${kind}` : null,
+      textLike ? `text~"${textLike}"` : null,
+    ].filter(Boolean).join(', ');
+    lines.push(`  📜 ЖУРНАЛ ОПЕРАЦІЙ — ОСТАННІ ${entries.length} ЗАПИСІВ${filters ? ` (${filters})` : ''}`);
+    lines.push('═'.repeat(78));
+
+    if (entries.length === 0) {
+      lines.push('  Записів немає (фільтр не дав збігів або журнал ще порожній).');
+    }
+    for (const e of entries) {
+      const when = new Date(e.ts).toTimeString().split(' ')[0];
+      const text = e.text.length > 120 ? e.text.substring(0, 117) + '...' : e.text;
+      lines.push(`  ${when} ${ICON[e.level] || '·'} [${e.kind}] ${text}`);
+    }
+
+    lines.push('─'.repeat(78));
+    lines.push('  Використання: /log [N] [info|warn|error|debug|command|llm|breaker|system|chat|текст] — порядок довільний.');
+    lines.push('  Tip: /debug on → більше debug-записів у /log');
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  /**
+   * /monitor — TOP-10 sections from the auto-generated model monitor report
+   * (data/model-monitor/REPORT.md, produced by scripts/model-monitor.py).
+   */
+  private static handleMonitor(): string {
+    const reportPath = '/var/www/evabot-backend/data/model-monitor/REPORT.md';
+    let report: string;
+    try {
+      report = fs.readFileSync(reportPath, 'utf8');
+    } catch {
+      return [
+        '⚠️ Звіт модельного монітора не знайдено: data/model-monitor/REPORT.md',
+        '   Запустіть генератор звіту: python3 scripts/model-monitor.py',
+        '   Після завершення повторіть /monitor.',
+      ].join('\n');
+    }
+
+    // Split the markdown into '## ' sections and keep the TOP-10 ones.
+    const sections = report.split(/\n(?=## )/);
+    const top = sections.filter((s) => /^## .*TOP-10/i.test(s));
+    if (top.length === 0) {
+      return '⚠️ У REPORT.md не знайдено секцій TOP-10. Запустіть: python3 scripts/model-monitor.py';
+    }
+
+    const dateMatch = report.match(/#\s+📡 Модельный монитор — ([^\n]+)/);
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  📡 МОДЕЛЬНИЙ МОНІТОР — ТОП-10 (авто-агрегація джерел)');
+    lines.push('═'.repeat(78));
+    if (dateMatch) lines.push(`  Звіт: ${dateMatch[1].trim()}`);
+    for (const s of top) {
+      lines.push(s.trimEnd());
+      lines.push('');
+    }
+    lines.push('  Оновити звіт: python3 scripts/model-monitor.py');
     lines.push('═'.repeat(78));
     return lines.join('\n');
   }

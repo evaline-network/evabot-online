@@ -10,3 +10,4 @@ fi
 
 npx quartz build "$@"
 echo "Build complete -> $(pwd)/public"
+cp /var/www/evabot-backend/data/model-monitor/REPORT.md /var/www/evabot-backend/docs-site/content/journal/MODEL_MONITOR.md

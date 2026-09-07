@@ -3,7 +3,7 @@
  * and NewsEngine (tag sets + formatNews grouping) tests.
  */
 
-import { CircuitBreaker, withTimeout, ProviderFallbackChain, getBreaker, BREAKERS } from '../src/core/Resilience.js';
+import { CircuitBreaker, withTimeout, ProviderFallbackChain, getBreaker, BREAKERS, BREAKER_PROVIDER_NAMES } from '../src/core/Resilience.js';
 import { NewsEngine, NEWS_TAGS, NewsItem } from '../src/core/NewsEngine.js';
 import { ModelCommand, COMMAND_ALIASES, normalizeCommand } from '../src/models/ModelRatings.js';
 import { I18nEngine } from '../src/core/I18nEngine.js';
@@ -11,6 +11,12 @@ import { I18nEngine } from '../src/core/I18nEngine.js';
 export async function runResilienceTests(): Promise<boolean> {
   console.log('\n--- Running Resilience (Breakers/Timeout) & NewsEngine Tests ---');
   let passed = true;
+
+  // Reset all breakers to a fresh closed state: earlier suites in the same
+  // process may have opened omniroute/openrouter breakers via LLM calls.
+  for (const p of BREAKER_PROVIDER_NAMES) {
+    getBreaker(p).recordSuccess();
+  }
 
   function assert(cond: boolean, msg: string) {
     if (cond) {

@@ -8,6 +8,7 @@ import { applyLocalePolicy } from '../../core/LocalePolicy.js';
 import { logger } from '../../core/Logger.js';
 import { ChatHistoryStore, CONSILIUM_SESSION_ID } from '../../core/ChatHistoryStore.js';
 import { I18nEngine } from '../../core/I18nEngine.js';
+import { isDebugOn, startSpan, renderDebugFooter } from '../../core/OpLog.js';
 
 /**
  * Fire-and-forget chat persistence: a DB failure must never break the chat flow.
@@ -62,11 +63,14 @@ export class ChatRouter extends Router {
       }
 
       const messages = [...history, { role: 'user', content: message.trim() }];
+      const span = startSpan(targetModel, client.resolveProvider(targetModel, provider));
       const responseText = await client.generateContent(targetModel, messages, {
         systemInstruction: effectiveInstruction,
         provider: provider as LlmProvider | undefined,
         apiKey,
       });
+      span.end();
+      const debugFooter = isDebugOn() ? `\n${renderDebugFooter(span)}` : '';
 
       const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
       persistChatMessage(chatSessionId, 'user', message.trim(), targetModel);
@@ -74,7 +78,7 @@ export class ChatRouter extends Router {
 
       logger.logUserAction('CHAT_MESSAGE', { model: targetModel, length: message.length, roleId }, ctx.clientIp);
       ctx.sendJson(200, {
-        response: responseText,
+        response: responseText + debugFooter,
         model: targetModel,
         provider: client.resolveProvider(targetModel, provider),
         roleId: roleId || 'default',
@@ -105,6 +109,7 @@ export class ChatRouter extends Router {
       }
 
       const messages = [...history, { role: 'user', content: message.trim() }];
+      const span = startSpan(targetModel, client.resolveProvider(targetModel, provider));
 
       const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
       persistChatMessage(chatSessionId, 'user', message.trim(), targetModel);
@@ -128,10 +133,12 @@ export class ChatRouter extends Router {
           apiKey,
         }
       );
+      span.end();
+      const fullTextOut = isDebugOn() ? `${fullText}\n${renderDebugFooter(span)}` : fullText;
 
       persistChatMessage(chatSessionId, 'assistant', fullText, targetModel);
 
-      ctx.res.write(`data: ${JSON.stringify({ done: true, fullText })}\n\n`);
+      ctx.res.write(`data: ${JSON.stringify({ done: true, fullText: fullTextOut })}\n\n`);
       ctx.res.end();
     }));
 

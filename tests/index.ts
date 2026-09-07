@@ -15,10 +15,11 @@ import { runCommandsAndHistoryTests } from './commands_and_history.test.js';
 import { runProductsTests } from './products.test.js';
 import { runTelegramTests } from './telegram.test.js';
 import { runResilienceTests } from './resilience.test.js';
+import { runDebugLogTests } from './debug_log.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
-  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (18 test suites)');
+  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (19 test suites)');
   console.log('================================================================\n');
 
   const results = [
@@ -40,6 +41,7 @@ async function runAllTests(): Promise<void> {
     await runProductsTests(),
     await runTelegramTests(),
     await runResilienceTests(),
+    await runDebugLogTests(),
   ];
 
   const testNames = [
@@ -61,6 +63,7 @@ async function runAllTests(): Promise<void> {
     'ProductsTests',
     'TelegramTests',
     'ResilienceTests',
+    'DebugLogTests',
   ];
 
   let allPassed = true;
@@ -76,7 +79,7 @@ async function runAllTests(): Promise<void> {
 
   console.log('\n================================================================');
   if (allPassed) {
-    console.log('✅ ALL 18 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
+    console.log('✅ ALL 19 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
     console.log('================================================================\n');
     process.exit(0);
   } else {

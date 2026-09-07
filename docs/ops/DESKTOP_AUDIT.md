@@ -78,7 +78,26 @@ description: "Аудит содержимого ~/Desktop с классифик�
     └── (пусто — всё перенесено в /var/www/evabot-backend/docs-site/content)
 ```
 
-## Связанное консолидации
+## Статус виконання (2026-09-07)
+
+**Режим:** безпкове прибирання — нічого не видалено, все переміщено в `~/Desktop/_archive/cleanup-2026-09-07/` зі збереженням структури.
+
+| Елемент | Дія | Новий шлях |
+| --- | --- | --- |
+| `Antigravity-CLI.desktop` (342 B) | переміщено | `_archive/cleanup-2026-09-07/Antigravity-CLI.desktop` |
+| `Antigravity-IDE.desktop` (272 B) | переміщено | `_archive/cleanup-2026-09-07/Antigravity-IDE.desktop` |
+| `Kilo-Code.desktop` (252 B) | переміщено | `_archive/cleanup-2026-09-07/Kilo-Code.desktop` |
+| `mcp-servers.json` (3 982 B) | переміщено | `_archive/cleanup-2026-09-07/mcp-servers.json` |
+| `evaline-com-ua/` (27 271 145 B) | переміщено (дублікат підтверджено: `cmp` по README.uk.md, scripts/convert_evaline.py, site/en/wholesale.md, site/ru/index.md, site/SUMMARY.md — усі ідентичні репо; `diff -rq` nested site — 0 відмінностей) | `_archive/cleanup-2026-09-07/evaline-com-ua/` |
+| `opencode/` (57 858 B) | переміщено (усередині лише eval-артефакти: звіти, JSON, скрипти, логи, __pycache__) | `_archive/cleanup-2026-09-07/opencode/` |
+| `omniroute/` (21 110 B) | переміщено (звіти + порожній logs/) | `_archive/cleanup-2026-09-07/omniroute/` |
+
+- **Звільнено з поверхні Desktop: 27 354 961 B (~26.1 MiB).**
+- Залишено навмисно: симлінки `evabot`/`evabot-online`, `AGENTS.md`, `antigravity/`, `gcloud/`, `ssh-bridge/`, `_archive/`, а також `ascii-art/` (активна робота від 2026-09-07, відсутня в оригінальному аудиті).
+- Строром * `*.log`/`*.tmp` на корені Desktop не виявлено.
+- Створено `~/Desktop/README.md` з описом нової структури.
+
+## Зв'язане консолідації
 
 - Отчёты Desktop → `reports/` и `models/` (см. [[index]])
 - SSH-bridge и gcloud → `ops/` ([[ops/ssh-bridge/REPORT|SSH Bridge]], [[ops/GCLOUD_SERVERS_AUDIT_REPORT|GCloud Audit]])

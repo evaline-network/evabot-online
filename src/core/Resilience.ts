@@ -17,6 +17,7 @@
  */
 
 import { logger } from './Logger.js';
+import { OpLog } from './OpLog.js';
 
 /** Default hard deadline for a single LLM provider call (45 s). */
 export const LLM_CALL_TIMEOUT_MS = 45_000;
@@ -81,6 +82,7 @@ export class CircuitBreaker {
     // the next canAttempt() call admits a single probe request.
     if (this.state === 'open' && Date.now() - (this.openedAtTs || 0) >= this.cooldownMs) {
       this.state = 'half-open';
+      OpLog.getInstance().log('warn', 'breaker', `${this.provider} → half-open (cooldown elapsed, admitting probe)`);
     }
     return this.state;
   }
@@ -103,10 +105,14 @@ export class CircuitBreaker {
   }
 
   public recordSuccess(): void {
+    const wasOpen = this.state !== 'closed';
     this.consecutiveFailures = 0;
     this.lastOkTs = Date.now();
     this.state = 'closed';
     this.openedAtTs = undefined;
+    if (wasOpen) {
+      OpLog.getInstance().log('warn', 'breaker', `${this.provider} → closed (probe succeeded)`);
+    }
   }
 
   public recordFailure(err: Error | string): void {
@@ -118,6 +124,7 @@ export class CircuitBreaker {
     if (this.state === 'half-open' || this.consecutiveFailures >= this.openThreshold) {
       this.state = 'open';
       this.openedAtTs = Date.now();
+      OpLog.getInstance().log('warn', 'breaker', `${this.provider} → open (${this.consecutiveFailures} consecutive failures, cooldown ${this.cooldownMs / 1000}s)`);
       logger.warn('CircuitBreaker', `Provider "${this.provider}" breaker OPENED after ${this.consecutiveFailures} consecutive failures. Cooldown ${this.cooldownMs / 1000}s. Last error: ${msg}`);
     }
     recentProviderErrors.push({ model: '-', provider: this.provider, outcome: 'failed', error: msg, ts: Date.now() });

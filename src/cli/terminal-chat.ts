@@ -22,6 +22,7 @@ import { ConsiliumEngine, ConsiliumMode, ConsiliumProgressEvent } from '../core/
 import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
 import { ClusterMonitor } from '../core/ClusterMonitor.js';
 import { I18nEngine } from '../core/I18nEngine.js';
+import { isDebugOn, startSpan, renderDebugFooter } from '../core/OpLog.js';
 
 // ANSI terminal color palette (Minimalist B&W + Traffic Light standard)
 const C = {
@@ -278,6 +279,10 @@ ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/mode <mode>${C.reset}            Режим: solo | dialogue | consilium
   ${C.cyan}/consilium <тема>${C.reset}     Запустить многоагентный консилиум экспертов
   ${C.cyan}/sephirot <тема>${C.reset}      Консиліум 10 сфер Дерева Життя (Tetraxis). Статус: /sephirot status
+  ${C.cyan}/health${C.reset}                Здоров’я LLM-провайдерів (circuit breakers)
+  ${C.cyan}/debug [on|off|full]${C.reset}   Режим налагодження: футер латентності, діагностика (/debug full)
+  ${C.cyan}/log [N] [фільтр]${C.reset}      Журнал операцій: останні N записів, фільтр level/kind/текст
+  ${C.cyan}/monitor${C.reset}               Модельний монітор: ТОП-10 free/paid моделей для кодингу
   ${C.cyan}/dialogue <тема>${C.reset}      Запустить автономный диалог-дебаты двух моделей
   ${C.cyan}/role <id>${C.reset}             Выбрать роль: architect, devops, security_auditor
   ${C.cyan}/clear${C.reset}                 Очистить историю сообщений
@@ -429,6 +434,9 @@ async function main(): Promise<void> {
         case '/products':
         case '/who':
         case '/sephirot':
+        case '/debug':
+        case '/log':
+        case '/monitor':
           console.log(ModelCommand.execute(input));
           break;
 
@@ -504,7 +512,7 @@ async function main(): Promise<void> {
           // Multilingual aliases (UK/RU) of server commands → route through the
           // alias-normalizing registry (e.g. /історія → /history, /пошук → /search).
           const canonical = COMMAND_ALIASES[cmd];
-          if (canonical && ['/history', '/memory', '/search', '/find', '/services', '/servers', '/health', '/news', '/products', '/who'].includes(canonical)) {
+          if (canonical && ['/history', '/memory', '/search', '/find', '/services', '/servers', '/health', '/news', '/products', '/who', '/debug', '/log', '/monitor'].includes(canonical)) {
             if (canonical === '/news') {
               console.log(await ModelCommand.executeAsync(input));
             } else {
@@ -534,6 +542,7 @@ async function main(): Promise<void> {
     try {
       const client = new UniversalLlmClient();
       const streamer = new TerminalMarkdownStreamer((text) => process.stdout.write(text));
+      const span = startSpan(session.getModel(), client.resolveProvider(session.getModel()));
       await client.streamContent(
         session.getModel(),
         [{ role: 'user', content: input }],
@@ -541,7 +550,11 @@ async function main(): Promise<void> {
           streamer.push(chunk);
         }
       );
+      span.end();
       streamer.finish();
+      if (isDebugOn()) {
+        process.stdout.write(`${C.gray}${renderDebugFooter(span)}${C.reset}\n`);
+      }
     } catch (err: any) {
       process.stdout.write(`\n${C.red}[ERROR] Ошибка генерации: ${err.message}${C.reset}\n`);
     }
