@@ -31,7 +31,7 @@ from .voice import VoiceController
 app = FastAPI(
     title="EvaBot Online API",
     version="v0.0.1 MVP",
-    description="Backend for EvaBot & Evaline Online (Odesa, Ukraine). Backend: Python/FastAPI, Frontend: TypeScript.",
+    description="Backend for EvaBot & Evaline Online (Chernomorsk, Ukraine & Bratislava, Slovakia). Backend: Python/FastAPI, Frontend: TypeScript.",
 )
 
 app.add_middleware(
@@ -109,7 +109,9 @@ async def api_config() -> JSONResponse:
             "productName": "EvaBot Online",
             "version": "v0.0.1 MVP",
             "server": "evabot-online-edge",
-            "base": "Odesa, Ukraine (UA)",
+            "base": "Chernomorsk, Ukraine (UA) & Bratislava, Slovakia",
+            "manufacturing": "Chernomorsk, Promyslova st. 1",
+            "euHub": "Bratislava, Obchodna 37",
             "localePolicy": {
                 "currencies": list(settings.supported_currencies),
                 "financialStandard": "USD ($) & EUR (€) only",

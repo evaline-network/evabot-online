@@ -191,5 +191,5 @@ npm test                # Run tests
 
 ---
 
-**© 2026 Evaline Corporation (Ukraine, Odesa)**  
+**© 2026 Evaline Corporation (Chernomorsk, Ukraine & Bratislava, Slovakia)**  
 **Status:** ✅ Production Ready

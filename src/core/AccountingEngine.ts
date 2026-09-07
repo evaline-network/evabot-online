@@ -19,6 +19,68 @@ export interface InfraCostItem {
   category: 'compute' | 'storage' | 'network' | 'subscription';
 }
 
+export interface CapitalExpenseItem {
+  item: string;
+  usd: number;
+  date: string;
+  note: string;
+}
+
+/**
+ * One-time capital investments ledger (CapEx) — distinct from recurring monthly OpEx.
+ */
+export class CapitalExpenses {
+  private static readonly CAPITAL_LEDGER: CapitalExpenseItem[] = [
+    {
+      item: 'Google Cloud evabot-agent-vm (c3-standard-8) - $10/day server plan',
+      usd: 300,
+      date: '2026-09-01',
+      note: '$300 of $500 investment - server $10/day',
+    },
+    {
+      item: 'Subscriptions (AI providers, tools)',
+      usd: 100,
+      date: '2026-09-01',
+      note: '$100 of $500 - subscriptions',
+    },
+    {
+      item: 'API tokens (OpenRouter, HuggingFace, Z.ai, Groq, Cerebras, Mistral, Cloudflare)',
+      usd: 100,
+      date: '2026-09-01',
+      note: '$100 of $500 - API tokens',
+    },
+    {
+      item: 'Google Pixel 10 Pro XL (control panel + Google account registration device)',
+      usd: 1000,
+      date: '2026-09-01',
+      note: 'smartphone as remote control & account registry',
+    },
+  ];
+
+  public static getCapitalExpenses(): CapitalExpenseItem[] {
+    return [...this.CAPITAL_LEDGER];
+  }
+
+  public static getTotalCapitalUSD(): number {
+    return this.CAPITAL_LEDGER.reduce((acc, item) => acc + item.usd, 0);
+  }
+
+  public static formatCapitalSection(): string {
+    const lines: string[] = [];
+    lines.push('  [4] КАПИТАЛЬНЫЕ ИНВЕСТИЦИИ (CAPITAL INVESTMENTS // Разовые вложения CapEx):');
+    lines.push('  ────────────────────────────────────────────────────────────────────────────');
+    for (const item of this.CAPITAL_LEDGER) {
+      const name = item.item.length > 62 ? item.item.substring(0, 59) + '...' : item.item;
+      lines.push(`  • ${name}`);
+      lines.push(`      Сумма: $${item.usd.toFixed(2)} | Дата: ${item.date}`);
+      lines.push(`      Примечание: ${item.note}`);
+    }
+    lines.push('  ────────────────────────────────────────────────────────────────────────────');
+    lines.push(`  ИТОГО КАПИТАЛЬНЫЕ ИНВЕСТИЦИИ:                       $${this.getTotalCapitalUSD().toFixed(2)}`);
+    return lines.join('\n');
+  }
+}
+
 export interface AgentUnitCostSpec {
   role: string;
   modelId: string;
@@ -285,6 +347,8 @@ export class AccountingEngine {
     lines.push('  ────────────────────────────────────────────────────────────────────────────');
     lines.push('  💡 ВЫВОД: Себестоимость создания агента на базе Gemini 3.8 / 3.1 Pro равна $0.00.');
     lines.push(`  Базовая стоимость работы роя из 10 агентов: $${(totalInfraHourly).toFixed(4)}/час за весь кластер.`);
+    lines.push('');
+    lines.push(CapitalExpenses.formatCapitalSection());
     lines.push('═'.repeat(78));
     return lines.join('\n');
   }

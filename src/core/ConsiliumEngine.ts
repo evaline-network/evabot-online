@@ -107,12 +107,13 @@ export class ConsiliumEngine {
     const startTime = Date.now();
     logger.info('ConsiliumEngine', `Starting execution: mode=${options.mode}, rounds=${options.rounds || 1}`);
 
-    // Fetch hybrid DB context if enabled
+    // Fetch hybrid DB context if enabled or if prompt concerns EvaLine
     let kbContext = '';
     let kbIncluded = false;
-    if (options.useKnowledgeBase) {
+    const shouldQueryKB = Boolean(options.useKnowledgeBase) || /(evaline|євалайн|евалайн|eva-line)/i.test(options.prompt);
+    if (shouldQueryKB) {
       try {
-        const docs = await this.kbConnector.search(options.prompt, { limit: 3 });
+        const docs = await this.kbConnector.search(options.prompt, { limit: 5 });
         if (docs.length > 0) {
           kbContext = this.kbConnector.formatContextForPrompt(docs);
           kbIncluded = true;
@@ -316,7 +317,7 @@ export class ConsiliumEngine {
         name: 'Eva (Frontend & Strategic Interviewer)',
         title: 'Lead Frontend Architect & UX Director',
         systemPrompt: applyLocalePolicy(
-          'You are Eva, conducting a professional Frontend, UX, and Strategic Architecture interview for EvaLine (based in Odesa, Ukraine). ' +
+          'You are Eva, conducting a professional Frontend, UX, and Strategic Architecture interview for EvaLine (Headquarters and manufacturing in Chernomorsk, Ukraine, EU Hub in Bratislava, Slovakia). ' +
           'Evaluate the candidate response with constructive depth. ' +
           'Format your reply in three clean sections:\n' +
           '1. 💡 Feedback & Assessment: Strengths and gaps observed in candidate answer.\n' +
@@ -332,7 +333,7 @@ export class ConsiliumEngine {
         name: 'Adam (Backend & Systems Interviewer)',
         title: 'Chief Backend Architect & Core Systems Lead',
         systemPrompt: applyLocalePolicy(
-          'You are Adam, conducting an advanced Backend, Cloud Infrastructure, and Distributed Systems interview for EvaLine (based in Odesa, Ukraine). ' +
+          'You are Adam, conducting an advanced Backend, Cloud Infrastructure, and Distributed Systems interview for EvaLine (Headquarters and manufacturing in Chernomorsk, Ukraine, EU Hub in Bratislava, Slovakia). ' +
           'Evaluate the candidate with technical rigor and zero tolerance for sloppy architecture. ' +
           'Format your reply in three clean sections:\n' +
           '1. 💡 Technical Critique: Algorithmic efficiency, scalability, and security posture.\n' +
@@ -348,7 +349,7 @@ export class ConsiliumEngine {
         name: 'Eva & Adam (Dual Co-Pilot Interview Board)',
         title: 'Full-Stack Technical Interview Board',
         systemPrompt: applyLocalePolicy(
-          'You are Eva (Lead Frontend Architect) and Adam (Chief Backend Architect), conducting a dual co-pilot technical interview for EvaLine (based in Odesa, Ukraine). ' +
+          'You are Eva (Lead Frontend Architect) and Adam (Chief Backend Architect), conducting a dual co-pilot technical interview for EvaLine (Headquarters and manufacturing in Chernomorsk, Ukraine, EU Hub in Bratislava, Slovakia). ' +
           'Both evaluate the candidate from your respective specialties:\n' +
           '[Eva ♀]: Assess frontend ergonomics, API consumption, usability, and strategic clarity.\n' +
           '[Adam ♂]: Assess backend architecture, database latency, security, and algorithmic performance.\n' +
@@ -613,6 +614,7 @@ export class ConsiliumEngine {
 
     const synthPrompt =
       `You are the Senior Technical Arbiter. Synthesize the debate between ${p1.name} and ${p2.name} on the topic:\n"${options.prompt}"\n\n` +
+      (kbContext ? `Grounded Knowledge Base Context:\n${kbContext}\n\n` : '') +
       `Deliberation Transcript:\n` +
       turns.map((t) => `### Round ${t.round} - ${t.name} (${t.role}):\n${t.content}`).join('\n\n') +
       `\n\nProduce an authoritative Executive Synthesis with:\n` +
@@ -756,6 +758,7 @@ export class ConsiliumEngine {
         const prompt =
           `You are participating in Round ${r} of the EvaLine Technical Consilium.\n` +
           `Original Mandate: "${options.prompt}"\n\n` +
+          (kbContext ? `${kbContext}\n\n` : '') +
           `Below are the stances delivered by your colleagues in the previous round:\n\n${peerSummary}\n\n` +
           `Critique, support, or refine these viewpoints from your vantage as ${p.title}. Highlight consensus or irreconcilable trade-offs.`;
 
@@ -813,13 +816,20 @@ export class ConsiliumEngine {
       `You are the EvaLine Supreme Technical Council Synthesizer.\n` +
       `Your role is to formulate the definitive, binding consensus from a ${activeParticipants.length}-agent expert consilium.\n\n` +
       `Original Mandate:\n"${options.prompt}"\n\n` +
+      (kbContext ? `Grounded Knowledge Base Context (Verified Corporate Facts & Hubs):\n${kbContext}\n\n` : '') +
       `Consilium Transcript:\n${fullTranscript}\n\n` +
       `Formulate a comprehensive, structured Consilium Consensus Report strictly in Markdown:\n` +
       `## 1. Executive Summary & Final Verdict\n` +
       `## 2. Unanimous Consensus & Strategic Alignment\n` +
       `## 3. Disputed Decisions, Risk Analysis & Trade-Offs\n` +
       `## 4. Implementation Roadmap & Technical Milestones\n` +
-      `## 5. Budgetary & Infrastructure Impact (strictly in USD ($) and EUR (€))\n`;
+      `## 5. Budgetary & Infrastructure Impact (strictly in USD ($) and EUR (€))\n\n` +
+      `MANDATORY GROUNDED VERIFICATION:\n` +
+      `- Confirm official manufacturing plant and office: м. Чорноморськ, вул. Промислова, 1 (Одеська обл., Україна).\n` +
+      `- Confirm official European logistics hub and office: м. Братислава, Obchodna 37 (Словаччина).\n` +
+      `- Detail the complete product portfolio (automotive sheets/mats Diamond & Honeycomb, sports tatami & puzzle mats with dovetail locks, livestock mats 'Бурьонка', footwear/orthopedic materials, marine teak, Private Label OEM/ODM).\n` +
+      `- Detail physical EVA advantages over rubber (5x lighter) and PVC (4x lighter), closed-cell hygiene, non-absorption (<0.1%), temperature resistance (-50°C to +75°C), 20-75 Shore A.\n` +
+      `- Confirm UNIC integrity membership, MOH/СЕС sanitary conclusions, CE European declaration, and autonomous industrial diesel generators ensuring uninterrupted manufacturing during wartime blackouts.\n`;
 
     let synthesis = '';
     try {

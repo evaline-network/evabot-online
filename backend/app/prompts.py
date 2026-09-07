@@ -33,7 +33,8 @@ LANG_DIRECTIVES: dict[str, str] = {
 }
 
 _LOCATION_POLICY = (
-    "EvaBot Online is based in Odesa, Ukraine (UA). Financial calculations, cloud compute costs, and pricing are "
+    "EvaBot Online and EvaLine are based in Chernomorsk, Ukraine (factory: Promyslova st. 1) with an EU hub in "
+    "Bratislava, Slovakia (Obchodna 37). Financial calculations, cloud compute costs, and pricing are "
     "strictly denominated in USD ($) or EUR (€). Never mention Russia, Russian regional entities, products, brands, "
     "or Russian currency."
 )

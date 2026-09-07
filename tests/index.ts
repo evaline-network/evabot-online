@@ -11,10 +11,14 @@ import { runLLMProvidersTests } from './llm-providers.test.js';
 import { runKnowledgeBaseTests } from './knowledge-base.test.js';
 import { runPluginConsiliumTests } from './consilium-new.test.js';
 import { runAccountingAndBuilderTests } from './accounting_and_builder.test.js';
+import { runCommandsAndHistoryTests } from './commands_and_history.test.js';
+import { runProductsTests } from './products.test.js';
+import { runTelegramTests } from './telegram.test.js';
+import { runResilienceTests } from './resilience.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
-  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (14 test suites)');
+  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (18 test suites)');
   console.log('================================================================\n');
 
   const results = [
@@ -32,6 +36,10 @@ async function runAllTests(): Promise<void> {
     await runKnowledgeBaseTests(),
     await runPluginConsiliumTests(),
     await runAccountingAndBuilderTests(),
+    await runCommandsAndHistoryTests(),
+    await runProductsTests(),
+    await runTelegramTests(),
+    await runResilienceTests(),
   ];
 
   const testNames = [
@@ -49,6 +57,10 @@ async function runAllTests(): Promise<void> {
     'KnowledgeBaseTests',
     'ConsiliumNewTests',
     'AccountingAndBuilderTests',
+    'CommandsAndHistoryTests',
+    'ProductsTests',
+    'TelegramTests',
+    'ResilienceTests',
   ];
 
   let allPassed = true;
@@ -64,7 +76,7 @@ async function runAllTests(): Promise<void> {
 
   console.log('\n================================================================');
   if (allPassed) {
-    console.log('✅ ALL 13 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
+    console.log('✅ ALL 18 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
     console.log('================================================================\n');
     process.exit(0);
   } else {

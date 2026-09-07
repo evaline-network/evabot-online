@@ -1,0 +1,21 @@
+# evabot-watchdog.service — oneshot probe executed by evabot-watchdog.timer.
+#
+# ── INSTALL (as root; DO NOT auto-install from repo) ────────────────────────
+#   sudo cp /var/www/evabot-backend/config/evabot-watchdog.service /etc/systemd/system/
+#   sudo cp /var/www/evabot-backend/config/evabot-watchdog.timer   /etc/systemd/system/
+#   sudo chmod +x /var/www/evabot-backend/config/watchdog.sh
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now evabot-watchdog.timer
+#
+# NOTE: give the main brain unit crash-restart too:
+#   sudo systemctl edit evabot-brain   # add:  [Service]  Restart=always  RestartSec=5
+
+[Unit]
+Description=EvaBot brain hang watchdog probe (checks :3000/api/health + omniroute :20128)
+After=network.target evabot-brain.service
+
+[Service]
+Type=oneshot
+ExecStart=/var/www/evabot-backend/config/watchdog.sh
+User=root
+TimeoutStartSec=60

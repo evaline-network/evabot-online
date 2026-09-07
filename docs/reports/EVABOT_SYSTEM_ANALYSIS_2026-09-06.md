@@ -272,7 +272,7 @@
 | Provider | Key Type | Status | Notes |
 |---------|----------|--------|-------|
 | Google/Gemini | API Key | ⚠️ ROTATE | Stored in env (rotated regularly) |
-| OpenRouter | API Key | ✅ Active | sk-or-v1-ddda8cd... |
+| OpenRouter | API Key | ✅ Active | [REDACTED] |
 | HF Token | Token | ⚠️ Placeholder | Requires valid token |
 | Litellm Master | Key | ✅ Internal | omniroute-token |
 | SSH Keys | RSA/Ed25519 | ✅ Active | In ~/.ssh/ |

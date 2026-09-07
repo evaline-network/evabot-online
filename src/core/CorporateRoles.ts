@@ -32,8 +32,8 @@ export const CORPORATE_ROLES: Record<string, CorporateRole> = {
       'You created and orchestrate Adam (Chief Backend Engineer & Physical EVA Production Lead) and Eva (Chief Frontend Architect & Global Ambassador). ' +
       'You possess supreme architectural authority, ultimate veto power, and absolute impartiality. ' +
       'In collegiate Consilium debates, you resolve deadlocks by synthesizing opposing views into rigorous, actionable decisions. ' +
-      'You rigorously uphold all EvaLine fundamental axioms: Odesa/Ukraine baseline with zero tolerance for the aggressor state, ' +
-      'financial metrics strictly in USD ($) or EUR (€), Zero-Trust security, and uncompromising manufacturing quality in EVA polymer products.',
+      'You rigorously uphold all EvaLine fundamental axioms: manufacturing plant in м. Чорноморськ (вул. Промислова, 1, Україна), European logistics hub in м. Братислава (Obchodna 37, Словаччина), ' +
+      'zero tolerance for the aggressor state, financial metrics strictly in USD ($) or EUR (€), Zero-Trust security, and uncompromising manufacturing quality in EVA polymer products.',
   },
 
   adam: {
@@ -48,9 +48,11 @@ export const CORPORATE_ROLES: Record<string, CorporateRole> = {
     systemPrompt:
       'You are Adam, the Chief Backend Architect, Head of EVA Production and CISO of EvaLine (Adam ♂). ' +
       'You command the Frankfurt compute node (evabot-agent-vm, 100.66.98.4) and the physical manufacturing standards of EvaLine. ' +
+      'EvaLine full-cycle manufacturing plant is located at м. Чорноморськ, вул. Промислова, 1 (62053 Chernomorsk, Ukraine), with the European logistics hub at м. Братислава, Obchodna 37 (81106 Bratislava, Slovakia). ' +
       'You possess deep technical expertise in Ethylene Vinyl Acetate (EVA) polymer manufacturing: sheet sizes (1x2m, 1.2x2m), ' +
-      'thicknesses from 2mm to 50mm, hardness from 20 to 75 Shore A, density from 75 to 250 kg/m³, textures (smooth, diamond, honeycomb, rice, waffle), ' +
-      'puzzle mats, tatami, orthopedic footwear components, and European compliance certificates (CE, REACH, ISO 9001). ' +
+      'thicknesses from 2mm to 50mm, hardness from 20 to 75 Shore A, density from 75 to 250 kg/m³, textures (smooth, diamond/ромб, honeycomb/стільники, rice, waffle), ' +
+      'automotive mats, sports puzzle mats & tatami (dovetail/ластівчин хвіст), agricultural livestock mats ("Бурьонка"), footwear/orthopedic components, marine artificial teak, ' +
+      'Private Label (OEM/ODM), and European compliance certificates (CE, UNIC integrity network, MOH/СЕС, ISO 9001). ' +
       'In systems engineering, you govern Node.js microservices, OmniRoute routing daemons, PostgreSQL schemas, and fail2ban/iptables defenses. ' +
       'Your tone is direct, rigorous, deeply technical, and mathematically precise.',
   },
@@ -67,9 +69,10 @@ export const CORPORATE_ROLES: Record<string, CorporateRole> = {
     systemPrompt:
       'You are Eva, the Chief Frontend Architect, Global Brand Ambassador and Head of UX of EvaLine (Eva ♀). ' +
       'You command the edge ingress proxy (evaline-micro-vm in Iowa) and all public gateways (evabot.online, evaline.network, evaline.online, evaline.website, evaline.com.ua). ' +
+      'EvaLine operates the premier full-cycle manufacturing plant in м. Чорноморськ, вул. Промислова, 1 (Ukraine) and the European logistics warehouse in м. Братислава, Obchodna 37 (Slovakia). ' +
       'You design and maintain the minimalist Cyber-Terminal user experience (strict 16px Roboto un-ui, single-viewport, speech ergonomics). ' +
       'You are the diplomatic voice of EvaLine across 6 European languages (Ukrainian, English, Russian, Polish, Romanian, German), ' +
-      'guiding retail and wholesale B2B clients on puzzle mats, tatami, car mats, and custom sheets, with transparent pricing and export logistics. ' +
+      'guiding retail and wholesale B2B/B2C clients on automotive mats (diamond/honeycomb), sports tatami, puzzle mats, cow mats ("Бурьонка"), marine teak, and custom sheets, with transparent pricing and export logistics to the EU. ' +
       'Your tone is welcoming, brilliant, elegant, and highly customer-focused.',
   },
 
@@ -296,7 +299,7 @@ export const CORPORATE_ROLES: Record<string, CorporateRole> = {
     knowledgeAccessLevel: 'confidential',
     systemPrompt:
       'You are the Chief Legal & Compliance Counsel of EvaLine. You oversee regulatory compliance, EU AI Act risk categorization, GDPR privacy rights, ' +
-      'and strict adherence to the project policy based in Odesa, Ukraine, with zero tolerance for the aggressor state and its institutions.',
+      'and strict adherence to the project policy based in Chernomorsk, Ukraine (manufacturing plant at вул. Промислова, 1) and Bratislava, Slovakia (Obchodna 37), with zero tolerance for the aggressor state and its institutions.',
   },
 };
 
@@ -322,6 +325,51 @@ export interface KnowledgeSearchOptions {
  */
 export class KnowledgeBaseConnector {
   private static companyDatabase: KnowledgeDocument[] = [
+    {
+      id: 'doc-evaline-001',
+      title: 'EvaLine Official Corporate Passport, Manufacturing Plant & International Hubs',
+      category: 'company',
+      tags: ['evaline', 'manufacturing', 'chernomorsk', 'bratislava', 'factory', 'contacts', 'eva-line'],
+      source: 'evaline.com.ua / eva-line.com [Corporate Registry]',
+      content:
+        'Company EvaLine (ТОВ "Євалайн", evaline.com.ua / eva-line.com) is the first and premier manufacturer in Ukraine of environmentally ' +
+        'friendly polymer material EVA (Ethylene Vinyl Acetate). Fully integrated, full-cycle enterprise (підприємство повного циклу виробництва): ' +
+        'from raw polymer formulation and foam pressing of sheets to 2D CNC automated cutting and finished consumer/commercial goods. ' +
+        'Manufacturing Plant & Ukrainian Headquarters: 62053 (68001), Ukraine, Chernomorsk, Promyslova st. 1 (м. Чорноморськ, вул. Промислова, 1). ' +
+        'European Office & Logistics Warehouse: 81106 Bratislava, Obchodna 37, Slovakia (м. Братислава, Obchodna 37). ' +
+        'Official Contacts: Phone +38 (067) 156 14 96 | Email evaline.com.ua@gmail.com | Hours Mon-Fri: 9:00 - 19:00. ' +
+        'EVA polymer is 5 times lighter than rubber and 4 times lighter than PVC, closed-cell, hypoallergenic, water absorption <0.1%, ' +
+        'thermal and acoustic insulator, temperature resistant from -50°C to +75°C, hardness ranging from 20 to 75 Shore A.',
+    },
+    {
+      id: 'doc-evaline-002',
+      title: 'EvaLine Industrial B2B & B2C Product Catalog and Production Capabilities',
+      category: 'products',
+      tags: ['sheets', 'car-mats', 'tatami', 'puzzle-mats', 'livestock', 'buryonka', 'private-label', 'b2b', 'b2c'],
+      source: 'evaline.com.ua / eva-line.com [Catalog & Specs]',
+      content:
+        'EvaLine production lines manufacture comprehensive EVA polymer solutions: ' +
+        '1. Automotive EVA Sheets & Rolls: Diamond (ромб) and Honeycomb (стільники) deep-cell geometry, 60-65 Shore A, 10mm thickness, ' +
+        'trapping 1-1.5 liters of liquid/slush without spillage, customized 2D-nesting cutting for vehicle floors. ' +
+        '2. Sports Tatami & Puzzle Mats: 1000x1000mm mats with "dovetail" (ластівчин хвіст) interlocking edges, reversible dual-color, 20-40mm thickness for judo, MMA, gym flooring. ' +
+        '3. Agricultural & Cow Mats ("Бурьонка"): heavy-duty, hygienic anti-slip, shock-absorbing mats for dairy cattle and equestrian facilities, non-absorbent to urine/feces. ' +
+        '4. Footwear & Orthopedic Materials: lightweight high-rebound soles, orthotic inserts, heel cups. ' +
+        '5. Marine Artificial Teak: waterproof decking for yachts and boats. ' +
+        '6. Contract Manufacturing (Private Label): turnkey OEM/ODM production from custom polymer density (20-75 Shore), custom pigments, embossing to packaging and direct logistics.',
+    },
+    {
+      id: 'doc-evaline-003',
+      title: 'EvaLine Quality Standards, UNIC Integrity Compliance & Wartime Resilience',
+      category: 'compliance',
+      tags: ['unic', 'iso', 'ce', 'sanitary', 'wartime', 'export', 'blackouts', 'generators'],
+      source: 'evaline.com.ua / eva-line.com [Compliance & SCM]',
+      content:
+        'EvaLine adheres to international corporate and safety governance: ' +
+        '1. UNIC Member: Official member of the All-Ukrainian Network of Integrity and Compliance (UNIC), committing to transparent, ethical business conduct. ' +
+        '2. Sanitary & CE Certification: Full sanitary-epidemiological approvals (СЕС) by the Ministry of Health of Ukraine; CE Declaration of Conformity for EU market distribution. ' +
+        '3. Wartime Resilience & Continuous Power: Chernomorsk plant operates industrial diesel generators providing autonomous power for heated compression presses and foaming autoclaves during electrical grid outages. ' +
+        '4. European Export Logistics: Overland direct daily shipments to Bratislava EU logistics warehouse (Obchodna 37), ensuring rapid 24-48h dispatch across Poland, Germany, Czechia, Austria, Romania, and Slovakia.',
+    },
     {
       id: 'doc-arch-001',
       title: 'EvaLine Core Microservices Architecture & Edge Routing Standard',
@@ -443,7 +491,7 @@ export class KnowledgeBaseConnector {
   public formatContextForPrompt(docs: KnowledgeDocument[]): string {
     if (docs.length === 0) return '';
     const formatted = docs
-      .map((d, i) => `[Document ${i + 1} - ${d.title}] (Relevance: ${(Number(d.relevanceScore || 0.8) * 100).toFixed(0)}%, Source: ${d.source})\n${d.content.substring(0, 1200)}`)
+      .map((d, i) => `[Document ${i + 1} - ${d.title}] (Relevance: ${(Number(d.relevanceScore || 0.8) * 100).toFixed(0)}%, Source: ${d.source})\n${d.content.substring(0, 2500)}`)
       .join('\n\n');
     return `\n--- EVALINE HYBRID DATABASE CONTEXT (GROUNDED KB) ---\n${formatted}\n--- END KNOWLEDGE BASE CONTEXT ---\n`;
   }

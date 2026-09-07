@@ -19,6 +19,7 @@ import { createAlertsRouter } from './routes/AlertsRouter.js';
 import { createPluginsRouter } from './routes/PluginsRouter.js';
 import { Router, createRouteContext } from './routes/Router.js';
 import { ChatRouter } from './routes/ChatRouter.js';
+import { startTelegramBot } from '../telegram/TelegramBot.js';
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -283,6 +284,12 @@ export async function startServerAsync(port: number = Config.serverPort, host: s
   server.listen(port, host, () => {
     logger.info(LogCategory.SYSTEM, 'Server', `[+] EvaBot HTTP Server listening on http://${host}:${port}`);
   });
+
+  try {
+    startTelegramBot();
+  } catch (err: any) {
+    logger.warn(LogCategory.SYSTEM, 'Server', `Telegram bot init failed: ${err.message}`);
+  }
   
   process.on('SIGTERM', async () => {
     logger.info(LogCategory.SYSTEM, 'Server', 'Shutting down...');

@@ -3,6 +3,7 @@ import { Config } from './Config.js';
 import { logger } from './Logger.js';
 import { ModelRegistry } from '../models/ModelRegistry.js';
 import { ModelRatings } from '../models/ModelRatings.js';
+import { withTimeout, getBreaker, LLM_CALL_TIMEOUT_MS, ProviderFallbackChain } from './Resilience.js';
 
 export type LlmProvider = 'google' | 'omniroute' | 'openrouter' | 'opencode';
 
@@ -183,6 +184,35 @@ export class UniversalLlmClient {
   }
 
   /**
+   * Resilience-wrapped single attempt: hard 45s deadline (hang protection),
+   * CircuitBreaker admission check + success/failure recording for the
+   * provider resolved from the model id.
+   */
+  private async attempt(
+    model: string,
+    universalMsgs: UniversalMessage[],
+    options: UniversalGenerationOptions,
+    onChunk?: (chunk: string) => void
+  ): Promise<string> {
+    const provider = this.resolveProvider(model);
+    const breaker = getBreaker(provider);
+    if (!breaker.canAttempt()) {
+      throw new Error(`[CIRCUIT_OPEN] provider "${provider}" breaker is open — skipping attempt for ${model}`);
+    }
+    const p = onChunk
+      ? this.executeStream(model, universalMsgs, onChunk, options)
+      : this.executeGenerate(model, universalMsgs, options);
+    try {
+      const result = await withTimeout(p, LLM_CALL_TIMEOUT_MS, `llm:${provider}:${model}`);
+      breaker.recordSuccess();
+      return result;
+    } catch (err: any) {
+      breaker.recordFailure(err);
+      throw err;
+    }
+  }
+
+  /**
    * Generates content with automatic ranked fallback on failure
    */
   public async generateContent(
@@ -193,17 +223,18 @@ export class UniversalLlmClient {
   ): Promise<string> {
     const universalMsgs = this.normalizeToUniversal(messages);
     try {
-      return await this.executeGenerate(model, universalMsgs, options);
+      return await this.attempt(model, universalMsgs, options);
     } catch (err: any) {
       if (!enableFallback) throw err;
 
-      const fallbackChain = ModelRatings.getFallbackChain(model);
-      logger.warn('UniversalLlmClient', `Model "${model}" failed: ${err.message}. Initiating ranked fallback chain (${fallbackChain.length} candidates)...`);
+      const resilience = new ProviderFallbackChain();
+      const fallbackChain = resilience.filterHealthy(ModelRatings.getFallbackChain(model));
+      logger.warn('UniversalLlmClient', `Model "${model}" failed: ${err.message}. Initiating ranked fallback chain (${fallbackChain.length} healthy candidates)...`);
 
       for (const fallbackModel of fallbackChain) {
         try {
           logger.info('UniversalLlmClient', `[FALLBACK] Attempting ranked candidate: ${fallbackModel}`);
-          return await this.executeGenerate(fallbackModel, universalMsgs, options);
+          return await this.attempt(fallbackModel, universalMsgs, options);
         } catch (fallbackErr: any) {
           logger.warn('UniversalLlmClient', `[FALLBACK] Candidate "${fallbackModel}" failed: ${fallbackErr.message}`);
         }
@@ -262,19 +293,20 @@ export class UniversalLlmClient {
     };
 
     try {
-      return await this.executeStream(model, universalMsgs, trackedOnChunk, options);
+      return await this.attempt(model, universalMsgs, options, trackedOnChunk);
     } catch (err: any) {
       if (!enableFallback || chunksEmitted > 0) {
         throw err;
       }
 
-      const fallbackChain = ModelRatings.getFallbackChain(model);
+      const resilience = new ProviderFallbackChain();
+      const fallbackChain = resilience.filterHealthy(ModelRatings.getFallbackChain(model));
       logger.warn('UniversalLlmClient', `Stream for model "${model}" failed before output: ${err.message}. Initiating ranked fallback...`);
 
       for (const fallbackModel of fallbackChain) {
         try {
           logger.info('UniversalLlmClient', `[STREAM FALLBACK] Trying candidate: ${fallbackModel}`);
-          return await this.executeStream(fallbackModel, universalMsgs, onChunk, options);
+          return await this.attempt(fallbackModel, universalMsgs, options, onChunk);
         } catch (fallbackErr: any) {
           logger.warn('UniversalLlmClient', `[STREAM FALLBACK] Candidate "${fallbackModel}" failed: ${fallbackErr.message}`);
         }

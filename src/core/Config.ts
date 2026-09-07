@@ -14,6 +14,7 @@ export interface SystemConfig {
   openrouterApiKey: string;
   opencodeBaseUrl: string;
   opencodeApiKey: string;
+  telegramBotToken: string;
 }
 
 /**
@@ -65,4 +66,5 @@ export const Config: SystemConfig = {
   openrouterApiKey: process.env.OPENROUTER_API_KEY || '',
   opencodeBaseUrl: process.env.OPENCODE_BASE_URL || 'http://100.66.98.4:20128/v1',
   opencodeApiKey: process.env.OPENCODE_API_KEY || '',
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
 };

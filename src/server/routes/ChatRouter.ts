@@ -6,6 +6,30 @@ import { CORPORATE_ROLES, KnowledgeBaseConnector } from '../../core/CorporateRol
 import { rulesEngine } from '../../core/RulesEngine.js';
 import { applyLocalePolicy } from '../../core/LocalePolicy.js';
 import { logger } from '../../core/Logger.js';
+import { ChatHistoryStore, CONSILIUM_SESSION_ID } from '../../core/ChatHistoryStore.js';
+import { I18nEngine } from '../../core/I18nEngine.js';
+
+/**
+ * Fire-and-forget chat persistence: a DB failure must never break the chat flow.
+ */
+function persistChatMessage(
+  sessionId: string,
+  role: string,
+  content: string,
+  model?: string
+): void {
+  try {
+    ChatHistoryStore.getInstance().appendMessage({
+      sessionId,
+      role,
+      content,
+      model: model || '',
+      lang: I18nEngine.getLocale(),
+    });
+  } catch (err: any) {
+    logger.warn('ChatRouter', `Chat history persistence skipped: ${err.message}`);
+  }
+}
 
 export class ChatRouter extends Router {
   private kbConnector: KnowledgeBaseConnector;
@@ -44,6 +68,10 @@ export class ChatRouter extends Router {
         apiKey,
       });
 
+      const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
+      persistChatMessage(chatSessionId, 'user', message.trim(), targetModel);
+      persistChatMessage(chatSessionId, 'assistant', responseText, targetModel);
+
       logger.logUserAction('CHAT_MESSAGE', { model: targetModel, length: message.length, roleId }, ctx.clientIp);
       ctx.sendJson(200, {
         response: responseText,
@@ -78,6 +106,9 @@ export class ChatRouter extends Router {
 
       const messages = [...history, { role: 'user', content: message.trim() }];
 
+      const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
+      persistChatMessage(chatSessionId, 'user', message.trim(), targetModel);
+
       ctx.res.writeHead(200, {
         'Content-Type': 'text/event-stream; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
@@ -97,6 +128,8 @@ export class ChatRouter extends Router {
           apiKey,
         }
       );
+
+      persistChatMessage(chatSessionId, 'assistant', fullText, targetModel);
 
       ctx.res.write(`data: ${JSON.stringify({ done: true, fullText })}\n\n`);
       ctx.res.end();
@@ -126,6 +159,30 @@ export class ChatRouter extends Router {
         apiKey,
         useKnowledgeBase: Boolean(useKnowledgeBase),
       });
+
+      try {
+        const historyStore = ChatHistoryStore.getInstance();
+        historyStore.appendMessage({
+          sessionId: CONSILIUM_SESSION_ID,
+          role: 'user',
+          content: prompt.trim(),
+          model: mode,
+          lang: I18nEngine.getLocale(),
+        });
+        const synthesized = (result as any)?.synthesis || (result as any)?.text || (result as any)?.response;
+        if (typeof synthesized === 'string' && synthesized) {
+          historyStore.appendMessage({
+            sessionId: CONSILIUM_SESSION_ID,
+            role: 'assistant',
+            content: synthesized,
+            model: synthesizerModel || mode,
+            lang: I18nEngine.getLocale(),
+          });
+        }
+      } catch (e: any) {
+        logger.warn('ChatRouter', `Consilium history persistence skipped: ${e.message}`);
+      }
+
       ctx.sendJson(200, { success: true, result });
     }));
 

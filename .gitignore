@@ -46,3 +46,6 @@ src/web/voice/
 # Knowledge base binary files
 knowledge-base/evaline-knowledge-base/chroma_db/
 knowledge-base/evaline-knowledge-base/fts_index.db
+
+# Chat history database
+data/

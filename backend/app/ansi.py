@@ -34,7 +34,7 @@ def boot_banner() -> str:
         f"{GRAY}┌{'─' * 78}┐{RESET}\n"
         f"{GRAY}│{RESET} {BOLD}{BRIGHT_WHITE}[>>] EVABOT ONLINE v0.0.1 MVP // LINEAR CYBER-TERMINAL{RESET}{' ' * 26}{GRAY}│{RESET}\n"
         f"{GRAY}│{RESET} {GRAY}Hybrid Topology: Web Edge Gateway (Face) ◄──► Agent Server (Brain){RESET}          {GRAY}│{RESET}\n"
-        f"{GRAY}│{RESET} {BRIGHT_CYAN}Base: Odesa, Ukraine (UA) │ USD ($) & EUR (€) │ Zero-Trust Cloud{RESET}{' ' * 9}{GRAY}│{RESET}\n"
+        f"{GRAY}│{RESET} {BRIGHT_CYAN}Base: Chernomorsk (UA) & Bratislava (EU) │ USD ($) & EUR (€) │ Zero-Trust{RESET}{' ' * 3}{GRAY}│{RESET}\n"
         f"{GRAY}└{'─' * 78}┘{RESET}"
     )
 

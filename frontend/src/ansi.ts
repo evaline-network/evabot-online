@@ -404,7 +404,7 @@ export function renderBootBanner(): string {
     `${ANSI.gray}┌${'─'.repeat(78)}┐${ANSI.reset}\n` +
     `${ANSI.gray}│${ANSI.reset} ${ANSI.bold}${ANSI.brightWhite}[>>] EVABOT ONLINE v0.0.1 MVP // LINEAR CYBER-TERMINAL${ANSI.reset}${' '.repeat(26)}${ANSI.gray}│${ANSI.reset}\n` +
     `${ANSI.gray}│${ANSI.reset} ${ANSI.gray}Hybrid Topology: Web Edge Gateway (Face) ◄──► Agent Server (Brain)${ANSI.reset}          ${ANSI.gray}│${ANSI.reset}\n` +
-    `${ANSI.gray}│${ANSI.reset} ${ANSI.brightCyan}Base: Odesa, Ukraine (UA) │ USD ($) & EUR (€) │ Zero-Trust Cloud${ANSI.reset}${' '.repeat(9)}${ANSI.gray}│${ANSI.reset}\n` +
+    `${ANSI.gray}│${ANSI.reset} ${ANSI.brightCyan}Base: Chernomorsk, Ukraine (UA) │ Bratislava (EU) │ Zero-Trust Cloud${ANSI.reset}${' '.repeat(9)}${ANSI.gray}│${ANSI.reset}\n` +
     `${ANSI.gray}└${'─'.repeat(78)}┘${ANSI.reset}`
   );
 }
@@ -742,7 +742,7 @@ export function renderConfigBlock(cfg: Record<string, any>): string {
   lines.push(`  ${ANSI.bold}${ANSI.white}${cfg.productName || 'EvaBot Online'}${ANSI.reset} ${ANSI.gray}${cfg.version || ''}${ANSI.reset} │ node: ${cfg.server || '-'}`);
   const loc = cfg.localePolicy as Record<string, any> | undefined;
   lines.push(
-    `  ${ANSI.gray}Locale:${ANSI.reset} ${cfg.base || 'Odesa, Ukraine (UA)'} │ ${(loc?.currencies || ['USD', 'EUR']).join(' / ')} │ ${loc?.financialStandard || 'USD ($) & EUR (€) only'}`,
+    `  ${ANSI.gray}Locale:${ANSI.reset} ${cfg.base || 'Chernomorsk, Ukraine (UA) & Bratislava, Slovakia'} │ ${(loc?.currencies || ['USD', 'EUR']).join(' / ')} │ ${loc?.financialStandard || 'USD ($) & EUR (€) only'}`,
   );
   lines.push(
     `  ${ANSI.gray}Dev Mode (server):${ANSI.reset} ${cfg.devMode ? ANSI.green + '[ON]' + ANSI.reset : ANSI.red + '[OFF]' + ANSI.reset}` +
@@ -780,7 +780,7 @@ export const ONBOARDING_TIPS: string[] = [
   'Type /help any time for the command palette, or /onboarding to replay setup.',
   'The voice orb is a live-chat mic: tap it, speak, and your prompt is transmitted.',
   'Consilium mode lets 3-10 frontier models deliberate and vote on your prompt.',
-  'All pricing is strictly USD ($) and EUR (€) — zero-trust, based in Odesa, Ukraine.',
+  'All pricing is strictly USD ($) and EUR (€) — zero-trust, based in Chernomorsk (UA) & Bratislava (EU).',
   'Developer Mode (/dev) reveals whisper commands: /ansi, /config, /dev.',
   'Use /model <id> to hot-swap the neural engine without touching the menu.',
   'The terminal stream is the same ANSI art in the CLI, web and mobile — no stubs.',

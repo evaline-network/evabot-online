@@ -280,6 +280,137 @@
       padding-left: 12px;
       margin: 2px 0;
     }
+
+    /* ===== SmartInput: autocomplete dropdown ===== */
+    .ac-box {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 22px;
+      right: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      background: #050505;
+      border: 1px solid var(--green);
+      box-shadow: 0 -4px 18px rgba(0, 230, 118, 0.12);
+      z-index: 60;
+    }
+
+    .ac-box.open {
+      display: block;
+    }
+
+    .ac-item {
+      padding: 3px 10px;
+      cursor: pointer;
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .ac-item.active,
+    .ac-item:hover {
+      background: #0f2a1a;
+    }
+
+    .ac-badge {
+      font-size: 10px;
+      border: 1px solid var(--dim);
+      padding: 0 4px;
+      color: var(--dim);
+      user-select: none;
+      flex: none;
+    }
+
+    .ac-badge.cmd {
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .ac-badge.mem {
+      color: var(--yellow);
+      border-color: var(--yellow);
+    }
+
+    .ac-text {
+      color: var(--fg);
+      flex: none;
+    }
+
+    .ac-desc {
+      color: var(--dim);
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ac-item.active .ac-desc {
+      color: var(--fg);
+    }
+
+    /* ===== Voice: mic button ===== */
+    .mic-btn {
+      background: transparent;
+      border: 1px solid var(--dim);
+      color: var(--fg);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 3px 7px;
+      user-select: none;
+      flex: none;
+    }
+
+    .mic-btn:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .mic-btn.recording {
+      border-color: var(--red);
+      color: var(--red);
+      animation: mic-pulse 1s infinite ease-in-out;
+    }
+
+    @keyframes mic-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.55); }
+      50% { box-shadow: 0 0 0 7px rgba(255, 23, 68, 0); }
+    }
+
+    /* ===== Toast notifications ===== */
+    .toast-wrap {
+      position: fixed;
+      right: 16px;
+      bottom: 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #0a0a0a;
+      border: 1px solid var(--green);
+      color: var(--green);
+      padding: 5px 12px;
+      font-size: 12px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      max-width: 340px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
@@ -287,7 +418,7 @@
   <!-- Header Rows -->
   <div class="header-block">
     <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> <span id="lbl-ping">Ping:</span> <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator">∿∿∿</span></div>
-    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">Gemini 3.8 Flash <span class="c-ok">[FREE]</span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">78 models (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">Gemini 3.8 Flash <span class="c-ok">[FREE]</span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">78 models (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span> <span class="cmd-link" id="tts-toggle" onclick="VoiceEngine.toggleTtsMute()" title="TTS on/off">🔊</span></div>
     <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
     <div class="tui-line" id="db-line"><span class="c-dim" id="lbl-databases">Databases:</span> <span class="c-ok" id="db-values">Chroma Vector (1075 embeddings) [OK] · SQLite FTS5 (1086 chunks) [OK] · Memory KB (178 docs) [OK]</span></div>
     <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">[■■░░░░░░]</span> 25% RAM <span class="c-ok">[■░░░░░░░]</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">[░░░░░░]</span> 2% RAM <span class="c-ok">[■■■░░░]</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">♥</span> 72bpm</span></div>
@@ -302,8 +433,10 @@
 
   <!-- Input Row -->
   <div class="input-line">
+    <div class="ac-box" id="ac-box"></div>
     <span class="prompt-char">&gt;</span>
     <textarea id="user-input" placeholder="Type a message or command (/help)..." autofocus></textarea>
+    <button class="mic-btn" id="mic-btn" title="Voice input (🎤)" onclick="VoiceEngine.toggle()">🎤</button>
   </div>
 
   <!-- Models Modal -->
@@ -323,6 +456,8 @@
       </div>
     </div>
   </div>
+
+  <div class="toast-wrap" id="toast-wrap"></div>
 
   <script>
     const state = {
@@ -347,6 +482,354 @@
     const userInput = document.getElementById('user-input');
     const modelModal = document.getElementById('model-modal');
     const modelList = document.getElementById('model-list');
+
+    // =======================================================================
+    // SmartInput — pure lexicon / fuzzy-match / auto-correct engine.
+    // Kept as a const object with pure functions so it can be mirrored in TS.
+    // Storage: 'evabot_vocab' (learned words, freq+recency), 'evabot_lexicon'
+    // (learned corrections), 'evabot_autocorrect' (on|off toggle).
+    // =======================================================================
+    const SmartInput = {
+      VOCAB_KEY: 'evabot_vocab',
+      LEXICON_KEY: 'evabot_lexicon',
+      AC_KEY: 'evabot_autocorrect',
+      VOCAB_CAP: 500,
+
+      // All slash commands recognized locally or proxied via /api/models/command
+      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'search', 'find', 'services', 'servers', 'autocorrect', 'voice', 'tts'],
+
+      // Short localized descriptions (condensed from the I18N help blocks)
+      CMD_DESC: {
+        top: { en: 'Top models leaderboard', uk: 'Рейтинг моделей', ru: 'Топ моделей' },
+        models: { en: 'Full model catalog', uk: 'Повний каталог моделей', ru: 'Полный каталог моделей' },
+        info: { en: 'Model passport & pricing', uk: 'Паспорт моделі та ціни', ru: 'Паспорт модели и цены' },
+        company: { en: 'AI company roster', uk: 'Ростер ШІ-агентів', ru: 'Ростер ИИ-агентов' },
+        evaline: { en: 'EvaLine business swarm', uk: 'Бізнес-система EvaLine', ru: 'Бизнес-система EvaLine' },
+        cost: { en: 'Financial ledger & OpEx', uk: 'Бухгалтерія та витрати', ru: 'Бухгалтерия и расходы' },
+        lang: { en: 'Switch language en|uk|ru', uk: 'Зміна мови en|uk|ru', ru: 'Смена языка en|uk|ru' },
+        mcp: { en: '21 MCP servers status', uk: 'Статус 21 MCP-сервера', ru: 'Статус 21 MCP-сервера' },
+        lsp: { en: '4 LSP daemons status', uk: 'Статус 4 LSP-демонів', ru: 'Статус 4 LSP-демонов' },
+        free: { en: 'Filter free models', uk: 'Фільтр безкоштовних', ru: 'Фильтр бесплатных' },
+        paid: { en: 'Filter paid models', uk: 'Фільтр платних', ru: 'Фильтр платных' },
+        mode: { en: 'solo / consilium mode', uk: 'Режим solo / консиліум', ru: 'Режим solo / консилиум' },
+        consilium: { en: 'Multi-agent deliberation', uk: 'Колегіальний аналіз', ru: 'Коллегиальный анализ' },
+        clear: { en: 'Clear terminal screen', uk: 'Очистити екран', ru: 'Очистить экран' },
+        history: { en: 'Recent conversation history', uk: 'Історія діалогу', ru: 'История диалога' },
+        memory: { en: 'Memory stats (KB, FTS, chat DB)', uk: 'Статистика памʼяті (KB, FTS, БД)', ru: 'Статистика памяти (KB, FTS, БД)' },
+        search: { en: 'Full-text search <query>', uk: 'Пошук по базі знань <запит>', ru: 'Поиск по базе знаний <запрос>' },
+        find: { en: 'Alias of /search', uk: 'Синонім /search', ru: 'Синоним /search' },
+        services: { en: 'Services & DB backends status', uk: 'Статус сервісів і бекендів БД', ru: 'Статус сервисов и бекендов БД' },
+        servers: { en: 'Cluster: evabot-agent-vm + evaline-micro-vm', uk: 'Кластер: evabot-agent-vm + evaline-micro-vm', ru: 'Кластер: evabot-agent-vm + evaline-micro-vm' },
+        products: { en: 'EvaLine product catalog: stats, categories, search', uk: 'Каталог продукції EvaLine: статистика, категорії, пошук', ru: 'Каталог продукции EvaLine: статистика, категории, поиск' },
+        who: { en: 'Corporate knowledge matrix: who knows what', uk: 'Матриця знань компанії: хто що знає', ru: 'Матрица знаний компании: кто что знает' },
+        autocorrect: { en: 'Toggle typo auto-correction', uk: 'Автокорекція описок', ru: 'Автокоррекция опечаток' },
+        voice: { en: 'Voice input & persona', uk: 'Голосовий ввід і персона', ru: 'Голосовой ввод и персона' },
+        tts: { en: 'Text-to-speech on/off', uk: 'Озвучення відповідей', ru: 'Озвучивание ответов' },
+        help: { en: 'Show this guide', uk: 'Показати довідку', ru: 'Показать справку' },
+        '?': { en: 'Show this guide', uk: 'Показати довідку', ru: 'Показать справку' },
+      },
+
+      // Cyrillic-typed command fragments → canonical command (e.g. '/модел' → '/models')
+      TRANSLIT: {
+        'топ': 'top', 'топмоделей': 'top',
+        'модели': 'models', 'моделі': 'models', 'модел': 'models', 'модель': 'models', 'каталог': 'models',
+        'история': 'history', 'історія': 'history', 'істор': 'history', 'историю': 'history',
+        'очистить': 'clear', 'очистити': 'clear', 'очисти': 'clear', 'очист': 'clear',
+        'помощь': 'help', 'справка': 'help', 'довідка': 'help', 'помоги': 'help', 'допоможи': 'help',
+        'консилиум': 'consilium', 'консиліум': 'consilium', 'консил': 'consilium',
+        'язык': 'lang', 'мова': 'lang',
+        'стоимость': 'cost', 'вартість': 'cost', 'цена': 'cost', 'ціна': 'cost',
+        'режим': 'mode', 'інфо': 'info', 'инфо': 'info',
+      },
+
+      // Seed lexicon: observed frequent terms of this bot (en/ru/uk chat vocabulary)
+      BUILTIN_LEXICON: [
+        'omniroute', 'openrouter', 'litellm', 'gemini', 'qwen', 'glm', 'evabot', 'evaline',
+        'consilium', 'terminal', 'models', 'history', 'server', 'servers', 'health', 'status',
+        'tokens', 'budget', 'frontend', 'backend', 'github', 'docker', 'deploy', 'release',
+        'sprint', 'report', 'please', 'thanks', 'hello', 'python', 'typescript', 'javascript',
+        'neural', 'latency', 'quota', 'pricing', 'provider', 'embedding', 'vector', 'agent',
+        'привет', 'спасибо', 'пожалуйста', 'проверь', 'модель', 'модели', 'моделей', 'моделью',
+        'сервер', 'сервера', 'серверы', 'консилиум', 'нейросеть', 'история', 'статус', 'ошибка',
+        'ошибки', 'токены', 'бюджет', 'помоги', 'напиши', 'скажи', 'покажи', 'сделай', 'задача',
+        'отчет', 'проект', 'команда', 'параметры', 'проверка', 'вопрос', 'ответ',
+        'привіт', 'дякую', 'будь', 'ласка', 'перевір', 'моделі', 'сервери', 'консиліум',
+        'нейромережа', 'історія', 'статус', 'помилка', 'помилки', 'токени', 'бюджет',
+        'допоможи', 'напиши', 'скажи', 'покажи', 'зроби', 'задача', 'звіт', 'проєкт',
+        'команда', 'параметри', 'питання', 'відповідь',
+      ],
+
+      // ---------- pure fuzzy primitives ----------
+      levenshtein(a, b) {
+        if (a === b) return 0;
+        const m = a.length;
+        const n = b.length;
+        if (!m) return n;
+        if (!n) return m;
+        let prev = new Array(n + 1);
+        let cur = new Array(n + 1);
+        for (let j = 0; j <= n; j++) prev[j] = j;
+        for (let i = 1; i <= m; i++) {
+          cur[0] = i;
+          for (let j = 1; j <= n; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+          }
+          [prev, cur] = [cur, prev];
+        }
+        return prev[n];
+      },
+
+      // Simple subsequence scorer: 0 = no match, higher = better (prefix & streak bonuses)
+      subsequenceScore(query, target) {
+        const q = query.toLowerCase();
+        const t = target.toLowerCase();
+        let qi = 0;
+        let score = 0;
+        let streak = 0;
+        for (let i = 0; i < t.length && qi < q.length; i++) {
+          if (t[i] === q[qi]) {
+            qi++;
+            streak++;
+            score += 2 + streak;
+            if (i === 0) score += 3;
+          } else {
+            streak = 0;
+          }
+        }
+        if (qi < q.length) return 0;
+        if (t.startsWith(q)) score += 20 - Math.min(10, t.length - q.length);
+        return score;
+      },
+
+      // ---------- storage ----------
+      loadVocab() {
+        try { return JSON.parse(localStorage.getItem(this.VOCAB_KEY)) || {}; } catch (e) { return {}; }
+      },
+
+      vocabScore(meta) {
+        const days = (Date.now() - (meta.t || 0)) / 86400000;
+        return (meta.f || 1) / (1 + Math.max(0, days));
+      },
+
+      saveVocab(vocab) {
+        let entries = Object.entries(vocab);
+        if (entries.length > this.VOCAB_CAP) {
+          entries.sort((a, b) => this.vocabScore(b[1]) - this.vocabScore(a[1]));
+          entries = entries.slice(0, this.VOCAB_CAP);
+        }
+        const out = {};
+        for (const [w, meta] of entries) out[w] = meta;
+        try { localStorage.setItem(this.VOCAB_KEY, JSON.stringify(out)); } catch (e) { /* quota */ }
+      },
+
+      rememberText(text) {
+        const clean = String(text || '').replace(/\/\S+/g, ' ');
+        const words = clean.toLowerCase().match(/[\p{L}\p{N}][\p{L}\p{N}'’-]{2,}/gu) || [];
+        if (!words.length) return;
+        const vocab = this.loadVocab();
+        for (const w of words) {
+          vocab[w] = { f: ((vocab[w] && vocab[w].f) || 0) + 1, t: Date.now() };
+        }
+        this.saveVocab(vocab);
+      },
+
+      lexiconSet() {
+        const set = new Set(this.BUILTIN_LEXICON);
+        try {
+          const learned = JSON.parse(localStorage.getItem(this.LEXICON_KEY)) || {};
+          for (const w of Object.keys(learned)) set.add(w.toLowerCase());
+        } catch (e) { /* ignore */ }
+        return set;
+      },
+
+      learnCorrection(word) {
+        try {
+          const learned = JSON.parse(localStorage.getItem(this.LEXICON_KEY)) || {};
+          learned[word.toLowerCase()] = (learned[word.toLowerCase()] || 0) + 1;
+          localStorage.setItem(this.LEXICON_KEY, JSON.stringify(learned));
+        } catch (e) { /* ignore */ }
+      },
+
+      isEnabled() {
+        return localStorage.getItem(this.AC_KEY) !== 'off';
+      },
+
+      setEnabled(v) {
+        localStorage.setItem(this.AC_KEY, v ? 'on' : 'off');
+      },
+
+      // ---------- correction core ----------
+      // Mask code fences & URLs so corrections never touch them.
+      protectSegments(text) {
+        const masked = [];
+        const stash = (m) => { masked.push(m); return '￰' + (masked.length - 1) + '￰'; };
+        let out = text.replace(/```[\s\S]*?(?:```|$)/g, stash);
+        out = out.replace(/https?:\/\/\S+|www\.\S+/gi, stash);
+        return {
+          text: out,
+          masked,
+          restore: (s) => s.replace(/￰(\d+)￰/g, (_, i) => masked[+i] !== undefined ? masked[+i] : ''),
+        };
+      },
+
+      matchCase(word, candidate) {
+        if (word[0] === word[0].toUpperCase() && word[0] !== word[0].toLowerCase() && word.slice(1) === word.slice(1).toLowerCase()) {
+          return candidate[0].toUpperCase() + candidate.slice(1);
+        }
+        return candidate;
+      },
+
+      // Unique best candidate within edit distance budget, else null.
+      correctWord(word, dict) {
+        if (word.length < 5 || dict.has(word)) return null;
+        const maxDist = word.length >= 8 ? 2 : 1;
+        let best = null;
+        let bestDist = maxDist + 1;
+        let ties = 0;
+        for (const cand of dict) {
+          if (Math.abs(cand.length - word.length) > maxDist) continue;
+          const d = this.levenshtein(word, cand);
+          if (d < bestDist) { bestDist = d; best = cand; ties = 1; }
+          else if (d === bestDist && cand !== best) ties++;
+        }
+        if (best && bestDist <= maxDist && ties === 1) return best;
+        return null;
+      },
+
+      // '/hist' → '/history', '/модел' → '/models' (prefix → translit → fuzzy)
+      fixCommand(token) {
+        if (!token || !token.startsWith('/')) return null;
+        const raw = token.slice(1).toLowerCase();
+        if (!raw) return null;
+        if (this.COMMANDS.includes(raw)) return null;
+        let target = raw;
+        if (this.TRANSLIT[target]) target = this.TRANSLIT[target];
+        if (this.COMMANDS.includes(target) && target !== raw) return '/' + target;
+        const pref = this.COMMANDS.filter((c) => c.startsWith(target));
+        if (pref.length === 1) return '/' + pref[0];
+        const maxDist = target.length >= 4 ? 2 : 1;
+        let best = null;
+        let bestDist = maxDist + 1;
+        let ties = 0;
+        for (const c of this.COMMANDS) {
+          if (c[0] !== target[0]) continue;
+          const d = this.levenshtein(target, c);
+          if (d < bestDist) { bestDist = d; best = c; ties = 1; }
+          else if (d === bestDist) ties++;
+        }
+        return best && bestDist <= maxDist && ties === 1 ? '/' + best : null;
+      },
+
+      // Punctuation spacing (never touches masked segments; safe for "3.14", "19:10", "e.g")
+      normalizePunct(text) {
+        return text
+          .replace(/[ \t]+([,.!?;:%)])/g, '$1')
+          .replace(/([,;:])(?=[^\s\d)])/g, '$1 ')
+          .replace(/([!?])(?=[^\s\d)])/g, '$1 ')
+          .replace(/([а-яёіїєґa-z]{2,})\.([А-ЯЁЄІЇҐA-Z])/g, '$1. $2')
+          .replace(/[ \t]{2,}/g, ' ')
+          .replace(/[ \t]+$/gm, '');
+      },
+
+      // Main pass: command expansion + punctuation + word-level correction.
+      // Returns { text, fixes: [{from, to}] }. Never alters code fences / URLs.
+      autocorrect(text) {
+        const fixes = [];
+        if (!text || !text.trim()) return { text, fixes };
+        const prot = this.protectSegments(text);
+        let out = prot.text;
+
+        // (c) partial command expansion on first token only
+        const cmdMatch = out.match(/^\s*(\/[^\s]+)/);
+        if (cmdMatch) {
+          const fixed = this.fixCommand(cmdMatch[1]);
+          if (fixed) {
+            fixes.push({ from: cmdMatch[1], to: fixed });
+            out = fixed + out.slice(out.indexOf(cmdMatch[1]) + cmdMatch[1].length);
+          }
+        }
+
+        // (b) punctuation / spacing normalization
+        out = this.normalizePunct(out);
+
+        // (d) word-level Levenshtein correction against vocab + lexicon
+        const dict = this.lexiconSet();
+        const vocab = this.loadVocab();
+        for (const w of Object.keys(vocab)) dict.add(w.toLowerCase());
+        out = out.split(/(￰\d+￰)/g).map((seg) => {
+          if (/^￰\d+￰$/.test(seg)) return seg;
+          return seg.replace(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu, (w) => {
+            const lw = w.toLowerCase();
+            if (lw.length < 5 || dict.has(lw)) return w;
+            const c = this.correctWord(lw, dict);
+            if (c) {
+              const fixedWord = this.matchCase(w, c);
+              fixes.push({ from: w, to: fixedWord });
+              this.learnCorrection(c);
+              return fixedWord;
+            }
+            return w;
+          });
+        }).join('');
+
+        return { text: prot.restore(out), fixes };
+      },
+
+      // ---------- autocomplete suggestions ----------
+      // Returns [{text, source:'cmd'|'mem', desc}] ranked by prefix/subsequence score.
+      suggest(text, caret) {
+        const pos = (caret === undefined || caret === null) ? text.length : caret;
+        const before = text.slice(0, pos);
+
+        // trigger: '/' at word start → commands
+        const cmdM = before.match(/(?:^|\s)(\/[\w?]{0,24})$/);
+        if (cmdM) {
+          const frag = cmdM[1].slice(1).toLowerCase();
+          return this.COMMANDS
+            .map((c) => ({ c, s: frag === '' ? 1 : (c.startsWith(frag) ? 100 : this.subsequenceScore(frag, c)) }))
+            .filter((x) => x.s > 0)
+            .sort((a, b) => b.s - a.s || a.c.localeCompare(b.c))
+            .slice(0, 8)
+            .map((x) => ({
+              text: '/' + x.c,
+              source: 'cmd',
+              desc: (this.CMD_DESC[x.c] || {})[state.lang] || (this.CMD_DESC[x.c] || {}).en || '',
+            }));
+        }
+
+        // trigger: 2+ typed chars → learned vocabulary words
+        const wM = before.match(/([\p{L}\p{N}][\p{L}\p{N}'’-]{1,})$/u);
+        if (wM && wM[1].length >= 2) {
+          const frag = wM[1].toLowerCase();
+          const vocab = this.loadVocab();
+          const items = [];
+          for (const w of Object.keys(vocab)) {
+            const wl = w.toLowerCase();
+            if (wl === frag) continue;
+            const s = wl.startsWith(frag) ? 100 + this.vocabScore(vocab[w]) : this.subsequenceScore(frag, wl);
+            if (s > 0) items.push({ text: w, source: 'mem', desc: '', s });
+          }
+          items.sort((a, b) => b.s - a.s);
+          return items.slice(0, 6).map((i) => ({ text: i.text, source: 'mem', desc: '' }));
+        }
+        return [];
+      },
+    };
+
+    function showToast(text) {
+      const wrap = document.getElementById('toast-wrap');
+      if (!wrap) return;
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = text;
+      wrap.appendChild(el);
+      requestAnimationFrame(() => el.classList.add('show'));
+      setTimeout(() => {
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 300);
+      }, 2600);
+    }
 
     const I18N = {
       en: {
@@ -388,6 +871,15 @@
   /mode [solo|consilium]  - Toggle single model or multi-agent consilium
   /consilium [topic]      - Run multi-agent deliberation and synthesis
   /clear                  - Clear terminal screen
+  /history                - Show recent conversation history
+  /memory                 - Memory stats: KB docs, FTS chunks, chat DB
+  /search <query>         - Full-text search across chats and knowledge base
+  /find <query>           - Alias of /search
+  /services               - Systemd/docker services and DB backends status
+  /servers                - Cluster: evabot-agent-vm + evaline-micro-vm
+  /autocorrect [on|off]   - Smart typo auto-correction (learned lexicon)
+  /voice [on|off|eva|adam]- Voice input mic & TTS persona (Eva/Adam)
+  /tts [on|off]           - Speak assistant replies aloud
   /help , /?              - Display this guide`,
         switched: 'Language switched to English (EN). Interface updated instantly.',
         cleared: 'Screen cleared.',
@@ -396,6 +888,18 @@
         consiliumReady: 'Mode switched to CONSILIUM. Please send your query/topic.',
         consiliumErr: 'Consilium error: ',
         execErr: 'Execution error: ',
+        fixedToast: 'fixed: {from} → {to}',
+        autocorrectOn: 'Auto-correction ENABLED.',
+        autocorrectOff: 'Auto-correction disabled.',
+        voiceOn: 'Voice input enabled. Click 🎤 to dictate.',
+        voiceOff: 'Voice input disabled.',
+        voicePersona: 'TTS persona set to ',
+        voiceUnsupported: 'Speech recognition not supported (use Chrome/Edge).',
+        voiceListening: 'Listening...',
+        ttsOn: 'TTS enabled — Eva will speak replies.',
+        ttsOff: 'TTS muted.',
+        historyEmpty: 'No conversation history yet.',
+        historyHeader: 'RECENT HISTORY (last {n}):',
       },
       uk: {
         statusOnline: 'ОНЛАЙН',
@@ -436,6 +940,15 @@
   /mode [solo|consilium]  - Перемикання режиму solo / консиліум
   /consilium [тема]       - Колегіальний аналіз та синтез консиліуму
   /clear                  - Очистити екран термінала
+  /history                - Показати нещодавню історію діалогу
+  /memory                 - Статистика памʼяті: база знань, FTS чанки, чат-БД
+  /search <запит>         - Полнотекстовий пошук по чатах і базі знань
+  /find <запит>           - Синонім /search
+  /services               - Статус systemd/docker сервісів і бекендів БД
+  /servers                - Кластер: evabot-agent-vm + evaline-micro-vm
+  /autocorrect [on|off]   - Розумна автокорекція описок (лексикон, що навчається)
+  /voice [on|off|eva|adam]- Голосовий ввід та персона озвучки (Єва/Адам)
+  /tts [on|off]           - Озвучення відповідей асистента
   /help , /?              - Ця довідка`,
         switched: 'Мову перемкнено на українську (UK). Інтерфейс оновлено миттєво.',
         cleared: 'Екран очищено.',
@@ -444,6 +957,18 @@
         consiliumReady: 'Режим перемкнено на КОНСИЛІУМ. Тепер надішліть ваше запитання.',
         consiliumErr: 'Помилка консиліуму: ',
         execErr: 'Помилка виконання: ',
+        fixedToast: 'виправлено: {from} → {to}',
+        autocorrectOn: 'Автокорекцію УВІМКНЕНО.',
+        autocorrectOff: 'Автокорекцію вимкнено.',
+        voiceOn: 'Голосовий ввід увімкнено. Натисніть 🎤 для диктування.',
+        voiceOff: 'Голосовий ввід вимкнено.',
+        voicePersona: 'Персону озвучки змінено на ',
+        voiceUnsupported: 'Розпізнавання мови не підтримується (використовуйте Chrome/Edge).',
+        voiceListening: 'Слухаю...',
+        ttsOn: 'Озвучення увімкнено — Єва озвучуватиме відповіді.',
+        ttsOff: 'Озвучення вимкнено.',
+        historyEmpty: 'Історія діалогу порожня.',
+        historyHeader: 'НЕЩОДАВНЯ ІСТОРІЯ (останні {n}):',
       },
       ru: {
         statusOnline: 'ОНЛАЙН',
@@ -484,6 +1009,15 @@
   /mode [solo|consilium]  - Смена режима solo / консилиум
   /consilium [тема]       - Запуск коллегиального анализа моделей
   /clear                  - Очистить экран терминала
+  /history                - Показать недавнюю историю диалога
+  /memory                 - Статистика памяти: база знаний, FTS чанки, чат-БД
+  /search <запрос>        - Полнотекстовый поиск по чатам и базе знаний
+  /find <запрос>          - Синоним /search
+  /services               - Статус systemd/docker сервисов и бекендов БД
+  /servers                - Кластер: evabot-agent-vm + evaline-micro-vm
+  /autocorrect [on|off]   - Умная автокоррекция опечаток (обучаемый лексикон)
+  /voice [on|off|eva|adam]- Голосовой ввод и персона озвучки (Ева/Адам)
+  /tts [on|off]           - Озвучивание ответов ассистента
   /help , /?              - Эта справка`,
         switched: 'Язык переключен на русский (RU). Интерфейс обновлен мгновенно.',
         cleared: 'Экран очищен.',
@@ -492,6 +1026,18 @@
         consiliumReady: 'Режим переключен на КОНСИЛИУМ. Теперь отправьте ваш вопрос.',
         consiliumErr: 'Ошибка консилиума: ',
         execErr: 'Ошибка выполнения: ',
+        fixedToast: 'исправлено: {from} → {to}',
+        autocorrectOn: 'Автокоррекция ВКЛЮЧЕНА.',
+        autocorrectOff: 'Автокоррекция выключена.',
+        voiceOn: 'Голосовой ввод включен. Нажмите 🎤 для диктовки.',
+        voiceOff: 'Голосовой ввод отключен.',
+        voicePersona: 'Персона озвучки изменена на ',
+        voiceUnsupported: 'Распознавание речи не поддерживается (используйте Chrome/Edge).',
+        voiceListening: 'Слушаю...',
+        ttsOn: 'Озвучивание включено — Ева будет озвучивать ответы.',
+        ttsOff: 'Озвучивание выключено.',
+        historyEmpty: 'История диалога пуста.',
+        historyHeader: 'НЕДАВНЯЯ ИСТОРИЯ (последние {n}):',
       }
     };
 
@@ -806,6 +1352,8 @@
 
         if (res && res.synthesis) {
           addMessage('evabot [КОНСЕНСУС]', res.synthesis);
+          state.history.push({ role: 'model', content: res.synthesis });
+          VoiceEngine.speak(res.synthesis);
         }
 
         setStatus(true, false);
@@ -818,11 +1366,28 @@
     }
 
     async function sendMessage() {
-      const text = userInput.value.trim();
-      if (!text || state.isGenerating) return;
+      const raw = userInput.value.trim();
+      if (!raw || state.isGenerating) return;
 
       userInput.value = '';
       userInput.style.height = 'auto';
+
+      // SmartInput: auto-correct + vocabulary learning (never breaks commands/code/URLs)
+      let text = raw;
+      try {
+        if (SmartInput.isEnabled()) {
+          const res = SmartInput.autocorrect(raw);
+          text = res.text;
+          const dI18n = I18N[state.lang] || I18N.en;
+          for (const f of res.fixes) {
+            showToast(dI18n.fixedToast.replace('{from}', f.from).replace('{to}', f.to));
+          }
+        }
+        SmartInput.rememberText(text);
+      } catch (e) {
+        console.warn('SmartInput error:', e);
+        text = raw;
+      }
 
       if (text.startsWith('/')) {
         await handleCommand(text);
@@ -885,6 +1450,7 @@
         state.history.push({ role: 'user', content: text });
         state.history.push({ role: 'model', content: accumulatedText });
         setStatus(true, false);
+        VoiceEngine.speak(accumulatedText);
       } catch (error) {
         botBody.innerHTML = `<span class="c-err">[ERROR] ${escapeHtml(error.message)}</span>`;
         setStatus(false);
@@ -915,7 +1481,70 @@
         return;
       }
 
-      if (lower.startsWith('/mode')) {
+      if (lower === '/history') {
+        const d = I18N[state.lang] || I18N.en;
+        const recent = state.history.slice(-10);
+        if (!recent.length) {
+          addMessage('system', d.historyEmpty);
+          return;
+        }
+        let out = d.historyHeader.replace('{n}', recent.length) + '\n';
+        for (const m of recent) {
+          const preview = m.content.length > 200 ? m.content.slice(0, 200) + '…' : m.content;
+          out += (m.role === 'user' ? '> ' : '< ') + preview + '\n';
+        }
+        addMessage('system', out);
+        return;
+      }
+
+      if (lower.startsWith('/autocorrect')) {
+        const d = I18N[state.lang] || I18N.en;
+        const arg = lower.split(/\s+/)[1];
+        if (arg === 'on') {
+          SmartInput.setEnabled(true);
+          addMessage('system', d.autocorrectOn);
+        } else if (arg === 'off') {
+          SmartInput.setEnabled(false);
+          addMessage('system', d.autocorrectOff);
+        } else {
+          addMessage('system', SmartInput.isEnabled() ? d.autocorrectOn : d.autocorrectOff);
+        }
+        return;
+      }
+
+      if (lower.startsWith('/voice')) {
+        const d = I18N[state.lang] || I18N.en;
+        const parts = lower.split(/\s+/);
+        const arg = parts[1];
+        if (arg === 'on' || arg === 'off') {
+          localStorage.setItem('evabot_voice', arg);
+          VoiceEngine.applyVoiceEnabled();
+          addMessage('system', arg === 'on' ? d.voiceOn : d.voiceOff);
+        } else if (arg === 'eva' || arg === 'adam') {
+          VoiceEngine.setPersona(arg);
+          addMessage('system', d.voicePersona + (arg === 'eva' ? 'EVA (female)' : 'ADAM (male)'));
+        } else if (arg === 'autosend' && (parts[2] === 'on' || parts[2] === 'off')) {
+          VoiceEngine.setAutosend(parts[2] === 'on');
+          addMessage('system', 'Voice auto-send: ' + parts[2]);
+        } else {
+          addMessage('system', (VoiceEngine.enabled() ? d.voiceOn : d.voiceOff) + ' | persona: ' + VoiceEngine.persona.toUpperCase());
+        }
+        return;
+      }
+
+      if (lower.startsWith('/tts')) {
+        const d = I18N[state.lang] || I18N.en;
+        const arg = lower.split(/\s+/)[1];
+        if (arg === 'on' || arg === 'off') {
+          VoiceEngine.setTts(arg === 'on');
+          addMessage('system', arg === 'on' ? d.ttsOn : d.ttsOff);
+        } else {
+          addMessage('system', VoiceEngine.ttsOn ? d.ttsOn : d.ttsOff);
+        }
+        return;
+      }
+
+      if (lower === '/mode' || lower.startsWith('/mode ')) {
         const d = I18N[state.lang] || I18N.en;
         const parts = lower.split(' ');
         if (parts[1]) {
@@ -941,24 +1570,9 @@
         return;
       }
 
-      if (
-        lower.startsWith('/top') ||
-        lower.startsWith('/free') ||
-        lower.startsWith('/paid') ||
-        lower.startsWith('/models') ||
-        lower.startsWith('/mcp') ||
-        lower.startsWith('/lsp') ||
-        lower.startsWith('/cost') ||
-        lower.startsWith('/finance') ||
-        lower.startsWith('/budget') ||
-        lower.startsWith('/company') ||
-        lower.startsWith('/team') ||
-        lower.startsWith('/roster') ||
-        lower.startsWith('/evaline') ||
-        lower.startsWith('/business') ||
-        lower.startsWith('/info') ||
-        lower.startsWith('/inspect')
-      ) {
+      // Delegate every remaining /command to the server command registry
+      // (ModelCommand.execute handles aliases, unknown commands and errors itself).
+      if (lower.startsWith('/')) {
         try {
           const res = await fetch('/api/models/command', {
             method: 'POST',
@@ -977,6 +1591,244 @@
       const d = I18N[state.lang] || I18N.en;
       addMessage('error', d.unknownCmd.replace('{cmd}', escapeHtml(cmd)));
     }
+
+    // =======================================================================
+    // VoiceEngine — Web Speech recognition + TTS (ported from
+    // frontend/src/app.ts:626-796 conventions, adapted to the live TUI).
+    // Storage: 'evabot_voice' (on|off), 'evabot_tts' (on|off),
+    // 'evabot_tts_persona' (eva|adam), 'evabot_voice_autosend' (on|off).
+    // =======================================================================
+    function normalizeVoiceText(text) {
+      return String(text || '').toLowerCase().replace(/^[,.\s]+|[.!?…]+$/g, '').replace(/\s+/g, ' ').trim();
+    }
+
+    // single-word / short-phrase voice commands (all 3 UI languages)
+    const VOICE_COMMAND_WORDS = {
+      'очистить': '/clear', 'очисти': '/clear', 'очистити': '/clear', 'clear': '/clear',
+      'очисти экран': '/clear', 'очистити екран': '/clear', 'clear screen': '/clear',
+      'история': '/history', 'історія': '/history', 'history': '/history',
+      'помощь': '/help', 'справка': '/help', 'довідка': '/help', 'help': '/help',
+      'модели': '/models', 'моделі': '/models', 'models': '/models',
+      'топ': '/top', 'top': '/top',
+      'cost': '/cost', 'витрати': '/cost', 'затраты': '/cost',
+      'консилиум': '/mode consilium', 'консиліум': '/mode consilium', 'consilium': '/mode consilium',
+    };
+
+    // Returns true if the transcript was consumed as a voice command.
+    function handleVoiceTranscript(text) {
+      let rest = normalizeVoiceText(text);
+      // wake-word prefixes: 'ева', 'єва', 'eva', 'адам', 'adam' (optional trailing comma)
+      rest = rest.replace(/^(ева|єва|eva|адам|adam)[,]?\s*/u, '').trim();
+      if (!rest) return true; // bare wake word — consumed, no-op
+      // explicit 'команда ...' / 'command ...' prefix
+      rest = rest.replace(/^(команда|команди|command)\s+/u, '').trim();
+      if (rest.startsWith('/')) {
+        const res = SmartInput.autocorrect(rest);
+        handleCommand(res.text.trim());
+        return true;
+      }
+      const direct = VOICE_COMMAND_WORDS[rest];
+      if (direct) {
+        handleCommand(direct);
+        return true;
+      }
+      return false;
+    }
+
+    const VoiceEngine = {
+      recognition: null,
+      listening: false,
+      baseText: '',
+      persona: localStorage.getItem('evabot_tts_persona') === 'adam' ? 'adam' : 'eva',
+      ttsOn: localStorage.getItem('evabot_tts') !== 'off',
+      autosend: localStorage.getItem('evabot_voice_autosend') !== 'off',
+
+      langCode() {
+        return state.lang === 'uk' ? 'uk-UA' : state.lang === 'ru' ? 'ru-RU' : 'en-US';
+      },
+
+      init() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const mic = document.getElementById('mic-btn');
+        if (!SR) {
+          if (mic) {
+            mic.style.opacity = '0.3';
+            mic.title = 'Speech recognition not supported (Chrome/Edge)';
+          }
+        } else {
+          try {
+            const rec = new SR();
+            rec.continuous = false;
+            rec.interimResults = true;
+            rec.maxAlternatives = 1;
+            rec.onstart = () => {
+              this.listening = true;
+              const m = document.getElementById('mic-btn');
+              if (m) m.classList.add('recording');
+            };
+            rec.onresult = (e) => this.onResult(e);
+            rec.onerror = (e) => {
+              console.warn('Speech recognition error:', e.error);
+              this.stop();
+            };
+            rec.onend = () => this.stop();
+            this.recognition = rec;
+          } catch (e) {
+            console.warn('SpeechRecognition init failed:', e);
+          }
+        }
+        // warm up the TTS voice list
+        if (window.speechSynthesis) {
+          window.speechSynthesis.getVoices();
+          window.speechSynthesis.onvoiceschanged = () => {};
+        }
+        this.updateTtsToggle();
+        this.applyVoiceEnabled();
+      },
+
+      enabled() {
+        return localStorage.getItem('evabot_voice') !== 'off';
+      },
+
+      applyVoiceEnabled() {
+        const mic = document.getElementById('mic-btn');
+        if (mic) mic.style.opacity = this.enabled() ? '1' : '0.35';
+      },
+
+      toggle() {
+        if (!this.enabled()) {
+          const d = I18N[state.lang] || I18N.en;
+          showToast(d.voiceOff);
+          return;
+        }
+        if (this.listening) {
+          this.stop();
+        } else {
+          this.start();
+        }
+      },
+
+      start() {
+        if (!this.recognition) {
+          const d = I18N[state.lang] || I18N.en;
+          showToast(d.voiceUnsupported);
+          return;
+        }
+        // keep whatever the user already typed; dictation appends to it
+        this.baseText = userInput.value ? userInput.value.replace(/\s+$/, '') + ' ' : '';
+        try {
+          this.recognition.lang = this.langCode();
+          this.recognition.start();
+          const d = I18N[state.lang] || I18N.en;
+          showToast(d.voiceListening);
+        } catch (e) {
+          console.warn('Failed to start speech recognition:', e);
+          this.stop();
+        }
+      },
+
+      stop() {
+        this.listening = false;
+        const mic = document.getElementById('mic-btn');
+        if (mic) mic.classList.remove('recording');
+        try {
+          if (this.recognition) this.recognition.stop();
+        } catch (e) { /* ignore */ }
+      },
+
+      onResult(event) {
+        let interim = '';
+        let final = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const t = event.results[i][0].transcript;
+          if (event.results[i].isFinal) final += t;
+          else interim += t;
+        }
+        if (interim) {
+          userInput.value = this.baseText + interim;
+        }
+        if (final && final.trim()) {
+          this.stop();
+          const text = (this.baseText + final.trim()).trim();
+          const consumed = handleVoiceTranscript(text);
+          if (!consumed) {
+            userInput.value = text;
+            if (this.autosend) {
+              setTimeout(() => sendMessage(), 250);
+            }
+          }
+        }
+      },
+
+      setTts(v) {
+        this.ttsOn = !!v;
+        localStorage.setItem('evabot_tts', this.ttsOn ? 'on' : 'off');
+        this.updateTtsToggle();
+        if (!this.ttsOn && window.speechSynthesis) window.speechSynthesis.cancel();
+      },
+
+      toggleTtsMute() {
+        this.setTts(!this.ttsOn);
+        const d = I18N[state.lang] || I18N.en;
+        showToast(this.ttsOn ? d.ttsOn : d.ttsOff);
+      },
+
+      updateTtsToggle() {
+        const el = document.getElementById('tts-toggle');
+        if (el) {
+          el.textContent = this.ttsOn ? '🔊' : '🔇';
+          el.className = this.ttsOn ? 'cmd-link' : 'cmd-link c-dim';
+        }
+      },
+
+      setPersona(p) {
+        this.persona = p === 'adam' ? 'adam' : 'eva';
+        localStorage.setItem('evabot_tts_persona', this.persona);
+      },
+
+      setAutosend(v) {
+        this.autosend = !!v;
+        localStorage.setItem('evabot_voice_autosend', this.autosend ? 'on' : 'off');
+      },
+
+      // Persona voice heuristics: prefer known female/male voice names
+      pickVoice(utterLang) {
+        if (!window.speechSynthesis) return null;
+        const voices = window.speechSynthesis.getVoices() || [];
+        const femaleRe = /female|woman|alice|milena|tatyana|yuri|alena|katya|zira|susan|katia|olesya|svetlana|valentina|natalia/i;
+        const maleRe = /male|man|dmitri|pavel|alex|david|daniel|maxim|oleg|artem/i;
+        const wantFemale = this.persona !== 'adam';
+        const primary = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith(utterLang.slice(0, 2).toLowerCase()));
+        const fallback = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith('en'));
+        const pool = primary.length ? primary : fallback;
+        const re = wantFemale ? femaleRe : maleRe;
+        return pool.find((v) => re.test(v.name)) || pool[0] || null;
+      },
+
+      speak(text) {
+        if (!this.ttsOn || !window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const cleanText = String(text || '')
+          .replace(/```[\s\S]*?```/g, ' [Code omitted] ')
+          .replace(/`([^`]+)`/g, '$1')
+          .replace(/[*_#~>|┌┐└┘├┤─│═]+/g, ' ')
+          .replace(/https?:\/\/\S+/g, ' ')
+          .replace(/\[[^\]]*\]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (!cleanText) return;
+        const spokenSlice = cleanText.length > 350 ? `${cleanText.slice(0, 350)}...` : cleanText;
+        const utterance = new SpeechSynthesisUtterance(spokenSlice);
+        utterance.lang = this.langCode();
+        // persona tuning (see frontend/src/app.ts:760-769 conventions)
+        utterance.rate = 1.05;
+        utterance.pitch = this.persona === 'adam' ? 0.85 : 1.12;
+        const voice = this.pickVoice(utterance.lang);
+        if (voice) utterance.voice = voice;
+        window.speechSynthesis.speak(utterance);
+      },
+    };
+    window.VoiceEngine = VoiceEngine;
 
     async function loadModels() {
       try {
@@ -1063,10 +1915,101 @@
       modelModal.style.display = 'none';
     }
 
-    // Auto-resize textarea & Enter to send
+    // ===== SmartInput autocomplete UI (attached to #user-input) =====
+    const acState = { items: [], idx: 0, open: false };
+    let acTimer = null;
+
+    function scheduleAc() {
+      clearTimeout(acTimer);
+      acTimer = setTimeout(updateAc, 80);
+    }
+
+    function updateAc() {
+      try {
+        acState.items = SmartInput.suggest(userInput.value, userInput.selectionStart);
+      } catch (e) {
+        acState.items = [];
+      }
+      acState.idx = 0;
+      acState.open = acState.items.length > 0;
+      paintAc();
+    }
+
+    function paintAc() {
+      const box = document.getElementById('ac-box');
+      if (!box) return;
+      if (!acState.open || !acState.items.length) {
+        box.classList.remove('open');
+        box.innerHTML = '';
+        return;
+      }
+      box.innerHTML = acState.items.map((it, i) => `
+        <div class="ac-item ${i === acState.idx ? 'active' : ''}" data-idx="${i}">
+          <span class="ac-badge ${it.source}">${it.source === 'cmd' ? 'cmd' : 'mem'}</span>
+          <span class="ac-text">${escapeHtml(it.text)}</span>${it.desc ? `<span class="ac-desc">— ${escapeHtml(it.desc)}</span>` : ''}
+        </div>`).join('');
+      box.classList.add('open');
+      box.querySelectorAll('.ac-item').forEach((el) => {
+        el.addEventListener('mousedown', (ev) => {
+          ev.preventDefault();
+          acState.idx = parseInt(el.dataset.idx, 10) || 0;
+          acceptAc();
+        });
+      });
+    }
+
+    function acceptAc() {
+      const it = acState.items[acState.idx];
+      if (!it) return;
+      const caret = userInput.selectionStart === null ? userInput.value.length : userInput.selectionStart;
+      const before = userInput.value.slice(0, caret);
+      const after = userInput.value.slice(caret);
+      const m = before.match(/(\/[\w?]*|[\p{L}\p{N}][\p{L}\p{N}'’-]*)$/u);
+      const start = caret - (m ? m[0].length : 0);
+      userInput.value = before.slice(0, start) + it.text + ' ' + after;
+      const np = start + it.text.length + 1;
+      userInput.setSelectionRange(np, np);
+      closeAc();
+      userInput.focus();
+      userInput.style.height = 'auto';
+      userInput.style.height = userInput.scrollHeight + 'px';
+    }
+
+    function closeAc() {
+      acState.open = false;
+      acState.items = [];
+      paintAc();
+    }
+
+    // Auto-resize textarea & Enter to send (with autocomplete key handling)
     userInput.addEventListener('keydown', (e) => {
+      if (acState.open && acState.items.length) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          acState.idx = (acState.idx + 1) % acState.items.length;
+          paintAc();
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          acState.idx = (acState.idx - 1 + acState.items.length) % acState.items.length;
+          paintAc();
+          return;
+        }
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          acceptAc();
+          return;
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeAc();
+          return;
+        }
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
+        closeAc();
         sendMessage();
       }
     });
@@ -1074,12 +2017,18 @@
     userInput.addEventListener('input', () => {
       userInput.style.height = 'auto';
       userInput.style.height = userInput.scrollHeight + 'px';
+      scheduleAc();
+    });
+
+    userInput.addEventListener('blur', () => {
+      setTimeout(closeAc, 150);
     });
 
     // Start
     setLanguage(state.lang, true);
     loadModels();
     setStatus(true);
+    VoiceEngine.init();
   </script>
 </body>
 </html>

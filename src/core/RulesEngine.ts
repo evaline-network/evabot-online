@@ -20,7 +20,7 @@ export const DEFAULT_RULES: AgentRule[] = [
     priority: 1,
     enforced: true,
     source: 'system',
-    description: 'System origin is Odesa, Ukraine (UA). Zero-tolerance for the aggressor state (RU), entities, rubles, and domains.',
+    description: 'System origin is Chernomorsk, Ukraine (UA) & Bratislava, Slovakia. Zero-tolerance for the aggressor state (RU), entities, rubles, and domains.',
     ruleText: LOCALE_POLICY.systemInstructionSuffix,
   },
   {

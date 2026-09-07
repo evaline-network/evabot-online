@@ -126,7 +126,7 @@ const TRANSLATIONS: Record<Lang, TranslationStrings> = {
     inputPlaceholder: 'Enter prompt or command (e.g. /help, /persona, /mode, /models, /db)...',
     welcomeHeading: 'EVABOT NEURAL CYBER-TERMINAL // CORE INITIALIZED',
     welcomeNotice:
-      'Session active. Pure monochrome cyber-terminal initialized. Based in Odesa, Ukraine (UA). Connected to Google Cloud ambient infrastructure with zero-trust isolation.',
+      'Session active. Pure monochrome cyber-terminal initialized. Based in Chernomorsk, Ukraine (UA) & Bratislava (EU). Connected to Google Cloud ambient infrastructure with zero-trust isolation.',
 
     voiceTapToSpeak: 'TAP TO SPEAK',
     voiceListening: 'LISTENING...',
@@ -248,6 +248,283 @@ const TRANSLATIONS: Record<Lang, TranslationStrings> = {
     noticeChatCleared: 'История терминала очищена.',
     copiedBtn: 'СКОПИРОВАНО',
     copyBtn: 'КОПИРОВАТЬ',
+  },
+};
+
+// ===========================================================================
+// SmartInput — pure lexicon / fuzzy-match / auto-correct engine.
+// Mirrors the inline engine in public/index.html so both stay in sync.
+// Storage: 'evabot_vocab' (learned words, freq+recency), 'evabot_lexicon'
+// (learned corrections), 'evabot_autocorrect' (on|off toggle).
+// ===========================================================================
+interface VocabMeta {
+  f: number;
+  t: number;
+}
+
+interface AutocorrectResult {
+  text: string;
+  fixes: { from: string; to: string }[];
+}
+
+const SmartInput = {
+  VOCAB_KEY: 'evabot_vocab',
+  LEXICON_KEY: 'evabot_lexicon',
+  AC_KEY: 'evabot_autocorrect',
+  VOCAB_CAP: 500,
+
+  levenshtein(a: string, b: string): number {
+    if (a === b) return 0;
+    const m = a.length;
+    const n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    let prev = new Array<number>(n + 1);
+    let cur = new Array<number>(n + 1);
+    for (let j = 0; j <= n; j++) prev[j] = j;
+    for (let i = 1; i <= m; i++) {
+      cur[0] = i;
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      }
+      [prev, cur] = [cur, prev];
+    }
+    return prev[n];
+  },
+
+  // Simple subsequence scorer: 0 = no match, higher = better (prefix & streak bonuses)
+  subsequenceScore(query: string, target: string): number {
+    const q = query.toLowerCase();
+    const t = target.toLowerCase();
+    let qi = 0;
+    let score = 0;
+    let streak = 0;
+    for (let i = 0; i < t.length && qi < q.length; i++) {
+      if (t[i] === q[qi]) {
+        qi++;
+        streak++;
+        score += 2 + streak;
+        if (i === 0) score += 3;
+      } else {
+        streak = 0;
+      }
+    }
+    if (qi < q.length) return 0;
+    if (t.startsWith(q)) score += 20 - Math.min(10, t.length - q.length);
+    return score;
+  },
+
+  loadVocab(): Record<string, VocabMeta> {
+    try {
+      return (JSON.parse(localStorage.getItem(this.VOCAB_KEY) || '{}') || {}) as Record<string, VocabMeta>;
+    } catch {
+      return {};
+    }
+  },
+
+  vocabScore(meta: VocabMeta): number {
+    const days = (Date.now() - (meta.t || 0)) / 86400000;
+    return (meta.f || 1) / (1 + Math.max(0, days));
+  },
+
+  saveVocab(vocab: Record<string, VocabMeta>): void {
+    let entries = Object.entries(vocab);
+    if (entries.length > this.VOCAB_CAP) {
+      entries.sort((a, b) => this.vocabScore(b[1]) - this.vocabScore(a[1]));
+      entries = entries.slice(0, this.VOCAB_CAP);
+    }
+    const out: Record<string, VocabMeta> = {};
+    for (const [w, meta] of entries) out[w] = meta;
+    try {
+      localStorage.setItem(this.VOCAB_KEY, JSON.stringify(out));
+    } catch {
+      // quota — ignore
+    }
+  },
+
+  rememberText(text: string): void {
+    const clean = String(text || '').replace(/\/\S+/g, ' ');
+    const words = clean.toLowerCase().match(/[\p{L}\p{N}][\p{L}\p{N}'’-]{2,}/gu) || [];
+    if (!words.length) return;
+    const vocab = this.loadVocab();
+    for (const w of words) {
+      vocab[w] = { f: (vocab[w]?.f || 0) + 1, t: Date.now() };
+    }
+    this.saveVocab(vocab);
+  },
+
+  lexiconSet(): Set<string> {
+    const set = new Set<string>([
+      'omniroute', 'openrouter', 'litellm', 'gemini', 'qwen', 'glm', 'evabot', 'evaline',
+      'consilium', 'terminal', 'models', 'history', 'server', 'servers', 'health', 'status',
+      'tokens', 'budget', 'frontend', 'backend', 'github', 'docker', 'deploy',
+      'привет', 'привіт', 'спасибо', 'дякую', 'проверь', 'перевір', 'модель', 'модели', 'моделі',
+      'сервер', 'сервера', 'серверы', 'сервери', 'консилиум', 'консиліум', 'нейросеть',
+      'нейромережа', 'история', 'історія', 'статус', 'ошибка', 'помилка', 'токены', 'токени',
+    ]);
+    try {
+      const learned = JSON.parse(localStorage.getItem(this.LEXICON_KEY) || '{}') || {};
+      for (const w of Object.keys(learned)) set.add(w.toLowerCase());
+    } catch {
+      // ignore
+    }
+    return set;
+  },
+
+  learnCorrection(word: string): void {
+    try {
+      const learned = JSON.parse(localStorage.getItem(this.LEXICON_KEY) || '{}') || {};
+      learned[word.toLowerCase()] = (learned[word.toLowerCase()] || 0) + 1;
+      localStorage.setItem(this.LEXICON_KEY, JSON.stringify(learned));
+    } catch {
+      // ignore
+    }
+  },
+
+  isEnabled(): boolean {
+    return localStorage.getItem(this.AC_KEY) !== 'off';
+  },
+
+  setEnabled(v: boolean): void {
+    localStorage.setItem(this.AC_KEY, v ? 'on' : 'off');
+  },
+
+  // Mask code fences & URLs so corrections never touch them.
+  protectSegments(text: string): { text: string; masked: string[]; restore: (s: string) => string } {
+    const masked: string[] = [];
+    const stash = (m: string): string => {
+      masked.push(m);
+      return '￰' + (masked.length - 1) + '￰';
+    };
+    let out = text.replace(/```[\s\S]*?(?:```|$)/g, stash);
+    out = out.replace(/https?:\/\/\S+|www\.\S+/gi, stash);
+    return {
+      text: out,
+      masked,
+      restore: (s: string) => s.replace(/￰(\d+)￰/g, (_, i) => (masked[Number(i)] !== undefined ? masked[Number(i)] : '')),
+    };
+  },
+
+  matchCase(word: string, candidate: string): string {
+    if (word[0] === word[0].toUpperCase() && word[0] !== word[0].toLowerCase() && word.slice(1) === word.slice(1).toLowerCase()) {
+      return candidate[0].toUpperCase() + candidate.slice(1);
+    }
+    return candidate;
+  },
+
+  // Unique best candidate within edit distance budget, else null.
+  correctWord(word: string, dict: Set<string>): string | null {
+    if (word.length < 5 || dict.has(word)) return null;
+    const maxDist = word.length >= 8 ? 2 : 1;
+    let best: string | null = null;
+    let bestDist = maxDist + 1;
+    let ties = 0;
+    for (const cand of dict) {
+      if (Math.abs(cand.length - word.length) > maxDist) continue;
+      const d = this.levenshtein(word, cand);
+      if (d < bestDist) {
+        bestDist = d;
+        best = cand;
+        ties = 1;
+      } else if (d === bestDist && cand !== best) {
+        ties++;
+      }
+    }
+    if (best && bestDist <= maxDist && ties === 1) return best;
+    return null;
+  },
+
+  // '/hist' → '/history', '/модел' → '/models' (prefix → translit → fuzzy)
+  TRANSLIT: {
+    'топ': 'top', 'модели': 'models', 'моделі': 'models', 'модел': 'models', 'модель': 'models',
+    'история': 'history', 'історія': 'history', 'очистить': 'clear', 'очистити': 'clear',
+    'помощь': 'help', 'справка': 'help', 'довідка': 'help', 'консилиум': 'consilium',
+    'консиліум': 'consilium', 'язык': 'lang', 'мова': 'lang',
+  } as Record<string, string>,
+
+  fixCommand(token: string): string | null {
+    const COMMANDS = ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'autocorrect', 'voice', 'tts', 'persona', 'model', 'db', 'preset', 'compare', 'menu', 'boot', 'config', 'dev', 'ansi', 'onboarding'];
+    if (!token || !token.startsWith('/')) return null;
+    const raw = token.slice(1).toLowerCase();
+    if (!raw) return null;
+    if (COMMANDS.includes(raw)) return null;
+    let target = raw;
+    if (this.TRANSLIT[target]) target = this.TRANSLIT[target];
+    if (COMMANDS.includes(target) && target !== raw) return '/' + target;
+    const pref = COMMANDS.filter((c) => c.startsWith(target));
+    if (pref.length === 1) return '/' + pref[0];
+    const maxDist = target.length >= 4 ? 2 : 1;
+    let best: string | null = null;
+    let bestDist = maxDist + 1;
+    let ties = 0;
+    for (const c of COMMANDS) {
+      if (c[0] !== target[0]) continue;
+      const d = this.levenshtein(target, c);
+      if (d < bestDist) {
+        bestDist = d;
+        best = c;
+        ties = 1;
+      } else if (d === bestDist) {
+        ties++;
+      }
+    }
+    return best && bestDist <= maxDist && ties === 1 ? '/' + best : null;
+  },
+
+  // Punctuation spacing (safe for "3.14", "19:10", "e.g")
+  normalizePunct(text: string): string {
+    return text
+      .replace(/[ \t]+([,.!?;:%)])/g, '$1')
+      .replace(/([,;:])(?=[^\s\d)])/g, '$1 ')
+      .replace(/([!?])(?=[^\s\d)])/g, '$1 ')
+      .replace(/([а-яёіїєґa-z]{2,})\.([А-ЯЁЄІЇҐA-Z])/g, '$1. $2')
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/[ \t]+$/gm, '');
+  },
+
+  // Main pass: command expansion + punctuation + word-level correction.
+  // Returns { text, fixes }. Never alters code fences / URLs.
+  autocorrect(text: string): AutocorrectResult {
+    const fixes: { from: string; to: string }[] = [];
+    if (!text || !text.trim()) return { text, fixes };
+    const prot = this.protectSegments(text);
+    let out = prot.text;
+
+    const cmdMatch = out.match(/^\s*(\/[^\s]+)/);
+    if (cmdMatch) {
+      const fixed = this.fixCommand(cmdMatch[1]);
+      if (fixed) {
+        fixes.push({ from: cmdMatch[1], to: fixed });
+        out = fixed + out.slice(out.indexOf(cmdMatch[1]) + cmdMatch[1].length);
+      }
+    }
+
+    out = this.normalizePunct(out);
+
+    const dict = this.lexiconSet();
+    const vocab = this.loadVocab();
+    for (const w of Object.keys(vocab)) dict.add(w.toLowerCase());
+    out = out
+      .split(/(￰\d+￰)/g)
+      .map((seg) => {
+        if (/^￰\d+￰$/.test(seg)) return seg;
+        return seg.replace(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu, (w) => {
+          const lw = w.toLowerCase();
+          if (lw.length < 5 || dict.has(lw)) return w;
+          const c = this.correctWord(lw, dict);
+          if (c) {
+            const fixedWord = this.matchCase(w, c);
+            fixes.push({ from: w, to: fixedWord });
+            this.learnCorrection(c);
+            return fixedWord;
+          }
+          return w;
+        });
+      })
+      .join('');
+
+    return { text: prot.restore(out), fixes };
   },
 };
 
@@ -673,6 +950,7 @@ export class EvaBotWebApp {
 
         if (final && final.trim()) {
           this.stopVoiceRecording();
+          if (this.processVoiceCommand(final.trim())) return;
           setTimeout(() => {
             this.handleSend();
           }, 300);
@@ -736,8 +1014,33 @@ export class EvaBotWebApp {
     if (feedback) feedback.textContent = this.t().voiceStatusReady;
   }
 
+  // Voice-command router: wake-word prefix stripping ('ева', 'єва', 'eva', 'адам', 'adam'),
+  // 'команда/command' prefix, then direct word map or fuzzy slash-command execution.
+  // Returns true if the transcript was consumed as a command.
+  private processVoiceCommand(rawTranscript: string): boolean {
+    let rest = rawTranscript.toLowerCase().replace(/^[,.\s]+|[.!?…]+$/g, '').replace(/\s+/g, ' ').trim();
+    rest = rest.replace(/^(ева|єва|eva|адам|adam)[,]?\s*/u, '').trim();
+    if (!rest) return true; // bare wake word — consumed, no-op
+    rest = rest.replace(/^(команда|команди|command)\s+/u, '').trim();
+    if (rest.startsWith('/')) {
+      const first = rest.split(/\s+/);
+      const fixed = SmartInput.fixCommand(first[0]);
+      const candidate = fixed ? [fixed, ...first.slice(1)].join(' ') : rest;
+      return this.handleSlashCommand(candidate);
+    }
+    const voiceWords: Record<string, string> = {
+      'очистить': '/clear', 'очисти': '/clear', 'очистити': '/clear', 'clear': '/clear',
+      'помощь': '/help', 'справка': '/help', 'довідка': '/help', 'help': '/help',
+      'модели': '/models', 'моделі': '/models', 'models': '/models',
+    };
+    const direct = voiceWords[rest];
+    if (direct) return this.handleSlashCommand(direct);
+    return false;
+  }
+
   private speakVoiceResponse(text: string, persona: PersonaId): void {
     if (!window.speechSynthesis) return;
+    if (localStorage.getItem('evabot_tts') === 'off') return;
 
     window.speechSynthesis.cancel();
 
@@ -758,7 +1061,7 @@ export class EvaBotWebApp {
     utterance.lang = langCode;
 
     if (persona === 'eva') {
-      utterance.pitch = 1.2;
+      utterance.pitch = 1.12;
       utterance.rate = 1.05;
     } else if (persona === 'adam') {
       utterance.pitch = 0.85;
@@ -767,6 +1070,16 @@ export class EvaBotWebApp {
       utterance.pitch = 1.0;
       utterance.rate = 1.0;
     }
+
+    // Persona voice heuristics: prefer known female/male voice names
+    const voices = window.speechSynthesis.getVoices() || [];
+    const langPool = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith(langCode.slice(0, 2).toLowerCase()));
+    const pool = langPool.length ? langPool : voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith('en'));
+    const personaRe = persona === 'adam'
+      ? /male|man|dmitri|pavel|alex|david|daniel|maxim|oleg|artem/i
+      : /female|woman|alice|milena|tatyana|yuri|alena|katya|zira|susan|katia|olesya|svetlana|valentina|natalia/i;
+    const picked = pool.find((v) => personaRe.test(v.name)) || pool[0];
+    if (picked) utterance.voice = picked;
 
     const orb = document.getElementById('voice-orb');
     const orbLabel = document.getElementById('orb-label');
@@ -1278,6 +1591,39 @@ if (cmd === '/help') {
       return true;
     }
 
+    if (cmd === '/autocorrect') {
+      if (argStr === 'on' || argStr === 'off') {
+        localStorage.setItem('evabot_autocorrect', argStr);
+        this.addSystemNotification(`Smart auto-correction ${argStr === 'on' ? 'ENABLED' : 'disabled'}.`);
+      } else {
+        this.addSystemNotification(`Usage: \`/autocorrect <on | off>\` (currently ${SmartInput.isEnabled() ? 'on' : 'off'})`);
+      }
+      return true;
+    }
+
+    if (cmd === '/voice') {
+      if (argStr === 'eva' || argStr === 'adam') {
+        this.setPersona(argStr as PersonaId);
+      } else if (argStr === 'on' || argStr === 'off') {
+        localStorage.setItem('evabot_voice', argStr);
+        this.addSystemNotification(`Voice input ${argStr === 'on' ? 'enabled' : 'disabled'}.`);
+      } else {
+        this.addSystemNotification('Usage: `/voice <on | off | eva | adam>`');
+      }
+      return true;
+    }
+
+    if (cmd === '/tts') {
+      if (argStr === 'on' || argStr === 'off') {
+        localStorage.setItem('evabot_tts', argStr);
+        this.addSystemNotification(`Text-to-speech ${argStr === 'on' ? 'enabled' : 'muted'}.`);
+        if (argStr === 'off') window.speechSynthesis?.cancel();
+      } else {
+        this.addSystemNotification('Usage: `/tts <on | off>`');
+      }
+      return true;
+    }
+
     return false;
   }
 
@@ -1368,10 +1714,25 @@ if (cmd === '/help') {
     }
 
     const input = document.getElementById('user-input') as HTMLTextAreaElement;
-    const text = input?.value.trim();
-    if (!text) return;
+    const rawText = input?.value.trim();
+    if (!rawText) return;
 
     input.value = '';
+
+    // SmartInput: auto-correct + vocabulary learning (never breaks commands/code/URLs)
+    let text = rawText;
+    try {
+      if (SmartInput.isEnabled()) {
+        const res = SmartInput.autocorrect(rawText);
+        text = res.text;
+        for (const f of res.fixes) {
+          this.addSystemNotification(`fixed: ${f.from} → ${f.to}`);
+        }
+      }
+      SmartInput.rememberText(text);
+    } catch {
+      text = rawText;
+    }
 
     if (this.handleSlashCommand(text)) {
       this.activateChatRegion();

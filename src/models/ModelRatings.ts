@@ -1,7 +1,18 @@
+import os from 'node:os';
+import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { ModelRegistry, GeminiModelInfo } from './ModelRegistry.js';
-import { AccountingEngine } from '../core/AccountingEngine.js';
+import { AccountingEngine, CapitalExpenses } from '../core/AccountingEngine.js';
 import { AgentBuilder } from '../core/AgentBuilder.js';
 import { I18nEngine } from '../core/I18nEngine.js';
+import { ChatHistoryStore } from '../core/ChatHistoryStore.js';
+import { knowledgeBase } from '../core/KnowledgeBase.js';
+import { ClusterMonitor } from '../core/ClusterMonitor.js';
+import { ProductCatalog, CatalogLang } from '../core/ProductCatalog.js';
+import { CompanyKnowledge } from '../core/CompanyKnowledge.js';
+import { NewsEngine, NewsTagId } from '../core/NewsEngine.js';
+import { ProviderFallbackChain } from '../core/Resilience.js';
+import { SephirotEngine, SEPHIROT_ROLES } from '../core/SephirotEngine.js';
 
 export type ModelRatingDimension = 'quality' | 'speed' | 'context' | 'cost';
 
@@ -314,9 +325,109 @@ export class ModelRatings {
   }
 }
 
+/**
+ * Multilingual command alias map (EN / UK / RU).
+ * Keys are lowercase with apostrophe variants canonicalized to the straight ASCII
+ * apostrophe `'` (see normalizeCommand — ` ’ ´ ʼ are all folded to ' before lookup).
+ */
+export const COMMAND_ALIASES: Record<string, string> = {
+  // /history
+  '/історія': '/history',
+  '/история': '/history',
+  '/hist': '/history',
+  '/журнал': '/history',
+  // /memory
+  '/пам\'ять': '/memory',
+  '/память': '/memory',
+  '/mem': '/memory',
+  '/памятка': '/memory',
+  // /search
+  '/пошук': '/search',
+  '/поиск': '/search',
+  '/знайти': '/search',
+  '/найти': '/search',
+  // /find
+  '/знайди': '/find',
+  '/найди': '/find',
+  // /services
+  '/сервіси': '/services',
+  '/сервисы': '/services',
+  '/служби': '/services',
+  '/службы': '/services',
+  // /servers
+  '/сервери': '/servers',
+  '/серверы': '/servers',
+  '/вми': '/servers',
+  '/vm': '/servers',
+  // /models
+  '/моделі': '/models',
+  '/модели': '/models',
+  // /help
+  '/допомога': '/help',
+  '/помощь': '/help',
+  // /lang
+  '/мова': '/lang',
+  '/язык': '/lang',
+  // /cost
+  '/вартість': '/cost',
+  '/стоимость': '/cost',
+  '/фінанси': '/cost',
+  '/финансы': '/cost',
+  '/бюджет': '/cost',
+  '/бухгалтерія': '/cost',
+  '/бухгалтерия': '/cost',
+  // /clear
+  '/очистити': '/clear',
+  '/очистить': '/clear',
+  '/очистка': '/clear',
+  // /news
+  '/новини': '/news',
+  '/новости': '/news',
+  '/новины': '/news',
+  '/нов': '/news',
+  // /health
+  '/здоров\'я': '/health',
+  '/здоровье': '/health',
+  '/статус-моделей': '/health',
+  '/статус': '/health',
+  // /products (EvaLine product catalog)
+  '/продукти': '/products',
+  '/продукты': '/products',
+  '/товари': '/products',
+  '/товары': '/products',
+  '/catalog': '/products',
+  '/каталог': '/products',
+  // /who (corporate knowledge matrix)
+  '/хто': '/who',
+  '/кто': '/who',
+  '/роли': '/who',
+  '/ролі': '/who',
+  // /sephirot (Sephirot/Tetraxis consilium)
+  '/сфирот': '/sephirot',
+  '/сефирот': '/sephirot',
+  '/дерево': '/sephirot',
+  '/tetraxis': '/sephirot',
+  '/тетраксис': '/sephirot',
+};
+
+/**
+ * Normalizes a user-typed command: trims whitespace, lowercases, canonicalizes
+ * apostrophe/backtick variants (` ' ´ ʼ ’ → ') and resolves multilingual aliases
+ * via COMMAND_ALIASES. Arguments (rest of the line) are preserved after the
+ * canonical head token.
+ */
+export function normalizeCommand(input: string): string {
+  const cmd = (input || '').trim().toLowerCase().replace(/['`´ʼ’']/g, "'");
+  const spaceIdx = cmd.indexOf(' ');
+  const head = spaceIdx === -1 ? cmd : cmd.slice(0, spaceIdx);
+  const rest = spaceIdx === -1 ? '' : cmd.slice(spaceIdx + 1).trim();
+  const canonical = COMMAND_ALIASES[head] || head;
+  return rest ? `${canonical} ${rest}` : canonical;
+}
+
 export class ModelCommand {
   public static execute(command: string): string {
-    const cmd = command.toLowerCase().trim();
+    const cmd = normalizeCommand(command);
     const parts = cmd.split(/\s+/);
     const action = parts[0];
 
@@ -333,6 +444,17 @@ export class ModelCommand {
         return this.handleMcp(parts.slice(1));
       case '/lsp':
         return this.handleLsp(parts.slice(1));
+      case '/history':
+        return this.handleHistory(parts.slice(1));
+      case '/memory':
+        return this.handleMemory();
+      case '/search':
+      case '/find':
+        return this.handleSearch(parts.slice(1));
+      case '/services':
+        return this.handleServices();
+      case '/servers':
+        return this.handleServers();
       case '/cost':
       case '/finance':
       case '/budget':
@@ -354,9 +476,290 @@ export class ModelCommand {
       case '/info':
       case '/inspect':
         return this.handleInfo(parts.slice(1));
+      case '/health':
+        return ProviderFallbackChain.getHealthReport();
+      case '/news':
+        return this.handleNewsSync(parts.slice(1));
+      case '/products':
+        return this.handleProducts(parts.slice(1));
+      case '/who':
+        return this.handleWho(parts.slice(1));
+      case '/sephirot':
+        return this.handleSephirot(parts.slice(1));
       default:
-        return `[ERROR] Unknown command: ${action}. Use /top, /models, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /free, /paid, or /help.`;
+        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /health, /products, /who, /sephirot, /free, /paid, or /help.`;
     }
+  }
+
+  /**
+   * Async entrypoint for commands that need network I/O (/news).
+   * Falls back to the synchronous execute() for everything else.
+   */
+  public static async executeAsync(command: string): Promise<string> {
+    const cmd = normalizeCommand(command);
+    if (cmd.startsWith('/news')) {
+      const args = cmd.split(/\s+/).slice(1);
+      return this.handleNews(args);
+    }
+    return this.execute(command);
+  }
+
+  /** Cache-first sync rendering for /news (used by the sync registry + web router). */
+  private static handleNewsSync(args: string[]): string {
+    const tags = this.resolveNewsTags(args);
+    const lang = I18nEngine.getLocale();
+    const cached = NewsEngine.getCachedText(lang, tags);
+    if (cached) return cached;
+    return '📰 Рушій новин запускає перший збір (до ~10 c, 8s timeout на джерело).\n   Повторіть /news за мить — результат буде взято з кешу (15 хв).';
+  }
+
+  /** Fully async /news handler (CLI / executeAsync): awaits the live fetch. */
+  private static async handleNews(args: string[]): Promise<string> {
+    const tags = this.resolveNewsTags(args);
+    try {
+      const { items, partialErrors } = await NewsEngine.fetchNews(tags);
+      const filtered = tags && tags.length > 0 ? items.filter((i) => tags.includes(i.category)) : items;
+      return NewsEngine.formatNews(I18nEngine.getLocale(), filtered, partialErrors);
+    } catch (err: any) {
+      return `[ERROR] News engine unavailable: ${err.message}`;
+    }
+  }
+
+  private static resolveNewsTags(args: string[]): NewsTagId[] | undefined {
+    if (args.length === 0) return undefined;
+    const ids: NewsTagId[] = [];
+    for (const raw of args) {
+      const id = NewsEngine.resolveTag(raw);
+      if (id && !ids.includes(id)) ids.push(id);
+    }
+    return ids.length > 0 ? ids : undefined;
+  }
+
+  private static handleHistory(args: string[]): string {
+    const limit = Math.max(1, Math.min(200, parseInt(args[0] || '20', 10) || 20));
+    const store = ChatHistoryStore.getInstance();
+    const messages = store.getRecentMessages(limit);
+
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push(`  🕘 ИСТОРИЯ ЧАТА — ПОСЛЕДНИЕ ${messages.length} СООБЩЕНИЙ (все сессии)`);
+    lines.push('═'.repeat(78));
+
+    if (messages.length === 0) {
+      lines.push('  История пока пуста. Задайте вопрос в чате — он сохранится автоматически.');
+    }
+
+    for (const m of messages) {
+      const when = new Date(m.ts).toISOString().replace('T', ' ').substring(0, 19);
+      const who = m.role === 'user' ? '👤 USER' : '🤖 BOT ';
+      const sessionTag = m.sessionId === 'consilium' ? '[consilium]' : `[${m.sessionId}]`;
+      const preview = m.content.replace(/\s+/g, ' ');
+      const shown = preview.length > 90 ? preview.substring(0, 87) + '...' : preview;
+      lines.push(`  ${when}  ${who} ${sessionTag} ${shown}`);
+    }
+
+    lines.push('─'.repeat(78));
+    lines.push('  Использование: /history [N] — показать последние N сообщений (по умолчанию 20).');
+    lines.push('  Поиск по истории: /search <запрос>. Очистка экрана: /clear.');
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  private static handleMemory(): string {
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  🧠 ПАМЯТЬ СИСТЕМЫ (MEMORY STATS)');
+    lines.push('═'.repeat(78));
+
+    // Knowledge Base statistics
+    try {
+      const kbStats = knowledgeBase.getStats();
+      const sqliteBackend = knowledgeBase.getAvailableBackends().find((b) => b.id === 'sqlite');
+      lines.push('  📚 БАЗА ЗНАНИЙ (Knowledge Base):');
+      lines.push(`    • Документов в памяти   : ${kbStats.documentCount}`);
+      lines.push(`    • FTS5 чанков (SQLite)  : ${sqliteBackend ? sqliteBackend.documentCount : 0}`);
+      lines.push(`    • Активный бэкенд       : ${kbStats.name}`);
+    } catch (err: any) {
+      lines.push(`  📚 БАЗА ЗНАНИЙ: недоступна (${err.message})`);
+    }
+
+    // Chat history database statistics
+    try {
+      const chatDb = ChatHistoryStore.getInstance();
+      const counts = chatDb.countAll();
+      lines.push('  💬 ИСТОРИЯ ЧАТОВ (SQLite chat-history.db):');
+      lines.push(`    • Всего сообщений       : ${counts.totalMessages}`);
+      lines.push(`    • Сессий                : ${counts.sessions}`);
+      lines.push(`    • Файл БД               : ${chatDb.getPath()}`);
+    } catch (err: any) {
+      lines.push(`  💬 ИСТОРИЯ ЧАТОВ: недоступна (${err.message})`);
+    }
+
+    // Vector store pointer
+    lines.push('  🗺️  ВЕКТОРНОЕ ХРАНИЛИЩЕ:');
+    lines.push('    • ChromaDB              : knowledge-base/evaline-knowledge-base/chroma_db');
+
+    lines.push('');
+    lines.push('  🔎 ЧТО ПОМНИТЬ / КАК ДОБРАТЬСЯ ДО ПАМЯТИ:');
+    lines.push('    • /search <запрос>      — полнотекстовый поиск по чатам и базе знаний');
+    lines.push('    • /history [N]          — последние N сообщений всех сессий');
+    lines.push('    • /kb search <запрос>   — поиск только по базе знаний EvaLine');
+    lines.push('    • /kb status            — статистика и бэкенды базы знаний');
+    lines.push('    • Сессия "consilium"    — итоги многоагентных консилиумов хранятся в чат-БД');
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  private static handleSearch(args: string[]): string {
+    const query = args.join(' ').trim();
+    if (!query) {
+      return `Использование: /search <запрос> — поиск по чатам (FTS5) и базе знаний. Синоним: /find.`;
+    }
+
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push(`  🔍 ПОИСК: "${query}"`);
+    lines.push('═'.repeat(78));
+
+    // 1. Chat history FTS5 search
+    let chatHits = 0;
+    try {
+      const hits = ChatHistoryStore.getInstance().searchMessages(query, 5);
+      chatHits = hits.length;
+      lines.push('  💬 ИСТОРИЯ ЧАТОВ:');
+      if (hits.length === 0) {
+        lines.push('    • Совпадений в чатах не найдено.');
+      }
+      for (const hit of hits) {
+        const when = new Date(hit.ts).toISOString().replace('T', ' ').substring(0, 16);
+        const preview = hit.content.replace(/\s+/g, ' ');
+        const shown = preview.length > 80 ? preview.substring(0, 77) + '...' : preview;
+        lines.push(`    • [${hit.sessionId}] ${when} (${hit.role}): ${shown}`);
+      }
+    } catch (err: any) {
+      lines.push(`    • Поиск чатов недоступен: ${err.message}`);
+    }
+
+    // 2. Knowledge Base search (SQLite FTS5 + memory fallback)
+    let kbHits = 0;
+    try {
+      const docs = knowledgeBase.search(query, { limit: 5 });
+      kbHits = docs.length;
+      lines.push('  📚 БАЗА ЗНАНИЙ:');
+      if (docs.length === 0) {
+        lines.push('    • Совпадений в базе знаний не найдено.');
+      }
+      for (const doc of docs) {
+        const preview = doc.content.replace(/\s+/g, ' ');
+        const shown = preview.length > 80 ? preview.substring(0, 77) + '...' : preview;
+        lines.push(`    • [${doc.language}] ${doc.title.substring(0, 50)}: ${shown}`);
+      }
+      lines.push('    • Расширенный поиск по KB: /kb search <запрос> или GET /api/kb/search');
+    } catch (err: any) {
+      lines.push(`    • Поиск по KB недоступен: ${err.message}. Альтернатива: GET /api/kb/search`);
+    }
+
+    lines.push('─'.repeat(78));
+    lines.push(`  Итого: ${chatHits} в чатах, ${kbHits} в базе знаний.`);
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  private static checkServiceUnit(unit: string): string {
+    try {
+      const out = execFileSync('systemctl', ['is-active', unit], {
+        timeout: 3000,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }).trim();
+      return out || 'unknown';
+    } catch (err: any) {
+      const stdout = typeof err.stdout === 'string' ? err.stdout.trim() : '';
+      if (stdout) return stdout;
+      return 'unknown';
+    }
+  }
+
+  private static checkDockerContainer(nameFragment: string): string {
+    try {
+      const out = execFileSync('docker', ['ps', '--format', '{{.Names}}'], {
+        timeout: 3000,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      return out.split('\n').some((n) => n.includes(nameFragment)) ? 'running' : 'stopped';
+    } catch (err: any) {
+      return 'unknown';
+    }
+  }
+
+  private static handleServices(): string {
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  ⚙️  СИСТЕМНЫЕ СЕРВИСЫ EVA (systemd / docker)');
+    lines.push('═'.repeat(78));
+
+    const units = [
+      { label: 'evabot-brain.service', unit: 'evabot-brain', desc: 'Node dist/server/server.js на :3000' },
+      { label: 'omniroute', unit: 'omniroute', desc: 'Edge model router proxy' },
+      { label: 'nginx', unit: 'nginx', desc: 'Веб-реверс-прокси, TLS' },
+      { label: 'code-server', unit: 'code-server', desc: 'Веб-IDE' },
+    ];
+    lines.push('  СЕРВИС                    СТАТУС       НАЗНАЧЕНИЕ');
+    for (const u of units) {
+      const status = this.checkServiceUnit(u.unit);
+      const label = u.label.padEnd(26);
+      const stat = status.padEnd(13);
+      lines.push(`  ${label} ${stat} ${u.desc}`);
+    }
+
+    const dockerN8n = this.checkDockerContainer('n8n');
+    lines.push(`  ${'n8n (docker)'.padEnd(26)} ${dockerN8n.padEnd(13)} Automation workflows`);
+    lines.push(`  ${'evabot-voice (if unit)'.padEnd(26)} ${this.checkServiceUnit('evabot-voice').padEnd(13)} Voice realtime relay`);
+
+    lines.push('');
+    lines.push('  💾 БЭКЕНДЫ БАЗ ДАННЫХ:');
+    const chatDbPath = '/var/www/evabot-backend/data/chat-history.db';
+    const ftsPath = '/var/www/evabot-backend/knowledge-base/evaline-knowledge-base/fts_index.db';
+    const chromaPath = '/var/www/evabot-backend/knowledge-base/evaline-knowledge-base/chroma_db';
+    lines.push(`    • SQLite chat-history   : ${fs.existsSync(chatDbPath) ? '[OK]' : '[NOT CREATED YET]'} ${chatDbPath}`);
+    lines.push(`    • SQLite FTS5 KB index  : ${fs.existsSync(ftsPath) ? '[OK]' : '[NOT FOUND]'} ${ftsPath}`);
+    lines.push(`    • ChromaDB vector store : ${fs.existsSync(chromaPath) ? '[OK]' : '[NOT FOUND]'} ${chromaPath}`);
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  private static handleServers(): string {
+    const lines: string[] = [];
+    const load = os.loadavg();
+    const totalMemGb = os.totalmem() / (1024 * 1024 * 1024);
+    const freeMemGb = os.freemem() / (1024 * 1024 * 1024);
+    const usedMemGb = totalMemGb - freeMemGb;
+    const memPct = Math.round((usedMemGb / totalMemGb) * 100);
+    const uptimeH = Math.round(os.uptime() / 3600);
+    const micro = ClusterMonitor.getMicroMetrics();
+
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  🌐 КЛАСТЕР EVA — ДВА СЕРВЕРА (brain + face)');
+    lines.push('═'.repeat(78));
+    lines.push('  [1] evabot-agent-vm (BRAIN / Frankfurt)');
+    lines.push(`      Зона: europe-west3-a | Тип: c3-standard-8 (8 vCPU / 32 GB) | IP: 100.66.98.4`);
+    lines.push(`      Load avg (1/5/15 мин): ${load[0].toFixed(2)} / ${load[1].toFixed(2)} / ${load[2].toFixed(2)}`);
+    lines.push(`      Память: ${usedMemGb.toFixed(1)} / ${totalMemGb.toFixed(0)} GB (${memPct}% занято, свободно ${freeMemGb.toFixed(1)} GB)`);
+    lines.push(`      Аптайм: ${uptimeH} ч`);
+    lines.push('  [2] evaline-micro-vm (FACE / Iowa)');
+    lines.push(`      Зона: us-central1-a | Тип: e2-micro (2 vCPU / 1 GB) | IP: 136.114.26.252`);
+    lines.push(`      CPU: ${micro.cpuPct}% | RAM: ${micro.memUsedMb}/${micro.memTotalMb} MB | Mesh latency: ${ClusterMonitor.getMeshLatency()}ms`);
+    lines.push('');
+    lines.push('  ℹ️  Live-метрики кластера (реальные SSH-телеметрия микровиртуалки, latency mesh)');
+    lines.push('     поставляет ClusterMonitor (src/core/ClusterMonitor.ts) — /servers показывает срез.');
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
   }
 
   private static handleTop(args: string[]): string {
@@ -547,13 +950,109 @@ export class ModelCommand {
 
   private static handleCompany(args: string[]): string {
     const tier = args[0]?.toLowerCase() || 'evaline';
+    let report: string;
     if (tier === 'free') {
-      return AgentBuilder.formatCompanyReport(AgentBuilder.buildFreeCompany());
+      report = AgentBuilder.formatCompanyReport(AgentBuilder.buildFreeCompany());
+    } else if (tier === 'paid') {
+      report = AgentBuilder.formatCompanyReport(AgentBuilder.buildPaidCompany());
+    } else {
+      report = AgentBuilder.formatCompanyReport(AgentBuilder.buildEvaLineBusinessCompany());
     }
-    if (tier === 'paid') {
-      return AgentBuilder.formatCompanyReport(AgentBuilder.buildPaidCompany());
+    // Enrich with corporate knowledge-matrix summary + product catalog stats.
+    const lang = I18nEngine.getLocale() as CatalogLang;
+    return `${report}\n${CompanyKnowledge.formatMatrix(lang)}`;
+  }
+
+  private static handleProducts(args: string[]): string {
+    const lang = I18nEngine.getLocale() as CatalogLang;
+    const query = args.join(' ').trim();
+    if (!query) {
+      return ProductCatalog.formatStats(lang);
     }
-    return AgentBuilder.formatCompanyReport(AgentBuilder.buildEvaLineBusinessCompany());
+    return ProductCatalog.formatFiltered(query, lang);
+  }
+
+  private static handleWho(args: string[]): string {
+    const lang = I18nEngine.getLocale() as CatalogLang;
+    const role = args.join(' ').trim();
+    if (!role) {
+      return CompanyKnowledge.formatMatrix(lang);
+    }
+    return CompanyKnowledge.formatRole(role, lang);
+  }
+
+  /**
+   * /sephirot — Sephirot/Tetraxis consilium of 10 Tree-of-Life agents.
+   * The consilium can run for minutes, and ModelCommand.execute is synchronous,
+   * so the heavy run is launched in the background (SephirotEngine.startAsyncRun)
+   * and progress/result are polled via '/sephirot status' — the same fire-and-
+   * forget pattern /consilium uses through the async web/CLI paths.
+   */
+  private static handleSephirot(args: string[]): string {
+    const sub = args[0]?.toLowerCase();
+
+    if (sub === 'status') {
+      const status = SephirotEngine.getStatus();
+      const lines: string[] = [];
+      lines.push('');
+      lines.push('═'.repeat(78));
+      lines.push('  🌳 SEPHIROT CONSILIUM — СТАТУС');
+      lines.push('═'.repeat(78));
+      lines.push(`  Стан        : ${status.running ? '⏳ ВИКОНУЄТЬСЯ' : status.error ? '❌ ПОМИЛКА' : '✅ ЗАВЕРШЕНО'}`);
+      lines.push(`  Тема        : ${status.topic || '—'}`);
+      if (status.startedAt) lines.push(`  Запущено    : ${new Date(status.startedAt).toISOString()}`);
+      if (status.finishedAt) lines.push(`  Завершено   : ${new Date(status.finishedAt).toISOString()}`);
+      if (status.durationMs) lines.push(`  Тривалість  : ${(status.durationMs / 1000).toFixed(1)} c (rounds: ${status.rounds})`);
+      if (status.error) lines.push(`  Помилка     : ${status.error}`);
+      if (status.synthesis) {
+        lines.push('─'.repeat(78));
+        const synth = status.synthesis.length > 3000 ? status.synthesis.substring(0, 2997) + '...' : status.synthesis;
+        lines.push('  СИНТЕЗ (Malkuth → Kether feedback):');
+        lines.push(synth);
+      }
+      lines.push('═'.repeat(78));
+      return lines.join('\n');
+    }
+
+    if (sub === 'tree' || sub === 'map') {
+      return this.handleSephirotTree();
+    }
+
+    const topic = args.join(' ').trim();
+    if (!topic) {
+      return [
+        '🌳 SEPHIROT CONSILIUM (10 сфер Дерева Життя + Tetraxis):',
+        '  Використання:',
+        '    /sephirot <тема>      — запустити консиліум 10 агентів (у фоні)',
+        '    /sephirot status      — прогрес / останній синтез',
+        '    /sephirot tree        — карта Дерева Життя (10 сфер, моделі)',
+        '  Синоніми: /сфирот, /сефирот, /дерево, /tetraxis, /тетраксис',
+      ].join('\n');
+    }
+
+    return SephirotEngine.startAsyncRun(topic);
+  }
+
+  private static handleSephirotTree(): string {
+    const roles = SEPHIROT_ROLES;
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  🌳 ДЕРЕВО ЖИТТЯ — 10 СФЕР = 10 АГЕНТІВ (Tetraxis: Vision-Strategy-Execution-Feedback)');
+    lines.push('═'.repeat(78));
+    for (const r of roles) {
+      const parents = r.parentIds.length ? ` ← ${r.parentIds.join(', ')}` : ' ← (root)';
+      const persona = r.voicePersona === 'neutral' ? '' : ` [${r.voicePersona}]`;
+      lines.push(`  [${r.stage}] ${r.sephira}${persona}`);
+      lines.push(`        ${r.nameEn} — ${r.title} | модель: ${r.model}${parents}`);
+    }
+    lines.push('─'.repeat(78));
+    lines.push('  Stage 1: Kether→Chokmah/Binah (намір → сила/форма)');
+    lines.push('  Stage 2: Chesed/Gevurah → Tiferet → Netzach → Hod (баланс і зв\'язок)');
+    lines.push('  Stage 3: Yesod → Malkuth (дані → виконання)');
+    lines.push('  Запуск: /sephirot <тема> | Статус: /sephirot status');
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
   }
 
   private static handleInfo(args: string[]): string {

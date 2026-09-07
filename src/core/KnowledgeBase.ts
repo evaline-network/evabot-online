@@ -40,7 +40,8 @@ export class KnowledgeBase {
   private ftsChunkCount: number = 0;
 
   private constructor() {
-    this.knowledgeBasePath = path.resolve(process.cwd(), 'knowledge-base');
+    const cwdKb = path.resolve(process.cwd(), 'knowledge-base');
+    this.knowledgeBasePath = fs.existsSync(cwdKb) ? cwdKb : '/var/www/evabot-backend/knowledge-base';
     this.desktopPath = '/home/evabot/Desktop/evaline-com-ua';
   }
 
@@ -76,9 +77,10 @@ export class KnowledgeBase {
 
   private initSqliteFts(): void {
     const candidatePaths = [
-      path.join(this.desktopPath, 'evaline-knowledge-base', 'fts_index.db'),
       path.join(this.knowledgeBasePath, 'evaline-knowledge-base', 'fts_index.db'),
+      path.join(this.desktopPath, 'evaline-knowledge-base', 'fts_index.db'),
       path.join(this.knowledgeBasePath, 'fts_index.db'),
+      '/var/www/evabot-backend/knowledge-base/evaline-knowledge-base/fts_index.db',
     ];
 
     for (const p of candidatePaths) {
@@ -104,8 +106,10 @@ export class KnowledgeBase {
 
   private async loadFromEvaLine(): Promise<void> {
     const possibleRoots = [
-      this.desktopPath,
       path.join(this.knowledgeBasePath, 'evaline-com-ua'),
+      this.desktopPath,
+      this.knowledgeBasePath,
+      '/var/www/evabot-backend/knowledge-base/evaline-com-ua',
     ];
 
     let loadedAny = false;
@@ -412,7 +416,9 @@ export class KnowledgeBase {
         id: 'vector',
         name: 'ChromaDB Vector Store',
         description: 'Persistent embeddings in evaline-knowledge-base/chroma_db',
-        enabled: fs.existsSync(path.join(this.desktopPath, 'evaline-knowledge-base', 'chroma_db')),
+        enabled: fs.existsSync(path.join(this.knowledgeBasePath, 'evaline-knowledge-base', 'chroma_db')) ||
+                 fs.existsSync(path.join(this.desktopPath, 'evaline-knowledge-base', 'chroma_db')) ||
+                 fs.existsSync('/var/www/evabot-backend/knowledge-base/evaline-knowledge-base/chroma_db'),
         documentCount: 1086,
         languages: ['uk', 'ru', 'en', 'pl', 'ro', 'de'],
         sources: ['evaline-knowledge-base/chroma_db'],

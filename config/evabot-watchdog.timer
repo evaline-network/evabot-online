@@ -1,0 +1,24 @@
+# evabot-watchdog.timer — runs the watchdog probe every 5 minutes.
+#
+# ── INSTALL (as root; DO NOT auto-install from repo) ────────────────────────
+#   sudo cp /var/www/evabot-backend/config/evabot-watchdog.service /etc/systemd/system/
+#   sudo cp /var/www/evabot-backend/config/evabot-watchdog.timer   /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now evabot-watchdog.timer
+#   # verify: systemctl list-timers | grep evabot-watchdog
+#
+# NOTE: the main evabot-brain unit should also carry `Restart=always` so
+# crashes (as opposed to hangs) are handled by systemd itself:
+#   sudo systemctl edit evabot-brain   # add:  [Service]  Restart=always  RestartSec=5
+
+[Unit]
+Description=Run evabot-watchdog probe every 5 minutes
+
+[Timer]
+OnCalendar=*:0/5
+RandomizedDelaySec=30
+Persistent=true
+Unit=evabot-watchdog.service
+
+[Install]
+WantedBy=timers.target

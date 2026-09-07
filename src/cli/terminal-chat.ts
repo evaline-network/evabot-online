@@ -15,7 +15,7 @@ import readline from 'node:readline';
 import os from 'node:os';
 import { ChatSession } from '../core/ChatSession.js';
 import { ModelRegistry } from '../models/ModelRegistry.js';
-import { ModelRatings, ModelCommand } from '../models/ModelRatings.js';
+import { ModelRatings, ModelCommand, COMMAND_ALIASES } from '../models/ModelRatings.js';
 import { BootDiagnostics, BootDiagnosticReport } from '../core/BootDiagnostics.js';
 import { UniversalLlmClient } from '../core/UniversalLlmClient.js';
 import { ConsiliumEngine, ConsiliumMode, ConsiliumProgressEvent } from '../core/ConsiliumEngine.js';
@@ -251,7 +251,7 @@ function renderDashboard(session: ChatSession): void {
   // Line 2: Active model, tier, mode, model pool count, lang
   console.log(`${C.gray}${s.model}${C.reset} ${C.bold}${C.white}${session.getModel()}${C.reset} ${tierBadge}  ${C.gray}${s.mode}${C.reset} ${currentMode}  ${C.gray}${s.pool ? 'Pool:' : 'Pool:'}${C.reset} ${totalModels} models (/models)  ${C.gray}${s.lang}${C.reset} ${enBadge} ${ukBadge} ${ruBadge}`);
   // Line 3: System command list
-  console.log(`${C.gray}${s.commandsLabel}${C.reset} /help  /?  /top  /models  /cost  /company  /evaline  /lang  /mode  /consilium  /mcp  /lsp  /clear`);
+  console.log(`${C.gray}${s.commandsLabel}${C.reset} /help  /?  /top  /models  /cost  /company  /evaline  /products  /who  /lang  /mode  /consilium  /sephirot  /mcp  /lsp  /history  /memory  /search  /services  /servers  /clear`);
   // Line 4: Connected databases
   console.log(`${C.gray}${s.databasesLabel}${C.reset} ${C.green}${s.databasesValue}${C.reset}`);
   // Line 5: Live server cluster load telemetry with ASCII bars
@@ -268,6 +268,8 @@ ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/models${C.reset}                Сводка и каталог всех моделей пула
   ${C.cyan}/info <id>${C.reset}            Паспорт модели, квоты, бенчмарки и цены
   ${C.cyan}/company [free|paid]${C.reset}  Ростер 10 специализированных ИИ-агентов компании
+  ${C.cyan}/products [запит]${C.reset}     Каталог продукції EvaLine: статистика, категорії, пошук
+  ${C.cyan}/who [роль]${C.reset}           Матриця знань компанії: хто що знає, обмін інформацією
   ${C.cyan}/cost${C.reset}                  Бухгалтерия, расходы на токены и себестоимость агентов
   ${C.cyan}/free, /paid${C.reset}           Фильтры бесплатных и платных моделей
   ${C.cyan}/mcp${C.reset}                   Статус 21 сервера Model Context Protocol
@@ -275,6 +277,7 @@ ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/model <id>${C.reset}            Переключить модель (напр. gemini-3.8-flash)
   ${C.cyan}/mode <mode>${C.reset}            Режим: solo | dialogue | consilium
   ${C.cyan}/consilium <тема>${C.reset}     Запустить многоагентный консилиум экспертов
+  ${C.cyan}/sephirot <тема>${C.reset}      Консиліум 10 сфер Дерева Життя (Tetraxis). Статус: /sephirot status
   ${C.cyan}/dialogue <тема>${C.reset}      Запустить автономный диалог-дебаты двух моделей
   ${C.cyan}/role <id>${C.reset}             Выбрать роль: architect, devops, security_auditor
   ${C.cyan}/clear${C.reset}                 Очистить историю сообщений
@@ -417,7 +420,20 @@ async function main(): Promise<void> {
         case '/roster':
         case '/info':
         case '/inspect':
+        case '/history':
+        case '/memory':
+        case '/search':
+        case '/find':
+        case '/services':
+        case '/servers':
+        case '/products':
+        case '/who':
+        case '/sephirot':
           console.log(ModelCommand.execute(input));
+          break;
+
+        case '/news':
+          console.log(await ModelCommand.executeAsync(input));
           break;
 
         case '/models':
@@ -485,8 +501,19 @@ async function main(): Promise<void> {
           break;
 
         default: {
-          const s = I18nEngine.getStrings();
-          console.log(`${C.red}✖ ${s.unknownCommand.replace('{cmd}', cmd)}${C.reset}`);
+          // Multilingual aliases (UK/RU) of server commands → route through the
+          // alias-normalizing registry (e.g. /історія → /history, /пошук → /search).
+          const canonical = COMMAND_ALIASES[cmd];
+          if (canonical && ['/history', '/memory', '/search', '/find', '/services', '/servers', '/health', '/news', '/products', '/who'].includes(canonical)) {
+            if (canonical === '/news') {
+              console.log(await ModelCommand.executeAsync(input));
+            } else {
+              console.log(ModelCommand.execute(input));
+            }
+          } else {
+            const s = I18nEngine.getStrings();
+            console.log(`${C.red}✖ ${s.unknownCommand.replace('{cmd}', cmd)}${C.reset}`);
+          }
           break;
         }
       }

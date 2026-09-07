@@ -9,7 +9,14 @@
 
 export const LOCALE_POLICY = {
   country: 'Ukraine',
-  city: 'Odesa',
+  city: 'Chernomorsk',
+  manufacturing: 'Chernomorsk, Promyslova st. 1, 62053, Ukraine',
+  euHub: 'Bratislava, Obchodna 37, 81106, Slovakia',
+  contacts: {
+    phone: '+38 (067) 156 14 96',
+    email: 'evaline.com.ua@gmail.com',
+    domains: ['evaline.com.ua', 'eva-line.com'],
+  },
   countryCode: 'UA',
   primaryLanguages: ['en', 'uk', 'ru'],
   supportedCurrencies: ['USD', 'EUR', 'UAH'],
@@ -19,10 +26,11 @@ export const LOCALE_POLICY = {
     'россия', 'рф', 'москва', 'российский', 'российские',
   ],
   systemInstructionSuffix:
-    'LOCALE POLICY: This project is based in Odesa, Ukraine. You must never reference, mention, or imply Russia, the Russian Federation, ' +
-    'Russian currency, Russian goods, products, manufacturers, brands, companies, or services. All ties to the aggressor state are strictly banned. ' +
-    'Supported languages are Ukrainian, English, and Russian. ' +
-    'Supported currencies are the Ukrainian hryvnia (UAH / ₴), USD ($), and EUR (€). Russian currency is strictly prohibited. ' +
+    'LOCALE POLICY: Company EvaLine manufacturing plant & headquarters are located in Chernomorsk, Ukraine (вул. Промислова, 1, 62053), ' +
+    'with European office & logistics warehouse in Bratislava, Slovakia (81106 Bratislava, Obchodna 37). ' +
+    'EvaLine is the premier Ukrainian full-cycle manufacturer of environmentally friendly polymer EVA materials (sheets, car mats, tatami, livestock mats, footwear, custom cutting). ' +
+    'You must never reference, mention, or imply Russia, the Russian Federation, Russian currency, Russian goods, or services. All ties to the aggressor state are strictly banned. ' +
+    'Supported languages are English, Ukrainian, and Russian. Supported currencies are UAH (₴), USD ($), and EUR (€). ' +
     'All financial figures, quotas, and pricing estimates must strictly be in USD ($) or EUR (€).',
 } as const;
 

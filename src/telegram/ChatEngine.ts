@@ -1,0 +1,115 @@
+import { UniversalLlmClient, LlmProvider, UniversalMessage } from '../core/UniversalLlmClient.js';
+import { Config } from '../core/Config.js';
+import { KnowledgeBaseConnector } from '../core/CorporateRoles.js';
+import { rulesEngine } from '../core/RulesEngine.js';
+import { applyLocalePolicy } from '../core/LocalePolicy.js';
+import { ChatHistoryStore } from '../core/ChatHistoryStore.js';
+import { I18nEngine, SupportedLocale } from '../core/I18nEngine.js';
+import { logger } from '../core/Logger.js';
+
+/**
+ * Thin chat-engine facade shared by the Telegram transport.
+ *
+ * ChatRouter is tightly coupled to the HTTP request/response cycle (SSE writes,
+ * status codes, rate-limit headers), so instead of reusing it directly we expose
+ * the same underlying units it composes — UniversalLlmClient, KnowledgeBaseConnector,
+ * RulesEngine and ChatHistoryStore — as a plain async `respond()` call that any
+ * non-HTTP transport can drive. Keep this in sync with ChatRouter.resolveSystemInstruction.
+ */
+export interface ChatEngineRequest {
+  message: string;
+  sessionId: string;
+  locale?: SupportedLocale;
+  model?: string;
+  provider?: LlmProvider;
+  useHistory?: boolean;
+  useKnowledgeBase?: boolean;
+}
+
+export interface ChatEngineResponse {
+  text: string;
+  model: string;
+  sessionId: string;
+}
+
+export class ChatEngine {
+  private kbConnector: KnowledgeBaseConnector;
+  private client: UniversalLlmClient;
+  private historyLimit: number;
+
+  constructor(options: { apiKey?: string; model?: string; historyLimit?: number } = {}) {
+    this.client = new UniversalLlmClient(options.apiKey || Config.geminiApiKey || undefined);
+    this.kbConnector = new KnowledgeBaseConnector();
+    this.historyLimit = options.historyLimit ?? 12;
+  }
+
+  public resolveSystemInstruction(): string {
+    const base = Config.defaultSystemInstruction;
+    const withLocale = applyLocalePolicy(base);
+    const withRules = `${withLocale}\n${rulesEngine.compileRulesInstruction()}`;
+    return withRules;
+  }
+
+  public async respond(request: ChatEngineRequest): Promise<ChatEngineResponse> {
+    const { message, sessionId, locale } = request;
+    const targetModel = request.model || Config.defaultModel;
+    const useKnowledgeBase = request.useKnowledgeBase !== false;
+    const useHistory = request.useHistory !== false;
+
+    const store = ChatHistoryStore.getInstance();
+    let history: Array<{ role: string; content: string }> = [];
+    if (useHistory) {
+      try {
+        history = store
+          .getSessionHistory(sessionId, this.historyLimit)
+          .map((rec) => ({ role: rec.role === 'assistant' ? 'assistant' : 'user', content: rec.content }));
+      } catch (err: any) {
+        logger.warn('ChatEngine', `History load skipped for ${sessionId}: ${err.message}`);
+      }
+    }
+
+    let effectiveInstruction = this.resolveSystemInstruction();
+
+    if (useKnowledgeBase) {
+      try {
+        const docs = await this.kbConnector.search(message, { limit: 3 });
+        if (docs.length > 0) {
+          effectiveInstruction += `\n${this.kbConnector.formatContextForPrompt(docs)}`;
+        }
+      } catch (err: any) {
+        logger.warn('ChatEngine', `KB retrieval skipped: ${err.message}`);
+      }
+    }
+
+    const messages: UniversalMessage[] = [
+      ...history.map((m) => ({
+        role: (m.role === 'assistant' ? 'assistant' : 'user') as UniversalMessage['role'],
+        content: m.content,
+      })),
+      { role: 'user', content: message.trim() },
+    ];
+    const responseText = await this.client.generateContent(targetModel, messages, {
+      systemInstruction: effectiveInstruction,
+      provider: request.provider,
+    });
+
+    this.persist(sessionId, 'user', message.trim(), targetModel, locale);
+    this.persist(sessionId, 'assistant', responseText, targetModel, locale);
+
+    return { text: responseText, model: targetModel, sessionId };
+  }
+
+  private persist(sessionId: string, role: string, content: string, model: string, locale?: SupportedLocale): void {
+    try {
+      ChatHistoryStore.getInstance().appendMessage({
+        sessionId,
+        role,
+        content,
+        model,
+        lang: locale || I18nEngine.getLocale(),
+      });
+    } catch (err: any) {
+      logger.warn('ChatEngine', `Chat history persistence skipped: ${err.message}`);
+    }
+  }
+}

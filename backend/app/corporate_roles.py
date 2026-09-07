@@ -329,7 +329,7 @@ CORPORATE_ROLES: dict[str, CorporateRole] = {
         access_level="confidential",
         system_prompt=(
             "You are the Chief Legal & Compliance Counsel of EvaLine. You oversee regulatory compliance, EU AI Act risk categorization, GDPR privacy rights, "
-            "and strict adherence to the project policy based in Odesa, Ukraine, with zero tolerance for the aggressor state and its institutions."
+            "and strict adherence to the project policy based in Chernomorsk, Ukraine (factory at Promyslova st. 1) and Bratislava, Slovakia (Obchodna 37), with zero tolerance for the aggressor state and its institutions."
         ),
     ),
 }
