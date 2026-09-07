@@ -353,7 +353,7 @@ export class TuiRenderer {
     max-height: 100vh;
     overflow: hidden;
     font-size: 16px;
-    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", "Menlo", "Courier New", monospace;
+    font-family: 'Roboto Mono', 'Roboto', monospace;
     line-height: 1.45;
     background-color: var(--bg);
     color: var(--fg);

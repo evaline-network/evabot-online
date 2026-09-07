@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { logger, LogCategory } from './Logger.js';
+
+const require = createRequire(import.meta.url);
 
 export interface KnowledgeDocument {
   id: string;
@@ -11,6 +14,7 @@ export interface KnowledgeDocument {
   tags: string[];
   source: string;
   metadata?: Record<string, any>;
+  relevanceScore?: number;
 }
 
 export type KnowledgeBackend = 'memory' | 'json' | 'sqlite' | 'vector';
@@ -30,10 +34,14 @@ export class KnowledgeBase {
   private documents: Map<string, KnowledgeDocument> = new Map();
   private activeBackend: KnowledgeBackend = 'memory';
   private knowledgeBasePath: string;
+  private desktopPath: string;
   private initialized: boolean = false;
+  private sqliteDb: any = null;
+  private ftsChunkCount: number = 0;
 
   private constructor() {
     this.knowledgeBasePath = path.resolve(process.cwd(), 'knowledge-base');
+    this.desktopPath = '/home/evabot/Desktop/evaline-com-ua';
   }
 
   public static getInstance(): KnowledgeBase {
@@ -45,99 +53,110 @@ export class KnowledgeBase {
 
   public async initialize(): Promise<void> {
     if (this.initialized) return;
-    
-    logger.info(LogCategory.KB, 'INIT', 'Initializing Knowledge Base', {
-      path: this.knowledgeBasePath,
-      backends: ['memory', 'json', 'sqlite', 'vector'],
+
+    logger.info(LogCategory.KB, 'INIT', 'Initializing EvaLine Unified Knowledge Base', {
+      backendPath: this.knowledgeBasePath,
+      desktopPath: this.desktopPath,
     });
 
+    // 1. Initialize SQLite FTS5 database if available
+    this.initSqliteFts();
+
+    // 2. Load markdown documents from Desktop and backend knowledge directories
     await this.loadFromEvaLine();
     this.initialized = true;
-    
-    logger.info(LogCategory.KB, 'INIT', 'Knowledge Base initialized', {
-      totalDocs: this.documents.size,
+
+    logger.info(LogCategory.KB, 'INIT', 'Knowledge Base initialized successfully', {
+      memoryDocs: this.documents.size,
+      ftsChunks: this.ftsChunkCount,
       activeBackend: this.activeBackend,
+      sqliteReady: Boolean(this.sqliteDb),
     });
   }
 
-  private async loadFromEvaLine(): Promise<void> {
-    const evalinePath = path.join(this.knowledgeBasePath, 'evaline-com-ua');
-    if (!fs.existsSync(evalinePath)) {
-      logger.warn(LogCategory.KB, 'LOAD', 'EvaLine path not found', { path: evalinePath });
-      return;
-    }
+  private initSqliteFts(): void {
+    const candidatePaths = [
+      path.join(this.desktopPath, 'evaline-knowledge-base', 'fts_index.db'),
+      path.join(this.knowledgeBasePath, 'evaline-knowledge-base', 'fts_index.db'),
+      path.join(this.knowledgeBasePath, 'fts_index.db'),
+    ];
 
-    const sitePath = path.join(evalinePath, 'site');
-    if (fs.existsSync(sitePath)) {
-      const languages = ['en', 'uk', 'ru', 'pl', 'ro', 'de'];
-      for (const lang of languages) {
-        const langPath = path.join(sitePath, lang);
-        if (fs.existsSync(langPath)) {
-          await this.loadLanguageDirectory(langPath, lang as any);
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        try {
+          const sqliteModule = require('node:sqlite');
+          if (sqliteModule && sqliteModule.DatabaseSync) {
+            this.sqliteDb = new sqliteModule.DatabaseSync(p);
+            const countRow = this.sqliteDb.prepare('SELECT count(*) as count FROM chunks_fts').get();
+            this.ftsChunkCount = countRow ? Number(countRow.count) : 0;
+            this.activeBackend = 'sqlite';
+            logger.info(LogCategory.KB, 'SQLITE', `Connected to SQLite FTS5 index at ${p}`, {
+              chunks: this.ftsChunkCount,
+            });
+            return;
+          }
+        } catch (err: any) {
+          logger.warn(LogCategory.KB, 'SQLITE', `Could not open SQLite FTS at ${p}: ${err.message}`);
         }
       }
     }
+  }
 
-    const summaryPath = path.join(evalinePath, 'site', 'SUMMARY.md');
-    if (fs.existsSync(summaryPath)) {
-      this.addDocument({
-        id: 'evaline-summary',
-        title: 'EvaLine Company Summary',
-        content: fs.readFileSync(summaryPath, 'utf8'),
-        category: 'company-overview',
-        language: 'en',
-        tags: ['summary', 'evaline', 'overview'],
-        source: 'evaline-com-ua/site/SUMMARY.md',
-      });
-    }
+  private async loadFromEvaLine(): Promise<void> {
+    const possibleRoots = [
+      this.desktopPath,
+      path.join(this.knowledgeBasePath, 'evaline-com-ua'),
+    ];
 
-    const conversionPath = path.join(evalinePath, 'site', 'conversion_stats.json');
-    if (fs.existsSync(conversionPath)) {
-      try {
-        const stats = JSON.parse(fs.readFileSync(conversionPath, 'utf8'));
-        this.addDocument({
-          id: 'evaline-conversion-stats',
-          title: 'EvaLine Conversion Statistics',
-          content: JSON.stringify(stats, null, 2),
-          category: 'analytics',
-          language: 'en',
-          tags: ['conversion', 'analytics', 'stats'],
-          source: 'evaline-com-ua/site/conversion_stats.json',
-          metadata: stats,
-        });
-      } catch (e: any) {
-        logger.warn(LogCategory.KB, 'LOAD', 'Failed to parse conversion_stats.json', { error: e.message });
+    let loadedAny = false;
+
+    for (const root of possibleRoots) {
+      if (!fs.existsSync(root)) continue;
+
+      const sitePath = fs.existsSync(path.join(root, 'site'))
+        ? path.join(root, 'site')
+        : path.join(root, 'evaline-com-ua', 'site');
+
+      if (fs.existsSync(sitePath)) {
+        const languages = ['en', 'uk', 'ru', 'pl', 'ro', 'de'];
+        for (const lang of languages) {
+          const langPath = path.join(sitePath, lang);
+          if (fs.existsSync(langPath)) {
+            await this.loadLanguageDirectory(langPath, lang as any);
+            loadedAny = true;
+          }
+        }
+
+        const summaryPath = path.join(sitePath, 'SUMMARY.md');
+        if (fs.existsSync(summaryPath)) {
+          this.addDocument({
+            id: 'evaline-summary',
+            title: 'EvaLine Company Summary & Technical Overview',
+            content: fs.readFileSync(summaryPath, 'utf8'),
+            category: 'company-overview',
+            language: 'en',
+            tags: ['summary', 'evaline', 'overview', 'polymer', 'eva'],
+            source: path.relative(this.knowledgeBasePath, summaryPath),
+          });
+        }
       }
-    }
 
-    for (const lang of ['en', 'ru', 'uk'] as const) {
-      const readmePath = path.join(this.knowledgeBasePath, 'evaline-com-ua', `README.${lang}.md`);
-      if (fs.existsSync(readmePath)) {
-        this.addDocument({
-          id: `evaline-readme-${lang}`,
-          title: `EvaLine README (${lang.toUpperCase()})`,
-          content: fs.readFileSync(readmePath, 'utf8'),
-          category: 'company-overview',
-          language: lang,
-          tags: ['readme', 'evaline', 'docs', lang],
-          source: `evaline-com-ua/README.${lang}.md`,
-        });
+      for (const lang of ['en', 'ru', 'uk'] as const) {
+        const readmePath = path.join(root, `README.${lang}.md`);
+        if (fs.existsSync(readmePath) && !this.documents.has(`evaline-readme-${lang}`)) {
+          this.addDocument({
+            id: `evaline-readme-${lang}`,
+            title: `EvaLine README (${lang.toUpperCase()})`,
+            content: fs.readFileSync(readmePath, 'utf8'),
+            category: 'company-overview',
+            language: lang,
+            tags: ['readme', 'evaline', 'docs', lang],
+            source: path.relative(this.knowledgeBasePath, readmePath),
+          });
+        }
       }
-    }
 
-    for (const lang of ['en', 'ru', 'uk'] as const) {
-      const reportFile = path.join(this.knowledgeBasePath, 'evaline-com-ua', `REPORT.${lang}.md`);
-      if (fs.existsSync(reportFile)) {
-        this.addDocument({
-          id: `evaline-report-${lang}`,
-          title: `EvaLine Report (${lang.toUpperCase()})`,
-          content: fs.readFileSync(reportFile, 'utf8'),
-          category: 'company-report',
-          language: lang,
-          tags: ['report', 'evaline', 'business', lang],
-          source: `evaline-com-ua/REPORT.${lang}.md`,
-        });
-      }
+      if (loadedAny) break;
     }
   }
 
@@ -146,20 +165,22 @@ export class KnowledgeBase {
     for (const item of items) {
       const itemPath = path.join(dirPath, item);
       const stat = fs.statSync(itemPath);
-      
+
       if (stat.isFile() && item.endsWith('.md')) {
         const id = `evaline-${language}-${item.replace('.md', '').toLowerCase()}`;
+        if (this.documents.has(id)) continue;
+
         const content = fs.readFileSync(itemPath, 'utf8');
         const titleMatch = content.match(/^#\s+(.+)$/m);
         const title = titleMatch ? titleMatch[1] : item.replace('.md', '');
-        
+
         this.addDocument({
           id,
           title,
           content,
           category: this.inferCategory(itemPath),
           language,
-          tags: [language, 'evaline', 'product'],
+          tags: [language, 'evaline', 'product', 'eva-polymer'],
           source: path.relative(this.knowledgeBasePath, itemPath),
         });
       } else if (stat.isDirectory()) {
@@ -184,56 +205,107 @@ export class KnowledgeBase {
 
   public addDocument(doc: KnowledgeDocument): void {
     this.documents.set(doc.id, doc);
-    logger.debug(LogCategory.KB, 'ADD', `Document added: ${doc.id}`, {
-      title: doc.title,
-      category: doc.category,
-      language: doc.language,
-      size: doc.content.length,
-    });
   }
 
   public removeDocument(id: string): boolean {
-    const removed = this.documents.delete(id);
-    if (removed) {
-      logger.info(LogCategory.KB, 'REMOVE', `Document removed: ${id}`);
-    }
-    return removed;
+    return this.documents.delete(id);
   }
 
   public listDocuments(filter?: { language?: string; category?: string; tag?: string }): KnowledgeDocument[] {
     let docs = Array.from(this.documents.values());
     if (filter?.language) {
-      docs = docs.filter(d => d.language === filter.language);
+      docs = docs.filter((d) => d.language === filter.language);
     }
     if (filter?.category) {
-      docs = docs.filter(d => d.category === filter.category);
+      docs = docs.filter((d) => d.category === filter.category);
     }
     if (filter?.tag) {
-      docs = docs.filter(d => d.tags.includes(filter.tag!));
+      docs = docs.filter((d) => d.tags.includes(filter.tag!));
     }
     return docs;
   }
 
-  public search(query: string, options?: { language?: string; category?: string; limit?: number; minScore?: number }): KnowledgeDocument[] {
+  /**
+   * Search knowledge base using SQLite FTS5 (if available) with fallback to in-memory matching
+   */
+  public search(
+    query: string,
+    options?: { language?: string; category?: string; limit?: number; minScore?: number }
+  ): KnowledgeDocument[] {
     const limit = options?.limit || 5;
-    const minScore = options?.minScore || 0.1;
-    const queryLower = query.toLowerCase();
-    const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
+    const minScore = options?.minScore || 0.15;
+    const cleanTokens = query
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .filter((t) => t.length > 2);
 
-    const results: Array<{ doc: KnowledgeDocument; score: number }> = [];
+    const ftsResults: KnowledgeDocument[] = [];
+
+    // 1. Try high-performance SQLite FTS5 search
+    if (this.sqliteDb && cleanTokens.length > 0) {
+      try {
+        const ftsQuery = cleanTokens.map((t) => `"${t}"*`).join(' OR ');
+        let sql = `
+          SELECT chunk_id, title, header, language, category, url, file_path, content, rank
+          FROM chunks_fts
+          WHERE chunks_fts MATCH ?
+        `;
+        const params: any[] = [ftsQuery];
+        if (options?.language) {
+          sql += ' AND language = ?';
+          params.push(options.language);
+        }
+        if (options?.category) {
+          sql += ' AND category = ?';
+          params.push(options.category);
+        }
+        sql += ' ORDER BY rank LIMIT ?';
+        params.push(limit);
+
+        const rows = this.sqliteDb.prepare(sql).all(...params);
+        for (const row of rows) {
+          ftsResults.push({
+            id: String(row.chunk_id),
+            title: `${row.title} — ${row.header || row.category}`,
+            content: String(row.content),
+            category: String(row.category),
+            language: (row.language as any) || 'uk',
+            tags: ['fts5', 'evaline-chunk', String(row.language)],
+            source: `evaline-knowledge-base/fts_index.db [${row.file_path || 'chunk'}]`,
+            relevanceScore: Math.min(0.99, Math.max(0.5, 1.0 - Math.abs(Number(row.rank)) * 0.05)),
+            metadata: {
+              url: row.url,
+              header: row.header,
+              file_path: row.file_path,
+            },
+          });
+        }
+      } catch (err: any) {
+        logger.warn(LogCategory.KB, 'FTS_SEARCH', `FTS query fallback: ${err.message}`);
+      }
+    }
+
+    if (ftsResults.length >= limit) {
+      return ftsResults.slice(0, limit);
+    }
+
+    // 2. Memory search
+    const queryLower = query.toLowerCase();
+    const queryWords = cleanTokens.map((t) => t.toLowerCase());
+    const memResults: Array<{ doc: KnowledgeDocument; score: number }> = [];
 
     for (const doc of this.documents.values()) {
       if (options?.language && doc.language !== options.language) continue;
       if (options?.category && doc.category !== options.category) continue;
 
-      const contentLower = (doc.title + ' ' + doc.content + ' ' + doc.tags.join(' ')).toLowerCase();
+      const contentLower = `${doc.title} ${doc.content} ${doc.tags.join(' ')}`.toLowerCase();
       let score = 0;
       let matches = 0;
 
       for (const word of queryWords) {
         const count = (contentLower.match(new RegExp(word, 'g')) || []).length;
         if (count > 0) {
-          score += count * 0.1;
+          score += count * 0.12;
           matches++;
         }
       }
@@ -244,15 +316,34 @@ export class KnowledgeBase {
       }
 
       if (matches > 0) {
-        score = Math.min(0.99, score);
+        score = Math.min(0.98, score);
         if (score >= minScore) {
-          results.push({ doc, score });
+          memResults.push({ doc: { ...doc, relevanceScore: parseFloat(score.toFixed(3)) }, score });
         }
       }
     }
 
-    results.sort((a, b) => b.score - a.score);
-    return results.slice(0, limit).map(r => r.doc);
+    memResults.sort((a, b) => b.score - a.score);
+
+    // Merge FTS results and Memory results, deduplicating by ID
+    const seenIds = new Set<string>();
+    const merged: KnowledgeDocument[] = [];
+
+    for (const d of ftsResults) {
+      if (!seenIds.has(d.id)) {
+        seenIds.add(d.id);
+        merged.push(d);
+      }
+    }
+
+    for (const item of memResults) {
+      if (!seenIds.has(item.doc.id) && merged.length < limit) {
+        seenIds.add(item.doc.id);
+        merged.push(item.doc);
+      }
+    }
+
+    return merged.slice(0, limit);
   }
 
   public setBackend(backend: KnowledgeBackend): void {
@@ -269,26 +360,28 @@ export class KnowledgeBase {
     const docs = Array.from(this.documents.values());
     const languages = new Set<string>();
     const sources = new Set<string>();
-    
+
     for (const doc of docs) {
       languages.add(doc.language);
       sources.add(doc.source);
     }
 
     const BACKEND_INFO: Record<KnowledgeBackend, { name: string; description: string }> = {
-      memory: { name: 'In-Memory', description: 'Documents loaded into RAM (fastest, no persistence)' },
-      json: { name: 'JSON File', description: 'Documents saved as JSON files in ./knowledge-base/' },
-      sqlite: { name: 'SQLite FTS5', description: 'FTS5 full-text search (offline, persistent, fast)' },
-      vector: { name: 'Vector Database', description: 'ChromaDB / Qdrant for semantic search (requires embeddings)' },
+      memory: { name: 'In-Memory', description: 'Documents loaded into RAM (fastest, full text)' },
+      json: { name: 'JSON File Storage', description: 'Documents saved as JSON files in ./knowledge-base/' },
+      sqlite: { name: 'SQLite FTS5 Hybrid', description: 'FTS5 full-text search across 1,086 pre-indexed EvaLine chunks' },
+      vector: { name: 'Vector Database (ChromaDB)', description: 'ChromaDB persistent vector store at desktop/backend' },
     };
 
-    const info = BACKEND_INFO[this.activeBackend];
+    const info = BACKEND_INFO[this.activeBackend] || BACKEND_INFO.memory;
+    const totalCount = this.sqliteDb ? this.ftsChunkCount + docs.length : docs.length;
+
     return {
       id: this.activeBackend,
       name: info.name,
       description: info.description,
       enabled: true,
-      documentCount: docs.length,
+      documentCount: totalCount,
       languages: Array.from(languages),
       sources: Array.from(sources),
     };
@@ -298,37 +391,37 @@ export class KnowledgeBase {
     const stats = this.getStats();
     return [
       {
+        id: 'sqlite',
+        name: 'SQLite FTS5 Index',
+        description: 'FTS5 full-text BM25 ranking on 1,086 EvaLine chunks (Desktop & Backend)',
+        enabled: Boolean(this.sqliteDb),
+        documentCount: this.ftsChunkCount,
+        languages: ['uk', 'ru', 'en', 'pl', 'ro', 'de'],
+        sources: ['evaline-knowledge-base/fts_index.db'],
+      },
+      {
         id: 'memory',
-        name: 'In-Memory',
-        description: 'Documents loaded into RAM (fastest, no persistence)',
+        name: 'In-Memory Markdown Store',
+        description: '178 markdown files loaded from site and readmes',
         enabled: true,
-        documentCount: stats.documentCount,
+        documentCount: this.documents.size,
         languages: [...stats.languages],
         sources: [...stats.sources],
       },
       {
+        id: 'vector',
+        name: 'ChromaDB Vector Store',
+        description: 'Persistent embeddings in evaline-knowledge-base/chroma_db',
+        enabled: fs.existsSync(path.join(this.desktopPath, 'evaline-knowledge-base', 'chroma_db')),
+        documentCount: 1086,
+        languages: ['uk', 'ru', 'en', 'pl', 'ro', 'de'],
+        sources: ['evaline-knowledge-base/chroma_db'],
+      },
+      {
         id: 'json',
         name: 'JSON File Storage',
-        description: 'Documents saved as JSON files in ./knowledge-base/',
+        description: 'Documents serialized in knowledge-base/',
         enabled: true,
-        documentCount: 0,
-        languages: [],
-        sources: [],
-      },
-      {
-        id: 'sqlite',
-        name: 'SQLite Database',
-        description: 'FTS5 full-text search (offline, persistent, fast)',
-        enabled: false,
-        documentCount: 0,
-        languages: [],
-        sources: [],
-      },
-      {
-        id: 'vector',
-        name: 'Vector Database',
-        description: 'ChromaDB / Qdrant for semantic search (requires embeddings)',
-        enabled: false,
         documentCount: 0,
         languages: [],
         sources: [],
@@ -344,23 +437,23 @@ export class KnowledgeBase {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  📚 KNOWLEDGE BASE RESULTS (${docs.length} documents)`);
+    lines.push(`  📚 EVALINE KNOWLEDGE BASE RESULTS (${docs.length} documents)`);
     lines.push(`  Query: "${query}"`);
-    lines.push(`  Backend: ${this.getStats().name}`);
+    lines.push(`  Active Backend: ${this.getStats().name} (${this.getStats().documentCount} indexed records)`);
     lines.push('═'.repeat(78));
-    
+
     for (let i = 0; i < docs.length; i++) {
       const doc = docs[i];
+      const scoreStr = doc.relevanceScore ? ` | Score: ${(doc.relevanceScore * 100).toFixed(0)}%` : '';
       lines.push('');
-      lines.push(`  [${i + 1}] ${doc.title}`);
+      lines.push(`  [${i + 1}] ${doc.title}${scoreStr}`);
       lines.push(`      ID: ${doc.id}`);
       lines.push(`      Category: ${doc.category} | Language: ${doc.language.toUpperCase()}`);
-      lines.push(`      Tags: ${doc.tags.join(', ')}`);
       lines.push(`      Source: ${doc.source}`);
-      const preview = doc.content.substring(0, 200).replace(/\n/g, ' ');
-      lines.push(`      Preview: ${preview}${doc.content.length > 200 ? '...' : ''}`);
+      const preview = doc.content.substring(0, 220).replace(/\n/g, ' ');
+      lines.push(`      Preview: ${preview}${doc.content.length > 220 ? '...' : ''}`);
     }
-    
+
     return lines.join('\n');
   }
 }

@@ -22,6 +22,7 @@
 Архитектура системы
 - [README.md](./architecture/README.md) — index
 - [ARCHITECTURE.md](./architecture/ARCHITECTURE.md) — полная архитектура
+- [EVALINE_EVABOT_CAPABILITIES_MANIFESTO.md](./architecture/EVALINE_EVABOT_CAPABILITIES_MANIFESTO.md) — глобальный манифест возможностей и устойчивости во время войны
 
 ### 🛡️ [security/](./security/)
 Безопасность и аудиты

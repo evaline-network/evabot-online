@@ -141,7 +141,7 @@ export const COMPLETE_GOOGLE_MODEL_CATALOG: GeminiModelInfo[] = [
     description: 'Premier reasoning and code generation engine for complex analytical challenges.',
     contextWindow: 2097152,
     maxOutputTokens: 8192,
-    recommended: false,
+    recommended: true,
     tier: 'Free Quota + Paid',
     protocol: 'google-genai',
     pricing: {

@@ -2,6 +2,7 @@ import { GeminiClient, ChatMessage, GenerationOptions } from './GeminiClient.js'
 import { Config } from './Config.js';
 import { logger } from './Logger.js';
 import { ModelRegistry } from '../models/ModelRegistry.js';
+import { ModelRatings } from '../models/ModelRatings.js';
 
 export type LlmProvider = 'google' | 'omniroute' | 'openrouter' | 'opencode';
 
@@ -152,16 +153,14 @@ export class UniversalLlmClient {
   }
 
   /**
-   * Generates content without streaming across any supported provider
+   * Internal execution of generateContent for a specific model without fallback
    */
-  public async generateContent(
+  private async executeGenerate(
     model: string,
-    messages: string | UniversalMessage[] | ChatMessage[],
-    options: UniversalGenerationOptions = {}
+    universalMsgs: UniversalMessage[],
+    options: UniversalGenerationOptions
   ): Promise<string> {
     const provider = this.resolveProvider(model, options.provider);
-    const universalMsgs = this.normalizeToUniversal(messages);
-
     logger.debug('UniversalLlmClient', `Generating unary response via provider: ${provider} [model: ${model}]`);
 
     if (provider === 'google') {
@@ -184,17 +183,46 @@ export class UniversalLlmClient {
   }
 
   /**
-   * Streams content chunk-by-chunk via SSE across any supported provider
+   * Generates content with automatic ranked fallback on failure
    */
-  public async streamContent(
+  public async generateContent(
     model: string,
     messages: string | UniversalMessage[] | ChatMessage[],
+    options: UniversalGenerationOptions = {},
+    enableFallback: boolean = true
+  ): Promise<string> {
+    const universalMsgs = this.normalizeToUniversal(messages);
+    try {
+      return await this.executeGenerate(model, universalMsgs, options);
+    } catch (err: any) {
+      if (!enableFallback) throw err;
+
+      const fallbackChain = ModelRatings.getFallbackChain(model);
+      logger.warn('UniversalLlmClient', `Model "${model}" failed: ${err.message}. Initiating ranked fallback chain (${fallbackChain.length} candidates)...`);
+
+      for (const fallbackModel of fallbackChain) {
+        try {
+          logger.info('UniversalLlmClient', `[FALLBACK] Attempting ranked candidate: ${fallbackModel}`);
+          return await this.executeGenerate(fallbackModel, universalMsgs, options);
+        } catch (fallbackErr: any) {
+          logger.warn('UniversalLlmClient', `[FALLBACK] Candidate "${fallbackModel}" failed: ${fallbackErr.message}`);
+        }
+      }
+
+      throw new Error(`All models in ranked fallback chain failed. Last error: ${err.message}`);
+    }
+  }
+
+  /**
+   * Internal execution of streamContent for a specific model without fallback
+   */
+  private async executeStream(
+    model: string,
+    universalMsgs: UniversalMessage[],
     onChunk: (chunk: string) => void,
-    options: UniversalGenerationOptions = {}
+    options: UniversalGenerationOptions
   ): Promise<string> {
     const provider = this.resolveProvider(model, options.provider);
-    const universalMsgs = this.normalizeToUniversal(messages);
-
     logger.debug('UniversalLlmClient', `Streaming response via provider: ${provider} [model: ${model}]`);
 
     if (provider === 'google') {
@@ -214,6 +242,46 @@ export class UniversalLlmClient {
     }
 
     return this.streamOpenAiCompatible(provider, model, universalMsgs, onChunk, options);
+  }
+
+  /**
+   * Streams content chunk-by-chunk via SSE with automatic ranked fallback on failure
+   */
+  public async streamContent(
+    model: string,
+    messages: string | UniversalMessage[] | ChatMessage[],
+    onChunk: (chunk: string) => void,
+    options: UniversalGenerationOptions = {},
+    enableFallback: boolean = true
+  ): Promise<string> {
+    const universalMsgs = this.normalizeToUniversal(messages);
+    let chunksEmitted = 0;
+    const trackedOnChunk = (chunk: string) => {
+      chunksEmitted++;
+      onChunk(chunk);
+    };
+
+    try {
+      return await this.executeStream(model, universalMsgs, trackedOnChunk, options);
+    } catch (err: any) {
+      if (!enableFallback || chunksEmitted > 0) {
+        throw err;
+      }
+
+      const fallbackChain = ModelRatings.getFallbackChain(model);
+      logger.warn('UniversalLlmClient', `Stream for model "${model}" failed before output: ${err.message}. Initiating ranked fallback...`);
+
+      for (const fallbackModel of fallbackChain) {
+        try {
+          logger.info('UniversalLlmClient', `[STREAM FALLBACK] Trying candidate: ${fallbackModel}`);
+          return await this.executeStream(fallbackModel, universalMsgs, onChunk, options);
+        } catch (fallbackErr: any) {
+          logger.warn('UniversalLlmClient', `[STREAM FALLBACK] Candidate "${fallbackModel}" failed: ${fallbackErr.message}`);
+        }
+      }
+
+      throw new Error(`Stream fallback chain exhausted. Last error: ${err.message}`);
+    }
   }
 
   /**

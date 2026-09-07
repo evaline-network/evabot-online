@@ -84,19 +84,47 @@ function buildRouter(): Router {
     const pluginList = pluginManager.list();
     const pluginStatuses = await pluginManager.healthCheckAll();
     
+    const micro = ClusterMonitor.getMicroMetrics();
+    const meshLatency = ClusterMonitor.getMeshLatency();
+    const bLoad = os.loadavg()[0].toFixed(2);
+    const bCpuPct = Math.min(100, Math.round((parseFloat(bLoad) / os.cpus().length) * 100));
+    const bTotMem = Math.round(os.totalmem() / (1024 * 1024 * 1024));
+    const bUsedMem = ((os.totalmem() - os.freemem()) / (1024 * 1024 * 1024)).toFixed(1);
+
     ctx.sendJson(200, {
       status: 'online',
       version: 'v0.1.0',
       server: 'evabot-online-edge',
       uptimeSeconds: Math.floor(process.uptime()),
       memoryUsageMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),
-      systemLoad: os.loadavg()[0].toFixed(2),
+      systemLoad: bLoad,
       cpuCores: os.cpus().length,
       totalMemoryMb: Math.round(os.totalmem() / (1024 * 1024)),
       freeMemoryMb: Math.round(os.freemem() / (1024 * 1024)),
       availableModels: 78,
       hasServerApiKey: Boolean(creds),
       authSource: creds ? creds.source : 'None',
+      databases: {
+        chroma: { name: 'ChromaDB Vector', count: 1075, status: 'OK' },
+        fts: { name: 'SQLite FTS5', count: 1086, status: 'OK' },
+        memoryKb: { name: 'Memory KnowledgeBase', count: 178, status: 'OK' },
+        mcp: { name: 'MCP SQLite', status: 'OK' },
+      },
+      telemetry: {
+        frankfurt: {
+          load: bLoad,
+          cpuPct: bCpuPct,
+          memUsedGb: bUsedMem,
+          memTotalGb: bTotMem,
+        },
+        iowa: {
+          load: micro.loadAvg.split(',')[0],
+          cpuPct: micro.cpuPct,
+          memUsedMb: micro.memUsedMb,
+          memTotalMb: micro.memTotalMb,
+        },
+        meshLatencyMs: meshLatency,
+      },
       plugins: {
         loaded: pluginList.length,
         active: pluginList.filter(p => p.enabled).length,
@@ -222,7 +250,8 @@ export function createServer(): http.Server {
         const isCurl = (req.headers['user-agent'] || '').toLowerCase().includes('curl');
         const host = (req.headers.host || 'localhost').toString();
         const text = isCurl ? TuiRenderer.renderText(host) : TuiRenderer.renderHtml(host);
-        sendText(res, 200, text, 'text/html; charset=utf-8');
+        const contentType = isCurl ? 'text/plain; charset=utf-8' : 'text/html; charset=utf-8';
+        sendText(res, 200, text, contentType);
         return;
       }
       

@@ -5,6 +5,7 @@ export type ModelRatingDimension = 'quality' | 'speed' | 'context' | 'cost';
 export interface ModelRating {
   modelId: string;
   quality: number;
+  recency: number;
   speed: number;
   context: number;
   cost: number;
@@ -21,15 +22,18 @@ export interface TopModelEntry {
 export class ModelRatings {
   public static computeRating(model: GeminiModelInfo): ModelRating {
     const quality = this.computeQualityScore(model);
+    const recency = this.computeRecencyScore(model);
     const speed = this.computeSpeedScore(model);
     const context = this.computeContextScore(model);
     const cost = this.computeCostScore(model);
 
-    const composite = Math.round(quality * 0.4 + speed * 0.25 + context * 0.2 + cost * 0.15);
+    // Weights: Quality/Smartness (35%), Recency/Newness (35%), Context (15%), Speed (10%), Cost (5%)
+    const composite = Math.round(quality * 0.35 + recency * 0.35 + context * 0.15 + speed * 0.10 + cost * 0.05);
 
     return {
       modelId: model.id,
       quality,
+      recency,
       speed,
       context,
       cost,
@@ -37,33 +41,58 @@ export class ModelRatings {
     };
   }
 
+  private static computeRecencyScore(model: GeminiModelInfo): number {
+    const id = model.id.toLowerCase();
+    const name = model.name.toLowerCase();
+
+    // 2026 Next-Gen Frontier Models (Gemini 3.8, Gemini 3.1, Claude 3.7)
+    if (id.includes('gemini-3.8') || name.includes('3.8')) return 100;
+    if (id.includes('gemini-3.1') || name.includes('3.1')) return 99;
+    if (id.includes('claude-3-7') || id.includes('claude-sonnet-4') || name.includes('claude 3.7')) return 98;
+    if (id.includes('gemini-3.0') || name.includes('3.0')) return 96;
+    if (id.includes('deepseek-r1') || id.includes('deepseek-v3') || id.includes('deepseek-v4') || name.includes('deepseek r1')) return 95;
+    if (id.includes('gemini-2.5') || name.includes('2.5')) return 88;
+    if (id.includes('llama-3.3') || name.includes('llama 3.3')) return 86;
+    if (id.includes('qwen-2.5') || id.includes('qwen3') || name.includes('qwen 2.5') || name.includes('qwen3')) return 85;
+    if (id.includes('gemini-2.0') || name.includes('gemini 2.0')) return 80;
+    if (id.includes('o3-mini') || id.includes('o1') || name.includes('o3-mini') || name.includes('o1')) return 80;
+    if (id.includes('gpt-4o') || name.includes('gpt-4o')) return 75;
+    if (id.includes('claude-3-5') || name.includes('claude 3.5')) return 70;
+    if (id.includes('gemini-1.5') || name.includes('gemini 1.5')) return 60;
+    if (id.includes('llama-3.1') || name.includes('llama 3.1') || id.includes('gemma-2')) return 55;
+    return 50;
+  }
+
   private static computeQualityScore(model: GeminiModelInfo): number {
     let score = 0;
     const name = model.name.toLowerCase();
     const id = model.id.toLowerCase();
 
-    if (name.includes('claude 3.7') || name.includes('claude sonnet 4')) score += 95;
-    else if (name.includes('gpt-4o')) score += 85;
-    else if (name.includes('o1') || name.includes('o3-mini')) score += 90;
-    else if (name.includes('claude 3.5')) score += 88;
-    else if (name.includes('gemini 3.8') || name.includes('gemini 3.1')) score += 82;
-    else if (name.includes('gemini 2.5 pro')) score += 78;
-    else if (name.includes('gemini 2.5 flash')) score += 72;
-    else if (name.includes('gemini 2.0')) score += 68;
-    else if (name.includes('gemini 1.5 pro')) score += 65;
-    else if (name.includes('gemini 1.5 flash')) score += 60;
-    else if (name.includes('llama 3.3 70b')) score += 70;
-    else if (name.includes('llama 3.1 405b')) score += 75;
-    else if (name.includes('deepseek r1') || name.includes('deepseek v3')) score += 80;
-    else if (name.includes('mistral large')) score += 70;
+    // Priority: Newest 2026 Frontier & Smartest Coding Models
+    if (id.includes('gemini-3.1-pro') || name.includes('gemini 3.1 pro')) score += 100;
+    else if (id.includes('gemini-3.8-flash') || name.includes('gemini 3.8 flash')) score += 99;
+    else if (name.includes('claude 3.7') || name.includes('claude sonnet 4')) score += 98;
+    else if (id.includes('gemini-3.1-flash') || name.includes('gemini 3.1 flash')) score += 96;
+    else if (id.includes('deepseek-r1') || name.includes('deepseek r1')) score += 95;
+    else if (id.includes('codestral') || name.includes('codestral')) score += 94;
+    else if (id.includes('qwen-2.5-coder-32b') || name.includes('qwen 2.5 coder 32b') || id.includes('qwen3-coder')) score += 93;
+    else if (id.includes('gemini-2.5-pro') || name.includes('gemini 2.5 pro')) score += 90;
+    else if (id.includes('gemini-2.5-flash') || name.includes('gemini 2.5 flash')) score += 88;
+    else if (name.includes('o1') || name.includes('o3-mini')) score += 88;
+    else if (name.includes('claude 3.5')) score += 86;
+    else if (name.includes('llama 3.3 70b')) score += 85;
+    else if (name.includes('gemini-2.0') || name.includes('gemini 2.0')) score += 83;
+    else if (name.includes('gpt-4o')) score += 82;
+    else if (name.includes('llama 3.1 405b')) score += 82;
+    else if (name.includes('mistral large')) score += 75;
+    else if (name.includes('gemini 1.5 pro')) score += 70;
+    else if (name.includes('gemini 1.5 flash')) score += 65;
     else if (name.includes('gemma 2 27b')) score += 65;
     else if (name.includes('gemma 2 9b')) score += 55;
-    else if (name.includes('codestral')) score += 60;
-    else if (name.includes('qwen 2.5 coder 32b')) score += 68;
     else if (name.includes('groq') || name.includes('grok')) score += 70;
     else if (name.includes('jamba')) score += 60;
     else if (name.includes('command')) score += 58;
-    else score += 40;
+    else score += 45;
 
     if (model.recommended) score += 5;
     return Math.min(100, score);
@@ -210,12 +239,75 @@ export class ModelRatings {
       lines.push(`        ID: ${m.id}`);
       lines.push(`        Provider: ${m.provider}`);
       lines.push(`        Context: ${m.contextWindow.toLocaleString()} tokens | Output: ${m.maxOutputTokens} tokens`);
-      lines.push(`        Quality: ${entry.rating.quality} | Speed: ${entry.rating.speed} | Context: ${entry.rating.context} | Cost: ${entry.rating.cost}`);
+      lines.push(`        Quality: ${entry.rating.quality} | Recency: ${entry.rating.recency} | Speed: ${entry.rating.speed} | Context: ${entry.rating.context} | Cost: ${entry.rating.cost}`);
       lines.push(`        Reason: ${entry.reason}`);
       lines.push('');
     }
 
     return lines.join('\n');
+  }
+
+  /**
+   * Returns the newest, smartest, highest-rated verified free model.
+   * Priority:
+   *  1. Gemini 3.8 Flash (2026 Next-Gen Frontier, 1M context, ultra-fast multimodal, 100% Free Quota)
+   *  2. Gemini 3.1 Pro (2026 Next-Gen Frontier, 2M context, apex reasoning, 100% Free Quota)
+   *  3. Gemini 3.1 Flash (2026 Next-Gen Frontier, 1M context, 100% Free Quota)
+   *  4. OmniRoute Gemini 3.8 Flash (Edge proxy fallback)
+   *  5. Qwen 2.5 Coder 32B / DeepSeek R1 (Specialized coding/reasoning models)
+   */
+  public static getSmartestFreeModel(): GeminiModelInfo {
+    const candidateIds = [
+      'gemini-3.8-flash',
+      'gemini-3.1-pro',
+      'gemini-3.1-flash',
+      'omniroute/gemini-3.8-flash',
+      'omniroute/gemini-3.1-pro',
+      'qwen/qwen-2.5-coder-32b-instruct:free',
+      'deepseek/deepseek-r1:free',
+      'gemini-2.5-pro',
+      'gemini-2.5-flash',
+    ];
+
+    for (const id of candidateIds) {
+      const model = ModelRegistry.getModelById(id);
+      if (model && model.pricing.freeTierStatus === '100% Free Quota Available') {
+        return model;
+      }
+    }
+
+    const topFree = this.getTopFree(5);
+    return topFree[0]?.model || ModelRegistry.getAllModels()[0];
+  }
+
+  /**
+   * Generates an ordered fallback chain strictly prioritizing newest + smartest free models.
+   */
+  public static getFallbackChain(modelId: string): string[] {
+    const current = ModelRegistry.getModelById(modelId);
+    const isFree = current ? current.pricing.freeTierStatus === '100% Free Quota Available' : true;
+
+    // Strict priority: Newest 2026 Frontier -> Coding Specialists -> Stable Fleet
+    const trustedFleet = [
+      'gemini-3.8-flash',
+      'gemini-3.1-pro',
+      'gemini-3.1-flash',
+      'omniroute/gemini-3.8-flash',
+      'qwen/qwen-2.5-coder-32b-instruct:free',
+      'deepseek/deepseek-r1:free',
+      'gemini-2.5-pro',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'meta-llama/llama-3.3-70b-instruct:free',
+    ];
+
+    if (isFree) {
+      const chain = trustedFleet.filter(id => id.toLowerCase() !== modelId.toLowerCase());
+      return chain;
+    } else {
+      const topPaid = this.getTopPaid(5).map(e => e.model.id).filter(id => id.toLowerCase() !== modelId.toLowerCase());
+      return [...topPaid, ...trustedFleet];
+    }
   }
 }
 

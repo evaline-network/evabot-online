@@ -499,7 +499,7 @@ export class ConsiliumEngine {
   ): Promise<ConsiliumResult> {
     const p1 = participants[0] || {
       id: 'agent-1',
-      model: 'gemini-3.1-pro',
+      model: 'gemini-2.5-pro',
       name: 'Lead Proponent',
       title: 'Lead Architect',
       systemPrompt: CORPORATE_ROLES.architect.systemPrompt,
@@ -508,7 +508,7 @@ export class ConsiliumEngine {
 
     const p2 = participants[1] || {
       id: 'agent-2',
-      model: 'gemini-3.8-flash',
+      model: 'gemini-2.5-flash',
       name: 'Lead Challenger',
       title: 'Principal Security & Risk Auditor',
       systemPrompt: CORPORATE_ROLES.security_auditor.systemPrompt,
@@ -605,7 +605,7 @@ export class ConsiliumEngine {
     }
 
     // Synthesize final dialogue outcome
-    const synthModel = options.synthesizerModel || 'gemini-3.8-flash';
+    const synthModel = options.synthesizerModel || 'gemini-2.5-pro';
     options.onProgress?.({
       type: 'synthesis_start',
       message: `Synthesizing final dialogue conclusion with ${synthModel}...`,
@@ -798,7 +798,7 @@ export class ConsiliumEngine {
     }
 
     // Final Stage: Synthesizer produces authoritative corporate consensus
-    const synthModel = options.synthesizerModel || 'gemini-3.8-flash';
+    const synthModel = options.synthesizerModel || 'gemini-2.5-pro';
     logger.info('ConsiliumEngine', `Synthesizing final consensus with ${synthModel}`);
     options.onProgress?.({
       type: 'synthesis_start',

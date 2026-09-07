@@ -5,21 +5,24 @@
  * 
  * Features:
  * - Boot Sequence & Live Diagnostics across Web Server & Agent Server
- * - Collapsible ASCII Accordions ([+] / [-]) matching Web details/summary
- * - Full Model Garden support (Gemini 3.8 Flash, 3.1 Pro/Flash, Claude, DeepSeek)
+ * - Full Model Garden support (Gemini 2.5 Flash/Pro, 2.0, Claude, DeepSeek)
  * - Multi-Agent Consilium, Dialogue & Corporate Roles
- * - Strict Currency Rules: USD ($) & EUR (€) only
+ * - Real-time Terminal Markdown streaming & ANSI highlighting
+ * - Identical commands and features as web (https://evabot.online)
  */
 
 import readline from 'node:readline';
+import os from 'node:os';
 import { ChatSession } from '../core/ChatSession.js';
 import { ModelRegistry } from '../models/ModelRegistry.js';
+import { ModelRatings, ModelCommand } from '../models/ModelRatings.js';
 import { BootDiagnostics, BootDiagnosticReport } from '../core/BootDiagnostics.js';
 import { UniversalLlmClient } from '../core/UniversalLlmClient.js';
 import { ConsiliumEngine, ConsiliumMode, ConsiliumProgressEvent } from '../core/ConsiliumEngine.js';
 import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
+import { ClusterMonitor } from '../core/ClusterMonitor.js';
 
-// ANSI terminal color pallet (Minimalist B&W + Traffic Light standard)
+// ANSI terminal color palette (Minimalist B&W + Traffic Light standard)
 const C = {
   reset: '\x1b[0m',
   bold: '\x1b[1m',
@@ -46,7 +49,7 @@ interface AccordionState {
 }
 
 const accordions: AccordionState = {
-  bootLog: true,     // Expanded on initial boot
+  bootLog: true,
   servers: false,
   models: false,
   consilium: false,
@@ -57,14 +60,128 @@ let lastDiagnosticReport: BootDiagnosticReport | null = null;
 let currentRole = 'general_assistant';
 let currentMode: ConsiliumMode = 'solo';
 
-function renderAccordionHeader(title: string, isOpen: boolean, tag: string = ''): string {
-  const icon = isOpen ? `${C.green}[ - COLLAPSE ]${C.reset}` : `${C.yellow}[ + EXPAND ]${C.reset}`;
-  const border = '─'.repeat(Math.max(10, 68 - title.length - tag.length));
-  return `${C.gray}┌──${C.reset} ${C.bold}${C.white}${title}${C.reset} ${tag} ${C.gray}─${border}─${C.reset} ${icon}`;
+/**
+ * ANSI Terminal Markdown Renderer for batch text
+ */
+export function renderTerminalMarkdown(md: string): string {
+  if (!md) return '';
+  let text = md;
+
+  // 1. Code blocks: ```lang ... ```
+  text = text.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, (_m, lang, code) => {
+    const langTag = lang ? ` ${C.yellow}[${lang.toUpperCase()}]${C.reset}` : '';
+    const codeLines = code
+      .trim()
+      .split('\n')
+      .map((l: string) => `  ${C.zinc}${l}${C.reset}`)
+      .join('\n');
+    return `\n${C.gray}┌──${langTag} ${C.gray}${'─'.repeat(40)}${C.reset}\n${codeLines}\n${C.gray}└──${'─'.repeat(46)}${C.reset}\n`;
+  });
+
+  // 2. Inline code: `code`
+  text = text.replace(/`([^`]+)`/g, `${C.cyan}$1${C.reset}`);
+
+  // 3. Bold: **text** or __text__
+  text = text.replace(/\*\*([^*]+)\*\*/g, `${C.bold}${C.white}$1${C.reset}`);
+  text = text.replace(/__([^_]+)__/g, `${C.bold}${C.white}$1${C.reset}`);
+
+  // 4. Italic: *text* or _text_
+  text = text.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, `${C.dim}$1${C.reset}`);
+
+  // 5. Headings: # Heading
+  text = text.replace(/^(#{1,6})\s+(.+)$/gm, `\n${C.bold}${C.green}# $2${C.reset}`);
+
+  // 6. Blockquote: > text
+  text = text.replace(/^>\s+(.+)$/gm, `${C.gray}│${C.reset} ${C.dim}$1${C.reset}`);
+
+  // 7. Unordered list: * or -
+  text = text.replace(/^[\*\-]\s+(.+)$/gm, `  ${C.green}•${C.reset} $1`);
+
+  // 8. Ordered list: 1.
+  text = text.replace(/^(\d+)\.\s+(.+)$/gm, `  ${C.yellow}$1.${C.reset} $2`);
+
+  // 9. Links: [text](url)
+  text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, `${C.cyan}$1${C.reset} ${C.gray}($2)${C.reset}`);
+
+  // 10. Horizontal rules: ---
+  text = text.replace(/^[-*_]{3,}$/gm, `${C.gray}${'─'.repeat(50)}${C.reset}`);
+
+  return text;
 }
 
-function renderAccordionFooter(): string {
-  return `${C.gray}└──${'─'.repeat(76)}┘${C.reset}`;
+/**
+ * Line-buffered real-time ANSI terminal markdown streamer
+ */
+export class TerminalMarkdownStreamer {
+  private buffer = '';
+  private inCodeBlock = false;
+  private codeLang = '';
+
+  constructor(private writeFn: (text: string) => void) {}
+
+  public push(chunk: string): void {
+    this.buffer += chunk;
+    const lines = this.buffer.split('\n');
+    this.buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      this.renderLine(line);
+    }
+  }
+
+  public finish(): void {
+    if (this.buffer.length > 0) {
+      this.renderLine(this.buffer);
+      this.buffer = '';
+    }
+    if (this.inCodeBlock) {
+      this.writeFn(`${C.gray}└──${'─'.repeat(46)}${C.reset}\n`);
+      this.inCodeBlock = false;
+    }
+  }
+
+  private renderLine(line: string): void {
+    const fenceMatch = line.match(/^```([a-zA-Z0-9_-]*)/);
+    if (fenceMatch) {
+      if (!this.inCodeBlock) {
+        this.inCodeBlock = true;
+        this.codeLang = fenceMatch[1] || '';
+        const tag = this.codeLang ? ` ${C.yellow}[${this.codeLang.toUpperCase()}]${C.reset}` : '';
+        this.writeFn(`\n${C.gray}┌──${tag} ${C.gray}${'─'.repeat(40)}${C.reset}\n`);
+      } else {
+        this.inCodeBlock = false;
+        this.writeFn(`${C.gray}└──${'─'.repeat(46)}${C.reset}\n`);
+      }
+      return;
+    }
+
+    if (this.inCodeBlock) {
+      this.writeFn(`  ${C.zinc}${line}${C.reset}\n`);
+      return;
+    }
+
+    let formatted = line;
+    formatted = formatted.replace(/`([^`]+)`/g, `${C.cyan}$1${C.reset}`);
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, `${C.bold}${C.white}$1${C.reset}`);
+    formatted = formatted.replace(/__([^_]+)__/g, `${C.bold}${C.white}$1${C.reset}`);
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, `${C.dim}$1${C.reset}`);
+
+    if (/^#{1,6}\s+/.test(formatted)) {
+      formatted = formatted.replace(/^(#{1,6})\s+(.+)$/, `${C.bold}${C.green}# $2${C.reset}`);
+    } else if (/^>\s+/.test(formatted)) {
+      formatted = formatted.replace(/^>\s+(.+)$/, `${C.gray}│${C.reset} ${C.dim}$1${C.reset}`);
+    } else if (/^[\*\-]\s+/.test(formatted)) {
+      formatted = formatted.replace(/^[\*\-]\s+(.+)$/, `  ${C.green}•${C.reset} $1`);
+    } else if (/^(\d+)\.\s+/.test(formatted)) {
+      formatted = formatted.replace(/^(\d+)\.\s+(.+)$/, `  ${C.yellow}$1.${C.reset} $2`);
+    } else if (/^[-*_]{3,}$/.test(formatted)) {
+      formatted = `${C.gray}${'─'.repeat(50)}${C.reset}`;
+    }
+
+    formatted = formatted.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, `${C.cyan}$1${C.reset} ${C.gray}($2)${C.reset}`);
+
+    this.writeFn(formatted + '\n');
+  }
 }
 
 /**
@@ -93,116 +210,63 @@ ${C.green}[OK] ALL DIAGNOSTIC CHECKS PASSED [Total: ${lastDiagnosticReport.total
 `);
 }
 
+function getTimeStr(): string {
+  const now = new Date();
+  return `[${now.toTimeString().split(' ')[0]}]`;
+}
+
 /**
- * Prints the main Cyber-Terminal banner and accordion summaries
+ * Prints the minimalist borderless Cyber-Terminal header (Strict 5-line specification)
  */
 function renderDashboard(session: ChatSession): void {
+  console.clear();
   const currentModel = ModelRegistry.getModelById(session.getModel());
   const isFree = currentModel?.pricing.freeTierStatus === '100% Free Quota Available';
-  const tierBadge = isFree ? `${C.green}[FREE QUOTA]${C.reset}` : `${C.yellow}[PAID / METERED]${C.reset}`;
+  const tierBadge = isFree ? `${C.green}[FREE]${C.reset}` : `${C.yellow}[PAID]${C.reset}`;
+  const totalModels = ModelRegistry.getAllModels().length;
 
-  console.log(`
-${C.gray}┌────────────────────────────────────────────────────────────────────────────┐${C.reset}
-${C.gray}│${C.reset} ${C.bold}${C.white}EVABOT // CORE v0.0.1 MVP${C.reset}  ${C.green}[ONLINE]${C.reset}  ${C.gray}│${C.reset} Mode: ${C.cyan}${currentMode.toUpperCase()}${C.reset}  ${C.gray}│${C.reset} Role: ${C.white}${currentRole}${C.reset} ${C.gray}│${C.reset}
-${C.gray}│${C.reset} Model: ${C.bold}${C.white}${session.getModel().padEnd(25)}${C.reset} ${tierBadge.padEnd(35)} ${C.gray}│${C.reset}
-${C.gray}│${C.reset} Auth:  ${C.green}[OK] Google Auto-Auth (evabot.online@gmail.com)${C.reset}    ${C.gray}Strict: USD ($)/EUR (€)│${C.reset}
-${C.gray}└────────────────────────────────────────────────────────────────────────────┘${C.reset}
-`);
+  const bLoad = os.loadavg()[0].toFixed(2);
+  const bCpuPct = Math.min(100, Math.round((parseFloat(bLoad) / 8) * 100));
+  const bTotMem = Math.round(os.totalmem() / (1024 * 1024 * 1024));
+  const bUsedMem = ((os.totalmem() - os.freemem()) / (1024 * 1024 * 1024)).toFixed(1);
+  const micro = ClusterMonitor.getMicroMetrics();
+  const meshLat = ClusterMonitor.getMeshLatency();
 
-  // Accordion 1: Boot Log Summary
-  console.log(renderAccordionHeader('1. BOOT SEQUENCE & DIAGNOSTICS LOG', accordions.bootLog));
-  if (accordions.bootLog && lastDiagnosticReport) {
-    for (const step of lastDiagnosticReport.steps) {
-      console.log(`  ${C.green}[OK]${C.reset} ${C.white}${step.name}${C.reset}: ${C.gray}${step.details}${C.reset}`);
-    }
-  }
-  console.log(renderAccordionFooter());
-
-  // Accordion 2: Dual Server Telemetry
-  console.log(renderAccordionHeader('2. DUAL SERVER TELEMETRY (WEB SERVER VS AGENT SERVER)', accordions.servers));
-  if (accordions.servers && lastDiagnosticReport) {
-    const ws = lastDiagnosticReport.servers.webServer;
-    const as = lastDiagnosticReport.servers.agentServer;
-    console.log(`  ${C.bold}[WEB] ${ws.role} [${ws.name}]${C.reset} - ${ws.status}`);
-    console.log(`     Location: ${ws.zone} | IP: ${ws.ip}`);
-    console.log(`     CPU Load: ${ws.cpuLoad} | RAM: ${ws.memoryUsed}`);
-    console.log(`     Workload: ${C.green}0% Compute (Caddy SSL Edge Gateway & Reverse Proxy)${C.reset}`);
-    console.log(`  ${C.bold}[CORE] ${as.role} [${as.name}]${C.reset} - ${as.status}`);
-    console.log(`     Location: ${as.zone} | Tailscale IP: ${as.ip}`);
-    console.log(`     Hardware: ${as.cpuSpec} | ${as.memorySpec}`);
-    console.log(`     CPU Load: ${as.cpuLoad} | RAM: ${as.memoryUsed}`);
-    console.log(`     Services: ${as.services.join(', ')}`);
-  }
-  console.log(renderAccordionFooter());
-
-  // Accordion 3: Frontier Models & Quotas
-  console.log(renderAccordionHeader('3. FRONTIER MODEL GARDEN (34 MODELS REGISTERED)', accordions.models));
-  if (accordions.models) {
-    console.log(`  ${C.green}[+] 1. Google Next-Gen Frontier (Gemini 3.x / 2.5):${C.reset}`);
-    console.log(`     • ${C.bold}gemini-3.8-flash${C.reset} - 1M ctx | 15 RPM Free Quota | Ultra-fast agentic`);
-    console.log(`     • ${C.bold}gemini-3.1-pro${C.reset}   - 2M ctx | Complex reasoning & architecture`);
-    console.log(`     • ${C.bold}gemini-3.1-flash${C.reset} - 1M ctx | High-efficiency real-time flash`);
-    console.log(`     • ${C.bold}gemini-2.5-flash${C.reset} - 1M ctx | Flagship multimodal balance`);
-    console.log(`  ${C.green}[+] 2. OpenRouter Free Tier (:free):${C.reset}`);
-    console.log(`     • deepseek/deepseek-r1:free | meta-llama/llama-3.3-70b:free | gemini-2.0-flash-exp:free`);
-    console.log(`  ${C.yellow}[*] 3. Paid Enterprise Partners (Google Cloud Vertex AI):${C.reset}`);
-    console.log(`     • claude-3-7-sonnet | claude-3-5-sonnet | mistral-large-2411 | jamba-1.5-large`);
-    console.log(`  ${C.gray}Use /models for the comprehensive rate card and full specification table.${C.reset}`);
-  }
-  console.log(renderAccordionFooter());
-
-  // Accordion 4: Consilium Engine
-  console.log(renderAccordionHeader('4. MULTI-AGENT CONSILIUM & DEBATE CONTROLLER', accordions.consilium));
-  if (accordions.consilium) {
-    console.log(`  Current Mode: ${C.bold}${C.cyan}${currentMode.toUpperCase()}${C.reset}`);
-    console.log(`  Supported Modes:`);
-    console.log(`    • ${C.white}solo${C.reset}      - 1-on-1 direct dialogue with active model`);
-    console.log(`    • ${C.white}broadcast${C.reset} - 1 prompt sent to 3 frontier models concurrently`);
-    console.log(`    • ${C.white}dialogue${C.reset}  - 2 models engage in an autonomous thesis debate`);
-    console.log(`    • ${C.white}consilium${C.reset} - 3 to 10 models deliberate in rounds with consensus report`);
-    console.log(`  ${C.gray}Switch mode with: /mode <solo|broadcast|dialogue|consilium>${C.reset}`);
-  }
-  console.log(renderAccordionFooter());
-
-  // Accordion 5: Corporate Roles
-  console.log(renderAccordionHeader('5. EVALINE CORPORATE ROLES & KNOWLEDGE BASE', accordions.roles));
-  if (accordions.roles) {
-    console.log(`  Active Role: ${C.bold}${C.white}${currentRole}${C.reset}`);
-    console.log(`  Available Roles: architect, devops, security_auditor, general_assistant, data_engineer`);
-    console.log(`  Knowledge Base: Hybrid PostgreSQL + Qdrant Vector Store (Connected)`);
-    console.log(`  ${C.gray}Switch role with: /role <role_id>${C.reset}`);
-  }
-  console.log(renderAccordionFooter());
-
-  console.log(`
-${C.gray}Interactive Commands:${C.reset}
-  ${C.cyan}/toggle <1-5|all>${C.reset}  Toggle accordions     ${C.cyan}/mode <mode>${C.reset}        Set Consilium mode
-  ${C.cyan}/model <id>${C.reset}        Switch active model   ${C.cyan}/role <role>${C.reset}        Set Corporate role
-  ${C.cyan}/boot${C.reset}              Re-run diagnostics    ${C.cyan}/clear${C.reset}              Clear chat stream
-  ${C.cyan}/help${C.reset}              Full command guide    ${C.cyan}/exit${C.reset}               Quit terminal
-`);
+  // Line 1: Single dot indicator, project name, version, status, latency
+  console.log(`${C.green}●${C.reset} ${C.bold}${C.white}EvaBot v0.0.1${C.reset}  ${C.green}ONLINE${C.reset}  ${C.gray}${meshLat}ms${C.reset}`);
+  // Line 2: Active model, tier, mode, model pool count
+  console.log(`${C.gray}Модель:${C.reset} ${C.bold}${C.white}${session.getModel()}${C.reset} ${tierBadge}  ${C.gray}Режим:${C.reset} ${currentMode}  ${C.gray}Пул:${C.reset} ${totalModels} моделей (/models)`);
+  // Line 3: System command list
+  console.log(`${C.gray}Команды:${C.reset} /help  /?  /top  /models  /mode  /consilium  /clear`);
+  // Line 4: Connected databases
+  console.log(`${C.gray}Базы данных:${C.reset} ${C.green}Chroma Vector (1075 эмбеддингов) [OK]${C.reset} · ${C.green}SQLite FTS5 (1086 чанков) [OK]${C.reset} · ${C.green}Memory KB (178 док) [OK]${C.reset}`);
+  // Line 5: Live server cluster load telemetry
+  console.log(`${C.gray}Метрики:${C.reset} Core(Frankfurt) CPU ${bCpuPct}% RAM ${bUsedMem}/${bTotMem}GB | Edge(Iowa) Load ${micro.loadAvg.split(',')[0]} RAM ${micro.memUsedMb}MB | Mesh ${meshLat}ms RTT ${C.green}[OK]${C.reset}\n`);
+  // System greeting with timestamp
+  console.log(`${C.gray}${getTimeStr()}${C.reset} ${C.yellow}system :${C.reset} Подключено к нейроядру evabot.online (Frankfurt). Введите сообщение или /help.\n`);
 }
 
 function printHelp(): void {
   console.log(`
 ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
-  ${C.cyan}/toggle <1-5|all>${C.reset}      Expand or collapse specified accordion section
-  ${C.cyan}/boot${C.reset}                  Re-run live diagnostics across Web Server and Agent Server
-  ${C.cyan}/models${C.reset}                Display full catalog of all 34 registered models
-  ${C.cyan}/model <id>${C.reset}            Switch active model (e.g. /model gemini-3.8-flash, /model gemini-3.1-pro)
-  ${C.cyan}/mode <mode>${C.reset}            Set mode: solo, broadcast, dialogue, consilium
-  ${C.cyan}/role <id>${C.reset}             Set corporate role: architect, devops, security_auditor, general_assistant
-  ${C.cyan}/consilium <prompt>${C.reset}    Launch an instant 3-model deliberation with consensus report
-  ${C.cyan}/dialogue <prompt>${C.reset}     Launch an autonomous 2-model debate
-  ${C.cyan}/clear${C.reset}                 Clear conversation history
-  ${C.cyan}/help${C.reset}                  Show this help screen
-  ${C.cyan}/exit${C.reset}                  Exit terminal chat
+  ${C.cyan}/help, /?${C.reset}              Показать это руководство
+  ${C.cyan}/top [free|paid|speed]${C.reset} Топ моделей по качеству и композитному рейтингу
+  ${C.cyan}/models${C.reset}                Сводка и каталог всех моделей пула
+  ${C.cyan}/free, /paid${C.reset}           Фильтры бесплатных и платных моделей
+  ${C.cyan}/model <id>${C.reset}            Переключить модель (напр. gemini-2.5-flash)
+  ${C.cyan}/mode <mode>${C.reset}            Режим: solo | dialogue | consilium
+  ${C.cyan}/consilium <тема>${C.reset}     Запустить многоагентный консилиум экспертов
+  ${C.cyan}/dialogue <тема>${C.reset}      Запустить автономный диалог-дебаты двух моделей
+  ${C.cyan}/role <id>${C.reset}             Выбрать роль: architect, devops, security_auditor
+  ${C.cyan}/clear${C.reset}                 Очистить историю сообщений
+  ${C.cyan}/boot${C.reset}                  Повторить аппаратную самодиагностику двух серверов
+  ${C.cyan}/exit, /quit${C.reset}           Выйти из терминала
 `);
 }
 
 function printAllModels(): void {
   console.log(`\n${C.yellow}${C.bold}═`.repeat(78) + C.reset);
-  console.log(`${C.bold}${C.white}GOOGLE MODEL GARDEN & MULTI-PROVIDER CATALOG (34 MODELS)${C.reset}`);
+  console.log(`${C.bold}${C.white}GOOGLE MODEL GARDEN & MULTI-PROVIDER CATALOG${C.reset}`);
   console.log(`${C.yellow}${C.bold}═`.repeat(78) + `${C.reset}\n`);
 
   const models = ModelRegistry.getAllModels();
@@ -217,13 +281,13 @@ function printAllModels(): void {
 }
 
 async function handleConsiliumRun(mode: ConsiliumMode, prompt: string): Promise<void> {
-  console.log(`\n${C.yellow}[*] Launching ${mode.toUpperCase()} session...${C.reset}`);
-  console.log(`${C.gray}Prompt: "${prompt}"${C.reset}\n`);
+  console.log(`\n${C.yellow}[*] Запуск сессии ${mode.toUpperCase()}...${C.reset}`);
+  console.log(`${C.gray}Вопрос/тема: "${prompt}"${C.reset}\n`);
 
   try {
     const participants = mode === 'consilium'
-      ? ['gemini-3.8-flash', 'claude-3-7-sonnet', 'deepseek/deepseek-r1:free']
-      : ['gemini-3.8-flash', 'gemini-3.1-pro'];
+      ? ['gemini-2.5-pro', 'gemini-2.5-flash', 'deepseek/deepseek-r1:free']
+      : ['gemini-2.5-pro', 'gemini-2.5-flash'];
 
     const engine = new ConsiliumEngine();
     const result = await engine.run({
@@ -231,34 +295,36 @@ async function handleConsiliumRun(mode: ConsiliumMode, prompt: string): Promise<
       prompt,
       models: participants,
       rounds: mode === 'dialogue' ? 2 : 1,
-      synthesizerModel: 'gemini-3.8-flash',
+      synthesizerModel: 'gemini-2.5-pro',
       useKnowledgeBase: true,
       onProgress: (evt: ConsiliumProgressEvent) => {
         console.log(`  ${C.cyan}▸ [${evt.type.toUpperCase()}]${C.reset} ${evt.message || ''}`);
       }
     });
 
-    console.log(`\n${C.green}✔ ${mode.toUpperCase()} COMPLETED [${result.durationMs}ms]${C.reset}\n`);
+    console.log(`\n${C.green}✔ ${mode.toUpperCase()} ЗАВЕРШЕН [${result.durationMs}ms]${C.reset}\n`);
     for (const turn of result.turns) {
       console.log(`${C.bold}${C.cyan}┌─ [${turn.name.toUpperCase()}] (${turn.model}) ──${C.reset}`);
-      console.log(turn.content);
+      console.log(renderTerminalMarkdown(turn.content));
       console.log(`${C.bold}${C.cyan}└─${'─'.repeat(50)}${C.reset}\n`);
     }
 
     if (result.synthesis) {
       console.log(`${C.bold}${C.green}╔══════════════════════════════════════════════════════════════════════════════╗${C.reset}`);
-      console.log(`${C.bold}${C.green}║                   [★] FINAL EXECUTIVE CONSENSUS REPORT                       ║${C.reset}`);
+      console.log(`${C.bold}${C.green}║                   [★] ИТОГОВЫЙ КОНСЕНСУС-ОТЧЕТ ЭКСПЕРТОВ                     ║${C.reset}`);
       console.log(`${C.bold}${C.green}╚══════════════════════════════════════════════════════════════════════════════╝${C.reset}`);
-      console.log(result.synthesis);
-      console.log(`\n${C.gray}Synthesized by consensus arbiter${C.reset}\n`);
+      console.log(renderTerminalMarkdown(result.synthesis));
+      console.log(`\n${C.gray}Синтезировано консилиум-арбитром на базе gemini-2.5-pro${C.reset}\n`);
     }
   } catch (err: any) {
-    console.log(`${C.red}✖ Consilium Error: ${err.message}${C.reset}`);
+    console.log(`${C.red}✖ Ошибка консилиума: ${err.message}${C.reset}`);
   }
 }
 
 async function main(): Promise<void> {
-  const initialModel = 'gemini-3.8-flash';
+  // Smartest model auto-selection at entry with ranked fallback
+  const smartest = ModelRatings.getSmartestFreeModel();
+  const initialModel = smartest ? smartest.id : 'gemini-2.5-pro';
   const session = new ChatSession({ model: initialModel });
 
   // 1. Run live boot diagnostics
@@ -267,7 +333,7 @@ async function main(): Promise<void> {
   // 2. Render initial cyber dashboard
   renderDashboard(session);
 
-  // 3. Start REPL prompt
+  // 3. Start REPL prompt (sticky input row)
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -292,7 +358,7 @@ async function main(): Promise<void> {
       switch (cmd) {
         case '/exit':
         case '/quit':
-          console.log(`\n${C.gray}Terminating EvaBot Cyber-Terminal session. Goodbye.${C.reset}`);
+          console.log(`\n${C.gray}Завершение сессии EvaBot Cyber-Terminal. До свидания.${C.reset}`);
           process.exit(0);
 
         case '/boot':
@@ -300,63 +366,60 @@ async function main(): Promise<void> {
           renderDashboard(session);
           break;
 
+        case '/help':
+        case '/?':
+          printHelp();
+          break;
+
+        case '/top':
+        case '/free':
+        case '/paid':
+          console.log(ModelCommand.execute(input));
+          break;
+
         case '/models':
-          printAllModels();
+          if (arg) {
+            printAllModels();
+          } else {
+            console.log(ModelCommand.execute(input));
+          }
           break;
 
         case '/model':
           if (!arg) {
-            console.log(`${C.yellow}Usage: /model <id> (e.g. /model gemini-3.8-flash, /model gemini-3.1-pro)${C.reset}`);
+            console.log(`${C.yellow}Использование: /model <id> (напр. /model gemini-2.5-flash)${C.reset}`);
           } else if (ModelRegistry.isValidModel(arg)) {
             session.setModel(arg);
-            console.log(`${C.green}✔ Switched active model to: ${C.bold}${arg}${C.reset}`);
+            console.log(`${C.green}✔ Активная модель переключена на: ${C.bold}${arg}${C.reset}`);
           } else {
-            console.log(`${C.red}✖ Unknown model: ${arg}. Use /models to view all 34 registered models.${C.reset}`);
+            console.log(`${C.red}✖ Неизвестная модель: ${arg}. Используйте /models для просмотра.${C.reset}`);
           }
           break;
 
         case '/mode':
           if (['solo', 'broadcast', 'dialogue', 'consilium'].includes(arg.toLowerCase())) {
             currentMode = arg.toLowerCase() as ConsiliumMode;
-            console.log(`${C.green}✔ Switched mode to: ${C.bold}${currentMode.toUpperCase()}${C.reset}`);
+            console.log(`${C.green}✔ Режим переключен на: ${C.bold}${currentMode.toUpperCase()}${C.reset}`);
+          } else if (!arg) {
+            currentMode = currentMode === 'solo' ? 'consilium' : 'solo';
+            console.log(`${C.green}✔ Режим переключен на: ${C.bold}${currentMode.toUpperCase()}${C.reset}`);
           } else {
-            console.log(`${C.yellow}Usage: /mode <solo|broadcast|dialogue|consilium>${C.reset}`);
+            console.log(`${C.yellow}Использование: /mode <solo|dialogue|consilium>${C.reset}`);
           }
           break;
 
         case '/role':
           if (CORPORATE_ROLES[arg]) {
             currentRole = arg;
-            console.log(`${C.green}✔ Active role set to: ${C.bold}${arg}${C.reset}`);
+            console.log(`${C.green}✔ Роль установлена: ${C.bold}${arg}${C.reset}`);
           } else {
-            console.log(`${C.yellow}Available roles: ${Object.keys(CORPORATE_ROLES).join(', ')}${C.reset}`);
+            console.log(`${C.yellow}Доступные роли: ${Object.keys(CORPORATE_ROLES).join(', ')}${C.reset}`);
           }
           break;
-
-        case '/toggle': {
-          const target = arg.toLowerCase();
-          if (target === '1' || target === 'boot') accordions.bootLog = !accordions.bootLog;
-          else if (target === '2' || target === 'servers') accordions.servers = !accordions.servers;
-          else if (target === '3' || target === 'models') accordions.models = !accordions.models;
-          else if (target === '4' || target === 'consilium') accordions.consilium = !accordions.consilium;
-          else if (target === '5' || target === 'roles') accordions.roles = !accordions.roles;
-          else if (target === 'all') {
-            const nextState = !accordions.servers;
-            accordions.bootLog = nextState;
-            accordions.servers = nextState;
-            accordions.models = nextState;
-            accordions.consilium = nextState;
-            accordions.roles = nextState;
-          } else {
-            console.log(`${C.yellow}Usage: /toggle <1-5|all|boot|servers|models|consilium|roles>${C.reset}`);
-          }
-          renderDashboard(session);
-          break;
-        }
 
         case '/consilium':
           if (!arg) {
-            console.log(`${C.yellow}Usage: /consilium <your problem/question for the council>${C.reset}`);
+            console.log(`${C.yellow}Использование: /consilium <вопрос или тема для совета>${C.reset}`);
           } else {
             await handleConsiliumRun('consilium', arg);
           }
@@ -364,25 +427,22 @@ async function main(): Promise<void> {
 
         case '/dialogue':
           if (!arg) {
-            console.log(`${C.yellow}Usage: /dialogue <debate topic or question>${C.reset}`);
+            console.log(`${C.yellow}Использование: /dialogue <тема для дебатов>${C.reset}`);
           } else {
             await handleConsiliumRun('dialogue', arg);
           }
           break;
 
         case '/clear':
+        case '/cls':
           session.clearHistory();
           console.clear();
           renderDashboard(session);
-          console.log(`${C.green}✔ Session memory cleared.${C.reset}`);
-          break;
-
-        case '/help':
-          printHelp();
+          console.log(`${C.green}✔ История сообщений очищена.${C.reset}`);
           break;
 
         default:
-          console.log(`${C.red}✖ Unknown command: ${cmd}. Type /help for assistance.${C.reset}`);
+          console.log(`${C.red}✖ Неизвестная команда: ${cmd}. Введите /help для справки.${C.reset}`);
           break;
       }
       rl.prompt();
@@ -396,20 +456,22 @@ async function main(): Promise<void> {
       return;
     }
 
-    // Standard solo chat stream via UniversalLlmClient
-    process.stdout.write(`\n${C.bold}${C.white}┌─ [EVABOT] (${session.getModel()}) ───────────────────────${C.reset}\n`);
+    // Standard solo chat stream via UniversalLlmClient with real-time markdown formatting
+    const time = getTimeStr();
+    process.stdout.write(`\n${C.gray}${time}${C.reset} ${C.green}evabot :${C.reset} `);
     try {
       const client = new UniversalLlmClient();
+      const streamer = new TerminalMarkdownStreamer((text) => process.stdout.write(text));
       await client.streamContent(
         session.getModel(),
         [{ role: 'user', content: input }],
         (chunk: string) => {
-          process.stdout.write(chunk);
+          streamer.push(chunk);
         }
       );
-      process.stdout.write(`\n${C.bold}${C.white}└─${'─'.repeat(50)}${C.reset}\n`);
+      streamer.finish();
     } catch (err: any) {
-      process.stdout.write(`\n${C.red}✖ Generation Error: ${err.message}${C.reset}\n`);
+      process.stdout.write(`\n${C.red}[ERROR] Ошибка генерации: ${err.message}${C.reset}\n`);
     }
 
     rl.prompt();

@@ -7,12 +7,28 @@ export function createModelsRouter(): Router {
   const router = new Router();
 
   router.get('/api/models', withErrorHandling(async (ctx) => {
+    const smartestFree = ModelRatings.getSmartestFreeModel();
+    const allModels = ModelRegistry.getAllModels().map((m) => ({
+      ...m,
+      rating: ModelRatings.computeRating(m),
+    }));
+
+    // Prioritize: 100% Free models first, sorted by composite score (Recency 35% + Quality 35% + Context 15% + Speed 10% + Cost 5%)
+    allModels.sort((a, b) => {
+      const aFree = a.pricing.freeTierStatus === '100% Free Quota Available' ? 1 : 0;
+      const bFree = b.pricing.freeTierStatus === '100% Free Quota Available' ? 1 : 0;
+      if (aFree !== bFree) return bFree - aFree;
+      return (b.rating?.composite || 0) - (a.rating?.composite || 0);
+    });
+
     ctx.sendJson(200, {
-      models: ModelRegistry.getAllModels(),
+      models: allModels,
       categories: ModelRegistry.getCategories(),
-      defaultModel: 'gemini-2.5-flash',
+      defaultModel: smartestFree.id,
+      smartestFreeModel: smartestFree,
+      fallbackChain: ModelRatings.getFallbackChain(smartestFree.id),
       stats: {
-        total: ModelRegistry.getAllModels().length,
+        total: allModels.length,
         free: ModelRegistry.getFreeModels().length,
         paid: ModelRegistry.getPaidOnlyModels().length,
       },

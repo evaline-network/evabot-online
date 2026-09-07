@@ -3,375 +3,332 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EVABOT // CYBER-TERMINAL v0.0.1</title>
+  <title>EvaBot v0.0.1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #000;
-      --fg: #fff;
-      --green: #0f0;
-      --red: #f00;
-      --yellow: #ff0;
-      --cyan: #0ff;
-      --gray: #666;
-      --dark-gray: #1a1a1a;
-      --border: #333;
+      --bg: #000000;
+      --fg: #ffffff;
+      --dim: #777777;
+      --green: #00e676;
+      --yellow: #ffd600;
+      --red: #ff1744;
     }
-    
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Roboto Mono', 'SF Mono', 'Courier New', monospace;
+    }
+
     body {
       background: var(--bg);
       color: var(--fg);
-      font-family: 'Courier New', monospace;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      padding: 14px 20px;
+      overflow-x: hidden;
+      font-size: 14px;
+      line-height: 1.35;
     }
-    
-    .header {
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: bold;
-    }
-    
-    .status-light {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px var(--green);
-    }
-    
-    .model-pill {
-      background: var(--dark-gray);
-      border: 1px solid var(--border);
-      padding: 5px 12px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 12px;
-    }
-    
-    .model-pill:hover {
-      border-color: var(--green);
-    }
-    
-    .menu-btn {
-      background: var(--bg);
-      color: var(--fg);
-      border: 1px solid var(--border);
-      padding: 5px 12px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 12px;
-    }
-    
-    .menu-btn:hover {
-      border-color: var(--green);
-      background: var(--dark-gray);
-    }
-    
-    .chat-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
+
+    .c-ok { color: var(--green); }
+    .c-wrn { color: var(--yellow); }
+    .c-err { color: var(--red); }
+    .c-dim { color: var(--dim); }
+    .bold { font-weight: 700; }
+
+    /* Header rows */
+    .header-block {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 2px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #222222;
     }
-    
-    .message {
-      padding: 12px 16px;
-      border-radius: 4px;
-      max-width: 85%;
-      line-height: 1.5;
-      word-wrap: break-word;
+
+    .tui-line {
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.35;
+      margin: 0;
+      padding: 1px 0;
     }
-    
-    .message.user {
-      background: #1a1a2e;
-      align-self: flex-end;
-      border-left: 3px solid var(--green);
+
+    .status-dot {
+      display: inline-block;
+      color: var(--green);
+      transition: color 0.2s ease;
     }
-    
-    .message.bot {
-      background: #0a0a1a;
-      align-self: flex-start;
-      border-left: 3px solid var(--cyan);
+
+    .status-dot.pulse {
+      animation: blink 1.6s infinite ease-in-out;
     }
-    
-    .message.system {
-      background: #2a1a1a;
-      border-left: 3px solid var(--yellow);
-      align-self: center;
-      max-width: 70%;
-      font-size: 13px;
-      white-space: pre-wrap;
-      font-family: 'Courier New', monospace;
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
     }
-    
-    .message.welcome {
-      background: #000;
-      border: 1px solid var(--green);
-      align-self: stretch;
-      max-width: 100%;
-      font-size: 13px;
-    }
-    
-    .input-area {
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      padding: 15px 20px;
-    }
-    
-    .input-container {
-      display: flex;
-      gap: 10px;
-    }
-    
-    textarea {
-      flex: 1;
-      background: #0a0a0a;
+
+    .interactive-link {
       color: var(--fg);
-      border: 1px solid var(--border);
-      padding: 12px;
-      font-family: inherit;
-      font-size: 14px;
-      resize: none;
-      min-height: 60px;
-    }
-    
-    textarea:focus {
-      outline: none;
-      border-color: var(--green);
-    }
-    
-    .send-btn {
-      background: var(--green);
-      color: #000;
-      border: none;
-      padding: 0 30px;
-      font-weight: bold;
-      font-family: inherit;
+      text-decoration: underline;
       cursor: pointer;
+    }
+
+    .interactive-link:hover {
+      color: var(--green);
+    }
+
+    .cmd-link {
+      color: var(--fg);
+      cursor: pointer;
+      text-decoration: underline;
+      margin-right: 8px;
+    }
+
+    .cmd-link:hover {
+      color: var(--green);
+    }
+
+    /* Message stream */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+      padding: 6px 0 16px 0;
+    }
+
+    .msg {
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.35;
+      padding: 1px 0;
       font-size: 14px;
     }
-    
-    .send-btn:hover {
-      background: #0c0;
-      box-shadow: 0 0 10px var(--green);
+
+    .msg-time {
+      color: var(--dim);
+      margin-right: 8px;
     }
-    
-    .send-btn:disabled {
-      background: var(--gray);
-      cursor: not-allowed;
-      box-shadow: none;
+
+    .msg-sender {
+      font-weight: 500;
+      margin-right: 8px;
     }
-    
+
+    .msg-sender.user { color: var(--fg); }
+    .msg-sender.evabot { color: var(--green); }
+    .msg-sender.system { color: var(--yellow); }
+    .msg-sender.error { color: var(--red); }
+
+    .msg-body {
+      color: var(--fg);
+    }
+
+    /* Command prompt input row */
+    .input-line {
+      position: sticky;
+      bottom: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-top: 1px solid #222222;
+      margin-top: auto;
+      z-index: 10;
+    }
+
+    .prompt-char {
+      color: var(--green);
+      user-select: none;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    textarea#user-input {
+      flex: 1;
+      background: transparent;
+      color: var(--fg);
+      border: none;
+      outline: none;
+      resize: none;
+      min-height: 20px;
+      max-height: 200px;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    textarea#user-input::placeholder {
+      color: var(--dim);
+    }
+
+    /* Modal - Zero border minimal text overlay */
     .modal {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
+      inset: 0;
+      background: rgba(0, 0, 0, 0.96);
+      padding: 24px;
+      overflow-y: auto;
       z-index: 100;
-      overflow-y: auto;
     }
-    
+
     .modal-content {
-      max-width: 800px;
-      margin: 50px auto;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 30px;
-      position: relative;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-    
-    .modal-close {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      background: none;
-      border: none;
-      color: var(--fg);
-      font-size: 24px;
-      cursor: pointer;
-    }
-    
-    .modal h2 {
-      margin-bottom: 20px;
-      color: var(--green);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-    }
-    
-    .model-list {
-      max-height: 60vh;
-      overflow-y: auto;
-      border: 1px solid var(--border);
-    }
-    
-    .model-item {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
+
+    .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    
-    .model-item:hover {
-      background: #0a1a0a;
-    }
-    
-    .model-item.active {
-      background: #0a2a0a;
-      border-left: 3px solid var(--green);
-    }
-    
-    .model-info {
-      flex: 1;
-    }
-    
-    .model-name {
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-    
-    .model-meta {
-      font-size: 11px;
-      color: var(--gray);
-    }
-    
-    .model-badge {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 2px;
-      font-weight: bold;
-    }
-    
-    .badge-free {
-      background: #0a2a0a;
-      color: var(--green);
-      border: 1px solid var(--green);
-    }
-    
-    .badge-paid {
-      background: #2a1a0a;
-      color: var(--yellow);
-      border: 1px solid var(--yellow);
-    }
-    
+
     .filter-bar {
       display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
+      gap: 16px;
+      margin: 8px 0;
     }
-    
+
     .filter-btn {
-      background: var(--bg);
-      color: var(--fg);
-      border: 1px solid var(--border);
-      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      color: var(--dim);
       cursor: pointer;
-      font-family: inherit;
-      font-size: 12px;
+      text-decoration: underline;
     }
-    
-    .filter-btn:hover {
-      border-color: var(--green);
-    }
-    
+
     .filter-btn.active {
-      background: var(--green);
-      color: #000;
+      color: var(--green);
+      font-weight: 700;
     }
-    
+
+    .model-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .model-row {
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 4px 0;
+    }
+
+    .model-row:hover {
+      background: #111111;
+    }
+
+    .model-row.active {
+      color: var(--green);
+      font-weight: 700;
+    }
+
     pre {
-      font-family: 'Courier New', monospace;
+      font-family: inherit;
       white-space: pre-wrap;
+    }
+
+    /* Minimalist Markdown Styles */
+    .code-block {
+      background: #0d0d0d;
+      border-left: 2px solid var(--green);
+      padding: 10px 14px;
+      margin: 8px 0;
+      overflow-x: auto;
+    }
+
+    .code-lang {
+      color: var(--dim);
+      margin-bottom: 4px;
+      user-select: none;
+    }
+
+    code.inline-code {
+      background: #141414;
+      padding: 2px 6px;
+      color: var(--green);
+    }
+
+    .md-heading {
+      margin: 10px 0 4px 0;
+    }
+
+    .md-quote {
+      border-left: 2px solid var(--dim);
+      padding-left: 10px;
+      margin: 6px 0;
+      color: var(--dim);
+    }
+
+    .md-bullet {
+      padding-left: 12px;
+      margin: 2px 0;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">
-      <div class="status-light" id="status-light"></div>
-      <span>EVABOT // CYBER-TERMINAL</span>
-      <span id="model-counter" style="color: var(--gray); font-size: 11px;">78 models</span>
-    </div>
-    <div>
-      <button class="model-pill" id="model-pill">🎯 gemini-2.5-flash [FREE]</button>
-      <button class="menu-btn" id="menu-btn">☰ МЕНЮ</button>
-    </div>
+
+  <!-- Header Rows -->
+  <div class="header-block">
+    <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> Ping: <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator">∿∿∿</span></div>
+    <div class="tui-line"><span class="c-dim">Модель:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">Gemini 3.8 Flash <span class="c-ok">[FREE]</span></span>  <span class="c-dim">Режим:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim">Пул:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">78 моделей (/models)</span></div>
+    <div class="tui-line"><span class="c-dim">Команды:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
+    <div class="tui-line" id="db-line"><span class="c-dim">Базы данных:</span> <span class="c-ok">Chroma Vector (1075 эмбеддингов) [OK]</span> · <span class="c-ok">SQLite FTS5 (1086 чанков) [OK]</span> · <span class="c-ok">Memory KB (178 док) [OK]</span></div>
+    <div class="tui-line" id="metrics-line"><span class="c-dim">Нагрузка:</span> <span id="metrics-frankfurt">Core(Frankfurt) CPU <span class="c-ok">[■■░░░░░░]</span> 25% RAM <span class="c-ok">[■░░░░░░░]</span> 4.7/31GB</span> │ <span id="metrics-iowa">Edge(Iowa) CPU <span class="c-ok">[░░░░░░]</span> 2% RAM <span class="c-ok">[■■■░░░]</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">♥</span> 72bpm</span></div>
   </div>
-  
+
+  <!-- Messages stream -->
   <div class="chat-container" id="chat-container">
-    <div class="message welcome">
-      <pre>+==============================================================================+
-|  EVABOT // CYBER-TERMINAL v0.0.1                                          |
-|  Universal Multi-Model AI Terminal                                          |
-+==============================================================================+
-
-✓ Подключение к Google Cloud Vertex AI активно
-✓ Доступно 78 моделей (46 бесплатных + 32 платных)
-✓ Режим: SOLO (одиночный диалог)
-✓ WireGuard Mesh: 100.125.200.49 ↔ 100.66.98.4
-
-💬 Введите сообщение для общения с ИИ
-🎯 Нажмите [gemini-2.5-flash] для смены модели
-☰  Нажмите [МЕНЮ] для выбора моделей и команд
-
-Горячие клавиши:
-  /top         - Показать топ моделей
-  /models      - Сводка по моделям
-  /free        - Список бесплатных
-  /paid        - Список платных
-  /help        - Помощь
-  /clear       - Очистить экран</pre>
-    </div>
-  </div>
-  
-  <div class="input-area">
-    <div class="input-container">
-      <textarea id="user-input" placeholder="Введите сообщение или команду (Enter для отправки, Shift+Enter для новой строки)..."></textarea>
-      <button class="send-btn" id="send-btn">➤ ОТПРАВИТЬ</button>
+    <div class="msg">
+      <span class="msg-time" id="boot-time">[19:10:00]</span><span class="msg-sender system">system :</span><span class="msg-body">Подключено к нейроядру evabot.online (Frankfurt, 78 моделей). Введите сообщение или команду (/help).</span>
     </div>
   </div>
 
-  <!-- Model Selection Modal -->
-  <div class="modal" id="model-modal">
+  <!-- Input Row -->
+  <div class="input-line">
+    <span class="prompt-char">&gt;</span>
+    <textarea id="user-input" placeholder="Введите сообщение или команду (/help)..." autofocus></textarea>
+  </div>
+
+  <!-- Models Modal -->
+  <div class="modal" id="model-modal" onclick="if(event.target===this)closeModelModal()">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeModelModal()">×</button>
-      <h2>🎯 ВЫБОР МОДЕЛИ</h2>
+      <div class="modal-header">
+        <div><span class="c-ok">●</span> КАТАЛОГ МОДЕЛЕЙ (78)</div>
+        <div class="interactive-link" onclick="closeModelModal()">[ЗАКРЫТЬ ×]</div>
+      </div>
       <div class="filter-bar">
-        <button class="filter-btn active" data-filter="all" onclick="filterModels('all')">ВСЕ (78)</button>
-        <button class="filter-btn" data-filter="free" onclick="filterModels('free')">💰 БЕСПЛАТНЫЕ (46)</button>
-        <button class="filter-btn" data-filter="paid" onclick="filterModels('paid')">💳 ПЛАТНЫЕ (32)</button>
+        <button class="filter-btn active" data-filter="all" onclick="filterModels('all')">Все (78)</button>
+        <button class="filter-btn" data-filter="free" onclick="filterModels('free')">Бесплатные (46)</button>
+        <button class="filter-btn" data-filter="paid" onclick="filterModels('paid')">Платные (32)</button>
       </div>
       <div class="model-list" id="model-list">
-        <div style="padding: 20px; text-align: center; color: var(--gray);">Загрузка моделей...</div>
+        <div class="c-dim">Загрузка моделей...</div>
       </div>
     </div>
   </div>
 
   <script>
     const state = {
-      currentModel: 'gemini-2.5-flash',
+      currentModel: 'gemini-3.8-flash',
       currentProvider: 'google',
+      currentMode: 'solo',
       isGenerating: false,
       history: [],
       models: [],
@@ -380,14 +337,22 @@
     };
 
     const statusLight = document.getElementById('status-light');
+    const statusText = document.getElementById('status-text');
+    const pingText = document.getElementById('ping-text');
     const modelPill = document.getElementById('model-pill');
-    const menuBtn = document.getElementById('menu-btn');
-    const modelCounter = document.getElementById('model-counter');
+    const modelsLink = document.getElementById('models-link');
+    const currentModeEl = document.getElementById('current-mode');
     const chatContainer = document.getElementById('chat-container');
     const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
     const modelModal = document.getElementById('model-modal');
     const modelList = document.getElementById('model-list');
+
+    function getTimeStr() {
+      const now = new Date();
+      return '[' + now.toTimeString().split(' ')[0] + ']';
+    }
+
+    document.getElementById('boot-time').textContent = getTimeStr();
 
     function escapeHtml(text) {
       const div = document.createElement('div');
@@ -395,39 +360,156 @@
       return div.innerHTML;
     }
 
-    function addMessage(role, text, isPreformatted = false) {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = `message ${role}`;
-      
-      if (isPreformatted) {
-        const pre = document.createElement('pre');
-        pre.textContent = text;
-        msgDiv.appendChild(pre);
-      } else {
-        msgDiv.innerHTML = text;
+    function renderMarkdown(md) {
+      if (!md) return '';
+      // 1. Extract and preserve code blocks
+      const codeBlocks = [];
+      let text = md.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+        const id = `__CODE_BLOCK_${codeBlocks.length}__`;
+        codeBlocks.push({ lang: lang.trim(), code });
+        return id;
+      });
+
+      // 2. Escape HTML
+      text = escapeHtml(text);
+
+      // 3. Inline formatting
+      text = text.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+      text = text.replace(/\*\*([^*]+)\*\*/g, '<strong class="bold c-fg">$1</strong>');
+      text = text.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em class="c-dim">$1</em>');
+      text = text.replace(/^(#{1,6})\s+(.+)$/gm, '<div class="md-heading bold c-ok">$2</div>');
+      text = text.replace(/^>\s+(.+)$/gm, '<div class="md-quote">&gt; $1</div>');
+      text = text.replace(/^[\*\-]\s+(.+)$/gm, '<div class="md-bullet">• $1</div>');
+      text = text.replace(/^(\d+)\.\s+(.+)$/gm, '<div class="md-bullet">$1. $2</div>');
+      text = text.replace(/^[-*_]{3,}$/gm, '<hr style="border:0;border-top:1px solid var(--dim);margin:8px 0;">');
+      text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" class="interactive-link">$1</a>');
+      text = text.replace(/<\/div>\n/g, '</div>');
+      text = text.replace(/\n/g, '<br>');
+
+      // 4. Restore code blocks safely escaped
+      for (let i = 0; i < codeBlocks.length; i++) {
+        const { lang, code } = codeBlocks[i];
+        const langTag = lang ? `<div class="code-lang">${escapeHtml(lang.toUpperCase())}</div>` : '';
+        const blockHtml = `<div class="code-block">${langTag}<pre><code>${escapeHtml(code.trim())}</code></pre></div>`;
+        text = text.replace(`__CODE_BLOCK_${i}__`, blockHtml);
       }
-      
-      chatContainer.appendChild(msgDiv);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-      return msgDiv;
+
+      return text;
     }
 
-    function addSystemMessage(text) {
-      return addMessage('system', text, true);
+    function addMessage(role, text) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'msg';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'msg-time';
+      timeSpan.textContent = getTimeStr();
+
+      const roleSpan = document.createElement('span');
+      roleSpan.className = `msg-sender ${role}`;
+      roleSpan.textContent = `${role} :`;
+
+      const bodySpan = document.createElement('span');
+      bodySpan.className = 'msg-body';
+      bodySpan.innerHTML = renderMarkdown(text);
+
+      msgDiv.appendChild(timeSpan);
+      msgDiv.appendChild(roleSpan);
+      msgDiv.appendChild(bodySpan);
+
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      return bodySpan;
     }
 
     function setStatus(online, busy = false) {
       if (!online) {
-        statusLight.style.background = 'var(--red)';
-        statusLight.style.boxShadow = '0 0 8px var(--red)';
+        statusLight.style.color = 'var(--red)';
+        statusText.textContent = 'OFFLINE';
+        statusText.className = 'c-err';
+        statusLight.classList.remove('pulse');
       } else if (busy) {
-        statusLight.style.background = 'var(--yellow)';
-        statusLight.style.boxShadow = '0 0 8px var(--yellow)';
+        statusLight.style.color = 'var(--yellow)';
+        statusText.textContent = 'BUSY';
+        statusText.className = 'c-wrn';
+        statusLight.classList.add('pulse');
       } else {
-        statusLight.style.background = 'var(--green)';
-        statusLight.style.boxShadow = '0 0 8px var(--green)';
+        statusLight.style.color = 'var(--green)';
+        statusText.textContent = 'ONLINE';
+        statusText.className = 'c-ok';
+        statusLight.classList.add('pulse');
       }
     }
+
+    const pulseFrames = ['∿∿∿', '≈≈≈', '≋≋≋', '∼∼∼', '∿≈∿', '≈≋≈'];
+    let pulseIdx = 0;
+    let heartRate = 72;
+
+    function makeBar(pct, length = 8) {
+      const p = Math.max(0, Math.min(100, Math.round(pct)));
+      const filled = Math.min(length, Math.max(0, Math.round((p / 100) * length)));
+      return '■'.repeat(filled) + '░'.repeat(length - filled);
+    }
+
+    async function checkPing() {
+      const t0 = performance.now();
+      pulseIdx = (pulseIdx + 1) % pulseFrames.length;
+      const pulseEl = document.getElementById('pulse-indicator');
+      if (pulseEl) pulseEl.textContent = pulseFrames[pulseIdx];
+
+      heartRate = 70 + Math.floor(Math.sin(Date.now() / 2500) * 5 + (Math.random() * 3));
+      const heartEl = document.getElementById('heartbeat-indicator');
+      if (heartEl) heartEl.innerHTML = `<span style="color:var(--red)">♥</span> ${heartRate}bpm`;
+
+      try {
+        const res = await fetch('/api/health');
+        if (res.ok) {
+          const data = await res.json();
+          const lat = Math.round(performance.now() - t0);
+          pingText.textContent = lat + 'ms';
+          if (lat < 100) pingText.className = 'c-ok bold';
+          else if (lat < 250) pingText.className = 'c-wrn bold';
+          else pingText.className = 'c-err bold';
+
+          if (data.telemetry) {
+            const f = data.telemetry.frankfurt;
+            const i = data.telemetry.iowa;
+            const m = data.telemetry.meshLatencyMs;
+            const frankfurtEl = document.getElementById('metrics-frankfurt');
+            const iowaEl = document.getElementById('metrics-iowa');
+            const meshPingEl = document.getElementById('mesh-ping');
+
+            if (meshPingEl && m !== undefined) {
+              meshPingEl.textContent = m + 'ms';
+              meshPingEl.className = m < 150 ? 'c-ok' : (m < 250 ? 'c-wrn' : 'c-err');
+            }
+
+            if (frankfurtEl && f) {
+              const cpuBar = makeBar(f.cpuPct || 25, 8);
+              const memUsed = parseFloat(f.memUsedGb) || 4.7;
+              const memTotal = parseFloat(f.memTotalGb) || 31;
+              const ramPct = Math.round((memUsed / memTotal) * 100);
+              const ramBar = makeBar(ramPct, 8);
+              frankfurtEl.innerHTML = `Core(Frankfurt) CPU <span class="c-ok">[${cpuBar}]</span> ${f.cpuPct}% RAM <span class="c-ok">[${ramBar}]</span> ${memUsed}/${memTotal}GB (${ramPct}%)`;
+            }
+
+            if (iowaEl && i) {
+              const iowaCpu = i.cpuPct || 2;
+              const cpuBar = makeBar(iowaCpu, 6);
+              const ramPct = Math.round((i.memUsedMb / (i.memTotalMb || 964)) * 100);
+              const ramBar = makeBar(ramPct, 6);
+              iowaEl.innerHTML = `Edge(Iowa) CPU <span class="c-ok">[${cpuBar}]</span> ${iowaCpu}% RAM <span class="c-ok">[${ramBar}]</span> ${i.memUsedMb}MB`;
+            }
+          }
+        }
+      } catch (e) {
+        pingText.textContent = 'ERR';
+        pingText.className = 'c-err bold';
+      }
+    }
+
+    setInterval(checkPing, 1000);
+    checkPing();
 
     function setModel(model) {
       state.currentModel = model.id;
@@ -435,8 +517,60 @@
                               model.id.startsWith('openai/') || model.id.startsWith('anthropic/') || model.id.startsWith('meta-') || model.id.startsWith('google/') || model.id.startsWith('deepseek/') || model.id.startsWith('x-ai/') || model.id.startsWith('mistralai/') || model.id.startsWith('qwen/') || model.id.startsWith('perplexity/') || model.id.startsWith('cognitivecomputations/') ? 'openrouter' :
                               'google';
       const isFree = model.pricing && model.pricing.freeTierStatus === '100% Free Quota Available';
-      const badge = isFree ? ' [FREE]' : ' [PAID]';
-      modelPill.textContent = `🎯 ${model.name}${badge}`;
+      const badge = isFree ? '<span class="c-ok">[FREE]</span>' : '<span class="c-wrn">[PAID]</span>';
+      modelPill.innerHTML = `${escapeHtml(model.name)} ${badge}`;
+    }
+
+    function toggleMode() {
+      if (state.currentMode === 'solo') {
+        state.currentMode = 'consilium';
+        addMessage('system', '⚖ Активирован режим КОНСИЛИУМ. Запросы анализируются несколькими моделями с итоговым синтезом.');
+      } else {
+        state.currentMode = 'solo';
+        addMessage('system', 'Режим переключен на SOLO (диалог с активной моделью).');
+      }
+      currentModeEl.textContent = state.currentMode;
+    }
+
+    async function sendConsiliumMessage(text) {
+      addMessage('user', text);
+      const waitNotice = addMessage('system', '⚖ Запуск консилиума моделей... Выполняется коллегиальный анализ.');
+      setStatus(true, true);
+      state.isGenerating = true;
+
+      try {
+        const response = await fetch('/api/consilium', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: text,
+            mode: 'consilium',
+            models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'deepseek/deepseek-r1:free'],
+            useKnowledgeBase: true,
+          })
+        });
+
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        const res = data.result;
+
+        if (res && Array.isArray(res.turns)) {
+          for (const turn of res.turns) {
+            addMessage(turn.model || turn.name, turn.content);
+          }
+        }
+
+        if (res && res.synthesis) {
+          addMessage('evabot [КОНСЕНСУС]', res.synthesis);
+        }
+
+        setStatus(true, false);
+      } catch (err) {
+        addMessage('error', `Ошибка консилиума: ${err.message}`);
+        setStatus(false);
+      } finally {
+        state.isGenerating = false;
+      }
     }
 
     async function sendMessage() {
@@ -444,17 +578,22 @@
       if (!text || state.isGenerating) return;
 
       userInput.value = '';
-      
+      userInput.style.height = 'auto';
+
       if (text.startsWith('/')) {
         await handleCommand(text);
         return;
       }
-      
+
+      if (state.currentMode === 'consilium') {
+        await sendConsiliumMessage(text);
+        return;
+      }
+
       addMessage('user', text);
-      const botMsg = addMessage('bot', '...');
+      const botBody = addMessage('evabot', '...');
       setStatus(true, true);
       state.isGenerating = true;
-      sendBtn.disabled = true;
 
       try {
         const response = await fetch('/api/chat/stream', {
@@ -468,7 +607,7 @@
           })
         });
 
-        if (!response.ok) throw new Error('Server error');
+        if (!response.ok) throw new Error('HTTP ' + response.status);
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
@@ -490,7 +629,7 @@
                 const data = JSON.parse(trimmed.slice(6));
                 if (data.chunk) {
                   accumulatedText += data.chunk;
-                  botMsg.innerHTML = escapeHtml(accumulatedText).replace(/\n/g, '<br>');
+                  botBody.innerHTML = renderMarkdown(accumulatedText);
                   chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
               } catch (e) {}
@@ -502,154 +641,150 @@
         state.history.push({ role: 'model', content: accumulatedText });
         setStatus(true, false);
       } catch (error) {
-        botMsg.innerHTML = `<span style="color: var(--red)">[ERROR] ${escapeHtml(error.message)}</span>`;
+        botBody.innerHTML = `<span class="c-err">[ERROR] ${escapeHtml(error.message)}</span>`;
         setStatus(false);
       } finally {
         state.isGenerating = false;
-        sendBtn.disabled = false;
       }
     }
 
     async function handleCommand(cmd) {
-      const lowerCmd = cmd.toLowerCase();
-      
-      if (lowerCmd === '/clear' || lowerCmd === '/cls') {
+      const lower = cmd.toLowerCase().trim();
+
+      if (lower === '/clear' || lower === '/cls') {
         chatContainer.innerHTML = '';
-        addMessage('welcome', '✓ Экран очищен. Можете продолжить общение с ИИ.');
+        addMessage('system', 'Экран очищен.');
         return;
       }
-      
-      if (lowerCmd === '/help' || lowerCmd === '/?') {
-        addSystemMessage(`ДОСТУПНЫЕ КОМАНДЫ:
 
-╔═══ МОДЕЛИ ═══╗
-  /top [filter] [N]  - Топ-N моделей (filter: free|paid|speed|context)
-  /free             - Все бесплатные модели
-  /paid             - Все платные модели
-  /models           - Сводка по моделям
-
-╔═══ БАЗА ЗНАНИЙ (EvaLine) ═══╗
-  /kb               - Управление KB (help)
-  /kb status        - Статус базы знаний
-  /kb search <q>    - Поиск в базе знаний
-  /kb list [lang]   - Список документов
-  /kb backend <t>   - Переключить backend (memory|json|sqlite|vector)
-
-╔═══ СИСТЕМА ═══╗
-  /clear            - Очистить экран
-  /help             - Эта справка
-
-Примеры:
-  /top free 10
-  /kb search EVA килимки
-  /kb backend memory`);
+      if (lower === '/help' || lower === '/?') {
+        addMessage('system', 
+`СИСТЕМНЫЕ КОМАНДЫ:
+  /top [free|paid|speed]  - Топ моделей
+  /models                 - Полный список моделей
+  /free                   - Все бесплатные модели
+  /paid                   - Все платные модели
+  /mode [solo|consilium]  - Смена режима
+  /consilium [тема]       - Запуск консилиума моделей
+  /clear                  - Очистить историю
+  /help , /?              - Эта справка`);
         return;
       }
-      
-      if (lowerCmd.startsWith('/top') || lowerCmd.startsWith('/free') || lowerCmd.startsWith('/paid') || lowerCmd.startsWith('/models')) {
+
+      if (lower.startsWith('/mode')) {
+        const parts = lower.split(' ');
+        if (parts[1]) {
+          state.currentMode = parts[1];
+          currentModeEl.textContent = state.currentMode;
+          addMessage('system', `Режим переключен: ${state.currentMode}`);
+        } else {
+          toggleMode();
+        }
+        return;
+      }
+
+      if (lower.startsWith('/consilium')) {
+        const prompt = cmd.slice(10).trim();
+        if (!prompt) {
+          state.currentMode = 'consilium';
+          currentModeEl.textContent = state.currentMode;
+          addMessage('system', 'Режим переключен на КОНСИЛИУМ. Теперь отправьте ваш вопрос.');
+        } else {
+          await sendConsiliumMessage(prompt);
+        }
+        return;
+      }
+
+      if (lower.startsWith('/top') || lower.startsWith('/free') || lower.startsWith('/paid') || lower.startsWith('/models')) {
         try {
-          const response = await fetch('/api/models/command', {
+          const res = await fetch('/api/models/command', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command: cmd })
           });
-          const data = await response.json();
-          addSystemMessage(data.result);
+          const data = await res.json();
+          addMessage('system', data.result || 'Команда выполнена');
         } catch (e) {
-          addSystemMessage(`[ERROR] Не удалось выполнить команду: ${e.message}`);
+          addMessage('error', `Ошибка выполнения: ${e.message}`);
         }
         return;
       }
-      
-      if (lowerCmd.startsWith('/kb')) {
-        try {
-          const response = await fetch('/api/kb/command', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command: cmd })
-          });
-          const data = await response.json();
-          addSystemMessage(data.result);
-        } catch (e) {
-          addSystemMessage(`[ERROR] Не удалось выполнить команду: ${e.message}`);
-        }
-        return;
-      }
-      
-      addSystemMessage(`[ERROR] Неизвестная команда: ${cmd}\nИспользуйте /help для справки`);
+
+      addMessage('error', `Неизвестная команда: ${cmd}. Введите /help для справки.`);
     }
 
     async function loadModels() {
       try {
-        const response = await fetch('/api/models');
-        const data = await response.json();
-        state.models = data.models;
-        state.filteredModels = data.models;
-        modelCounter.textContent = `${data.stats.total} models (${data.stats.free} free + ${data.stats.paid} paid)`;
+        const res = await fetch('/api/models');
+        const data = await res.json();
+        state.models = data.models || [];
+        state.filteredModels = state.models;
+        modelsLink.textContent = `${data.stats.total} моделей (/models)`;
+
+        // Automatically select the smartest verified free model upon entry
+        const targetId = data.smartestFreeModel?.id || data.defaultModel || 'gemini-3.8-flash';
+        const bestModel = state.models.find(m => m.id === targetId) || state.models.find(m => m.pricing?.freeTierStatus === '100% Free Quota Available') || state.models[0];
+        if (bestModel) {
+          setModel(bestModel);
+        }
       } catch (e) {
         console.error('Failed to load models:', e);
       }
     }
 
     function renderModelList() {
-      if (state.filteredModels.length === 0) {
-        modelList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--gray);">Нет моделей в этой категории</div>';
+      if (!state.filteredModels.length) {
+        modelList.innerHTML = '<div class="c-dim">Нет моделей в данной категории.</div>';
         return;
       }
-      
+
       let html = '';
-      for (const m of state.filteredModels) {
+      state.filteredModels.forEach((m, idx) => {
         const isFree = m.pricing && m.pricing.freeTierStatus === '100% Free Quota Available';
         const isActive = m.id === state.currentModel;
-        const badgeClass = isFree ? 'badge-free' : 'badge-paid';
-        const badgeText = isFree ? 'FREE' : 'PAID';
-        const rating = m.rating ? `Score: ${m.rating.composite}/100` : '';
-        const contextStr = m.contextWindow ? `${m.contextWindow.toLocaleString()} ctx` : '';
-        
+        const badge = isFree ? '<span class="c-ok bold">[FREE]</span>' : '<span class="c-wrn">[PAID]</span>';
+        const rating = m.rating ? `${m.rating.composite}/100` : '-';
+        const ctx = m.contextWindow ? `${(m.contextWindow/1000).toFixed(0)}k ctx` : '';
+        const isFrontier = m.rating && m.rating.recency >= 98;
+        const frontierTag = isFrontier ? ' <span class="c-ok bold">[2026 FRONTIER]</span>' : '';
+
         html += `
-          <div class="model-item ${isActive ? 'active' : ''}" onclick="selectModel('${m.id}')">
-            <div class="model-info">
-              <div class="model-name">${escapeHtml(m.name)}</div>
-              <div class="model-meta">
-                ${escapeHtml(m.provider)} | ${contextStr} | ${rating}
-                ${m.id !== m.name ? ` | ${escapeHtml(m.id)}` : ''}
-              </div>
+          <div class="model-row ${isActive ? 'active' : ''}" onclick="selectModel('${m.id}')">
+            <div>
+              <span class="c-dim">#${idx + 1}</span> <strong>${escapeHtml(m.name)}</strong>
+              <span class="c-dim">(${escapeHtml(m.provider)} · ${ctx} · Оценка: ${rating})</span>${frontierTag}
             </div>
-            <div class="model-badge ${badgeClass}">${badgeText}</div>
+            <div>${badge}</div>
           </div>
         `;
-      }
+      });
       modelList.innerHTML = html;
     }
 
-    function filterModels(filter) {
-      state.currentFilter = filter;
+    function filterModels(f) {
+      state.currentFilter = f;
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
-      
-      if (filter === 'all') {
-        state.filteredModels = state.models;
-      } else if (filter === 'free') {
-        state.filteredModels = state.models.filter(m => m.pricing && m.pricing.freeTierStatus === '100% Free Quota Available');
-      } else if (filter === 'paid') {
-        state.filteredModels = state.models.filter(m => m.pricing && m.pricing.freeTierStatus === 'Paid / Pay-As-You-Go Only');
-      }
+      document.querySelector(`[data-filter="${f}"]`)?.classList.add('active');
+
+      if (f === 'all') state.filteredModels = state.models;
+      else if (f === 'free') state.filteredModels = state.models.filter(m => m.pricing && m.pricing.freeTierStatus === '100% Free Quota Available');
+      else if (f === 'paid') state.filteredModels = state.models.filter(m => m.pricing && m.pricing.freeTierStatus === 'Paid / Pay-As-You-Go Only');
       renderModelList();
     }
 
-    function selectModel(modelId) {
-      const model = state.models.find(m => m.id === modelId);
+    function selectModel(id) {
+      const model = state.models.find(m => m.id === id);
       if (model) {
         setModel(model);
-        addSystemMessage(`✓ Модель переключена: ${model.name}`);
+        addMessage('system', `Выбрана модель: ${model.name}`);
         closeModelModal();
       }
     }
 
     function openModelModal() {
       modelModal.style.display = 'block';
-      if (state.models.length === 0) {
-        loadModels().then(() => renderModelList());
+      if (!state.models.length) {
+        loadModels().then(renderModelList);
       } else {
         renderModelList();
       }
@@ -659,21 +794,20 @@
       modelModal.style.display = 'none';
     }
 
-    // Event Listeners
-    sendBtn.addEventListener('click', sendMessage);
+    // Auto-resize textarea & Enter to send
     userInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
     });
-    modelPill.addEventListener('click', openModelModal);
-    menuBtn.addEventListener('click', () => handleCommand('/help'));
-    modelModal.addEventListener('click', (e) => {
-      if (e.target === modelModal) closeModelModal();
+
+    userInput.addEventListener('input', () => {
+      userInput.style.height = 'auto';
+      userInput.style.height = userInput.scrollHeight + 'px';
     });
 
-    // Initial load
+    // Start
     loadModels();
     setStatus(true);
   </script>
