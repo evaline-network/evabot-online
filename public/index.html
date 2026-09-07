@@ -286,46 +286,47 @@
 
   <!-- Header Rows -->
   <div class="header-block">
-    <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> Ping: <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator">∿∿∿</span></div>
-    <div class="tui-line"><span class="c-dim">Модель:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">Gemini 3.8 Flash <span class="c-ok">[FREE]</span></span>  <span class="c-dim">Режим:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim">Пул:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">78 моделей (/models)</span></div>
-    <div class="tui-line"><span class="c-dim">Команды:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
-    <div class="tui-line" id="db-line"><span class="c-dim">Базы данных:</span> <span class="c-ok">Chroma Vector (1075 эмбеддингов) [OK]</span> · <span class="c-ok">SQLite FTS5 (1086 чанков) [OK]</span> · <span class="c-ok">Memory KB (178 док) [OK]</span></div>
-    <div class="tui-line" id="metrics-line"><span class="c-dim">Нагрузка:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">[■■░░░░░░]</span> 25% RAM <span class="c-ok">[■░░░░░░░]</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">[░░░░░░]</span> 2% RAM <span class="c-ok">[■■■░░░]</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">♥</span> 72bpm</span></div>
+    <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> <span id="lbl-ping">Ping:</span> <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator">∿∿∿</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">Gemini 3.8 Flash <span class="c-ok">[FREE]</span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">78 models (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
+    <div class="tui-line" id="db-line"><span class="c-dim" id="lbl-databases">Databases:</span> <span class="c-ok" id="db-values">Chroma Vector (1075 embeddings) [OK] · SQLite FTS5 (1086 chunks) [OK] · Memory KB (178 docs) [OK]</span></div>
+    <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">[■■░░░░░░]</span> 25% RAM <span class="c-ok">[■░░░░░░░]</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">[░░░░░░]</span> 2% RAM <span class="c-ok">[■■■░░░]</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">♥</span> 72bpm</span></div>
   </div>
 
   <!-- Messages stream -->
   <div class="chat-container" id="chat-container">
     <div class="msg">
-      <span class="msg-time" id="boot-time">[19:10:00]</span><span class="msg-sender system">system :</span><span class="msg-body">Подключено к нейроядру evabot.online (Frankfurt, 78 моделей). Введите сообщение или команду (/help).</span>
+      <span class="msg-time" id="boot-time">[19:10:00]</span><span class="msg-sender system">system :</span><span class="msg-body" id="boot-msg">Connected to neural core evabot.online (Frankfurt, 78 models). Type a message or command (/help).</span>
     </div>
   </div>
 
   <!-- Input Row -->
   <div class="input-line">
     <span class="prompt-char">&gt;</span>
-    <textarea id="user-input" placeholder="Введите сообщение или команду (/help)..." autofocus></textarea>
+    <textarea id="user-input" placeholder="Type a message or command (/help)..." autofocus></textarea>
   </div>
 
   <!-- Models Modal -->
   <div class="modal" id="model-modal" onclick="if(event.target===this)closeModelModal()">
     <div class="modal-content">
       <div class="modal-header">
-        <div><span class="c-ok">●</span> КАТАЛОГ МОДЕЛЕЙ (78)</div>
-        <div class="interactive-link" onclick="closeModelModal()">[ЗАКРЫТЬ ×]</div>
+        <div><span class="c-ok">●</span> <span id="modal-title">MODEL CATALOG (78)</span></div>
+        <div class="interactive-link" id="modal-close" onclick="closeModelModal()">[CLOSE ×]</div>
       </div>
       <div class="filter-bar">
-        <button class="filter-btn active" data-filter="all" onclick="filterModels('all')">Все (78)</button>
-        <button class="filter-btn" data-filter="free" onclick="filterModels('free')">Бесплатные (46)</button>
-        <button class="filter-btn" data-filter="paid" onclick="filterModels('paid')">Платные (32)</button>
+        <button class="filter-btn active" id="filter-all" data-filter="all" onclick="filterModels('all')">All (78)</button>
+        <button class="filter-btn" id="filter-free" data-filter="free" onclick="filterModels('free')">Free (46)</button>
+        <button class="filter-btn" id="filter-paid" data-filter="paid" onclick="filterModels('paid')">Paid (32)</button>
       </div>
       <div class="model-list" id="model-list">
-        <div class="c-dim">Загрузка моделей...</div>
+        <div class="c-dim" id="model-list-loading">Loading models...</div>
       </div>
     </div>
   </div>
 
   <script>
     const state = {
+      lang: localStorage.getItem('evabot_lang') || 'en',
       currentModel: 'gemini-3.8-flash',
       currentProvider: 'google',
       currentMode: 'solo',
@@ -346,6 +347,247 @@
     const userInput = document.getElementById('user-input');
     const modelModal = document.getElementById('model-modal');
     const modelList = document.getElementById('model-list');
+
+    const I18N = {
+      en: {
+        statusOnline: 'ONLINE',
+        statusBusy: 'BUSY',
+        statusOffline: 'OFFLINE',
+        ping: 'Ping:',
+        mesh: 'Mesh:',
+        live: 'Live:',
+        model: 'Model:',
+        mode: 'Mode:',
+        pool: '78 models (/models)',
+        lang: 'Lang:',
+        commands: 'Commands:',
+        databases: 'Databases:',
+        databasesValue: 'Chroma Vector (1075 embeddings) [OK] · SQLite FTS5 (1086 chunks) [OK] · Memory KB (178 docs) [OK]',
+        load: 'Load:',
+        greeting: 'Connected to neural core evabot.online (Frankfurt, 78 models). Type a message or command (/help).',
+        placeholder: 'Type a message or command (/help)...',
+        modalTitle: 'MODEL CATALOG (78)',
+        modalClose: '[CLOSE ×]',
+        filterAll: 'All (78)',
+        filterFree: 'Free (46)',
+        filterPaid: 'Paid (32)',
+        loadingModels: 'Loading models...',
+        noModels: 'No models in this category.',
+        modelSelected: 'Selected model: ',
+        help: `SYSTEM COMMANDS:
+  /top [free|paid|speed]  - Top models leaderboard by quality and recency
+  /models                 - Full interactive catalog of 78 models
+  /info <model>           - Technical passport, context limits & token pricing
+  /company [evaline|free] - 10-Agent Autonomous AI Corporation
+  /evaline                - EvaLine Enterprise Business Swarm (Mats, SCM, 24/7 Support)
+  /cost                   - Financial ledger, token burn & cluster OpEx
+  /lang [en|uk|ru]        - Instant language switch (English, Ukrainian, Russian)
+  /mcp                    - Active 21 MCP tool servers status
+  /lsp                    - Active 4 Language Server Protocol daemons
+  /free, /paid            - Filter models by tariff tier
+  /mode [solo|consilium]  - Toggle single model or multi-agent consilium
+  /consilium [topic]      - Run multi-agent deliberation and synthesis
+  /clear                  - Clear terminal screen
+  /help , /?              - Display this guide`,
+        switched: 'Language switched to English (EN). Interface updated instantly.',
+        cleared: 'Screen cleared.',
+        unknownCmd: 'Unknown command: {cmd}. Type /help for assistance.',
+        modeSwitched: 'Mode switched: ',
+        consiliumReady: 'Mode switched to CONSILIUM. Please send your query/topic.',
+        consiliumErr: 'Consilium error: ',
+        execErr: 'Execution error: ',
+      },
+      uk: {
+        statusOnline: 'ОНЛАЙН',
+        statusBusy: 'ЗАЙНЯТИЙ',
+        statusOffline: 'ОФЛАЙН',
+        ping: 'Пінг:',
+        mesh: 'Mesh:',
+        live: 'Live:',
+        model: 'Модель:',
+        mode: 'Режим:',
+        pool: '78 моделей (/models)',
+        lang: 'Мова:',
+        commands: 'Команди:',
+        databases: 'Бази даних:',
+        databasesValue: 'Chroma Vector (1075 ембедінгів) [OK] · SQLite FTS5 (1086 чанків) [OK] · Memory KB (178 док) [OK]',
+        load: 'Навантаження:',
+        greeting: 'Підключено до нейроядра evabot.online (Frankfurt, 78 моделей). Введіть повідомлення або команду (/help).',
+        placeholder: 'Введіть повідомлення або команду (/help)...',
+        modalTitle: 'КАТАЛОГ МОДЕЛЕЙ (78)',
+        modalClose: '[ЗАКРИТИ ×]',
+        filterAll: 'Всі (78)',
+        filterFree: 'Безкоштовні (46)',
+        filterPaid: 'Платні (32)',
+        loadingModels: 'Завантаження моделей...',
+        noModels: 'Немає моделей у даній категорії.',
+        modelSelected: 'Вибрано модель: ',
+        help: `СИСТЕМНІ КОМАНДИ:
+  /top [free|paid|speed]  - Рейтинг моделей за якістю та новизною
+  /models                 - Повний інтерактивний каталог із 78 моделей
+  /info <model>           - Технічний паспорт, контекстне вікно та тарифи
+  /company [evaline|free] - Ростер 10 автономних ШІ-агентів компанії
+  /evaline                - Бізнес-система агентів EvaLine (Автоковрики, SCM, 24/7 Сапорт)
+  /cost                   - Бухгалтерія, витрати токенів та собівартість OpEx
+  /lang [en|uk|ru]        - Миттєва зміна мови (English, Українська, Русский)
+  /mcp                    - Статус пулу з 21 MCP-сервера
+  /lsp                    - Статус 4 глобальних мовних серверів LSP
+  /free, /paid            - Фільтри моделей за тарифом
+  /mode [solo|consilium]  - Перемикання режиму solo / консиліум
+  /consilium [тема]       - Колегіальний аналіз та синтез консиліуму
+  /clear                  - Очистити екран термінала
+  /help , /?              - Ця довідка`,
+        switched: 'Мову перемкнено на українську (UK). Інтерфейс оновлено миттєво.',
+        cleared: 'Екран очищено.',
+        unknownCmd: 'Невідома команда: {cmd}. Введіть /help для довідки.',
+        modeSwitched: 'Режим перемкнено: ',
+        consiliumReady: 'Режим перемкнено на КОНСИЛІУМ. Тепер надішліть ваше запитання.',
+        consiliumErr: 'Помилка консиліуму: ',
+        execErr: 'Помилка виконання: ',
+      },
+      ru: {
+        statusOnline: 'ОНЛАЙН',
+        statusBusy: 'ЗАНЯТ',
+        statusOffline: 'ОФФЛАЙН',
+        ping: 'Пинг:',
+        mesh: 'Mesh:',
+        live: 'Live:',
+        model: 'Модель:',
+        mode: 'Режим:',
+        pool: '78 моделей (/models)',
+        lang: 'Язык:',
+        commands: 'Команды:',
+        databases: 'Базы данных:',
+        databasesValue: 'Chroma Vector (1075 эмбеддингов) [OK] · SQLite FTS5 (1086 чанков) [OK] · Memory KB (178 док) [OK]',
+        load: 'Нагрузка:',
+        greeting: 'Подключено к нейроядру evabot.online (Frankfurt, 78 моделей). Введите сообщение или команду (/help).',
+        placeholder: 'Введите сообщение или команду (/help)...',
+        modalTitle: 'КАТАЛОГ МОДЕЛЕЙ (78)',
+        modalClose: '[ЗАКРЫТЬ ×]',
+        filterAll: 'Все (78)',
+        filterFree: 'Бесплатные (46)',
+        filterPaid: 'Платные (32)',
+        loadingModels: 'Загрузка моделей...',
+        noModels: 'Нет моделей в данной категории.',
+        modelSelected: 'Выбрана модель: ',
+        help: `СИСТЕМНЫЕ КОМАНДЫ:
+  /top [free|paid|speed]  - Топ моделей по качеству и новизне
+  /models                 - Полный интерактивный каталог из 78 моделей
+  /info <model>           - Паспорт, контекстное окно и квоты модели
+  /company [evaline|free] - Ростер 10 автономных ИИ-агентов компании EvaLine
+  /evaline                - Бизнес-система агентов EvaLine (Автоковрики, SCM, 24/7 Саппорт)
+  /cost                   - Бухгалтерия, токены и себестоимость OpEx
+  /lang [en|uk|ru]        - Мгновенное переключение языка (English, Украинский, Русский)
+  /mcp                    - Пул из 21 активного MCP-сервера
+  /lsp                    - Статус 4 языковых демонов LSP
+  /free, /paid            - Фильтры моделей по тарифу
+  /mode [solo|consilium]  - Смена режима solo / консилиум
+  /consilium [тема]       - Запуск коллегиального анализа моделей
+  /clear                  - Очистить экран терминала
+  /help , /?              - Эта справка`,
+        switched: 'Язык переключен на русский (RU). Интерфейс обновлен мгновенно.',
+        cleared: 'Экран очищен.',
+        unknownCmd: 'Неизвестная команда: {cmd}. Введите /help для справки.',
+        modeSwitched: 'Режим переключен: ',
+        consiliumReady: 'Режим переключен на КОНСИЛИУМ. Теперь отправьте ваш вопрос.',
+        consiliumErr: 'Ошибка консилиума: ',
+        execErr: 'Ошибка выполнения: ',
+      }
+    };
+
+    function setLanguage(lang, silent = false) {
+      const targetLang = (lang === 'uk' || lang === 'ua' || lang === 'ukr' || lang === 'ukrainian') ? 'uk' :
+                         (lang === 'ru' || lang === 'rus' || lang === 'russian') ? 'ru' : 'en';
+      state.lang = targetLang;
+      localStorage.setItem('evabot_lang', targetLang);
+
+      const d = I18N[targetLang] || I18N.en;
+
+      const lblPing = document.getElementById('lbl-ping');
+      if (lblPing) lblPing.textContent = d.ping;
+
+      const lblModel = document.getElementById('lbl-model');
+      if (lblModel) lblModel.textContent = d.model;
+
+      const lblMode = document.getElementById('lbl-mode');
+      if (lblMode) lblMode.textContent = d.mode;
+
+      const lblPool = document.getElementById('lbl-pool');
+      if (lblPool) lblPool.textContent = d.pool;
+
+      const lblLang = document.getElementById('lbl-lang');
+      if (lblLang) lblLang.textContent = d.lang;
+
+      const lblCommands = document.getElementById('lbl-commands');
+      if (lblCommands) lblCommands.textContent = d.commands;
+
+      const lblDatabases = document.getElementById('lbl-databases');
+      if (lblDatabases) lblDatabases.textContent = d.databases;
+
+      const dbValues = document.getElementById('db-values');
+      if (dbValues) dbValues.textContent = d.databasesValue;
+
+      const lblLoad = document.getElementById('lbl-load');
+      if (lblLoad) lblLoad.textContent = d.load;
+
+      const lEn = document.getElementById('lang-en');
+      const lUk = document.getElementById('lang-uk');
+      const lRu = document.getElementById('lang-ru');
+      if (lEn && lUk && lRu) {
+        lEn.className = targetLang === 'en' ? 'cmd-link bold c-ok' : 'cmd-link';
+        lEn.textContent = targetLang === 'en' ? '[EN]' : 'EN';
+        lUk.className = targetLang === 'uk' ? 'cmd-link bold c-ok' : 'cmd-link';
+        lUk.textContent = targetLang === 'uk' ? '[UK]' : 'UK';
+        lRu.className = targetLang === 'ru' ? 'cmd-link bold c-ok' : 'cmd-link';
+        lRu.textContent = targetLang === 'ru' ? '[RU]' : 'RU';
+      }
+
+      if (userInput) {
+        userInput.placeholder = d.placeholder;
+      }
+
+      const modalTitle = document.getElementById('modal-title');
+      if (modalTitle) modalTitle.textContent = d.modalTitle;
+
+      const modalClose = document.getElementById('modal-close');
+      if (modalClose) modalClose.textContent = d.modalClose;
+
+      const filterAll = document.getElementById('filter-all');
+      if (filterAll) filterAll.textContent = d.filterAll;
+
+      const filterFree = document.getElementById('filter-free');
+      if (filterFree) filterFree.textContent = d.filterFree;
+
+      const filterPaid = document.getElementById('filter-paid');
+      if (filterPaid) filterPaid.textContent = d.filterPaid;
+
+      const modelListLoading = document.getElementById('model-list-loading');
+      if (modelListLoading) modelListLoading.textContent = d.loadingModels;
+
+      if (modelsLink && state.models && state.models.length) {
+        modelsLink.textContent = targetLang === 'en'
+          ? `${state.models.length} models (/models)`
+          : `${state.models.length} моделей (/models)`;
+      }
+
+      const bootMsg = document.getElementById('boot-msg');
+      if (bootMsg && chatContainer && chatContainer.children.length === 1) {
+        bootMsg.textContent = d.greeting;
+      }
+
+      setStatus(true, state.isGenerating);
+
+      if (!silent) {
+        addMessage('system', d.switched);
+      }
+
+      fetch('/api/models/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: `/lang ${targetLang}` })
+      }).catch(() => {});
+    }
+    window.setLanguage = setLanguage;
 
     function getTimeStr() {
       const now = new Date();
@@ -424,19 +666,20 @@
     }
 
     function setStatus(online, busy = false) {
+      const d = I18N[state.lang] || I18N.en;
       if (!online) {
         statusLight.style.color = 'var(--red)';
-        statusText.textContent = 'OFFLINE';
+        statusText.textContent = d.statusOffline;
         statusText.className = 'c-err';
         statusLight.classList.remove('pulse');
       } else if (busy) {
         statusLight.style.color = 'var(--yellow)';
-        statusText.textContent = 'BUSY';
+        statusText.textContent = d.statusBusy;
         statusText.className = 'c-wrn';
         statusLight.classList.add('pulse');
       } else {
         statusLight.style.color = 'var(--green)';
-        statusText.textContent = 'ONLINE';
+        statusText.textContent = d.statusOnline;
         statusText.className = 'c-ok';
         statusLight.classList.add('pulse');
       }
@@ -653,37 +896,32 @@
     async function handleCommand(cmd) {
       const lower = cmd.toLowerCase().trim();
 
+      if (lower.startsWith('/lang') || lower.startsWith('/language') || lower.startsWith('/locale')) {
+        const parts = lower.split(' ');
+        setLanguage(parts[1] || 'en', false);
+        return;
+      }
+
       if (lower === '/clear' || lower === '/cls') {
         chatContainer.innerHTML = '';
-        addMessage('system', 'Экран очищен.');
+        const d = I18N[state.lang] || I18N.en;
+        addMessage('system', d.cleared);
         return;
       }
 
       if (lower === '/help' || lower === '/?') {
-        addMessage('system', 
-`СИСТЕМНЫЕ КОМАНДЫ:
-  /top [free|paid|speed]  - Топ моделей
-  /models                 - Полный список моделей
-  /info <model>           - Паспорт и квоты модели
-  /company [evaline|free] - Ростер 10 ИИ-агентов компании EvaLine
-  /evaline                - Бизнес-система агентов EvaLine
-  /cost                   - Бухгалтерия, токены и себестоимость
-  /mcp                    - Пул из 21 MCP-сервера
-  /lsp                    - Статус LSP языковых демонов
-  /free, /paid            - Фильтры моделей
-  /mode [solo|consilium]  - Смена режима
-  /consilium [тема]       - Запуск консилиума моделей
-  /clear                  - Очистить историю
-  /help , /?              - Эта справка`);
+        const d = I18N[state.lang] || I18N.en;
+        addMessage('system', d.help);
         return;
       }
 
       if (lower.startsWith('/mode')) {
+        const d = I18N[state.lang] || I18N.en;
         const parts = lower.split(' ');
         if (parts[1]) {
           state.currentMode = parts[1];
           currentModeEl.textContent = state.currentMode;
-          addMessage('system', `Режим переключен: ${state.currentMode}`);
+          addMessage('system', `${d.modeSwitched}${state.currentMode}`);
         } else {
           toggleMode();
         }
@@ -691,11 +929,12 @@
       }
 
       if (lower.startsWith('/consilium')) {
+        const d = I18N[state.lang] || I18N.en;
         const prompt = cmd.slice(10).trim();
         if (!prompt) {
           state.currentMode = 'consilium';
           currentModeEl.textContent = state.currentMode;
-          addMessage('system', 'Режим переключен на КОНСИЛИУМ. Теперь отправьте ваш вопрос.');
+          addMessage('system', d.consiliumReady);
         } else {
           await sendConsiliumMessage(prompt);
         }
@@ -727,14 +966,16 @@
             body: JSON.stringify({ command: cmd })
           });
           const data = await res.json();
-          addMessage('system', data.result || 'Команда выполнена');
+          addMessage('system', data.result || 'OK');
         } catch (e) {
-          addMessage('error', `Ошибка выполнения: ${e.message}`);
+          const d = I18N[state.lang] || I18N.en;
+          addMessage('error', `${d.execErr}${e.message}`);
         }
         return;
       }
 
-      addMessage('error', `Неизвестная команда: ${cmd}. Введите /help для справки.`);
+      const d = I18N[state.lang] || I18N.en;
+      addMessage('error', d.unknownCmd.replace('{cmd}', escapeHtml(cmd)));
     }
 
     async function loadModels() {
@@ -743,7 +984,9 @@
         const data = await res.json();
         state.models = data.models || [];
         state.filteredModels = state.models;
-        modelsLink.textContent = `${data.stats.total} моделей (/models)`;
+        modelsLink.textContent = state.lang === 'en'
+          ? `${data.stats.total} models (/models)`
+          : `${data.stats.total} моделей (/models)`;
 
         // Automatically select the smartest verified free model upon entry
         const targetId = data.smartestFreeModel?.id || data.defaultModel || 'gemini-3.8-flash';
@@ -758,7 +1001,8 @@
 
     function renderModelList() {
       if (!state.filteredModels.length) {
-        modelList.innerHTML = '<div class="c-dim">Нет моделей в данной категории.</div>';
+        const d = I18N[state.lang] || I18N.en;
+        modelList.innerHTML = `<div class="c-dim">${d.noModels}</div>`;
         return;
       }
 
@@ -776,7 +1020,7 @@
           <div class="model-row ${isActive ? 'active' : ''}" onclick="selectModel('${m.id}')">
             <div>
               <span class="c-dim">#${idx + 1}</span> <strong>${escapeHtml(m.name)}</strong>
-              <span class="c-dim">(${escapeHtml(m.provider)} · ${ctx} · Оценка: ${rating})</span>${frontierTag}
+              <span class="c-dim">(${escapeHtml(m.provider)} · ${ctx} · Rating: ${rating})</span>${frontierTag}
             </div>
             <div>${badge}</div>
           </div>
@@ -800,7 +1044,8 @@
       const model = state.models.find(m => m.id === id);
       if (model) {
         setModel(model);
-        addMessage('system', `Выбрана модель: ${model.name}`);
+        const d = I18N[state.lang] || I18N.en;
+        addMessage('system', `${d.modelSelected}${model.name}`);
         closeModelModal();
       }
     }
@@ -832,6 +1077,7 @@
     });
 
     // Start
+    setLanguage(state.lang, true);
     loadModels();
     setStatus(true);
   </script>

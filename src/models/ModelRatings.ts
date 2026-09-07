@@ -1,6 +1,7 @@
 import { ModelRegistry, GeminiModelInfo } from './ModelRegistry.js';
 import { AccountingEngine } from '../core/AccountingEngine.js';
 import { AgentBuilder } from '../core/AgentBuilder.js';
+import { I18nEngine } from '../core/I18nEngine.js';
 
 export type ModelRatingDimension = 'quality' | 'speed' | 'context' | 'cost';
 
@@ -339,14 +340,22 @@ export class ModelCommand {
       case '/company':
       case '/team':
       case '/roster':
+        return this.handleCompany(parts.slice(1));
       case '/evaline':
       case '/business':
-        return this.handleCompany(parts.slice(1));
+        return this.handleCompany(['evaline']);
+      case '/lang':
+      case '/language':
+      case '/locale':
+        return I18nEngine.setLocale(parts[1] || 'en').message;
+      case '/help':
+      case '/?':
+        return I18nEngine.formatHelp();
       case '/info':
       case '/inspect':
         return this.handleInfo(parts.slice(1));
       default:
-        return `[ERROR] Unknown command: ${action}. Use /top, /models, /mcp, /lsp, /cost, /company, /info, /free, /paid, or /help.`;
+        return `[ERROR] Unknown command: ${action}. Use /top, /models, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /free, /paid, or /help.`;
     }
   }
 

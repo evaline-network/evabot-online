@@ -21,6 +21,7 @@ import { UniversalLlmClient } from '../core/UniversalLlmClient.js';
 import { ConsiliumEngine, ConsiliumMode, ConsiliumProgressEvent } from '../core/ConsiliumEngine.js';
 import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
 import { ClusterMonitor } from '../core/ClusterMonitor.js';
+import { I18nEngine } from '../core/I18nEngine.js';
 
 // ANSI terminal color palette (Minimalist B&W + Traffic Light standard)
 const C = {
@@ -224,6 +225,8 @@ function renderDashboard(session: ChatSession): void {
   const isFree = currentModel?.pricing.freeTierStatus === '100% Free Quota Available';
   const tierBadge = isFree ? `${C.green}[FREE]${C.reset}` : `${C.yellow}[PAID]${C.reset}`;
   const totalModels = ModelRegistry.getAllModels().length;
+  const lang = I18nEngine.getLocale();
+  const s = I18nEngine.getStrings(lang);
 
   const bLoad = os.loadavg()[0].toFixed(2);
   const bCpuPct = Math.min(100, Math.round((parseFloat(bLoad) / 8) * 100));
@@ -239,18 +242,22 @@ function renderDashboard(session: ChatSession): void {
     return '■'.repeat(filled) + '░'.repeat(length - filled);
   }
 
+  const enBadge = lang === 'en' ? `${C.green}${C.bold}[EN]${C.reset}` : 'EN';
+  const ukBadge = lang === 'uk' ? `${C.green}${C.bold}[UK]${C.reset}` : 'UK';
+  const ruBadge = lang === 'ru' ? `${C.green}${C.bold}[RU]${C.reset}` : 'RU';
+
   // Line 1: Single dot indicator, project name, version, status, latency
-  console.log(`${C.green}●${C.reset} ${C.bold}${C.white}EvaBot v0.0.1${C.reset}  ${C.green}ONLINE${C.reset}  ${C.gray}│${C.reset} Ping: ${C.green}5ms${C.reset}  ${C.gray}│${C.reset} Mesh: ${C.green}${meshLat}ms${C.reset}  ${C.gray}│${C.reset} Live: ${C.green}~~~${C.reset}`);
-  // Line 2: Active model, tier, mode, model pool count
-  console.log(`${C.gray}Модель:${C.reset} ${C.bold}${C.white}${session.getModel()}${C.reset} ${tierBadge}  ${C.gray}Режим:${C.reset} ${currentMode}  ${C.gray}Пул:${C.reset} ${totalModels} моделей (/models)`);
+  console.log(`${C.green}●${C.reset} ${C.bold}${C.white}EvaBot v0.0.1${C.reset}  ${C.green}${s.statusOnline}${C.reset}  ${C.gray}│${C.reset} ${s.ping} ${C.green}5ms${C.reset}  ${C.gray}│${C.reset} ${s.mesh} ${C.green}${meshLat}ms${C.reset}  ${C.gray}│${C.reset} ${s.live} ${C.green}∿∿∿${C.reset}`);
+  // Line 2: Active model, tier, mode, model pool count, lang
+  console.log(`${C.gray}${s.model}${C.reset} ${C.bold}${C.white}${session.getModel()}${C.reset} ${tierBadge}  ${C.gray}${s.mode}${C.reset} ${currentMode}  ${C.gray}${s.pool ? 'Pool:' : 'Pool:'}${C.reset} ${totalModels} models (/models)  ${C.gray}${s.lang}${C.reset} ${enBadge} ${ukBadge} ${ruBadge}`);
   // Line 3: System command list
-  console.log(`${C.gray}Команды:${C.reset} /help  /?  /top  /models  /cost  /company  /mode  /consilium  /mcp  /lsp  /clear`);
+  console.log(`${C.gray}${s.commandsLabel}${C.reset} /help  /?  /top  /models  /cost  /company  /evaline  /lang  /mode  /consilium  /mcp  /lsp  /clear`);
   // Line 4: Connected databases
-  console.log(`${C.gray}Базы данных:${C.reset} ${C.green}Chroma Vector (1075 эмбеддингов) [OK]${C.reset} · ${C.green}SQLite FTS5 (1086 чанков) [OK]${C.reset} · ${C.green}Memory KB (178 док) [OK]${C.reset}`);
+  console.log(`${C.gray}${s.databasesLabel}${C.reset} ${C.green}${s.databasesValue}${C.reset}`);
   // Line 5: Live server cluster load telemetry with ASCII bars
-  console.log(`${C.gray}Нагрузка:${C.reset} Brain(Frankfurt) CPU ${C.green}[${makeBar(bCpuPct, 8)}]${C.reset} ${bCpuPct}% RAM ${C.green}[${makeBar(ramPct, 8)}]${C.reset} ${bUsedMem}/${bTotMem}GB (${ramPct}%) │ Face(Iowa) CPU ${C.green}[${makeBar(micro.cpuPct, 6)}]${C.reset} ${micro.cpuPct}% RAM ${C.green}[${makeBar(Math.round((micro.memUsedMb / (micro.memTotalMb || 1024)) * 100), 6)}]${C.reset} ${micro.memUsedMb}MB │ ${C.red}♥${C.reset} 72bpm\n`);
+  console.log(`${C.gray}${s.loadLabel}${C.reset} Brain(Frankfurt) CPU ${C.green}[${makeBar(bCpuPct, 8)}]${C.reset} ${bCpuPct}% RAM ${C.green}[${makeBar(ramPct, 8)}]${C.reset} ${bUsedMem}/${bTotMem}GB (${ramPct}%) │ Face(Iowa) CPU ${C.green}[${makeBar(micro.cpuPct, 6)}]${C.reset} ${micro.cpuPct}% RAM ${C.green}[${makeBar(Math.round((micro.memUsedMb / (micro.memTotalMb || 1024)) * 100), 6)}]${C.reset} ${micro.memUsedMb}MB │ ${C.red}♥${C.reset} 72bpm\n`);
   // System greeting with timestamp
-  console.log(`${C.gray}${getTimeStr()}${C.reset} ${C.yellow}system :${C.reset} Подключено к нейроядру evabot.online (Frankfurt, ${totalModels} моделей). Введите сообщение или команду (/help).\n`);
+  console.log(`${C.gray}${getTimeStr()}${C.reset} ${C.yellow}system :${C.reset} ${s.greeting}\n`);
 }
 
 function printHelp(): void {
@@ -380,7 +387,21 @@ async function main(): Promise<void> {
 
         case '/help':
         case '/?':
-          printHelp();
+          console.log(I18nEngine.formatHelp());
+          break;
+
+        case '/lang':
+        case '/language':
+        case '/locale': {
+          const res = I18nEngine.setLocale(arg || 'en');
+          renderDashboard(session);
+          console.log(`${C.green}✔ ${res.message}${C.reset}`);
+          break;
+        }
+
+        case '/evaline':
+        case '/business':
+          console.log(ModelCommand.execute('/evaline'));
           break;
 
         case '/top':
@@ -463,9 +484,11 @@ async function main(): Promise<void> {
           console.log(`${C.green}✔ История сообщений очищена.${C.reset}`);
           break;
 
-        default:
-          console.log(`${C.red}✖ Неизвестная команда: ${cmd}. Введите /help для справки.${C.reset}`);
+        default: {
+          const s = I18nEngine.getStrings();
+          console.log(`${C.red}✖ ${s.unknownCommand.replace('{cmd}', cmd)}${C.reset}`);
           break;
+        }
       }
       rl.prompt();
       return;
