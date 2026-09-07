@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.1.0] - 2026-09-07 — Cyber-Terminal TUI, Frontier 3.8 Fleet, Accounting & Agent Factory
+
+### 🖥️ Cyber-Terminal & TUI Isomorphism
+- **Pure CRT Monospace TUI**: Eliminated bloated cards and borders; strict 16px monospace layout in dark theme (`#0a0a0a`).
+- **5-Line System Header**: Line 1 (Online + 1s Real-time Ping + Mesh RTT + Pulse Wave), Line 2 (Active Model + Mode + 78 Models Pool), Line 3 (Commands Bar), Line 4 (Databases OK), Line 5 (ASCII Load Bars CPU/RAM + Heartbeat).
+- **Parity Across All Interfaces**: Browser, Node.js CLI (`terminal-chat.ts`), text browsers (Lynx/w3m), and `curl http://127.0.0.1:3000/`.
+- **Autoscroll Support**: Automatic smooth scrolling to bottom during streaming chunks and message additions.
+
+### 🤖 Frontier Fleet & Google Ecosystem
+- **Gemini 3.8 Flash as Default #1**: Frontier 1M-context model with 100% Free Quota set as primary engine.
+- **Search Grounding Guaranteed**: Direct live web fact retrieval via Vertex AI Google Search Grounding with zero extra cost.
+- **Cascading Fallback Chain**: Strict ranked fallback: `gemini-3.8-flash` ➔ `gemini-3.1-pro` ➔ `gemini-3.1-flash` ➔ `deepseek-r1:free` ➔ `qwen-2.5-coder-32b:free`.
+
+### 💰 Accounting & Financial Ledger (`/cost`)
+- **AccountingEngine**: Tracks live token consumption, input/output cost, and calculated savings against commercial flagships ($0.2250 - $0.3000 saved per task).
+- **Hardware OpEx Itemization**: Frankfurt Compute Core ($178.40), Iowa Edge Ingress ($7.14), Disks ($12.00), Mesh ($5.00), Subscriptions (Google AI Pro $20, Colab Pro $10, OpenRouter $25) = $257.54/mo ($0.3577/h).
+- **Zero-Cost Unit Economics**: Creation of autonomous agents on Gemini 3.8 Flash / 3.1 Pro is verified at $0.00.
+
+### 🏢 Agent Constructor (`/company [free|paid]`)
+- **AgentBuilder**: Generates 10-agent autonomous corporations with defined missions, assigned models, and required MCP/LSP tools.
+- **100% Free Fleet**: 10 specialized agents running on 100% free models.
+- **Commercial Frontier Fleet**: 10 specialized agents running on Claude 3.7 Sonnet, OpenAI o1, GPT-4o, Codestral 2501, etc.
+- **Model Technical Passports (`/info <model>`)**: Full specifications, token costs, context limits, and composite benchmark ratings.
+
+### 🔌 MCP (21 Servers) & LSP (4 Servers) Integration
+- **Commands `/mcp` & `/lsp`**: Live status reporting of all 21 MCP servers and 4 Language Servers in PATH (TypeScript, Python, HTML/CSS/JSON, Markdown).
+
+### 🧪 100% Test Coverage
+- **13 Test Suites**: All 13 suites (`npm test`) pass with 100% success (ModelTests, ChatTests, ServerTests, CoreEngineTests, UniversalClientTests, ConsiliumTests, RolesTests, AnsiStreamEngineTests, PluginManagerTests, EventBusTests, LLMProvidersTests, KnowledgeBaseTests, ConsiliumNewTests, AccountingAndBuilderTests).
+
+---
+
 ## [v0.0.2] - 2026-09-07 — Refactored & Hardened
 
 ### 🛡️ Added - Security

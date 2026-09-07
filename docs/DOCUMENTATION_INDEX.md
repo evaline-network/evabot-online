@@ -23,6 +23,11 @@
 - [README.md](./architecture/README.md) — index
 - [ARCHITECTURE.md](./architecture/ARCHITECTURE.md) — полная архитектура
 - [EVALINE_EVABOT_CAPABILITIES_MANIFESTO.md](./architecture/EVALINE_EVABOT_CAPABILITIES_MANIFESTO.md) — глобальный манифест возможностей и устойчивости во время войны
+- [GOOGLE_ECOSYSTEM_AGENT_FACTORY_ARCHITECTURE.md](./architecture/GOOGLE_ECOSYSTEM_AGENT_FACTORY_ARCHITECTURE.md) — архитектура автономной фабрики агентов на Google Cloud & Colab Pro
+
+### 📊 [reports/](./reports/)
+Генеральные отчеты и финансовые сводки
+- [SESSION_FINAL_REPORT_2026-09-07.md](./reports/SESSION_FINAL_REPORT_2026-09-07.md) — итоговый генеральный отчет сессии (аудит, TUI-анатомия, учет OpEx, ростеры 10 Free/Paid агентов)
 
 ### 🛡️ [security/](./security/)
 Безопасность и аудиты
