@@ -8,6 +8,7 @@ import { Security, securityConfig } from '../core/Security.js';
 import { ClusterMonitor } from '../core/ClusterMonitor.js';
 import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
 import { pluginManager } from '../core/plugin-system/PluginManager.js';
+import { TuiRenderer } from '../core/TuiRenderer.js';
 import { consiliumPlugin } from '../plugins/consilium/index.js';
 import { knowledgeBasePlugin } from '../plugins/knowledge-base/index.js';
 import { llmProvidersPlugin } from '../plugins/llm-providers/index.js';
@@ -209,18 +210,20 @@ export function createServer(): http.Server {
       return;
     }
     
-    if (pathname.startsWith('/dist/') || pathname === '/') {
+    if (pathname.startsWith('/dist/') || pathname === '/' || pathname === '/visualize' || pathname === '/visualize.html' || pathname === '/index.html' || pathname === '/terminal' || pathname === '/terminal.txt' || pathname === '/plain') {
       let filePath = '';
       if (pathname.startsWith('/dist/')) {
         filePath = path.resolve(process.cwd(), pathname.slice(1));
-      } else {
-        const indexPath = path.resolve(process.cwd(), 'public', 'index.html');
-        if (fs.existsSync(indexPath)) {
-          const content = fs.readFileSync(indexPath);
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(content);
-          return;
-        }
+      } else if (pathname === '/' || pathname === '/index.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'index.html');
+      } else if (pathname === '/visualize' || pathname === '/visualize.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'visualize.html');
+      } else if (pathname === '/terminal' || pathname === '/terminal.txt' || pathname === '/plain') {
+        const isCurl = (req.headers['user-agent'] || '').toLowerCase().includes('curl');
+        const host = (req.headers.host || 'localhost').toString();
+        const text = isCurl ? TuiRenderer.renderText(host) : TuiRenderer.renderHtml(host);
+        sendText(res, 200, text, 'text/html; charset=utf-8');
+        return;
       }
       
       if (filePath && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
