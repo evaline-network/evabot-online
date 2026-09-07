@@ -29,5 +29,23 @@ export function runModelTests(): boolean {
   assert(ModelRegistry.isValidModel('gemini-2.0-flash'), 'gemini-2.0-flash is valid');
   assert(!ModelRegistry.isValidModel('non-existent-gpt-model'), 'Invalid model returns false');
 
+  // Gemini 3.x Frontier Models Verification
+  const flash38 = ModelRegistry.getModelById('gemini-3.8-flash');
+  assert(Boolean(flash38), 'gemini-3.8-flash is registered');
+  assert(flash38?.contextWindow === 1048576, 'gemini-3.8-flash context window is 1M tokens');
+  assert(flash38?.maxOutputTokens === 8192, 'gemini-3.8-flash max output tokens is 8192');
+  assert(Boolean(flash38?.pricing.inputPer1MTokensUSD.includes('$')), 'gemini-3.8-flash has USD pricing');
+  assert(Boolean(flash38?.pricing.inputPer1MTokensEUR.includes('€')), 'gemini-3.8-flash has EUR pricing');
+
+  const pro31 = ModelRegistry.getModelById('gemini-3.1-pro');
+  assert(Boolean(pro31), 'gemini-3.1-pro is registered');
+  assert(pro31?.contextWindow === 2097152, 'gemini-3.1-pro context window is 2M tokens');
+  assert(pro31?.maxOutputTokens === 8192, 'gemini-3.1-pro max output tokens is 8192');
+  assert(Boolean(pro31?.pricing.inputPer1MTokensUSD.includes('$')), 'gemini-3.1-pro has USD pricing');
+  assert(Boolean(pro31?.pricing.inputPer1MTokensEUR.includes('€')), 'gemini-3.1-pro has EUR pricing');
+
+  assert(ModelRegistry.isValidModel('omniroute/gemini-3.8-flash'), 'omniroute/gemini-3.8-flash is valid');
+  assert(ModelRegistry.isValidModel('omniroute/gemini-3.1-pro'), 'omniroute/gemini-3.1-pro is valid');
+
   return passed;
 }

@@ -25,6 +25,7 @@ export declare class EvaBotWebApp {
     private applyLanguage;
     private setupEventListeners;
     private checkHealth;
+    private fetchBootDiagnostics;
     private startTelemetryLoop;
     private updateTelemetryUI;
     private populateModelSelector;

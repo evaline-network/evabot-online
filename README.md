@@ -8,6 +8,21 @@ Autonomous AI agent platform and cloud infrastructure deployed on **Google Cloud
 - **AI Core:** Google AI Pro (Gemini 2.0 / 1.5 Pro) with 2,000,000 token context window
 - **Security:** Private WireGuard Mesh (Tailscale 100.125.200.49), TLS 1.3, HTTP/3 QUIC (Caddy)
 
+## EvaNet Terminology (6-letter glossary)
+
+| Term | Role | Node |
+|---|---|---|
+| **EvaBot** | AI agent core | this repository (`evabot-online`) |
+| **EvaNet** | Network | Tailscale mesh: EvaBrain ↔ laptop ↔ EvaCell ↔ EvaPalm |
+| **EvaFace** | Edge | `evaline-micro-vm` (Iowa, Caddy → evabot.online) |
+| **EvaBrain** | Compute | `evabot-agent-vm` (Frankfurt, c3-standard-8) |
+| **EvaCell** | Mobile | Pixel 10 Pro XL (Tailscale `100.80.216.27`, ADB over Wi-Fi `:5555`) |
+| **EvaPalm** | Mobile | Oppo A5 Pro 5G (USB via macbook, ADB `55PZDIBIFIPVEMAE`) |
+| **EvaLink** | Bridges | `~/eva-link/` + `~/ssh-bridge/` (SSH/ADB tunnels, keys, scripts) |
+| **EvaHub** | Control | `EvaBrain` :3000 — telemetry & command hub |
+
+Full glossary: [`docs/GLOSSARY.md`](docs/GLOSSARY.md) · Mobile bridge: `~/eva-link/eva-link.sh status`
+
 ## Architecture Overview
 
 1. **Screen 1:** Gemini Conversational Core & Live Gemini Voice Assistant

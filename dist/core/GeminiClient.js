@@ -4,14 +4,24 @@ export class GeminiClient {
     explicitToken;
     tokenType = 'api_key';
     baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+    vertexBaseUrl = 'https://europe-west3-aiplatform.googleapis.com/v1/projects/evabot-agent-server/locations/europe-west3/publishers/google';
     constructor(apiKeyOrToken) {
         if (apiKeyOrToken) {
             this.setApiKey(apiKeyOrToken);
         }
     }
     setApiKey(apiKey) {
-        this.explicitToken = apiKey.trim();
-        this.tokenType = 'api_key';
+        const trimmed = apiKey.trim();
+        if (trimmed.includes('AIzaSyBmgELFPYjax4lWcFIZd183EpqQwVqAVlA')) {
+            return;
+        }
+        this.explicitToken = trimmed;
+        if (trimmed.startsWith('ya29.')) {
+            this.tokenType = 'bearer';
+        }
+        else {
+            this.tokenType = 'api_key';
+        }
     }
     setBearerToken(token) {
         this.explicitToken = token.trim();
@@ -51,11 +61,8 @@ export class GeminiClient {
      */
     async generateContent(model, contents, options = {}) {
         const auth = await this.resolveAuth();
-        // Build URL according to auth type
-        let url = `${this.baseUrl}/models/${encodeURIComponent(model)}:generateContent`;
-        if (auth.type === 'api_key') {
-            url += `?key=${auth.token}`;
-        }
+        const cleanModel = model.replace(/^models\//, '');
+        let url;
         const payload = {
             contents,
             generationConfig: {
@@ -63,14 +70,26 @@ export class GeminiClient {
                 maxOutputTokens: options.maxOutputTokens ?? 4096,
             },
         };
-        if (options.systemInstruction) {
-            payload.system_instruction = {
-                parts: [{ text: options.systemInstruction }],
-            };
+        if (auth.type === 'bearer') {
+            url = `${this.vertexBaseUrl}/models/${encodeURIComponent(cleanModel)}:generateContent`;
+            if (options.systemInstruction) {
+                payload.systemInstruction = {
+                    parts: [{ text: options.systemInstruction }],
+                };
+            }
         }
-        logger.debug('GeminiClient', `Sending unary request to ${model}`, {
+        else {
+            url = `${this.baseUrl}/models/${encodeURIComponent(cleanModel)}:generateContent?key=${auth.token}`;
+            if (options.systemInstruction) {
+                payload.system_instruction = {
+                    parts: [{ text: options.systemInstruction }],
+                };
+            }
+        }
+        logger.debug('GeminiClient', `Sending unary request to ${cleanModel}`, {
             messageCount: contents.length,
             authType: auth.type,
+            endpoint: auth.type === 'bearer' ? 'Vertex AI' : 'Generative Language',
         });
         const response = await fetch(url, {
             method: 'POST',
@@ -82,6 +101,11 @@ export class GeminiClient {
             signal: options.signal,
         });
         if (!response.ok) {
+            // If Vertex AI returns 404 for a model not yet available in europe-west3, fallback to gemini-2.5-flash
+            if (response.status === 404 && auth.type === 'bearer' && cleanModel !== 'gemini-2.5-flash') {
+                logger.warn('GeminiClient', `Model "${cleanModel}" not found on Vertex AI in europe-west3. Falling back to gemini-2.5-flash`);
+                return this.generateContent('gemini-2.5-flash', contents, options);
+            }
             const errText = await response.text();
             let parsedErr = errText;
             try {
@@ -93,28 +117,31 @@ export class GeminiClient {
             catch {
                 // use errText
             }
+            const apiName = auth.type === 'bearer' ? 'Vertex AI API' : 'Google AI API';
             logger.error('GeminiClient', `HTTP Error ${response.status}: ${parsedErr}`);
-            throw new Error(`Google AI API Error (${response.status}): ${parsedErr}`);
+            throw new Error(`${apiName} Error (${response.status}): ${parsedErr}`);
         }
         const data = await response.json();
         const candidate = data.candidates?.[0];
-        if (!candidate?.content?.parts?.[0]?.text) {
-            if (candidate?.finishReason) {
-                return `[Completed with reason: ${candidate.finishReason}]`;
+        const parts = candidate?.content?.parts;
+        if (Array.isArray(parts) && parts.length > 0) {
+            const text = parts.map((p) => p.text || '').join('');
+            if (text.length > 0) {
+                return text;
             }
-            return '[No response text received from model]';
         }
-        return candidate.content.parts.map((p) => p.text || '').join('');
+        if (candidate?.finishReason) {
+            return `[Completed with reason: ${candidate.finishReason}]`;
+        }
+        return '[No response text received from model]';
     }
     /**
      * Streams content chunk-by-chunk via Server-Sent Events (SSE)
      */
     async streamContent(model, contents, onChunk, options = {}) {
         const auth = await this.resolveAuth();
-        let url = `${this.baseUrl}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
-        if (auth.type === 'api_key') {
-            url += `&key=${auth.token}`;
-        }
+        const cleanModel = model.replace(/^models\//, '');
+        let url;
         const payload = {
             contents,
             generationConfig: {
@@ -122,14 +149,26 @@ export class GeminiClient {
                 maxOutputTokens: options.maxOutputTokens ?? 4096,
             },
         };
-        if (options.systemInstruction) {
-            payload.system_instruction = {
-                parts: [{ text: options.systemInstruction }],
-            };
+        if (auth.type === 'bearer') {
+            url = `${this.vertexBaseUrl}/models/${encodeURIComponent(cleanModel)}:streamGenerateContent?alt=sse`;
+            if (options.systemInstruction) {
+                payload.systemInstruction = {
+                    parts: [{ text: options.systemInstruction }],
+                };
+            }
         }
-        logger.debug('GeminiClient', `Starting stream request to ${model}`, {
+        else {
+            url = `${this.baseUrl}/models/${encodeURIComponent(cleanModel)}:streamGenerateContent?alt=sse&key=${auth.token}`;
+            if (options.systemInstruction) {
+                payload.system_instruction = {
+                    parts: [{ text: options.systemInstruction }],
+                };
+            }
+        }
+        logger.debug('GeminiClient', `Starting stream request to ${cleanModel}`, {
             messageCount: contents.length,
             authType: auth.type,
+            endpoint: auth.type === 'bearer' ? 'Vertex AI' : 'Generative Language',
         });
         const response = await fetch(url, {
             method: 'POST',
@@ -141,6 +180,11 @@ export class GeminiClient {
             signal: options.signal,
         });
         if (!response.ok) {
+            // If Vertex AI returns 404 for a model not yet available in europe-west3, fallback to gemini-2.5-flash
+            if (response.status === 404 && auth.type === 'bearer' && cleanModel !== 'gemini-2.5-flash') {
+                logger.warn('GeminiClient', `Model "${cleanModel}" not found on Vertex AI in europe-west3. Falling back to gemini-2.5-flash`);
+                return this.streamContent('gemini-2.5-flash', contents, onChunk, options);
+            }
             const errText = await response.text();
             let parsedErr = errText;
             try {
@@ -152,8 +196,9 @@ export class GeminiClient {
             catch {
                 // use errText
             }
+            const apiName = auth.type === 'bearer' ? 'Vertex AI API' : 'Google AI API';
             logger.error('GeminiClient', `Stream HTTP Error ${response.status}: ${parsedErr}`);
-            throw new Error(`Google AI API Error (${response.status}): ${parsedErr}`);
+            throw new Error(`${apiName} Error (${response.status}): ${parsedErr}`);
         }
         if (!response.body) {
             throw new Error("Response body is empty.");

@@ -21,7 +21,9 @@ export class GoogleAuthProvider {
             return this.cachedCredentials;
         }
         // 1. Environment Variable
-        if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
+        if (process.env.GEMINI_API_KEY &&
+            process.env.GEMINI_API_KEY.trim() &&
+            !process.env.GEMINI_API_KEY.includes('AIzaSyBmgELFPYjax4lWcFIZd183EpqQwVqAVlA')) {
             this.cachedCredentials = {
                 token: process.env.GEMINI_API_KEY.trim(),
                 type: 'api_key',

@@ -1,588 +1,657 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- ANTI-CACHING HEADERS -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-
-  <title>EVABOT // CYBER-TERMINAL</title>
-
-  <!-- TAILWIND CSS CDN & JETBRAINS MONO FONT -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            mono: ['"JetBrains Mono"', 'monospace', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas'],
-          },
-          colors: {
-            black: '#000000',
-          }
-        }
-      }
-    }
-  </script>
-
+  <title>EVABOT // CYBER-TERMINAL v0.0.1</title>
   <style>
-    html {
-      scroll-behavior: smooth;
-      background-color: #000000;
-      color: #ffffff;
+    :root {
+      --bg: #000;
+      --fg: #fff;
+      --green: #0f0;
+      --red: #f00;
+      --yellow: #ff0;
+      --cyan: #0ff;
+      --gray: #666;
+      --dark-gray: #1a1a1a;
+      --border: #333;
     }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body {
-      background-color: #000000;
-      color: #ffffff;
-      font-family: 'JetBrains Mono', monospace;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-    /* Monospace Terminal Custom Scrollbars */
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
+    
+    .header {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    ::-webkit-scrollbar-track {
-      background: #000000;
-      border-left: 1px solid #18181b;
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
     }
-    ::-webkit-scrollbar-thumb {
-      background: #27272a;
+    
+    .status-light {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #ffffff;
+    
+    .model-pill {
+      background: var(--dark-gray);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
     }
-    /* Cyber blinking cursor animation */
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
+    
+    .model-pill:hover {
+      border-color: var(--green);
     }
-    .cursor-blink {
-      animation: blink 1s infinite;
+    
+    .menu-btn {
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+    }
+    
+    .menu-btn:hover {
+      border-color: var(--green);
+      background: var(--dark-gray);
+    }
+    
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .message {
+      padding: 12px 16px;
+      border-radius: 4px;
+      max-width: 85%;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+    
+    .message.user {
+      background: #1a1a2e;
+      align-self: flex-end;
+      border-left: 3px solid var(--green);
+    }
+    
+    .message.bot {
+      background: #0a0a1a;
+      align-self: flex-start;
+      border-left: 3px solid var(--cyan);
+    }
+    
+    .message.system {
+      background: #2a1a1a;
+      border-left: 3px solid var(--yellow);
+      align-self: center;
+      max-width: 70%;
+      font-size: 13px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .message.welcome {
+      background: #000;
+      border: 1px solid var(--green);
+      align-self: stretch;
+      max-width: 100%;
+      font-size: 13px;
+    }
+    
+    .input-area {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 15px 20px;
+    }
+    
+    .input-container {
+      display: flex;
+      gap: 10px;
+    }
+    
+    textarea {
+      flex: 1;
+      background: #0a0a0a;
+      color: var(--fg);
+      border: 1px solid var(--border);
+      padding: 12px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      min-height: 60px;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--green);
+    }
+    
+    .send-btn {
+      background: var(--green);
+      color: #000;
+      border: none;
+      padding: 0 30px;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .send-btn:hover {
+      background: #0c0;
+      box-shadow: 0 0 10px var(--green);
+    }
+    
+    .send-btn:disabled {
+      background: var(--gray);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 100;
+      overflow-y: auto;
+    }
+    
+    .modal-content {
+      max-width: 800px;
+      margin: 50px auto;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 30px;
+      position: relative;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      color: var(--fg);
+      font-size: 24px;
+      cursor: pointer;
+    }
+    
+    .modal h2 {
+      margin-bottom: 20px;
+      color: var(--green);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+    
+    .model-list {
+      max-height: 60vh;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+    
+    .model-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .model-item:hover {
+      background: #0a1a0a;
+    }
+    
+    .model-item.active {
+      background: #0a2a0a;
+      border-left: 3px solid var(--green);
+    }
+    
+    .model-info {
+      flex: 1;
+    }
+    
+    .model-name {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    
+    .model-meta {
+      font-size: 11px;
+      color: var(--gray);
+    }
+    
+    .model-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-weight: bold;
+    }
+    
+    .badge-free {
+      background: #0a2a0a;
+      color: var(--green);
+      border: 1px solid var(--green);
+    }
+    
+    .badge-paid {
+      background: #2a1a0a;
+      color: var(--yellow);
+      border: 1px solid var(--yellow);
+    }
+    
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .filter-btn {
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+    }
+    
+    .filter-btn:hover {
+      border-color: var(--green);
+    }
+    
+    .filter-btn.active {
+      background: var(--green);
+      color: #000;
+    }
+    
+    pre {
+      font-family: 'Courier New', monospace;
+      white-space: pre-wrap;
     }
   </style>
 </head>
-<body class="bg-black text-white font-mono antialiased min-h-screen">
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="status-light" id="status-light"></div>
+      <span>EVABOT // CYBER-TERMINAL</span>
+      <span id="model-counter" style="color: var(--gray); font-size: 11px;">78 models</span>
+    </div>
+    <div>
+      <button class="model-pill" id="model-pill">🎯 gemini-2.5-flash [FREE]</button>
+      <button class="menu-btn" id="menu-btn">☰ МЕНЮ</button>
+    </div>
+  </div>
+  
+  <div class="chat-container" id="chat-container">
+    <div class="message welcome">
+      <pre>+==============================================================================+
+|  EVABOT // CYBER-TERMINAL v0.0.1                                          |
+|  Universal Multi-Model AI Terminal                                          |
++==============================================================================+
 
-  <!-- ========================================================================= -->
-  <!-- SCREEN 1: CYBER-TERMINAL CHAT INTERFACE                                  -->
-  <!-- ========================================================================= -->
-  <section id="screen-terminal" class="min-h-screen flex flex-col justify-between bg-black border-b border-zinc-800 relative">
-    
-    <!-- TOP TERMINAL BAR -->
-    <header class="border-b border-zinc-800 bg-black/95 px-3 sm:px-6 py-2.5 z-20 flex flex-wrap items-center justify-between gap-3">
+✓ Подключение к Google Cloud Vertex AI активно
+✓ Доступно 78 моделей (46 бесплатных + 32 платных)
+✓ Режим: SOLO (одиночный диалог)
+✓ WireGuard Mesh: 100.125.200.49 ↔ 100.66.98.4
+
+💬 Введите сообщение для общения с ИИ
+🎯 Нажмите [gemini-2.5-flash] для смены модели
+☰  Нажмите [МЕНЮ] для выбора моделей и команд
+
+Горячие клавиши:
+  /top         - Показать топ моделей
+  /models      - Сводка по моделям
+  /free        - Список бесплатных
+  /paid        - Список платных
+  /help        - Помощь
+  /clear       - Очистить экран</pre>
+    </div>
+  </div>
+  
+  <div class="input-area">
+    <div class="input-container">
+      <textarea id="user-input" placeholder="Введите сообщение или команду (Enter для отправки, Shift+Enter для новой строки)..."></textarea>
+      <button class="send-btn" id="send-btn">➤ ОТПРАВИТЬ</button>
+    </div>
+  </div>
+
+  <!-- Model Selection Modal -->
+  <div class="modal" id="model-modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModelModal()">×</button>
+      <h2>🎯 ВЫБОР МОДЕЛИ</h2>
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all" onclick="filterModels('all')">ВСЕ (78)</button>
+        <button class="filter-btn" data-filter="free" onclick="filterModels('free')">💰 БЕСПЛАТНЫЕ (46)</button>
+        <button class="filter-btn" data-filter="paid" onclick="filterModels('paid')">💳 ПЛАТНЫЕ (32)</button>
+      </div>
+      <div class="model-list" id="model-list">
+        <div style="padding: 20px; text-align: center; color: var(--gray);">Загрузка моделей...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      currentModel: 'gemini-2.5-flash',
+      currentProvider: 'google',
+      isGenerating: false,
+      history: [],
+      models: [],
+      filteredModels: [],
+      currentFilter: 'all',
+    };
+
+    const statusLight = document.getElementById('status-light');
+    const modelPill = document.getElementById('model-pill');
+    const menuBtn = document.getElementById('menu-btn');
+    const modelCounter = document.getElementById('model-counter');
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const modelModal = document.getElementById('model-modal');
+    const modelList = document.getElementById('model-list');
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function addMessage(role, text, isPreformatted = false) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${role}`;
       
-      <!-- LOGO & STATUS LIGHT -->
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 border border-zinc-800 px-2 py-1 bg-black">
-          <span id="telemetry-status-light" class="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#22c55e]"></span>
-          <span class="font-bold text-xs tracking-wider text-white">EVABOT<span class="text-zinc-500">//</span>CORE</span>
-        </div>
-        <div class="hidden sm:flex items-center gap-1.5 text-xs">
-          <span id="telemetry-status-text" class="text-emerald-400 font-bold">🟢 ONLINE // IDLE</span>
-        </div>
-      </div>
+      if (isPreformatted) {
+        const pre = document.createElement('pre');
+        pre.textContent = text;
+        msgDiv.appendChild(pre);
+      } else {
+        msgDiv.innerHTML = text;
+      }
+      
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      return msgDiv;
+    }
 
-      <!-- ACTIVE TELEMETRY CHIPS -->
-      <div class="hidden md:flex items-center gap-2">
-        <span id="header-mode-badge" class="px-2 py-0.5 border border-zinc-800 text-[11px] text-zinc-400">MODE: SOLO</span>
-        <span id="header-role-badge" class="px-2 py-0.5 border border-zinc-800 text-[11px] text-zinc-400">ROLE: CEO</span>
-        <button id="header-model-pill" title="Inspect model in control deck" class="flex items-center gap-1.5 px-2 py-0.5 border border-zinc-800 hover:border-zinc-500 text-[11px] text-zinc-300 transition-colors">
-          <span id="header-model-name">Gemini 2.5 Flash</span>
-          <span id="header-model-badge" class="px-1.5 py-0.2 bg-emerald-950 text-emerald-400 border border-emerald-700 text-[10px] font-bold">🟢 FREE</span>
-        </button>
-      </div>
+    function addSystemMessage(text) {
+      return addMessage('system', text, true);
+    }
 
-      <!-- ACTIONS & TRILINGUAL SWITCHER -->
-      <div class="flex items-center gap-2">
-        <!-- TRILINGUAL SWITCHER [ EN | UK | RU ] -->
-        <div class="flex items-center border border-zinc-800 p-0.5 bg-black">
-          <button id="lang-btn-en" class="px-2 py-0.5 text-xs font-bold bg-white text-black border border-white">EN</button>
-          <button id="lang-btn-uk" class="px-2 py-0.5 text-xs font-bold bg-black text-zinc-400 hover:text-white border border-transparent">UK</button>
-          <button id="lang-btn-ru" class="px-2 py-0.5 text-xs font-bold bg-black text-zinc-400 hover:text-white border border-transparent">RU</button>
-        </div>
+    function setStatus(online, busy = false) {
+      if (!online) {
+        statusLight.style.background = 'var(--red)';
+        statusLight.style.boxShadow = '0 0 8px var(--red)';
+      } else if (busy) {
+        statusLight.style.background = 'var(--yellow)';
+        statusLight.style.boxShadow = '0 0 8px var(--yellow)';
+      } else {
+        statusLight.style.background = 'var(--green)';
+        statusLight.style.boxShadow = '0 0 8px var(--green)';
+      }
+    }
 
-        <!-- CLEAR BUTTON -->
-        <button id="clear-btn" title="Purge terminal conversation" class="px-2.5 py-1 text-xs font-bold border border-zinc-800 hover:border-zinc-500 text-zinc-400 hover:text-white transition-colors">
-          [ CLR ]
-        </button>
-      </div>
-    </header>
+    function setModel(model) {
+      state.currentModel = model.id;
+      state.currentProvider = model.id.startsWith('omniroute/') ? 'omniroute' : 
+                              model.id.startsWith('openai/') || model.id.startsWith('anthropic/') || model.id.startsWith('meta-') || model.id.startsWith('google/') || model.id.startsWith('deepseek/') || model.id.startsWith('x-ai/') || model.id.startsWith('mistralai/') || model.id.startsWith('qwen/') || model.id.startsWith('perplexity/') || model.id.startsWith('cognitivecomputations/') ? 'openrouter' :
+                              'google';
+      const isFree = model.pricing && model.pricing.freeTierStatus === '100% Free Quota Available';
+      const badge = isFree ? ' [FREE]' : ' [PAID]';
+      modelPill.textContent = `🎯 ${model.name}${badge}`;
+    }
 
-    <!-- CHAT MESSAGES SCROLL REGION -->
-    <main id="chat-scroll-area" class="flex-1 overflow-y-auto px-3 sm:px-6 py-4 bg-black">
-      <div id="messages-container" class="max-w-5xl mx-auto flex flex-col space-y-3">
-        <!-- Dynamic terminal bubbles rendered by app.ts -->
-      </div>
-    </main>
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text || state.isGenerating) return;
 
-    <!-- PROMPT INPUT & CONTROL PANEL ANCHOR BAR -->
-    <footer class="border-t border-zinc-800 bg-black/95 px-3 sm:px-6 py-3 z-10">
-      <form id="chat-form" class="max-w-5xl mx-auto">
-        <div class="border border-zinc-800 bg-black p-2 focus-within:border-zinc-400 transition-colors">
-          <div class="flex items-start gap-2">
-            <span class="text-zinc-600 select-none font-bold pt-1.5">></span>
-            <textarea
-              id="user-input"
-              rows="2"
-              data-i18n-placeholder="inputPlaceholder"
-              placeholder="Enter cyber command or query prompt (Enter to send, Shift+Enter for newline)..."
-              class="flex-1 bg-transparent text-sm text-white placeholder-zinc-600 focus:outline-none resize-none font-mono"
-            ></textarea>
-            <button
-              type="submit"
-              id="send-btn"
-              class="px-4 py-2 border border-white bg-white text-black font-bold text-xs tracking-wider transition-all hover:bg-zinc-200 active:scale-95 font-mono flex-none"
-            >
-              [ TRANSMIT ↵ ]
-            </button>
-          </div>
-        </div>
+      userInput.value = '';
+      
+      if (text.startsWith('/')) {
+        await handleCommand(text);
+        return;
+      }
+      
+      addMessage('user', text);
+      const botMsg = addMessage('bot', '...');
+      setStatus(true, true);
+      state.isGenerating = true;
+      sendBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/chat/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            model: state.currentModel,
+            history: state.history.slice(-10),
+            provider: state.currentProvider,
+          })
+        });
+
+        if (!response.ok) throw new Error('Server error');
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let accumulatedText = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(trimmed.slice(6));
+                if (data.chunk) {
+                  accumulatedText += data.chunk;
+                  botMsg.innerHTML = escapeHtml(accumulatedText).replace(/\n/g, '<br>');
+                  chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+              } catch (e) {}
+            }
+          }
+        }
+
+        state.history.push({ role: 'user', content: text });
+        state.history.push({ role: 'model', content: accumulatedText });
+        setStatus(true, false);
+      } catch (error) {
+        botMsg.innerHTML = `<span style="color: var(--red)">[ERROR] ${escapeHtml(error.message)}</span>`;
+        setStatus(false);
+      } finally {
+        state.isGenerating = false;
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function handleCommand(cmd) {
+      const lowerCmd = cmd.toLowerCase();
+      
+      if (lowerCmd === '/clear' || lowerCmd === '/cls') {
+        chatContainer.innerHTML = '';
+        addMessage('welcome', '✓ Экран очищен. Можете продолжить общение с ИИ.');
+        return;
+      }
+      
+      if (lowerCmd === '/help' || lowerCmd === '/?') {
+        addSystemMessage(`ДОСТУПНЫЕ КОМАНДЫ:
+/top [filter] [N]  - Топ-N моделей (filter: free|paid|speed|context)
+/free             - Все 46 бесплатных моделей
+/paid             - Все 32 платные модели
+/models           - Сводка по моделям
+/clear            - Очистить экран
+/help             - Эта справка
+
+Примеры:
+  /top             - Топ-5 free + топ-5 paid
+  /top free 10     - Топ-10 бесплатных
+  /top speed 5     - 5 самых быстрых
+  /top context 5   - 5 с самым большим контекстом
+  /free            - Список всех бесплатных`);
+        return;
+      }
+      
+      if (lowerCmd.startsWith('/top') || lowerCmd.startsWith('/free') || lowerCmd.startsWith('/paid') || lowerCmd.startsWith('/models')) {
+        try {
+          const response = await fetch('/api/models/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: cmd })
+          });
+          const data = await response.json();
+          addSystemMessage(data.result);
+        } catch (e) {
+          addSystemMessage(`[ERROR] Не удалось выполнить команду: ${e.message}`);
+        }
+        return;
+      }
+      
+      addSystemMessage(`[ERROR] Неизвестная команда: ${cmd}\nИспользуйте /help для справки`);
+    }
+
+    async function loadModels() {
+      try {
+        const response = await fetch('/api/models');
+        const data = await response.json();
+        state.models = data.models;
+        state.filteredModels = data.models;
+        modelCounter.textContent = `${data.stats.total} models (${data.stats.free} free + ${data.stats.paid} paid)`;
+      } catch (e) {
+        console.error('Failed to load models:', e);
+      }
+    }
+
+    function renderModelList() {
+      if (state.filteredModels.length === 0) {
+        modelList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--gray);">Нет моделей в этой категории</div>';
+        return;
+      }
+      
+      let html = '';
+      for (const m of state.filteredModels) {
+        const isFree = m.pricing && m.pricing.freeTierStatus === '100% Free Quota Available';
+        const isActive = m.id === state.currentModel;
+        const badgeClass = isFree ? 'badge-free' : 'badge-paid';
+        const badgeText = isFree ? 'FREE' : 'PAID';
+        const rating = m.rating ? `Score: ${m.rating.composite}/100` : '';
+        const contextStr = m.contextWindow ? `${m.contextWindow.toLocaleString()} ctx` : '';
         
-        <div class="flex flex-wrap justify-between items-center text-[10px] sm:text-[11px] text-zinc-600 px-1 pt-1.5 gap-2">
-          <span data-i18n="inputLegend">Enter: Transmit • Shift+Enter: Linebreak • EvaBot Core v0.2.0</span>
-          <span class="text-zinc-500 font-mono">STATUS: <span class="text-emerald-400">NOMINAL</span></span>
-        </div>
-      </form>
-
-      <!-- SLEEK CONTROL PANEL TRANSITION BUTTON -->
-      <div class="max-w-5xl mx-auto pt-3 pb-1 text-center">
-        <button
-          id="scroll-to-deck-btn"
-          class="w-full py-2 px-4 border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 hover:border-zinc-500 text-zinc-300 hover:text-white transition-all text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 group cursor-pointer"
-        >
-          <span class="text-zinc-600 group-hover:text-emerald-400 transition-colors">▼</span>
-          <span id="control-panel-btn-label">[ ↓ CONTROL PANEL // SYSTEM DECK ]</span>
-          <span class="text-zinc-600 group-hover:text-emerald-400 transition-colors">▼</span>
-        </button>
-      </div>
-    </footer>
-  </section>
-
-  <!-- ========================================================================= -->
-  <!-- SCREEN 2: CONTROL DECK (SYSTEM CONFIGURATION & TELEMETRY)                 -->
-  <!-- ========================================================================= -->
-  <section id="screen-control-deck" class="min-h-screen bg-black text-white px-4 sm:px-8 py-6 flex flex-col border-t border-zinc-800">
-    
-    <!-- TOP DECK NAVIGATION BAR -->
-    <div class="max-w-6xl w-full mx-auto flex flex-wrap items-center justify-between gap-3 pb-4 mb-6 border-b border-zinc-800">
-      <button
-        id="scroll-to-terminal-btn"
-        class="py-1.5 px-3 border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 hover:border-zinc-400 text-zinc-300 hover:text-white transition-all text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 cursor-pointer"
-      >
-        <span class="text-emerald-400">▲</span>
-        <span id="return-terminal-btn-label">[ ↑ RETURN TO TERMINAL ]</span>
-      </button>
-
-      <h2 data-i18n="secDeckTitle" class="text-xs sm:text-sm font-bold tracking-widest text-zinc-300">
-        EVA CONTROL DECK // CONFIGURATION & TELEMETRY
-      </h2>
-
-      <div class="text-xs text-emerald-400 border border-emerald-900 bg-emerald-950/40 px-2.5 py-1 font-bold">
-        🟢 SYSTEM READY
-      </div>
-    </div>
-
-    <!-- MAIN CONTROL DECK GRID -->
-    <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-      <!-- ===================================================================== -->
-      <!-- MODULE 1: NEURAL PROVIDERS (6 cols)                                  -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-          <h3 data-i18n="secProviders" class="text-xs font-bold text-white tracking-wider">
-            1. NEURAL PROVIDERS
-          </h3>
-          <span class="text-[10px] text-zinc-500 font-mono">[4 NODES]</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-          <!-- Google Cloud -->
-          <div data-provider="google" class="border border-white bg-zinc-900 text-white p-3 cursor-pointer hover:border-zinc-400 transition-all flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span data-i18n="provGoogleName" class="font-bold text-xs">Google Cloud</span>
-                <span data-i18n="badgeActive" class="text-[10px] text-emerald-400 font-bold border border-emerald-800 bg-emerald-950/60 px-1">🟢 ACTIVE</span>
+        html += `
+          <div class="model-item ${isActive ? 'active' : ''}" onclick="selectModel('${m.id}')">
+            <div class="model-info">
+              <div class="model-name">${escapeHtml(m.name)}</div>
+              <div class="model-meta">
+                ${escapeHtml(m.provider)} | ${contextStr} | ${rating}
+                ${m.id !== m.name ? ` | ${escapeHtml(m.id)}` : ''}
               </div>
-              <p data-i18n="provGoogleDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Native Google DeepMind Gemini and enterprise partner models with low-latency direct API dispatch.
-              </p>
             </div>
-            <div class="mt-2 text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-1">
-              ROUTE: vertex.googleapis.com
-            </div>
+            <div class="model-badge ${badgeClass}">${badgeText}</div>
           </div>
+        `;
+      }
+      modelList.innerHTML = html;
+    }
 
-          <!-- OmniRoute -->
-          <div data-provider="omniroute" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span data-i18n="provOmniName" class="font-bold text-xs text-white">OmniRoute</span>
-                <span data-i18n="badgeReady" class="text-[10px] text-emerald-400 font-bold border border-emerald-800 bg-emerald-950/60 px-1">🟢 READY</span>
-              </div>
-              <p data-i18n="provOmniDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Dynamic multi-cloud neural router featuring intelligent load-balancing, failover, and prompt routing.
-              </p>
-            </div>
-            <div class="mt-2 text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-1">
-              ROUTE: mesh.omniroute.internal
-            </div>
-          </div>
+    function filterModels(filter) {
+      state.currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+      
+      if (filter === 'all') {
+        state.filteredModels = state.models;
+      } else if (filter === 'free') {
+        state.filteredModels = state.models.filter(m => m.pricing && m.pricing.freeTierStatus === '100% Free Quota Available');
+      } else if (filter === 'paid') {
+        state.filteredModels = state.models.filter(m => m.pricing && m.pricing.freeTierStatus === 'Paid / Pay-As-You-Go Only');
+      }
+      renderModelList();
+    }
 
-          <!-- OpenRouter -->
-          <div data-provider="openrouter" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span data-i18n="provOpenRouterName" class="font-bold text-xs text-white">OpenRouter</span>
-                <span data-i18n="badgeStandby" class="text-[10px] text-amber-400 font-bold border border-amber-800 bg-amber-950/60 px-1">🟡 STANDBY</span>
-              </div>
-              <p data-i18n="provOpenRouterDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Decentralized gateway granting access to global open-weights clusters and specialized reasoning engines.
-              </p>
-            </div>
-            <div class="mt-2 text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-1">
-              ROUTE: openrouter.ai/api/v1
-            </div>
-          </div>
+    function selectModel(modelId) {
+      const model = state.models.find(m => m.id === modelId);
+      if (model) {
+        setModel(model);
+        addSystemMessage(`✓ Модель переключена: ${model.name}`);
+        closeModelModal();
+      }
+    }
 
-          <!-- OpenCode Go -->
-          <div data-provider="opencode" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span data-i18n="provOpenCodeName" class="font-bold text-xs text-white">OpenCode Go</span>
-                <span data-i18n="badgeReady" class="text-[10px] text-emerald-400 font-bold border border-emerald-800 bg-emerald-950/60 px-1">🟢 READY</span>
-              </div>
-              <p data-i18n="provOpenCodeDesc" class="text-[11px] text-zinc-400 leading-normal">
-                High-throughput code inference node designed for private syntax generation, refactoring, and AST analysis.
-              </p>
-            </div>
-            <div class="mt-2 text-[10px] text-zinc-500 border-t border-zinc-800/80 pt-1">
-              ROUTE: opencode.dev/cluster-edge
-            </div>
-          </div>
-        </div>
-      </div>
+    function openModelModal() {
+      modelModal.style.display = 'block';
+      if (state.models.length === 0) {
+        loadModels().then(() => renderModelList());
+      } else {
+        renderModelList();
+      }
+    }
 
-      <!-- ===================================================================== -->
-      <!-- MODULE 2: MODEL SELECTION & QUOTAS (6 cols)                           -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-            <h3 data-i18n="secModels" class="text-xs font-bold text-white tracking-wider">
-              2. MODEL SELECTION & QUOTAS
-            </h3>
-            <span class="text-[10px] text-zinc-500 font-mono">[CATALOG: 24+ LLMS]</span>
-          </div>
+    function closeModelModal() {
+      modelModal.style.display = 'none';
+    }
 
-          <!-- MODEL DROPDOWN SELECTOR -->
-          <div class="mb-3">
-            <label class="block text-[11px] text-zinc-400 mb-1">Active Neural Engine:</label>
-            <select
-              id="deck-model-select"
-              class="w-full bg-zinc-950 border border-zinc-700 text-white text-xs px-3 py-2 font-mono focus:outline-none focus:border-white cursor-pointer"
-            >
-              <!-- Dynamically populated -->
-            </select>
-          </div>
+    // Event Listeners
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    modelPill.addEventListener('click', openModelModal);
+    menuBtn.addEventListener('click', () => handleCommand('/help'));
+    modelModal.addEventListener('click', (e) => {
+      if (e.target === modelModal) closeModelModal();
+    });
 
-          <!-- MODEL SPECIFICATION VIEW CARD -->
-          <div class="border border-zinc-800 bg-zinc-950/60 p-3 text-xs space-y-2">
-            <div class="flex items-center justify-between border-b border-zinc-800 pb-1.5">
-              <span id="model-spec-name" class="font-bold text-white text-sm">Gemini 2.5 Flash</span>
-              <span id="model-spec-badge" class="px-2 py-0.5 border border-emerald-600 text-emerald-400 font-bold text-xs">🟢 FREE QUOTA</span>
-            </div>
-            <div class="grid grid-cols-2 gap-2 text-[11px] text-zinc-400">
-              <div>Provider: <span id="model-spec-provider" class="text-white font-bold">Google DeepMind</span></div>
-              <div>Context: <span id="model-spec-context" class="text-white font-bold">1,048,576 tokens</span></div>
-              <div>Max Output: <span id="model-spec-maxout" class="text-white font-bold">8,192 tokens</span></div>
-              <div>Quota: <span id="model-spec-quota" class="text-emerald-400 font-mono">1,500 RPD ($0.00)</span></div>
-            </div>
-            <div class="border-t border-zinc-800 pt-1.5 text-[11px] text-zinc-400 space-y-0.5">
-              <div>USD ($): <span id="model-spec-usd" class="text-zinc-200 font-mono">$0.00 (Free) / $0.075 (Paid)</span></div>
-              <div>EUR (€): <span id="model-spec-eur" class="text-zinc-200 font-mono">€0.00 (Free) / €0.070 (Paid)</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-3 text-[10px] text-zinc-500">
-          • Real-time model tiering strictly in USD ($) and EUR (€). Global currency compliance active.
-        </div>
-      </div>
-
-      <!-- ===================================================================== -->
-      <!-- MODULE 3: OPERATIONAL MODES (6 cols)                                 -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-          <h3 data-i18n="secModes" class="text-xs font-bold text-white tracking-wider">
-            3. OPERATIONAL MODES
-          </h3>
-          <span class="text-[10px] text-zinc-500 font-mono">[4 TOPOLOGIES]</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-          <!-- Solo -->
-          <div data-mode="solo" class="border border-white bg-zinc-900 text-white p-3 cursor-pointer hover:border-zinc-400 transition-all flex flex-col justify-between">
-            <div>
-              <div class="font-bold text-xs text-white mb-1 flex items-center justify-between">
-                <span data-i18n="modeSoloName">SOLO</span>
-                <span class="text-[10px] text-zinc-400">[DIRECT]</span>
-              </div>
-              <p data-i18n="modeSoloDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Direct single LLM execution focused strictly on active corporate persona directives.
-              </p>
-            </div>
-          </div>
-
-          <!-- Broadcast -->
-          <div data-mode="broadcast" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="font-bold text-xs text-white mb-1 flex items-center justify-between">
-                <span data-i18n="modeBroadcastName">BROADCAST</span>
-                <span class="text-[10px] text-zinc-400">[MULTI]</span>
-              </div>
-              <p data-i18n="modeBroadcastDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Multi-perspective analysis broadcasting your prompt across core architectural dimensions.
-              </p>
-            </div>
-          </div>
-
-          <!-- Dialogue -->
-          <div data-mode="dialogue" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="font-bold text-xs text-white mb-1 flex items-center justify-between">
-                <span data-i18n="modeDialogueName">DIALOGUE</span>
-                <span class="text-[10px] text-zinc-400">[STREAM]</span>
-              </div>
-              <p data-i18n="modeDialogueDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Rapid-cadence conversational cyber-stream with continuous state retention and feedback.
-              </p>
-            </div>
-          </div>
-
-          <!-- Consilium -->
-          <div data-mode="consilium" class="border border-zinc-800 bg-black text-zinc-400 p-3 cursor-pointer hover:border-zinc-600 transition-all flex flex-col justify-between">
-            <div>
-              <div class="font-bold text-xs text-white mb-1 flex items-center justify-between">
-                <span data-i18n="modeConsiliumName">CONSILIUM</span>
-                <span class="text-[10px] text-zinc-400">[COUNCIL]</span>
-              </div>
-              <p data-i18n="modeConsiliumDesc" class="text-[11px] text-zinc-400 leading-normal">
-                Autonomous corporate council deliberation synthesizing executive viewpoints into consensus.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===================================================================== -->
-      <!-- MODULE 4: CORPORATE ROLES (6 cols)                                   -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-          <h3 data-i18n="secRoles" class="text-xs font-bold text-white tracking-wider">
-            4. CORPORATE ROLES & PERSONAS
-          </h3>
-          <span class="text-[10px] text-zinc-500 font-mono">[8 PERSONAS]</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 max-h-72 overflow-y-auto pr-1">
-          <!-- CEO -->
-          <div data-role="ceo" class="border border-white bg-zinc-900 text-white p-2 cursor-pointer hover:border-zinc-400 transition-all">
-            <div data-i18n="roleCeoName" class="font-bold text-xs">CEO // Executive Strategist</div>
-            <div data-i18n="roleCeoDesc" class="text-[10px] text-zinc-400">High-level corporate strategy & ROI.</div>
-          </div>
-
-          <!-- CTO -->
-          <div data-role="cto" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleCtoName" class="font-bold text-xs text-white">CTO // Principal Architect</div>
-            <div data-i18n="roleCtoDesc" class="text-[10px] text-zinc-400">Distributed systems & fault tolerance.</div>
-          </div>
-
-          <!-- CISO -->
-          <div data-role="ciso" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleCisoName" class="font-bold text-xs text-white">CISO // Cyber Security</div>
-            <div data-i18n="roleCisoDesc" class="text-[10px] text-zinc-400">Zero-trust threat modeling & defense.</div>
-          </div>
-
-          <!-- CFO -->
-          <div data-role="cfo" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleCfoName" class="font-bold text-xs text-white">CFO // Financial Analyst</div>
-            <div data-i18n="roleCfoDesc" class="text-[10px] text-zinc-400">Fiscal budgeting in USD ($) and EUR (€).</div>
-          </div>
-
-          <!-- UX -->
-          <div data-role="ux" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleUxName" class="font-bold text-xs text-white">UX/DES // Creative Director</div>
-            <div data-i18n="roleUxDesc" class="text-[10px] text-zinc-400">Minimalist monochrome ergonomics.</div>
-          </div>
-
-          <!-- DEV -->
-          <div data-role="dev" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleDevName" class="font-bold text-xs text-white">DEV // Full-Stack Engineer</div>
-            <div data-i18n="roleDevDesc" class="text-[10px] text-zinc-400">Production-grade code & tests.</div>
-          </div>
-
-          <!-- RSCH -->
-          <div data-role="rsch" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleRschName" class="font-bold text-xs text-white">RSCH // AI Scientist</div>
-            <div data-i18n="roleRschDesc" class="text-[10px] text-zinc-400">Attention loops & token heuristics.</div>
-          </div>
-
-          <!-- LEGAL -->
-          <div data-role="legal" class="border border-zinc-800 bg-black text-zinc-400 p-2 cursor-pointer hover:border-zinc-600 transition-all">
-            <div data-i18n="roleLegalName" class="font-bold text-xs text-white">LEGAL // Compliance Counsel</div>
-            <div data-i18n="roleLegalDesc" class="text-[10px] text-zinc-400">GDPR, EU AI Act, risk governance.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===================================================================== -->
-      <!-- MODULE 5: REAL-TIME SYSTEM TELEMETRY (6 cols)                        -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-            <h3 data-i18n="secTelemetry" class="text-xs font-bold text-white tracking-wider">
-              5. REAL-TIME SYSTEM TELEMETRY
-            </h3>
-            <span class="text-[10px] text-emerald-400 font-mono font-bold">🟢 NOMINAL</span>
-          </div>
-
-          <div class="space-y-2 text-xs font-mono">
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemServerLabel" class="text-zinc-500">Edge Server:</span>
-              <span id="telem-server" class="text-white font-bold">evabot-online-edge</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemUptimeLabel" class="text-zinc-500">Uptime:</span>
-              <span id="telem-uptime" class="text-zinc-200">0h 0m 0s</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemMemoryLabel" class="text-zinc-500">Memory (RSS):</span>
-              <span id="telem-memory" class="text-zinc-200">0 MB</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemLatencyLabel" class="text-zinc-500">API Latency:</span>
-              <span id="telem-latency" class="text-emerald-400">-- ms</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemProviderLabel" class="text-zinc-500">Provider:</span>
-              <span id="telem-provider" class="text-white font-bold">GOOGLE</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemModelLabel" class="text-zinc-500">Active Model:</span>
-              <span id="telem-model" class="text-white font-bold">gemini-2.5-flash</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span class="text-zinc-500">Role:</span>
-              <span id="telem-role" class="text-white font-bold">CEO</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span class="text-zinc-500">Mode:</span>
-              <span id="telem-mode" class="text-white font-bold">SOLO</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemQuotaLabel" class="text-zinc-500">Quota Status:</span>
-              <span id="telem-quota" class="text-emerald-400 font-bold">🟢 FREE QUOTA</span>
-            </div>
-            <div class="flex justify-between border-b border-zinc-900 pb-1">
-              <span data-i18n="telemAuthLabel" class="text-zinc-500">Auth Source:</span>
-              <span id="telem-auth" class="text-zinc-200">Google Cloud Ambient</span>
-            </div>
-            <div class="flex justify-between">
-              <span data-i18n="telemAccountLabel" class="text-zinc-500">Account:</span>
-              <span id="telem-account" class="text-zinc-300">evabot.online@gmail.com</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 pt-2 border-t border-zinc-800 text-[10px] text-zinc-500">
-          Telemetry stream updated dynamically every 1000ms.
-        </div>
-      </div>
-
-      <!-- ===================================================================== -->
-      <!-- MODULE 6: SECURITY & CREDENTIALS (6 cols)                             -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 border border-zinc-800 bg-black p-4 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
-            <h3 data-i18n="secSecurity" class="text-xs font-bold text-white tracking-wider">
-              6. SECURITY & CREDENTIALS
-            </h3>
-            <span id="deck-key-status" class="text-[10px] text-emerald-400 font-bold border border-emerald-800 bg-emerald-950/40 px-2 py-0.5">
-              🟢 GOOGLE AMBIENT AUTH
-            </span>
-          </div>
-
-          <div class="space-y-3">
-            <div>
-              <label data-i18n="apiKeyLabel" class="block text-xs text-zinc-300 mb-1">
-                Google Gemini / Vertex API Key
-              </label>
-              <input
-                type="password"
-                id="deck-api-key-input"
-                data-i18n-placeholder="apiKeyPlaceholder"
-                placeholder="AIzaSy..."
-                class="w-full bg-zinc-950 border border-zinc-700 text-white font-mono px-3 py-2 text-xs focus:outline-none focus:border-white"
-              />
-              <p data-i18n="apiKeyHelp" class="text-[11px] text-zinc-500 mt-1.5 leading-normal">
-                Enter your custom key to override server ambient credentials. Stored securely in browser localStorage.
-              </p>
-            </div>
-
-            <div class="flex flex-wrap gap-2 pt-2">
-              <button
-                type="button"
-                id="deck-save-key-btn"
-                data-i18n="saveKeyBtn"
-                class="px-3 py-1.5 border border-white bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-all cursor-pointer font-mono"
-              >
-                [ SAVE CREDENTIALS ]
-              </button>
-              <button
-                type="button"
-                id="deck-clear-key-btn"
-                data-i18n="clearKeyBtn"
-                class="px-3 py-1.5 border border-zinc-800 bg-black text-zinc-400 hover:text-white hover:border-zinc-500 font-bold text-xs transition-all cursor-pointer font-mono"
-              >
-                [ USE AMBIENT AUTO-AUTH ]
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 pt-2 border-t border-zinc-800 text-[10px] text-zinc-500">
-          Encrypted local vault configuration. No key data is persisted to third-party cookies.
-        </div>
-      </div>
-
-    </div>
-
-    <!-- CONTROL DECK FOOTER -->
-    <div class="max-w-6xl w-full mx-auto mt-8 pt-4 border-t border-zinc-900 flex flex-wrap justify-between items-center text-[11px] text-zinc-600 gap-2">
-      <span>EVABOT ARCHITECTURE V0.2.0 • MONOCHROME CYBER DECK</span>
-      <button onclick="document.getElementById('screen-terminal').scrollIntoView({behavior:'smooth'})" class="text-zinc-400 hover:text-white cursor-pointer">
-        [ ↑ TOP OF TERMINAL ]
-      </button>
-    </div>
-
-  </section>
-
-  <!-- ESBUILD COMPILED CLIENT BUNDLE -->
-  <script type="module" src="/dist/bundle.js"></script>
+    // Initial load
+    loadModels();
+    setStatus(true);
+  </script>
 </body>
 </html>

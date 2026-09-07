@@ -3,14 +3,14 @@ const TRANSLATIONS = {
     en: {
         appTitle: 'EVABOT // CYBER-TERMINAL',
         appSubtitle: 'Autonomous Multi-Provider Neural Deck',
-        statusOnline: '🟢 ONLINE // IDLE',
-        statusBusy: '🟡 STREAMING // ACTIVE',
-        statusError: '🔴 ERROR // OFFLINE',
+        statusOnline: '[ONLINE] // IDLE',
+        statusBusy: '[ACTIVE] // STREAMING',
+        statusError: '[ERROR] // OFFLINE',
         controlPanelBtn: '[ ↓ CONTROL PANEL // SYSTEM DECK ]',
         returnTerminalBtn: '[ ↑ RETURN TO TERMINAL ]',
         clearChatBtn: '[ CLR ]',
         transmitBtn: '[ TRANSMIT ↵ ]',
-        stopBtn: '[ STOP 🟡 ]',
+        stopBtn: '[ STOP ]',
         inputPlaceholder: 'Enter cyber command or query prompt (Enter to send, Shift+Enter for newline)...',
         inputLegend: 'Enter: Transmit • Shift+Enter: Linebreak • EvaBot Core v0.2.0',
         welcomeHeading: 'EVABOT NEURAL CYBER-TERMINAL ONLINE',
@@ -22,11 +22,11 @@ const TRANSLATIONS = {
         secRoles: '4. CORPORATE ROLES & PERSONAS',
         secTelemetry: '5. REAL-TIME SYSTEM TELEMETRY',
         secSecurity: '6. SECURITY & CREDENTIALS',
-        badgeFree: '🟢 FREE QUOTA',
-        badgePaid: '🟡 PAID / PAYG',
-        badgeActive: '🟢 ACTIVE',
-        badgeReady: '🟢 READY',
-        badgeStandby: '🟡 STANDBY',
+        badgeFree: '[FREE QUOTA]',
+        badgePaid: '[PAID / PAYG]',
+        badgeActive: '[ACTIVE]',
+        badgeReady: '[READY]',
+        badgeStandby: '[STANDBY]',
         provGoogleName: 'Google Cloud (Vertex AI & AI Studio)',
         provGoogleDesc: 'Native Google DeepMind Gemini and enterprise partner models with low-latency direct API dispatch.',
         provOmniName: 'OmniRoute Neural Gateway',
@@ -73,8 +73,8 @@ const TRANSLATIONS = {
         apiKeyPlaceholder: 'AIzaSy...',
         saveKeyBtn: '[ SAVE CREDENTIALS ]',
         clearKeyBtn: '[ USE AMBIENT AUTO-AUTH ]',
-        keyStatusCustom: '🟢 CUSTOM KEY ACTIVE',
-        keyStatusAmbient: '🟢 GOOGLE AMBIENT AUTH',
+        keyStatusCustom: '[CUSTOM KEY ACTIVE]',
+        keyStatusAmbient: '[GOOGLE AMBIENT AUTH]',
         noticeModelSwitched: 'Switched model to',
         noticeRoleSwitched: 'Activated corporate role',
         noticeModeSwitched: 'Changed operation mode to',
@@ -88,14 +88,14 @@ const TRANSLATIONS = {
     uk: {
         appTitle: 'EVABOT // КІБЕР-ТЕРМІНАЛ',
         appSubtitle: 'Автономний багатопровайдерний нейродек',
-        statusOnline: '🟢 В МЕРЕЖІ // ОЧІКУВАННЯ',
-        statusBusy: '🟡 ГЕНЕРАЦІЯ // АКТИВНО',
-        statusError: '🔴 ПОМИЛКА // ОФЛАЙН',
+        statusOnline: '[ONLINE] В МЕРЕЖІ // ОЧІКУВАННЯ',
+        statusBusy: '[ACTIVE] ГЕНЕРАЦІЯ // АКТИВНО',
+        statusError: '[ERROR] ПОМИЛКА // ОФЛАЙН',
         controlPanelBtn: '[ ↓ ПАНЕЛЬ КЕРУВАННЯ // СИСТЕМНИЙ ДЕК ]',
         returnTerminalBtn: '[ ↑ ПОВЕРНУТИСЯ ДО ТЕРМІНАЛУ ]',
         clearChatBtn: '[ ОЧИСТИТИ ]',
         transmitBtn: '[ ВІДПРАВИТИ ↵ ]',
-        stopBtn: '[ ЗУПИНИТИ 🟡 ]',
+        stopBtn: '[ ЗУПИНИТИ ]',
         inputPlaceholder: 'Введіть кібер-команду або запит (Enter для відправки, Shift+Enter для нового рядка)...',
         inputLegend: 'Enter: Відправити • Shift+Enter: Перенос рядка • Ядро EvaBot v0.2.0',
         welcomeHeading: 'НЕЙРОННИЙ КІБЕР-ТЕРМІНАЛ EVABOT В МЕРЕЖІ',
@@ -107,11 +107,11 @@ const TRANSLATIONS = {
         secRoles: '4. КОРПОРАТИВНІ РОЛІ ТА ПЕРСОНИ',
         secTelemetry: '5. ТЕЛЕМЕТРІЯ В РЕАЛЬНОМУ ЧАСІ',
         secSecurity: '6. БЕЗПЕКА ТА АВТОРИЗАЦІЯ',
-        badgeFree: '🟢 БЕЗКОШТОВНО',
-        badgePaid: '🟡 ПЛАТНО / PAYG',
-        badgeActive: '🟢 АКТИВНИЙ',
-        badgeReady: '🟢 ГОТОВИЙ',
-        badgeStandby: '🟡 ОЧІКУВАННЯ',
+        badgeFree: '[БЕЗКОШТОВНО]',
+        badgePaid: '[ПЛАТНО / PAYG]',
+        badgeActive: '[АКТИВНИЙ]',
+        badgeReady: '[ГОТОВИЙ]',
+        badgeStandby: '[ОЧІКУВАННЯ]',
         provGoogleName: 'Google Cloud (Vertex AI & AI Studio)',
         provGoogleDesc: 'Оригінальні моделі Google DeepMind Gemini та партнерські корпоративні моделі з прямою відправкою.',
         provOmniName: 'Нейрошлюз OmniRoute',
@@ -158,8 +158,8 @@ const TRANSLATIONS = {
         apiKeyPlaceholder: 'AIzaSy...',
         saveKeyBtn: '[ ЗБЕРЕГТИ КЛЮЧ ]',
         clearKeyBtn: '[ АВТО-АВТОРИЗАЦІЯ GOOGLE ]',
-        keyStatusCustom: '🟢 ВЛАСНИЙ КЛЮЧ АКТИВНИЙ',
-        keyStatusAmbient: '🟢 АВТО-АВТОРИЗАЦІЯ GOOGLE',
+        keyStatusCustom: '[ВЛАСНИЙ КЛЮЧ АКТИВНИЙ]',
+        keyStatusAmbient: '[АВТО-АВТОРИЗАЦІЯ GOOGLE]',
         noticeModelSwitched: 'Переключено модель на',
         noticeRoleSwitched: 'Активовано корпоративну роль',
         noticeModeSwitched: 'Змінено режим роботи на',
@@ -173,14 +173,14 @@ const TRANSLATIONS = {
     ru: {
         appTitle: 'EVABOT // КИБЕР-ТЕРМИНАЛ',
         appSubtitle: 'Автономный многопровайдерный нейродек',
-        statusOnline: '🟢 В СЕТИ // ОЖИДАНИЕ',
-        statusBusy: '🟡 ГЕНЕРАЦИЯ // АКТИВНО',
-        statusError: '🔴 ОШИБКА // ОФЛАЙН',
+        statusOnline: '[ONLINE] В СЕТИ // ОЖИДАНИЕ',
+        statusBusy: '[ACTIVE] ГЕНЕРАЦИЯ // АКТИВНО',
+        statusError: '[ERROR] ОШИБКА // ОФЛАЙН',
         controlPanelBtn: '[ ↓ КОНТРОЛЬНАЯ ПАНЕЛЬ // СИСТЕМНЫЙ ДЕК ]',
         returnTerminalBtn: '[ ↑ ВЕРНУТЬСЯ В ТЕРМИНАЛ ]',
         clearChatBtn: '[ ОЧИСТИТЬ ]',
         transmitBtn: '[ ОТПРАВИТЬ ↵ ]',
-        stopBtn: '[ ОСТАНОВИТЬ 🟡 ]',
+        stopBtn: '[ ОСТАНОВИТЬ ]',
         inputPlaceholder: 'Введите кибер-команду или запрос (Enter для отправки, Shift+Enter для новой строки)...',
         inputLegend: 'Enter: Отправить • Shift+Enter: Перенос строки • Ядро EvaBot v0.2.0',
         welcomeHeading: 'НЕЙРОННЫЙ КИБЕР-ТЕРМИНАЛ EVABOT В СЕТИ',
@@ -192,11 +192,11 @@ const TRANSLATIONS = {
         secRoles: '4. КОРПОРАТИВНЫЕ РОЛИ И ПЕРСОНЫ',
         secTelemetry: '5. ТЕЛЕМЕТРИЯ В РЕАЛЬНОМ ВРЕМЕНИ',
         secSecurity: '6. БЕЗОПАСНОСТЬ И АВТОРИЗАЦИЯ',
-        badgeFree: '🟢 БЕСПЛАТНО',
-        badgePaid: '🟡 ПЛАТНО / PAYG',
-        badgeActive: '🟢 АКТИВЕН',
-        badgeReady: '🟢 ГОТОВ',
-        badgeStandby: '🟡 ОЖИДАНИЕ',
+        badgeFree: '[БЕСПЛАТНО]',
+        badgePaid: '[ПЛАТНО / PAYG]',
+        badgeActive: '[АКТИВЕН]',
+        badgeReady: '[ГОТОВ]',
+        badgeStandby: '[ОЖИДАНИЕ]',
         provGoogleName: 'Google Cloud (Vertex AI & AI Studio)',
         provGoogleDesc: 'Оригинальные модели Google DeepMind Gemini и партнерские корпоративные модели прямого вызова.',
         provOmniName: 'Нейрошлюз OmniRoute',
@@ -243,8 +243,8 @@ const TRANSLATIONS = {
         apiKeyPlaceholder: 'AIzaSy...',
         saveKeyBtn: '[ СОХРАНИТЬ КЛЮЧ ]',
         clearKeyBtn: '[ АВТО-АВТОРИЗАЦИЯ GOOGLE ]',
-        keyStatusCustom: '🟢 СОБСТВЕННЫЙ КЛЮЧ АКТИВЕН',
-        keyStatusAmbient: '🟢 АВТО-АВТОРИЗАЦИЯ GOOGLE',
+        keyStatusCustom: '[СОБСТВЕННЫЙ КЛЮЧ АКТИВЕН]',
+        keyStatusAmbient: '[АВТО-АВТОРИЗАЦИЯ GOOGLE]',
         noticeModelSwitched: 'Модель переключена на',
         noticeRoleSwitched: 'Активирована корпоративная роль',
         noticeModeSwitched: 'Режим работы изменен на',
@@ -442,6 +442,13 @@ export class EvaBotWebApp {
         document.getElementById('header-model-pill')?.addEventListener('click', () => {
             deckSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+        const bootAccordion = document.getElementById('accordion-boot');
+        const bootLabel = document.getElementById('boot-toggle-label');
+        bootAccordion?.addEventListener('toggle', () => {
+            if (bootLabel) {
+                bootLabel.textContent = bootAccordion.open ? '[ - COLLAPSE ]' : '[ + EXPAND ]';
+            }
+        });
     }
     async checkHealth() {
         const t0 = performance.now();
@@ -466,6 +473,36 @@ export class EvaBotWebApp {
             this.lastLatencyMs = 999;
         }
         this.updateTelemetryUI();
+        this.fetchBootDiagnostics();
+    }
+    async fetchBootDiagnostics() {
+        try {
+            const res = await fetch(`/api/diagnostics/boot?model=${encodeURIComponent(this.currentModel)}`);
+            if (res.ok) {
+                const report = await res.json();
+                const container = document.getElementById('boot-log-container');
+                if (container && report.steps) {
+                    container.innerHTML = `
+            <div class="text-zinc-500 font-bold mb-1">Live dual-server diagnostic probe completed in ${report.totalDurationMs}ms:</div>
+            ${report.steps.map((step) => `
+              <div class="flex items-start gap-2 text-zinc-300 py-0.5">
+                <span class="text-emerald-400 font-bold">[OK]</span>
+                <div class="flex-1">
+                  <div class="flex justify-between items-center">
+                    <span class="text-white font-bold">${step.name}</span>
+                    <span class="text-zinc-500 text-[10px] font-mono">${step.latencyMs}ms</span>
+                  </div>
+                  <div class="text-zinc-400 text-[11px]">${step.details}</div>
+                </div>
+              </div>
+            `).join('')}
+          `;
+                }
+            }
+        }
+        catch (e) {
+            console.warn('Boot diagnostics fetch skipped:', e);
+        }
     }
     startTelemetryLoop() {
         if (this.uptimeInterval)
@@ -538,6 +575,10 @@ export class EvaBotWebApp {
             'Mistral AI on Google Cloud',
             'DeepSeek on Google Cloud',
             'AI21 Labs & Cohere on Google Cloud',
+            'OmniRoute Daemon Cluster',
+            'OpenRouter Free Models',
+            'OpenRouter Premium',
+            'OpenCode Go Platforms',
         ];
         for (const cat of categories) {
             const models = ModelRegistry.getModelsByCategory(cat);
@@ -549,7 +590,7 @@ export class EvaBotWebApp {
                 const opt = document.createElement('option');
                 opt.value = m.id;
                 const isFree = m.pricing.freeTierStatus.includes('Free');
-                const badge = isFree ? ' [🟢 FREE]' : ' [🟡 PAID]';
+                const badge = isFree ? ' [FREE]' : ' [PAID]';
                 opt.textContent = `${m.name}${badge}`;
                 if (m.id === this.currentModel)
                     opt.selected = true;
@@ -620,7 +661,7 @@ export class EvaBotWebApp {
             headerName.textContent = m.name;
         const headerBadge = document.getElementById('header-model-badge');
         if (headerBadge) {
-            headerBadge.textContent = isFree ? '🟢 FREE' : '🟡 PAID';
+            headerBadge.textContent = isFree ? '[FREE]' : '[PAID]';
             headerBadge.className = isFree
                 ? 'px-1.5 py-0.2 bg-emerald-950 text-emerald-400 border border-emerald-700 text-[10px] font-bold'
                 : 'px-1.5 py-0.2 bg-amber-950 text-amber-400 border border-amber-700 text-[10px] font-bold';
@@ -768,6 +809,7 @@ Execute commands or submit analytical inquiries below. Click '[ ↓ CONTROL PANE
                 body: JSON.stringify({
                     message: text,
                     model: this.currentModel,
+                    provider: this.currentProvider,
                     history: historyPayload,
                     apiKey: customKey || undefined,
                     systemInstruction: this.buildSystemInstruction(),
@@ -833,10 +875,10 @@ Execute commands or submit analytical inquiries below. Click '[ ↓ CONTROL PANE
         catch (err) {
             this.updateStatusLight('error');
             if (err.name === 'AbortError') {
-                textSpan.innerHTML += '\n<span class="text-amber-400 font-mono text-xs"> [STREAM_HALTED_BY_OPERATOR 🟡]</span>';
+                textSpan.innerHTML += '\n<span class="text-amber-400 font-mono text-xs"> [STREAM_HALTED_BY_OPERATOR]</span>';
             }
             else {
-                textSpan.innerHTML = `<span class="text-rose-500 font-mono text-xs">🔴 TRANSMISSION_ERROR: ${this.escapeHtml(err.message)}</span>`;
+                textSpan.innerHTML = `<span class="text-rose-500 font-mono text-xs">[ERROR] TRANSMISSION_ERROR: ${this.escapeHtml(err.message)}</span>`;
             }
         }
         finally {
@@ -921,7 +963,7 @@ Execute commands or submit analytical inquiries below. Click '[ ↓ CONTROL PANE
             : `┌─ [${timestamp}] [EVA // ${this.currentModel.toUpperCase()} // ${this.currentMode.toUpperCase()} // ${this.currentRole.toUpperCase()}]`;
         header.innerHTML = `
       <span class="font-bold ${isUser ? 'text-white' : 'text-zinc-300'}">${callsign}</span>
-      <span class="text-zinc-600 text-[11px]">${isUser ? 'TX_OK' : 'RX_OK 🟢'}</span>
+      <span class="text-zinc-600 text-[11px]">${isUser ? 'TX_OK' : 'RX_OK [OK]'}</span>
     `;
         const body = document.createElement('div');
         body.className = 'message-body font-mono text-zinc-200 leading-relaxed overflow-x-auto';

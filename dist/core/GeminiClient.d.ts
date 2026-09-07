@@ -15,6 +15,7 @@ export declare class GeminiClient {
     private explicitToken?;
     private tokenType;
     private baseUrl;
+    private vertexBaseUrl;
     constructor(apiKeyOrToken?: string);
     setApiKey(apiKey: string): void;
     setBearerToken(token: string): void;

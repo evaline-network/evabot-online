@@ -1,8 +1,68 @@
 // src/models/ModelRegistry.ts
 var COMPLETE_GOOGLE_MODEL_CATALOG = [
   // ============================================================================
-  // 1. GOOGLE GEMINI NEXT-GEN (Google DeepMind)
+  // 1. GOOGLE GEMINI NEXT-GEN FRONTIER (Google DeepMind - 2026 Fleet)
   // ============================================================================
+  {
+    id: "gemini-3.8-flash",
+    name: "Gemini 3.8 Flash",
+    provider: "Google DeepMind",
+    category: "Google Gemini (Next-Gen)",
+    description: "Frontier ultra-fast autonomous agentic model with native real-time tool orchestration and multi-modal streaming.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Pro / AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00)",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.075 (Paid)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.300 (Paid)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.070 (Paid)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.280 (Paid)"
+    }
+  },
+  {
+    id: "gemini-3.1-pro",
+    name: "Gemini 3.1 Pro",
+    provider: "Google DeepMind",
+    category: "Google Gemini (Next-Gen)",
+    description: "Premier enterprise reasoning frontier model with 2M token context, deep logic, and architectural planning capability.",
+    contextWindow: 2097152,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Pro / AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00)",
+      inputPer1MTokensUSD: "$0.00 (Free) / $1.25 (Paid)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $5.00 (Paid)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC1.15 (Paid)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC4.60 (Paid)"
+    }
+  },
+  {
+    id: "gemini-3.1-flash",
+    name: "Gemini 3.1 Flash",
+    provider: "Google DeepMind",
+    category: "Google Gemini (Next-Gen)",
+    description: "Lightweight high-efficiency frontier flash model with ultra-low latency inference.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "google-genai",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Google AI Studio: 15 RPM, 1M TPM ($0.00)",
+      inputPer1MTokensUSD: "$0.00 (Free) / $0.050 (Paid)",
+      outputPer1MTokensUSD: "$0.00 (Free) / $0.200 (Paid)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.046 (Paid)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Free) / \u20AC0.185 (Paid)"
+    }
+  },
   {
     id: "gemini-2.5-flash",
     name: "Gemini 2.5 Flash",
@@ -423,7 +483,49 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
   },
   // ============================================================================
   // 8. OMNIROUTE DAEMON CLUSTER (http://100.66.98.4:20128)
+  // LiteLLM-OpenAI-compatible proxy exposing frontier models on local edge.
+  // Verified September 2026 free/paid availability.
   // ============================================================================
+  {
+    id: "omniroute/gemini-3.8-flash",
+    name: "OmniRoute Gemini 3.8 Flash (Edge Router)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "Frontier ultra-fast autonomous agentic model routed via internal OmniRoute daemon cluster.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Direct edge routing via internal daemon cluster ($0.00 margin)",
+      inputPer1MTokensUSD: "$0.00 (Self-Hosted) / $0.075 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Self-Hosted) / $0.300 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC0.070 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC0.280 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/gemini-3.1-pro",
+    name: "OmniRoute Gemini 3.1 Pro (Edge Router)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "Premier enterprise reasoning frontier model with 2M context proxied via OmniRoute daemon cluster.",
+    contextWindow: 2097152,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Direct edge routing via internal daemon cluster ($0.00 margin)",
+      inputPer1MTokensUSD: "$0.00 (Self-Hosted) / $1.25 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Self-Hosted) / $5.00 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC1.15 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC4.60 (Upstream)"
+    }
+  },
   {
     id: "omniroute/gemini-2.5-pro",
     name: "OmniRoute Gemini 2.5 Pro (Edge Router)",
@@ -442,6 +544,46 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
       outputPer1MTokensUSD: "$0.00 (Self-Hosted) / $5.00 (Upstream)",
       inputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC1.17 (Upstream)",
       outputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC4.68 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/gemini-2.5-flash",
+    name: "OmniRoute Gemini 2.5 Flash (Edge Router)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "Workhorse Google model routed via OmniRoute daemon. Fast, multimodal, 1M context.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: true,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Direct edge routing via internal daemon cluster ($0.00 margin)",
+      inputPer1MTokensUSD: "$0.00 (Self-Hosted) / $0.075 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Self-Hosted) / $0.30 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC0.070 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC0.28 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/gemini-2.0-flash",
+    name: "OmniRoute Gemini 2.0 Flash (Edge Router)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "Next-gen streaming architecture routed via OmniRoute for high-frequency interactive dialogues.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Direct edge routing via internal daemon cluster ($0.00 margin)",
+      inputPer1MTokensUSD: "$0.00 (Self-Hosted) / $0.10 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Self-Hosted) / $0.40 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC0.093 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Self-Hosted) / \u20AC0.375 (Upstream)"
     }
   },
   {
@@ -465,6 +607,186 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
     }
   },
   {
+    id: "omniroute/deepseek-v3",
+    name: "OmniRoute DeepSeek V3 (Daemon Cluster)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "DeepSeek V3 671B MoE with extreme cost efficiency and high coding quality routed via OmniRoute.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Routed through high-throughput OmniRoute node ($0.00 node fee)",
+      inputPer1MTokensUSD: "$0.00 (Local) / $0.14 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Local) / $0.28 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.13 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.26 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/llama-3.3-70b",
+    name: "OmniRoute Llama 3.3 70B (Daemon Cluster)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "Meta Llama 3.3 70B Instruct open weights routed through OmniRoute daemon cluster.",
+    contextWindow: 128e3,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Routed through high-throughput OmniRoute node ($0.00 node fee)",
+      inputPer1MTokensUSD: "$0.00 (Local) / $0.59 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Local) / $0.79 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.55 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.74 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/qwen-2.5-coder-32b",
+    name: "OmniRoute Qwen 2.5 Coder 32B (Daemon Cluster)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "Alibaba Qwen 2.5 Coder 32B code generation specialist routed via OmniRoute.",
+    contextWindow: 128e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Routed through high-throughput OmniRoute node ($0.00 node fee)",
+      inputPer1MTokensUSD: "$0.00 (Local) / $0.18 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Local) / $0.18 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.17 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.17 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/mistral-7b",
+    name: "OmniRoute Mistral 7B (Daemon Cluster)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "Fast, reliable Mistral 7B lightweight instruction model routed via OmniRoute.",
+    contextWindow: 32768,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Routed through high-throughput OmniRoute node ($0.00 node fee)",
+      inputPer1MTokensUSD: "$0.00 (Local) / $0.05 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Local) / $0.05 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.05 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.05 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/gpt-4o",
+    name: "OmniRoute GPT-4o (Edge Proxy)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "OpenAI GPT-4o multimodal flagship proxied through OmniRoute daemon gateway.",
+    contextWindow: 128e3,
+    maxOutputTokens: 16384,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "Edge-routed OpenAI upstream billing",
+      inputPer1MTokensUSD: "$2.50",
+      outputPer1MTokensUSD: "$10.00",
+      inputPer1MTokensEUR: "\u20AC2.33",
+      outputPer1MTokensEUR: "\u20AC9.30"
+    }
+  },
+  {
+    id: "omniroute/gpt-4o-mini",
+    name: "OmniRoute GPT-4o Mini (Edge Proxy)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "OpenAI GPT-4o Mini cost-efficient multimodal model proxied via OmniRoute.",
+    contextWindow: 128e3,
+    maxOutputTokens: 16384,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Routed through high-throughput OmniRoute node ($0.00 node fee)",
+      inputPer1MTokensUSD: "$0.00 (Local) / $0.15 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Local) / $0.60 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.14 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.56 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/o1",
+    name: "OmniRoute OpenAI o1 (Edge Proxy)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "OpenAI o1 advanced reasoning model with chain-of-thought proxied via OmniRoute.",
+    contextWindow: 2e5,
+    maxOutputTokens: 1e5,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "Edge-routed OpenAI upstream billing",
+      inputPer1MTokensUSD: "$15.00",
+      outputPer1MTokensUSD: "$60.00",
+      inputPer1MTokensEUR: "\u20AC14.00",
+      outputPer1MTokensEUR: "\u20AC55.80"
+    }
+  },
+  {
+    id: "omniroute/o3-mini",
+    name: "OmniRoute OpenAI o3-mini (Edge Proxy)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "OpenAI o3-mini fast reasoning model with cost-effective chain-of-thought via OmniRoute.",
+    contextWindow: 2e5,
+    maxOutputTokens: 1e5,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Routed through high-throughput OmniRoute node ($0.00 node fee)",
+      inputPer1MTokensUSD: "$0.00 (Local) / $1.10 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Local) / $4.40 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC1.02 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC4.09 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/claude-sonnet-4-5",
+    name: "OmniRoute Claude Sonnet 4.5 (Edge Proxy)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "Anthropic Claude Sonnet 4.5 frontier model proxied through OmniRoute daemon gateway.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "Edge-routed Anthropic upstream billing",
+      inputPer1MTokensUSD: "$3.00",
+      outputPer1MTokensUSD: "$15.00",
+      inputPer1MTokensEUR: "\u20AC2.80",
+      outputPer1MTokensEUR: "\u20AC14.00"
+    }
+  },
+  {
     id: "omniroute/claude-3.5-sonnet",
     name: "OmniRoute Claude 3.5 Sonnet (Edge Proxy)",
     provider: "OmniRoute",
@@ -484,8 +806,48 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
       outputPer1MTokensEUR: "\u20AC14.00"
     }
   },
+  {
+    id: "omniroute/claude-3-5-haiku",
+    name: "OmniRoute Claude 3.5 Haiku (Edge Proxy)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "High speed, cost-effective Anthropic Claude 3.5 Haiku routed via OmniRoute.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "Routed through high-throughput OmniRoute node ($0.00 node fee)",
+      inputPer1MTokensUSD: "$0.00 (Local) / $0.80 (Upstream)",
+      outputPer1MTokensUSD: "$0.00 (Local) / $4.00 (Upstream)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC0.75 (Upstream)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Local) / \u20AC3.75 (Upstream)"
+    }
+  },
+  {
+    id: "omniroute/grok-2",
+    name: "OmniRoute Grok 2 (Edge Proxy)",
+    provider: "OmniRoute",
+    category: "OmniRoute Daemon Cluster",
+    description: "xAI Grok 2 frontier model with real-time knowledge proxied via OmniRoute.",
+    contextWindow: 131072,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OmniRoute Daemon",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "Edge-routed xAI upstream billing",
+      inputPer1MTokensUSD: "$2.00",
+      outputPer1MTokensUSD: "$10.00",
+      inputPer1MTokensEUR: "\u20AC1.86",
+      outputPer1MTokensEUR: "\u20AC9.30"
+    }
+  },
   // ============================================================================
-  // 9. OPENROUTER FREE MODELS (https://openrouter.ai)
+  // 9. OPENROUTER FREE MODELS (https://openrouter.ai) — September 2026
   // ============================================================================
   {
     id: "deepseek/deepseek-r1:free",
@@ -587,11 +949,251 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
       outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
     }
   },
+  {
+    id: "anthropic/claude-3.5-haiku:free",
+    name: "Claude 3.5 Haiku (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Anthropic Claude 3.5 Haiku fast inference model 100% free via OpenRouter community tier.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "google/gemini-3.0-flash:free",
+    name: "Gemini 3.0 Flash (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Google Gemini 3.0 Flash ultra-fast model, 100% free via OpenRouter community tier.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "openai/gpt-4o-mini:free",
+    name: "GPT-4o Mini (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "OpenAI GPT-4o Mini cost-efficient model, 100% free via OpenRouter community tier.",
+    contextWindow: 128e3,
+    maxOutputTokens: 16384,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
+  {
+    id: "cognitivecomputations/dolphin3.0-r1-2506:free",
+    name: "Dolphin 3.0 R1 2506 (Free on OpenRouter)",
+    provider: "OpenRouter",
+    category: "OpenRouter Free Models",
+    description: "Open-source reasoning model Dolphin 3.0 R1 fine-tuned for instruction following, free on OpenRouter.",
+    contextWindow: 128e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "100% Free Community",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenRouter Community Free Tier",
+      inputPer1MTokensUSD: "$0.00 (100% Free)",
+      outputPer1MTokensUSD: "$0.00 (100% Free)",
+      inputPer1MTokensEUR: "\u20AC0.00 (100% Free)",
+      outputPer1MTokensEUR: "\u20AC0.00 (100% Free)"
+    }
+  },
   // ============================================================================
-  // 10. OPENROUTER PREMIUM MODELS
+  // 10. OPENROUTER PREMIUM MODELS — September 2026
   // ============================================================================
   {
-    id: "openrouter/deepseek-chat",
+    id: "openai/gpt-4o",
+    name: "GPT-4o (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "OpenAI GPT-4o multimodal flagship with 128k context on OpenRouter.",
+    contextWindow: 128e3,
+    maxOutputTokens: 16384,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$2.50",
+      outputPer1MTokensUSD: "$10.00",
+      inputPer1MTokensEUR: "\u20AC2.33",
+      outputPer1MTokensEUR: "\u20AC9.30"
+    }
+  },
+  {
+    id: "openai/gpt-4o-mini",
+    name: "GPT-4o Mini (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "OpenAI GPT-4o Mini cost-efficient multimodal model on OpenRouter.",
+    contextWindow: 128e3,
+    maxOutputTokens: 16384,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$0.15",
+      outputPer1MTokensUSD: "$0.60",
+      inputPer1MTokensEUR: "\u20AC0.14",
+      outputPer1MTokensEUR: "\u20AC0.56"
+    }
+  },
+  {
+    id: "openai/o1-preview",
+    name: "OpenAI o1 Preview (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "OpenAI o1 advanced reasoning model with chain-of-thought on OpenRouter.",
+    contextWindow: 2e5,
+    maxOutputTokens: 1e5,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$15.00",
+      outputPer1MTokensUSD: "$60.00",
+      inputPer1MTokensEUR: "\u20AC14.00",
+      outputPer1MTokensEUR: "\u20AC55.80"
+    }
+  },
+  {
+    id: "openai/o1-mini",
+    name: "OpenAI o1 Mini (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "OpenAI o1 Mini fast reasoning model on OpenRouter.",
+    contextWindow: 2e5,
+    maxOutputTokens: 1e5,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$1.10",
+      outputPer1MTokensUSD: "$4.40",
+      inputPer1MTokensEUR: "\u20AC1.02",
+      outputPer1MTokensEUR: "\u20AC4.09"
+    }
+  },
+  {
+    id: "anthropic/claude-3.5-sonnet",
+    name: "Claude 3.5 Sonnet (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Anthropic Claude 3.5 Sonnet industry-leading code and reasoning model on OpenRouter.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$3.00",
+      outputPer1MTokensUSD: "$15.00",
+      inputPer1MTokensEUR: "\u20AC2.80",
+      outputPer1MTokensEUR: "\u20AC14.00"
+    }
+  },
+  {
+    id: "anthropic/claude-3-opus",
+    name: "Claude 3 Opus (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Anthropic Claude 3 Opus frontier model for complex reasoning on OpenRouter.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$15.00",
+      outputPer1MTokensUSD: "$75.00",
+      inputPer1MTokensEUR: "\u20AC14.00",
+      outputPer1MTokensEUR: "\u20AC69.75"
+    }
+  },
+  {
+    id: "google/gemini-2.5-flash",
+    name: "Gemini 2.5 Flash (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Google Gemini 2.5 Flash fast multimodal model on OpenRouter.",
+    contextWindow: 1048576,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$0.075",
+      outputPer1MTokensUSD: "$0.30",
+      inputPer1MTokensEUR: "\u20AC0.070",
+      outputPer1MTokensEUR: "\u20AC0.28"
+    }
+  },
+  {
+    id: "google/gemini-3.0-pro-exp",
+    name: "Gemini 3.0 Pro Exp (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Google Gemini 3.0 Pro experimental frontier model on OpenRouter.",
+    contextWindow: 2097152,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$1.25",
+      outputPer1MTokensUSD: "$5.00",
+      inputPer1MTokensEUR: "\u20AC1.17",
+      outputPer1MTokensEUR: "\u20AC4.68"
+    }
+  },
+  {
+    id: "deepseek/deepseek-chat-v3-0324",
     name: "DeepSeek V3 (OpenRouter Premium)",
     provider: "OpenRouter",
     category: "OpenRouter Premium",
@@ -610,8 +1212,150 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
       outputPer1MTokensEUR: "\u20AC0.26"
     }
   },
+  {
+    id: "meta-llama/llama-3.1-405b-instruct",
+    name: "Llama 3.1 405B (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Meta Llama 3.1 405B frontier open weights model on OpenRouter.",
+    contextWindow: 128e3,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$3.50",
+      outputPer1MTokensUSD: "$3.50",
+      inputPer1MTokensEUR: "\u20AC3.25",
+      outputPer1MTokensEUR: "\u20AC3.25"
+    }
+  },
+  {
+    id: "mistralai/mistral-large-3",
+    name: "Mistral Large 3 (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Mistral Large 3 top-tier multilingual reasoning and coding model on OpenRouter.",
+    contextWindow: 128e3,
+    maxOutputTokens: 32e3,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$2.00",
+      outputPer1MTokensUSD: "$6.00",
+      inputPer1MTokensEUR: "\u20AC1.86",
+      outputPer1MTokensEUR: "\u20AC5.60"
+    }
+  },
+  {
+    id: "qwen/qwen-2.5-72b-instruct",
+    name: "Qwen 2.5 72B (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Alibaba Qwen 2.5 72B large instruction model on OpenRouter.",
+    contextWindow: 32e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$0.90",
+      outputPer1MTokensUSD: "$0.90",
+      inputPer1MTokensEUR: "\u20AC0.84",
+      outputPer1MTokensEUR: "\u20AC0.84"
+    }
+  },
+  {
+    id: "x-ai/grok-2",
+    name: "Grok 2 (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "xAI Grok 2 frontier model with real-time knowledge on OpenRouter.",
+    contextWindow: 131072,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$2.00",
+      outputPer1MTokensUSD: "$10.00",
+      inputPer1MTokensEUR: "\u20AC1.86",
+      outputPer1MTokensEUR: "\u20AC9.30"
+    }
+  },
+  {
+    id: "perplexity/llama-3.1-sonar-405b-instruct",
+    name: "Perplexity Sonar 405B (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "Perplexity Llama 3.1 Sonar 405B with real-time web search integration on OpenRouter.",
+    contextWindow: 128e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$3.50",
+      outputPer1MTokensUSD: "$14.00",
+      inputPer1MTokensEUR: "\u20AC3.25",
+      outputPer1MTokensEUR: "\u20AC13.00"
+    }
+  },
+  {
+    id: "nvidia/llama-3.1-nemotron-70b-instruct",
+    name: "NVIDIA Nemotron 70B (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "NVIDIA NeMo Nemotron 70B RLHF-optimized instruction model on OpenRouter.",
+    contextWindow: 128e3,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$0.59",
+      outputPer1MTokensUSD: "$0.79",
+      inputPer1MTokensEUR: "\u20AC0.55",
+      outputPer1MTokensEUR: "\u20AC0.74"
+    }
+  },
+  {
+    id: "deepseek/deepseek-r1",
+    name: "DeepSeek R1 (OpenRouter Premium)",
+    provider: "OpenRouter",
+    category: "OpenRouter Premium",
+    description: "DeepSeek R1 reasoning model on OpenRouter (higher limits than free tier).",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "Free Quota + Paid",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "Paid / Pay-As-You-Go Only",
+      freeTierDetails: "OpenRouter credit balance",
+      inputPer1MTokensUSD: "$0.55",
+      outputPer1MTokensUSD: "$2.19",
+      inputPer1MTokensEUR: "\u20AC0.51",
+      outputPer1MTokensEUR: "\u20AC2.04"
+    }
+  },
   // ============================================================================
   // 11. OPENCODE GO PLATFORMS (OpenCode AI Platform API / OmniRoute Adapter)
+  // Same local edge endpoint as OmniRoute: http://100.66.98.4:20128/v1
+  // All "opencode/" models are code-specialized variants.
   // ============================================================================
   {
     id: "opencode/go-coder-32b",
@@ -652,6 +1396,206 @@ var COMPLETE_GOOGLE_MODEL_CATALOG = [
       inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.07 (Prod)",
       outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.22 (Prod)"
     }
+  },
+  {
+    id: "opencode/zen-coder-pro",
+    name: "OpenCode Zen Coder Pro",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Zen-grade enterprise coding model with multi-language refactoring, AST analysis, and security audit. Pro tier with deeper reasoning.",
+    contextWindow: 128e3,
+    maxOutputTokens: 16384,
+    recommended: true,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.40 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $1.20 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.37 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC1.12 (Prod)"
+    }
+  },
+  {
+    id: "opencode/zen-fast-7b",
+    name: "OpenCode Zen Fast 7B (Edge Coder)",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Lightweight 7B Zen-fast edge coder optimized for IDE autocomplete and inline refactoring at sub-100ms latency.",
+    contextWindow: 32768,
+    maxOutputTokens: 4096,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.04 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.12 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.04 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.11 (Prod)"
+    }
+  },
+  {
+    id: "opencode/zen-reasoner-32b",
+    name: "OpenCode Zen Reasoner 32B",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Deep chain-of-thought reasoning coder for complex algorithms, architectural refactors, and bug forensics.",
+    contextWindow: 128e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.30 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.90 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.28 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.84 (Prod)"
+    }
+  },
+  {
+    id: "opencode/zen-multi-lang-70b",
+    name: "OpenCode Zen Multi-Lang 70B",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "70B frontier code model supporting 100+ languages with deep context and CI/CD-grade refactoring.",
+    contextWindow: 2e5,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.60 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $1.80 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.56 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC1.67 (Prod)"
+    }
+  },
+  {
+    id: "opencode/zen-security-auditor",
+    name: "OpenCode Zen Security Auditor",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Specialized security audit coder trained on OWASP Top 10, CVE database, and zero-trust patterns.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.35 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $1.05 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.33 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.98 (Prod)"
+    }
+  },
+  {
+    id: "opencode/zen-test-gen",
+    name: "OpenCode Zen Test Generator",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Automated unit test and integration test generation. Supports Jest, pytest, JUnit, Go test frameworks.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.25 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.75 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.23 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.70 (Prod)"
+    }
+  },
+  {
+    id: "opencode/zen-docs-writer",
+    name: "OpenCode Zen Docs Writer",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Technical documentation generator producing JSDoc, OpenAPI specs, README files, and architecture diagrams.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.18 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.54 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.17 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.50 (Prod)"
+    }
+  },
+  {
+    id: "opencode/zen-frontend-react",
+    name: "OpenCode Zen Frontend (React/Next.js)",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Frontend specialist for React 19, Next.js 15, TypeScript, Tailwind CSS, and component architecture.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.22 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.66 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.20 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.61 (Prod)"
+    }
+  },
+  {
+    id: "opencode/zen-backend-go",
+    name: "OpenCode Zen Backend (Go/Rust)",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "Backend systems specialist for Go, Rust, gRPC, microservices, and high-throughput APIs.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.22 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.66 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.20 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.61 (Prod)"
+    }
+  },
+  {
+    id: "opencode/zen-devops-k8s",
+    name: "OpenCode Zen DevOps (K8s/Terraform)",
+    provider: "OpenCode AI",
+    category: "OpenCode Go Platforms",
+    description: "DevOps and SRE specialist for Kubernetes manifests, Terraform modules, Helm charts, and CI/CD pipelines.",
+    contextWindow: 64e3,
+    maxOutputTokens: 8192,
+    recommended: false,
+    tier: "OpenCode Platform",
+    protocol: "openai-compatible",
+    pricing: {
+      freeTierStatus: "100% Free Quota Available",
+      freeTierDetails: "OpenCode Zen Developer Community Quota",
+      inputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.28 (Prod)",
+      outputPer1MTokensUSD: "$0.00 (Dev Tier) / $0.84 (Prod)",
+      inputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.26 (Prod)",
+      outputPer1MTokensEUR: "\u20AC0.00 (Dev Tier) / \u20AC0.78 (Prod)"
+    }
   }
 ];
 var ModelRegistry = class {
@@ -687,14 +1631,14 @@ var TRANSLATIONS = {
   en: {
     appTitle: "EVABOT // CYBER-TERMINAL",
     appSubtitle: "Autonomous Multi-Provider Neural Deck",
-    statusOnline: "\u{1F7E2} ONLINE // IDLE",
-    statusBusy: "\u{1F7E1} STREAMING // ACTIVE",
-    statusError: "\u{1F534} ERROR // OFFLINE",
+    statusOnline: "[ONLINE] // IDLE",
+    statusBusy: "[ACTIVE] // STREAMING",
+    statusError: "[ERROR] // OFFLINE",
     controlPanelBtn: "[ \u2193 CONTROL PANEL // SYSTEM DECK ]",
     returnTerminalBtn: "[ \u2191 RETURN TO TERMINAL ]",
     clearChatBtn: "[ CLR ]",
     transmitBtn: "[ TRANSMIT \u21B5 ]",
-    stopBtn: "[ STOP \u{1F7E1} ]",
+    stopBtn: "[ STOP ]",
     inputPlaceholder: "Enter cyber command or query prompt (Enter to send, Shift+Enter for newline)...",
     inputLegend: "Enter: Transmit \u2022 Shift+Enter: Linebreak \u2022 EvaBot Core v0.2.0",
     welcomeHeading: "EVABOT NEURAL CYBER-TERMINAL ONLINE",
@@ -706,11 +1650,11 @@ var TRANSLATIONS = {
     secRoles: "4. CORPORATE ROLES & PERSONAS",
     secTelemetry: "5. REAL-TIME SYSTEM TELEMETRY",
     secSecurity: "6. SECURITY & CREDENTIALS",
-    badgeFree: "\u{1F7E2} FREE QUOTA",
-    badgePaid: "\u{1F7E1} PAID / PAYG",
-    badgeActive: "\u{1F7E2} ACTIVE",
-    badgeReady: "\u{1F7E2} READY",
-    badgeStandby: "\u{1F7E1} STANDBY",
+    badgeFree: "[FREE QUOTA]",
+    badgePaid: "[PAID / PAYG]",
+    badgeActive: "[ACTIVE]",
+    badgeReady: "[READY]",
+    badgeStandby: "[STANDBY]",
     provGoogleName: "Google Cloud (Vertex AI & AI Studio)",
     provGoogleDesc: "Native Google DeepMind Gemini and enterprise partner models with low-latency direct API dispatch.",
     provOmniName: "OmniRoute Neural Gateway",
@@ -757,8 +1701,8 @@ var TRANSLATIONS = {
     apiKeyPlaceholder: "AIzaSy...",
     saveKeyBtn: "[ SAVE CREDENTIALS ]",
     clearKeyBtn: "[ USE AMBIENT AUTO-AUTH ]",
-    keyStatusCustom: "\u{1F7E2} CUSTOM KEY ACTIVE",
-    keyStatusAmbient: "\u{1F7E2} GOOGLE AMBIENT AUTH",
+    keyStatusCustom: "[CUSTOM KEY ACTIVE]",
+    keyStatusAmbient: "[GOOGLE AMBIENT AUTH]",
     noticeModelSwitched: "Switched model to",
     noticeRoleSwitched: "Activated corporate role",
     noticeModeSwitched: "Changed operation mode to",
@@ -772,14 +1716,14 @@ var TRANSLATIONS = {
   uk: {
     appTitle: "EVABOT // \u041A\u0406\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B",
     appSubtitle: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u0438\u0439 \u0431\u0430\u0433\u0430\u0442\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u0438\u0439 \u043D\u0435\u0439\u0440\u043E\u0434\u0435\u043A",
-    statusOnline: "\u{1F7E2} \u0412 \u041C\u0415\u0420\u0415\u0416\u0406 // \u041E\u0427\u0406\u041A\u0423\u0412\u0410\u041D\u041D\u042F",
-    statusBusy: "\u{1F7E1} \u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0406\u042F // \u0410\u041A\u0422\u0418\u0412\u041D\u041E",
-    statusError: "\u{1F534} \u041F\u041E\u041C\u0418\u041B\u041A\u0410 // \u041E\u0424\u041B\u0410\u0419\u041D",
+    statusOnline: "[ONLINE] \u0412 \u041C\u0415\u0420\u0415\u0416\u0406 // \u041E\u0427\u0406\u041A\u0423\u0412\u0410\u041D\u041D\u042F",
+    statusBusy: "[ACTIVE] \u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0406\u042F // \u0410\u041A\u0422\u0418\u0412\u041D\u041E",
+    statusError: "[ERROR] \u041F\u041E\u041C\u0418\u041B\u041A\u0410 // \u041E\u0424\u041B\u0410\u0419\u041D",
     controlPanelBtn: "[ \u2193 \u041F\u0410\u041D\u0415\u041B\u042C \u041A\u0415\u0420\u0423\u0412\u0410\u041D\u041D\u042F // \u0421\u0418\u0421\u0422\u0415\u041C\u041D\u0418\u0419 \u0414\u0415\u041A ]",
     returnTerminalBtn: "[ \u2191 \u041F\u041E\u0412\u0415\u0420\u041D\u0423\u0422\u0418\u0421\u042F \u0414\u041E \u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B\u0423 ]",
     clearChatBtn: "[ \u041E\u0427\u0418\u0421\u0422\u0418\u0422\u0418 ]",
     transmitBtn: "[ \u0412\u0406\u0414\u041F\u0420\u0410\u0412\u0418\u0422\u0418 \u21B5 ]",
-    stopBtn: "[ \u0417\u0423\u041F\u0418\u041D\u0418\u0422\u0418 \u{1F7E1} ]",
+    stopBtn: "[ \u0417\u0423\u041F\u0418\u041D\u0418\u0422\u0418 ]",
     inputPlaceholder: "\u0412\u0432\u0435\u0434\u0456\u0442\u044C \u043A\u0456\u0431\u0435\u0440-\u043A\u043E\u043C\u0430\u043D\u0434\u0443 \u0430\u0431\u043E \u0437\u0430\u043F\u0438\u0442 (Enter \u0434\u043B\u044F \u0432\u0456\u0434\u043F\u0440\u0430\u0432\u043A\u0438, Shift+Enter \u0434\u043B\u044F \u043D\u043E\u0432\u043E\u0433\u043E \u0440\u044F\u0434\u043A\u0430)...",
     inputLegend: "Enter: \u0412\u0456\u0434\u043F\u0440\u0430\u0432\u0438\u0442\u0438 \u2022 Shift+Enter: \u041F\u0435\u0440\u0435\u043D\u043E\u0441 \u0440\u044F\u0434\u043A\u0430 \u2022 \u042F\u0434\u0440\u043E EvaBot v0.2.0",
     welcomeHeading: "\u041D\u0415\u0419\u0420\u041E\u041D\u041D\u0418\u0419 \u041A\u0406\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0406\u041D\u0410\u041B EVABOT \u0412 \u041C\u0415\u0420\u0415\u0416\u0406",
@@ -791,11 +1735,11 @@ var TRANSLATIONS = {
     secRoles: "4. \u041A\u041E\u0420\u041F\u041E\u0420\u0410\u0422\u0418\u0412\u041D\u0406 \u0420\u041E\u041B\u0406 \u0422\u0410 \u041F\u0415\u0420\u0421\u041E\u041D\u0418",
     secTelemetry: "5. \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0406\u042F \u0412 \u0420\u0415\u0410\u041B\u042C\u041D\u041E\u041C\u0423 \u0427\u0410\u0421\u0406",
     secSecurity: "6. \u0411\u0415\u0417\u041F\u0415\u041A\u0410 \u0422\u0410 \u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F",
-    badgeFree: "\u{1F7E2} \u0411\u0415\u0417\u041A\u041E\u0428\u0422\u041E\u0412\u041D\u041E",
-    badgePaid: "\u{1F7E1} \u041F\u041B\u0410\u0422\u041D\u041E / PAYG",
-    badgeActive: "\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u041D\u0418\u0419",
-    badgeReady: "\u{1F7E2} \u0413\u041E\u0422\u041E\u0412\u0418\u0419",
-    badgeStandby: "\u{1F7E1} \u041E\u0427\u0406\u041A\u0423\u0412\u0410\u041D\u041D\u042F",
+    badgeFree: "[\u0411\u0415\u0417\u041A\u041E\u0428\u0422\u041E\u0412\u041D\u041E]",
+    badgePaid: "[\u041F\u041B\u0410\u0422\u041D\u041E / PAYG]",
+    badgeActive: "[\u0410\u041A\u0422\u0418\u0412\u041D\u0418\u0419]",
+    badgeReady: "[\u0413\u041E\u0422\u041E\u0412\u0418\u0419]",
+    badgeStandby: "[\u041E\u0427\u0406\u041A\u0423\u0412\u0410\u041D\u041D\u042F]",
     provGoogleName: "Google Cloud (Vertex AI & AI Studio)",
     provGoogleDesc: "\u041E\u0440\u0438\u0433\u0456\u043D\u0430\u043B\u044C\u043D\u0456 \u043C\u043E\u0434\u0435\u043B\u0456 Google DeepMind Gemini \u0442\u0430 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\u0441\u044C\u043A\u0456 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0456 \u043C\u043E\u0434\u0435\u043B\u0456 \u0437 \u043F\u0440\u044F\u043C\u043E\u044E \u0432\u0456\u0434\u043F\u0440\u0430\u0432\u043A\u043E\u044E.",
     provOmniName: "\u041D\u0435\u0439\u0440\u043E\u0448\u043B\u044E\u0437 OmniRoute",
@@ -842,8 +1786,8 @@ var TRANSLATIONS = {
     apiKeyPlaceholder: "AIzaSy...",
     saveKeyBtn: "[ \u0417\u0411\u0415\u0420\u0415\u0413\u0422\u0418 \u041A\u041B\u042E\u0427 ]",
     clearKeyBtn: "[ \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F GOOGLE ]",
-    keyStatusCustom: "\u{1F7E2} \u0412\u041B\u0410\u0421\u041D\u0418\u0419 \u041A\u041B\u042E\u0427 \u0410\u041A\u0422\u0418\u0412\u041D\u0418\u0419",
-    keyStatusAmbient: "\u{1F7E2} \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F GOOGLE",
+    keyStatusCustom: "[\u0412\u041B\u0410\u0421\u041D\u0418\u0419 \u041A\u041B\u042E\u0427 \u0410\u041A\u0422\u0418\u0412\u041D\u0418\u0419]",
+    keyStatusAmbient: "[\u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0406\u042F GOOGLE]",
     noticeModelSwitched: "\u041F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u043C\u043E\u0434\u0435\u043B\u044C \u043D\u0430",
     noticeRoleSwitched: "\u0410\u043A\u0442\u0438\u0432\u043E\u0432\u0430\u043D\u043E \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0443 \u0440\u043E\u043B\u044C",
     noticeModeSwitched: "\u0417\u043C\u0456\u043D\u0435\u043D\u043E \u0440\u0435\u0436\u0438\u043C \u0440\u043E\u0431\u043E\u0442\u0438 \u043D\u0430",
@@ -857,14 +1801,14 @@ var TRANSLATIONS = {
   ru: {
     appTitle: "EVABOT // \u041A\u0418\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B",
     appSubtitle: "\u0410\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u044B\u0439 \u043C\u043D\u043E\u0433\u043E\u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u043D\u044B\u0439 \u043D\u0435\u0439\u0440\u043E\u0434\u0435\u043A",
-    statusOnline: "\u{1F7E2} \u0412 \u0421\u0415\u0422\u0418 // \u041E\u0416\u0418\u0414\u0410\u041D\u0418\u0415",
-    statusBusy: "\u{1F7E1} \u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0418\u042F // \u0410\u041A\u0422\u0418\u0412\u041D\u041E",
-    statusError: "\u{1F534} \u041E\u0428\u0418\u0411\u041A\u0410 // \u041E\u0424\u041B\u0410\u0419\u041D",
+    statusOnline: "[ONLINE] \u0412 \u0421\u0415\u0422\u0418 // \u041E\u0416\u0418\u0414\u0410\u041D\u0418\u0415",
+    statusBusy: "[ACTIVE] \u0413\u0415\u041D\u0415\u0420\u0410\u0426\u0418\u042F // \u0410\u041A\u0422\u0418\u0412\u041D\u041E",
+    statusError: "[ERROR] \u041E\u0428\u0418\u0411\u041A\u0410 // \u041E\u0424\u041B\u0410\u0419\u041D",
     controlPanelBtn: "[ \u2193 \u041A\u041E\u041D\u0422\u0420\u041E\u041B\u042C\u041D\u0410\u042F \u041F\u0410\u041D\u0415\u041B\u042C // \u0421\u0418\u0421\u0422\u0415\u041C\u041D\u042B\u0419 \u0414\u0415\u041A ]",
     returnTerminalBtn: "[ \u2191 \u0412\u0415\u0420\u041D\u0423\u0422\u042C\u0421\u042F \u0412 \u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B ]",
     clearChatBtn: "[ \u041E\u0427\u0418\u0421\u0422\u0418\u0422\u042C ]",
     transmitBtn: "[ \u041E\u0422\u041F\u0420\u0410\u0412\u0418\u0422\u042C \u21B5 ]",
-    stopBtn: "[ \u041E\u0421\u0422\u0410\u041D\u041E\u0412\u0418\u0422\u042C \u{1F7E1} ]",
+    stopBtn: "[ \u041E\u0421\u0422\u0410\u041D\u041E\u0412\u0418\u0422\u042C ]",
     inputPlaceholder: "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u0438\u0431\u0435\u0440-\u043A\u043E\u043C\u0430\u043D\u0434\u0443 \u0438\u043B\u0438 \u0437\u0430\u043F\u0440\u043E\u0441 (Enter \u0434\u043B\u044F \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438, Shift+Enter \u0434\u043B\u044F \u043D\u043E\u0432\u043E\u0439 \u0441\u0442\u0440\u043E\u043A\u0438)...",
     inputLegend: "Enter: \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u2022 Shift+Enter: \u041F\u0435\u0440\u0435\u043D\u043E\u0441 \u0441\u0442\u0440\u043E\u043A\u0438 \u2022 \u042F\u0434\u0440\u043E EvaBot v0.2.0",
     welcomeHeading: "\u041D\u0415\u0419\u0420\u041E\u041D\u041D\u042B\u0419 \u041A\u0418\u0411\u0415\u0420-\u0422\u0415\u0420\u041C\u0418\u041D\u0410\u041B EVABOT \u0412 \u0421\u0415\u0422\u0418",
@@ -876,11 +1820,11 @@ var TRANSLATIONS = {
     secRoles: "4. \u041A\u041E\u0420\u041F\u041E\u0420\u0410\u0422\u0418\u0412\u041D\u042B\u0415 \u0420\u041E\u041B\u0418 \u0418 \u041F\u0415\u0420\u0421\u041E\u041D\u042B",
     secTelemetry: "5. \u0422\u0415\u041B\u0415\u041C\u0415\u0422\u0420\u0418\u042F \u0412 \u0420\u0415\u0410\u041B\u042C\u041D\u041E\u041C \u0412\u0420\u0415\u041C\u0415\u041D\u0418",
     secSecurity: "6. \u0411\u0415\u0417\u041E\u041F\u0410\u0421\u041D\u041E\u0421\u0422\u042C \u0418 \u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F",
-    badgeFree: "\u{1F7E2} \u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u041E",
-    badgePaid: "\u{1F7E1} \u041F\u041B\u0410\u0422\u041D\u041E / PAYG",
-    badgeActive: "\u{1F7E2} \u0410\u041A\u0422\u0418\u0412\u0415\u041D",
-    badgeReady: "\u{1F7E2} \u0413\u041E\u0422\u041E\u0412",
-    badgeStandby: "\u{1F7E1} \u041E\u0416\u0418\u0414\u0410\u041D\u0418\u0415",
+    badgeFree: "[\u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u041E]",
+    badgePaid: "[\u041F\u041B\u0410\u0422\u041D\u041E / PAYG]",
+    badgeActive: "[\u0410\u041A\u0422\u0418\u0412\u0415\u041D]",
+    badgeReady: "[\u0413\u041E\u0422\u041E\u0412]",
+    badgeStandby: "[\u041E\u0416\u0418\u0414\u0410\u041D\u0418\u0415]",
     provGoogleName: "Google Cloud (Vertex AI & AI Studio)",
     provGoogleDesc: "\u041E\u0440\u0438\u0433\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438 Google DeepMind Gemini \u0438 \u043F\u0430\u0440\u0442\u043D\u0435\u0440\u0441\u043A\u0438\u0435 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438 \u043F\u0440\u044F\u043C\u043E\u0433\u043E \u0432\u044B\u0437\u043E\u0432\u0430.",
     provOmniName: "\u041D\u0435\u0439\u0440\u043E\u0448\u043B\u044E\u0437 OmniRoute",
@@ -927,8 +1871,8 @@ var TRANSLATIONS = {
     apiKeyPlaceholder: "AIzaSy...",
     saveKeyBtn: "[ \u0421\u041E\u0425\u0420\u0410\u041D\u0418\u0422\u042C \u041A\u041B\u042E\u0427 ]",
     clearKeyBtn: "[ \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F GOOGLE ]",
-    keyStatusCustom: "\u{1F7E2} \u0421\u041E\u0411\u0421\u0422\u0412\u0415\u041D\u041D\u042B\u0419 \u041A\u041B\u042E\u0427 \u0410\u041A\u0422\u0418\u0412\u0415\u041D",
-    keyStatusAmbient: "\u{1F7E2} \u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F GOOGLE",
+    keyStatusCustom: "[\u0421\u041E\u0411\u0421\u0422\u0412\u0415\u041D\u041D\u042B\u0419 \u041A\u041B\u042E\u0427 \u0410\u041A\u0422\u0418\u0412\u0415\u041D]",
+    keyStatusAmbient: "[\u0410\u0412\u0422\u041E-\u0410\u0412\u0422\u041E\u0420\u0418\u0417\u0410\u0426\u0418\u042F GOOGLE]",
     noticeModelSwitched: "\u041C\u043E\u0434\u0435\u043B\u044C \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0430 \u043D\u0430",
     noticeRoleSwitched: "\u0410\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u0430 \u043A\u043E\u0440\u043F\u043E\u0440\u0430\u0442\u0438\u0432\u043D\u0430\u044F \u0440\u043E\u043B\u044C",
     noticeModeSwitched: "\u0420\u0435\u0436\u0438\u043C \u0440\u0430\u0431\u043E\u0442\u044B \u0438\u0437\u043C\u0435\u043D\u0435\u043D \u043D\u0430",
@@ -1117,6 +2061,13 @@ var EvaBotWebApp = class {
     document.getElementById("header-model-pill")?.addEventListener("click", () => {
       deckSection?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+    const bootAccordion = document.getElementById("accordion-boot");
+    const bootLabel = document.getElementById("boot-toggle-label");
+    bootAccordion?.addEventListener("toggle", () => {
+      if (bootLabel) {
+        bootLabel.textContent = bootAccordion.open ? "[ - COLLAPSE ]" : "[ + EXPAND ]";
+      }
+    });
   }
   async checkHealth() {
     const t0 = performance.now();
@@ -1136,6 +2087,35 @@ var EvaBotWebApp = class {
       this.lastLatencyMs = 999;
     }
     this.updateTelemetryUI();
+    this.fetchBootDiagnostics();
+  }
+  async fetchBootDiagnostics() {
+    try {
+      const res = await fetch(`/api/diagnostics/boot?model=${encodeURIComponent(this.currentModel)}`);
+      if (res.ok) {
+        const report = await res.json();
+        const container = document.getElementById("boot-log-container");
+        if (container && report.steps) {
+          container.innerHTML = `
+            <div class="text-zinc-500 font-bold mb-1">Live dual-server diagnostic probe completed in ${report.totalDurationMs}ms:</div>
+            ${report.steps.map((step) => `
+              <div class="flex items-start gap-2 text-zinc-300 py-0.5">
+                <span class="text-emerald-400 font-bold">[OK]</span>
+                <div class="flex-1">
+                  <div class="flex justify-between items-center">
+                    <span class="text-white font-bold">${step.name}</span>
+                    <span class="text-zinc-500 text-[10px] font-mono">${step.latencyMs}ms</span>
+                  </div>
+                  <div class="text-zinc-400 text-[11px]">${step.details}</div>
+                </div>
+              </div>
+            `).join("")}
+          `;
+        }
+      }
+    } catch (e) {
+      console.warn("Boot diagnostics fetch skipped:", e);
+    }
   }
   startTelemetryLoop() {
     if (this.uptimeInterval) clearInterval(this.uptimeInterval);
@@ -1197,7 +2177,11 @@ var EvaBotWebApp = class {
       "Meta Llama 3 on Google Cloud",
       "Mistral AI on Google Cloud",
       "DeepSeek on Google Cloud",
-      "AI21 Labs & Cohere on Google Cloud"
+      "AI21 Labs & Cohere on Google Cloud",
+      "OmniRoute Daemon Cluster",
+      "OpenRouter Free Models",
+      "OpenRouter Premium",
+      "OpenCode Go Platforms"
     ];
     for (const cat of categories) {
       const models = ModelRegistry.getModelsByCategory(cat);
@@ -1208,7 +2192,7 @@ var EvaBotWebApp = class {
         const opt = document.createElement("option");
         opt.value = m.id;
         const isFree = m.pricing.freeTierStatus.includes("Free");
-        const badge = isFree ? " [\u{1F7E2} FREE]" : " [\u{1F7E1} PAID]";
+        const badge = isFree ? " [FREE]" : " [PAID]";
         opt.textContent = `${m.name}${badge}`;
         if (m.id === this.currentModel) opt.selected = true;
         group.appendChild(opt);
@@ -1271,7 +2255,7 @@ var EvaBotWebApp = class {
     if (headerName) headerName.textContent = m.name;
     const headerBadge = document.getElementById("header-model-badge");
     if (headerBadge) {
-      headerBadge.textContent = isFree ? "\u{1F7E2} FREE" : "\u{1F7E1} PAID";
+      headerBadge.textContent = isFree ? "[FREE]" : "[PAID]";
       headerBadge.className = isFree ? "px-1.5 py-0.2 bg-emerald-950 text-emerald-400 border border-emerald-700 text-[10px] font-bold" : "px-1.5 py-0.2 bg-amber-950 text-amber-400 border border-amber-700 text-[10px] font-bold";
     }
     const specName = document.getElementById("model-spec-name");
@@ -1406,6 +2390,7 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
         body: JSON.stringify({
           message: text,
           model: this.currentModel,
+          provider: this.currentProvider,
           history: historyPayload,
           apiKey: customKey || void 0,
           systemInstruction: this.buildSystemInstruction()
@@ -1466,9 +2451,9 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
     } catch (err) {
       this.updateStatusLight("error");
       if (err.name === "AbortError") {
-        textSpan.innerHTML += '\n<span class="text-amber-400 font-mono text-xs"> [STREAM_HALTED_BY_OPERATOR \u{1F7E1}]</span>';
+        textSpan.innerHTML += '\n<span class="text-amber-400 font-mono text-xs"> [STREAM_HALTED_BY_OPERATOR]</span>';
       } else {
-        textSpan.innerHTML = `<span class="text-rose-500 font-mono text-xs">\u{1F534} TRANSMISSION_ERROR: ${this.escapeHtml(err.message)}</span>`;
+        textSpan.innerHTML = `<span class="text-rose-500 font-mono text-xs">[ERROR] TRANSMISSION_ERROR: ${this.escapeHtml(err.message)}</span>`;
       }
     } finally {
       this.isGenerating = false;
@@ -1538,7 +2523,7 @@ Format your responses with clean cyber-terminal markdown, crisp ASCII tables or 
     const callsign = isUser ? `\u250C\u2500 [${timestamp}] [USER // OPERATOR]` : `\u250C\u2500 [${timestamp}] [EVA // ${this.currentModel.toUpperCase()} // ${this.currentMode.toUpperCase()} // ${this.currentRole.toUpperCase()}]`;
     header.innerHTML = `
       <span class="font-bold ${isUser ? "text-white" : "text-zinc-300"}">${callsign}</span>
-      <span class="text-zinc-600 text-[11px]">${isUser ? "TX_OK" : "RX_OK \u{1F7E2}"}</span>
+      <span class="text-zinc-600 text-[11px]">${isUser ? "TX_OK" : "RX_OK [OK]"}</span>
     `;
     const body = document.createElement("div");
     body.className = "message-body font-mono text-zinc-200 leading-relaxed overflow-x-auto";

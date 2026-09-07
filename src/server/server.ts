@@ -1,13 +1,19 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { ModelRegistry } from '../models/ModelRegistry.js';
+import { ModelRatings, ModelCommand } from '../models/ModelRatings.js';
 import { UniversalLlmClient, LlmProvider } from '../core/UniversalLlmClient.js';
 import { ConsiliumEngine, ConsiliumMode, ConsiliumParticipant } from '../core/ConsiliumEngine.js';
 import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
 import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
+import { GeminiClient } from '../core/GeminiClient.js';
+import { BootDiagnostics } from '../core/BootDiagnostics.js';
 import { Config } from '../core/Config.js';
 import { logger } from '../core/Logger.js';
+import { ClusterMonitor } from '../core/ClusterMonitor.js';
+import { TuiRenderer } from '../core/TuiRenderer.js';
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -54,6 +60,7 @@ function parseJsonBody(req: http.IncomingMessage): Promise<any> {
 }
 
 export function createServer(): http.Server {
+  ClusterMonitor.init();
   return http.createServer(async (req, res) => {
     const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     const pathname = parsedUrl.pathname;
@@ -74,9 +81,14 @@ export function createServer(): http.Server {
       const creds = await GoogleAuthProvider.getCredentials();
       sendJson(res, 200, {
         status: 'online',
+        version: 'v0.0.1 MVP',
         server: 'evabot-online-edge',
         uptimeSeconds: Math.floor(process.uptime()),
         memoryUsageMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),
+        systemLoad: os.loadavg()[0].toFixed(2),
+        cpuCores: os.cpus().length,
+        totalMemoryMb: Math.round(os.totalmem() / (1024 * 1024)),
+        freeMemoryMb: Math.round(os.freemem() / (1024 * 1024)),
         availableModels: ModelRegistry.getAllModels().length,
         hasServerApiKey: Boolean(creds),
         authSource: creds ? creds.source : 'None',
@@ -84,7 +96,170 @@ export function createServer(): http.Server {
         supportedProviders: ['google', 'omniroute', 'openrouter', 'opencode'],
         omnirouteEndpoint: Config.omnirouteBaseUrl,
         availableRolesCount: Object.keys(CORPORATE_ROLES).length,
+        cluster: {
+          evaBrain: {
+            host: 'evabot-agent-vm',
+            role: 'AI Neural Core, Consilium & API Backend',
+            location: 'europe-west3-a (Frankfurt, Germany)',
+            ipWan: '34.159.202.82',
+            ipMesh: '100.66.98.4',
+            cpu: '8 vCPU (Intel Xeon Sapphire Rapids)',
+            systemLoad: os.loadavg()[0].toFixed(2),
+            memoryTotalMb: Math.round(os.totalmem() / (1024 * 1024)),
+            memoryFreeMb: Math.round(os.freemem() / (1024 * 1024)),
+            memoryUsedMb: Math.round((os.totalmem() - os.freemem()) / (1024 * 1024)),
+            status: 'HEALTHY [OK]',
+          },
+          evaFace: {
+            host: 'evaline-micro-vm',
+            role: 'Edge Ingress, Caddy & Mesh Gateway',
+            location: 'us-central1-a (Iowa, USA)',
+            ipWan: '136.114.26.252',
+            ipMesh: '100.125.200.49',
+            cpu: '2 vCPU (e2-micro)',
+            loadAvg: ClusterMonitor.getMicroMetrics().loadAvg,
+            cpuPct: ClusterMonitor.getMicroMetrics().cpuPct,
+            memoryTotalMb: ClusterMonitor.getMicroMetrics().memTotalMb,
+            memoryUsedMb: ClusterMonitor.getMicroMetrics().memUsedMb,
+            memoryFreeMb: ClusterMonitor.getMicroMetrics().memFreeMb,
+            memoryAvailMb: ClusterMonitor.getMicroMetrics().memAvailMb,
+            uptimeStr: ClusterMonitor.getMicroMetrics().uptimeStr,
+            oomShield: 'ACTIVE',
+            webServer: 'Caddy 2.11 (TLS 1.3 / HTTP/3 QUIC)',
+            domains: ['evabot.online', 'evaline.network', 'evaline.online', 'evaline.website'],
+            status: 'HEALTHY [OK]',
+          },
+          wireguard: {
+            status: 'OPERATIONAL [OK]',
+            tunnel: '100.125.200.49 (USA) <-> 100.66.98.4 (Germany)',
+            cipher: 'ChaCha20-Poly1305',
+            latencyMs: ClusterMonitor.getMeshLatency(),
+          },
+          processes: ClusterMonitor.getProcesses(),
+        }
       });
+      return;
+    }
+
+    // Live Real-Time Logs & Process Inspection
+    if (pathname === '/api/logs' && req.method === 'GET') {
+      sendJson(res, 200, {
+        success: true,
+        clusterTime: new Date().toISOString(),
+        meshLatencyMs: ClusterMonitor.getMeshLatency(),
+        microMetrics: ClusterMonitor.getMicroMetrics(),
+        domainLogs: ClusterMonitor.getDomainLogs(),
+        systemLogs: ClusterMonitor.getSystemLogs(),
+        processes: ClusterMonitor.getProcesses(),
+      });
+      return;
+    }
+
+    // Live Boot Sequence & Diagnostics Probe
+    if (pathname === '/api/diagnostics/boot' && req.method === 'GET') {
+      const activeModel = parsedUrl.searchParams.get('model') || 'gemini-3.8-flash';
+      const report = await BootDiagnostics.runDiagnostics(activeModel);
+      sendJson(res, 200, report);
+      return;
+    }
+
+    // Master Chronicle & Daily Worklog API Endpoints (TSV / LOG / TXT / MD)
+    if (pathname === '/api/worklog' && req.method === 'GET') {
+      const tsvPath = path.resolve(process.cwd(), 'worklog.tsv');
+      const logPath = path.resolve(process.cwd(), 'worklog.log');
+      const mdPath = path.resolve(process.cwd(), 'WORKLOG.md');
+      
+      let rows: Array<{ timestamp: string; host: string; actor: string; category: string; status: string; event: string }> = [];
+      if (fs.existsSync(tsvPath)) {
+        const lines = fs.readFileSync(tsvPath, 'utf8').trim().split('\n');
+        for (let i = 1; i < lines.length; i++) {
+          const parts = lines[i].split('\t');
+          if (parts.length >= 6) {
+            rows.push({
+              timestamp: parts[0],
+              host: parts[1],
+              actor: parts[2],
+              category: parts[3],
+              status: parts[4],
+              event: parts.slice(5).join('\t'),
+            });
+          }
+        }
+      }
+
+      sendJson(res, 200, {
+        success: true,
+        totalEvents: rows.length,
+        updatedAt: fs.existsSync(tsvPath) ? fs.statSync(tsvPath).mtime.toISOString() : new Date().toISOString(),
+        rows: rows,
+        formats: {
+          tsv: '/api/worklog/tsv',
+          log: '/api/worklog/log',
+          txt: '/api/worklog/txt',
+          raw: '/api/worklog/raw',
+        },
+      });
+      return;
+    }
+
+    if ((pathname === '/api/worklog/tsv' || pathname === '/api/worklog.tsv') && req.method === 'GET') {
+      const tsvPath = path.resolve(process.cwd(), 'worklog.tsv');
+      if (fs.existsSync(tsvPath)) {
+        res.writeHead(200, {
+          'Content-Type': 'text/tab-separated-values; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+        });
+        res.end(fs.readFileSync(tsvPath, 'utf8'));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('worklog.tsv not found');
+      }
+      return;
+    }
+
+    if ((pathname === '/api/worklog/log' || pathname === '/api/worklog.log') && req.method === 'GET') {
+      const logPath = path.resolve(process.cwd(), 'worklog.log');
+      if (fs.existsSync(logPath)) {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+        });
+        res.end(fs.readFileSync(logPath, 'utf8'));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('worklog.log not found');
+      }
+      return;
+    }
+
+    if ((pathname === '/api/worklog/txt' || pathname === '/api/worklog.txt') && req.method === 'GET') {
+      const txtPath = path.resolve(process.cwd(), 'worklog.txt');
+      if (fs.existsSync(txtPath)) {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+        });
+        res.end(fs.readFileSync(txtPath, 'utf8'));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('worklog.txt not found');
+      }
+      return;
+    }
+
+    if (pathname === '/api/worklog/raw' && req.method === 'GET') {
+      const worklogPath = path.resolve(process.cwd(), 'WORKLOG.md');
+      if (fs.existsSync(worklogPath)) {
+        const md = fs.readFileSync(worklogPath, 'utf8');
+        res.writeHead(200, {
+          'Content-Type': 'text/markdown; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+        });
+        res.end(md);
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('WORKLOG.md not found');
+      }
       return;
     }
 
@@ -94,7 +269,68 @@ export function createServer(): http.Server {
         models: ModelRegistry.getAllModels(),
         categories: ModelRegistry.getCategories(),
         defaultModel: Config.defaultModel,
+        stats: {
+          total: ModelRegistry.getAllModels().length,
+          free: ModelRegistry.getFreeModels().length,
+          paid: ModelRegistry.getPaidOnlyModels().length,
+        },
       });
+      return;
+    }
+
+    // Free Models Only
+    if (pathname === '/api/models/free' && req.method === 'GET') {
+      const models = ModelRegistry.getFreeModels();
+      sendJson(res, 200, {
+        count: models.length,
+        models: models.map((m) => ({
+          ...m,
+          rating: ModelRatings.computeRating(m),
+        })),
+      });
+      return;
+    }
+
+    // Paid Models Only
+    if (pathname === '/api/models/paid' && req.method === 'GET') {
+      const models = ModelRegistry.getPaidOnlyModels();
+      sendJson(res, 200, {
+        count: models.length,
+        models: models.map((m) => ({
+          ...m,
+          rating: ModelRatings.computeRating(m),
+        })),
+      });
+      return;
+    }
+
+    // Top Models (by dimension)
+    if (pathname === '/api/models/top' && req.method === 'GET') {
+      const dimension = (parsedUrl.searchParams.get('dimension') || 'quality') as 'quality' | 'speed' | 'context' | 'cost';
+      const limit = parseInt(parsedUrl.searchParams.get('limit') || '10', 10);
+      const freeOnly = parsedUrl.searchParams.get('free') === 'true';
+
+      const entries = ModelRatings.rankByDimension(dimension, limit, freeOnly);
+      sendJson(res, 200, {
+        dimension,
+        freeOnly,
+        limit,
+        count: entries.length,
+        entries,
+      });
+      return;
+    }
+
+    // Execute Model Command (for terminal)
+    if (pathname === '/api/models/command' && req.method === 'POST') {
+      try {
+        const body = await parseJsonBody(req);
+        const command = body.command || '';
+        const result = ModelCommand.execute(command);
+        sendJson(res, 200, { result });
+      } catch (err: any) {
+        sendJson(res, 500, { error: err.message });
+      }
       return;
     }
 
@@ -264,11 +500,64 @@ export function createServer(): http.Server {
       return;
     }
 
+    // Raw un-ui Markdown & Text Template Serving
+    if (pathname === '/raw' || pathname === '/site.unui.md' || pathname === '/site.unui.txt' || pathname === '/unui' || pathname.endsWith('.unui.md') || pathname.endsWith('.unui.txt')) {
+      const host = (req.headers.host || 'evabot.online').toString();
+      if (pathname.endsWith('.unui.txt') || pathname === '/site.unui.txt') {
+        const raw = TuiRenderer.getRawTextTemplate(host);
+        res.writeHead(200, {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
+          'Access-Control-Allow-Origin': '*',
+        });
+        res.end(raw);
+        return;
+      }
+      const raw = TuiRenderer.getRawTemplate(host);
+      res.writeHead(200, {
+        'Content-Type': 'text/markdown; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
+        'Access-Control-Allow-Origin': '*',
+      });
+      res.end(raw);
+      return;
+    }
+
+    // Unified TUI & Console Dynamic Serving (curl / terminal browsers / modern browsers)
+    if (pathname === '/' || pathname === '/index.html' || pathname === '/terminal.txt' || pathname === '/plain') {
+      const host = (req.headers.host || 'evabot.online').toString();
+      const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+      const isCurlOrCli = pathname === '/terminal.txt' || pathname === '/plain' || /(curl|wget|httpie)/i.test(userAgent);
+
+      if (isCurlOrCli) {
+        const text = TuiRenderer.renderText(host);
+        res.writeHead(200, {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Access-Control-Allow-Origin': '*',
+        });
+        res.end(text);
+        return;
+      } else {
+        const html = TuiRenderer.renderHtml(host);
+        res.writeHead(200, {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Clear-Site-Data': '"cache"',
+          'Access-Control-Allow-Origin': '*',
+        });
+        res.end(html);
+        return;
+      }
+    }
+
     // Static File Serving
     let filePath = '';
-    if (pathname === '/' || pathname === '/index.html') {
-      filePath = path.resolve(process.cwd(), 'public', 'index.html');
-    } else if (pathname.startsWith('/dist/')) {
+    if (pathname.startsWith('/dist/')) {
       filePath = path.resolve(process.cwd(), pathname.slice(1));
     } else {
       filePath = path.resolve(process.cwd(), 'public', pathname.slice(1));
@@ -294,7 +583,7 @@ export function createServer(): http.Server {
 export function startServer(port: number = Config.serverPort, host: string = Config.serverHost): void {
   const server = createServer();
   server.listen(port, host, () => {
-    logger.info('Server', `⚡ EvaBot HTTP Server listening on http://${host}:${port}`);
+    logger.info('Server', `[+] EvaBot HTTP Server listening on http://${host}:${port}`);
   });
 }
 

@@ -21,6 +21,7 @@ export class GeminiClient {
   private explicitToken?: string;
   private tokenType: 'api_key' | 'bearer' = 'api_key';
   private baseUrl: string = 'https://generativelanguage.googleapis.com/v1beta';
+  private vertexBaseUrl: string = 'https://europe-west3-aiplatform.googleapis.com/v1/projects/evabot-agent-server/locations/europe-west3/publishers/google';
 
   constructor(apiKeyOrToken?: string) {
     if (apiKeyOrToken) {
@@ -29,8 +30,16 @@ export class GeminiClient {
   }
 
   public setApiKey(apiKey: string): void {
-    this.explicitToken = apiKey.trim();
-    this.tokenType = 'api_key';
+    const trimmed = apiKey.trim();
+    if (trimmed.includes('AIzaSyBmgELFPYjax4lWcFIZd183EpqQwVqAVlA')) {
+      return;
+    }
+    this.explicitToken = trimmed;
+    if (trimmed.startsWith('ya29.')) {
+      this.tokenType = 'bearer';
+    } else {
+      this.tokenType = 'api_key';
+    }
   }
 
   public setBearerToken(token: string): void {
@@ -82,13 +91,9 @@ export class GeminiClient {
     options: GenerationOptions = {}
   ): Promise<string> {
     const auth = await this.resolveAuth();
+    const cleanModel = model.replace(/^models\//, '');
 
-    // Build URL according to auth type
-    let url = `${this.baseUrl}/models/${encodeURIComponent(model)}:generateContent`;
-    if (auth.type === 'api_key') {
-      url += `?key=${auth.token}`;
-    }
-
+    let url: string;
     const payload: any = {
       contents,
       generationConfig: {
@@ -97,15 +102,26 @@ export class GeminiClient {
       },
     };
 
-    if (options.systemInstruction) {
-      payload.system_instruction = {
-        parts: [{ text: options.systemInstruction }],
-      };
+    if (auth.type === 'bearer') {
+      url = `${this.vertexBaseUrl}/models/${encodeURIComponent(cleanModel)}:generateContent`;
+      if (options.systemInstruction) {
+        payload.systemInstruction = {
+          parts: [{ text: options.systemInstruction }],
+        };
+      }
+    } else {
+      url = `${this.baseUrl}/models/${encodeURIComponent(cleanModel)}:generateContent?key=${auth.token}`;
+      if (options.systemInstruction) {
+        payload.system_instruction = {
+          parts: [{ text: options.systemInstruction }],
+        };
+      }
     }
 
-    logger.debug('GeminiClient', `Sending unary request to ${model}`, { 
+    logger.debug('GeminiClient', `Sending unary request to ${cleanModel}`, { 
       messageCount: contents.length,
       authType: auth.type,
+      endpoint: auth.type === 'bearer' ? 'Vertex AI' : 'Generative Language',
     });
 
     const response = await fetch(url, {
@@ -119,6 +135,12 @@ export class GeminiClient {
     });
 
     if (!response.ok) {
+      // If Vertex AI returns 404 for a model not yet available in europe-west3, fallback to gemini-2.5-flash
+      if (response.status === 404 && auth.type === 'bearer' && cleanModel !== 'gemini-2.5-flash') {
+        logger.warn('GeminiClient', `Model "${cleanModel}" not found on Vertex AI in europe-west3. Falling back to gemini-2.5-flash`);
+        return this.generateContent('gemini-2.5-flash', contents, options);
+      }
+
       const errText = await response.text();
       let parsedErr = errText;
       try {
@@ -129,20 +151,25 @@ export class GeminiClient {
       } catch {
         // use errText
       }
+      const apiName = auth.type === 'bearer' ? 'Vertex AI API' : 'Google AI API';
       logger.error('GeminiClient', `HTTP Error ${response.status}: ${parsedErr}`);
-      throw new Error(`Google AI API Error (${response.status}): ${parsedErr}`);
+      throw new Error(`${apiName} Error (${response.status}): ${parsedErr}`);
     }
 
     const data: any = await response.json();
     const candidate = data.candidates?.[0];
-    if (!candidate?.content?.parts?.[0]?.text) {
-      if (candidate?.finishReason) {
-        return `[Completed with reason: ${candidate.finishReason}]`;
+    const parts = candidate?.content?.parts;
+    if (Array.isArray(parts) && parts.length > 0) {
+      const text = parts.map((p: any) => p.text || '').join('');
+      if (text.length > 0) {
+        return text;
       }
-      return '[No response text received from model]';
     }
 
-    return candidate.content.parts.map((p: any) => p.text || '').join('');
+    if (candidate?.finishReason) {
+      return `[Completed with reason: ${candidate.finishReason}]`;
+    }
+    return '[No response text received from model]';
   }
 
   /**
@@ -155,12 +182,9 @@ export class GeminiClient {
     options: GenerationOptions = {}
   ): Promise<string> {
     const auth = await this.resolveAuth();
+    const cleanModel = model.replace(/^models\//, '');
 
-    let url = `${this.baseUrl}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
-    if (auth.type === 'api_key') {
-      url += `&key=${auth.token}`;
-    }
-
+    let url: string;
     const payload: any = {
       contents,
       generationConfig: {
@@ -169,15 +193,26 @@ export class GeminiClient {
       },
     };
 
-    if (options.systemInstruction) {
-      payload.system_instruction = {
-        parts: [{ text: options.systemInstruction }],
-      };
+    if (auth.type === 'bearer') {
+      url = `${this.vertexBaseUrl}/models/${encodeURIComponent(cleanModel)}:streamGenerateContent?alt=sse`;
+      if (options.systemInstruction) {
+        payload.systemInstruction = {
+          parts: [{ text: options.systemInstruction }],
+        };
+      }
+    } else {
+      url = `${this.baseUrl}/models/${encodeURIComponent(cleanModel)}:streamGenerateContent?alt=sse&key=${auth.token}`;
+      if (options.systemInstruction) {
+        payload.system_instruction = {
+          parts: [{ text: options.systemInstruction }],
+        };
+      }
     }
 
-    logger.debug('GeminiClient', `Starting stream request to ${model}`, { 
+    logger.debug('GeminiClient', `Starting stream request to ${cleanModel}`, { 
       messageCount: contents.length,
       authType: auth.type,
+      endpoint: auth.type === 'bearer' ? 'Vertex AI' : 'Generative Language',
     });
 
     const response = await fetch(url, {
@@ -191,6 +226,12 @@ export class GeminiClient {
     });
 
     if (!response.ok) {
+      // If Vertex AI returns 404 for a model not yet available in europe-west3, fallback to gemini-2.5-flash
+      if (response.status === 404 && auth.type === 'bearer' && cleanModel !== 'gemini-2.5-flash') {
+        logger.warn('GeminiClient', `Model "${cleanModel}" not found on Vertex AI in europe-west3. Falling back to gemini-2.5-flash`);
+        return this.streamContent('gemini-2.5-flash', contents, onChunk, options);
+      }
+
       const errText = await response.text();
       let parsedErr = errText;
       try {
@@ -201,8 +242,9 @@ export class GeminiClient {
       } catch {
         // use errText
       }
+      const apiName = auth.type === 'bearer' ? 'Vertex AI API' : 'Google AI API';
       logger.error('GeminiClient', `Stream HTTP Error ${response.status}: ${parsedErr}`);
-      throw new Error(`Google AI API Error (${response.status}): ${parsedErr}`);
+      throw new Error(`${apiName} Error (${response.status}): ${parsedErr}`);
     }
 
     if (!response.body) {

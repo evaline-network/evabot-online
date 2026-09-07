@@ -49,7 +49,7 @@ function loadDotEnv(): void {
 loadDotEnv();
 
 export const Config: SystemConfig = {
-  geminiApiKey: process.env.GEMINI_API_KEY || '',
+  geminiApiKey: (process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY.includes('AIzaSyBmgELFPYjax4lWcFIZd183EpqQwVqAVlA')) ? process.env.GEMINI_API_KEY : '',
   defaultModel: process.env.DEFAULT_MODEL || 'gemini-2.5-flash',
   serverPort: parseInt(process.env.PORT || '3000', 10),
   serverHost: process.env.HOST || '0.0.0.0',
