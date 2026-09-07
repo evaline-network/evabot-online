@@ -24,9 +24,10 @@ import { UniversalLlmClient } from '../core/UniversalLlmClient.js';
 import { ConsiliumEngine, ConsiliumMode, ConsiliumProgressEvent } from '../core/ConsiliumEngine.js';
 import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
 import { ClusterMonitor } from '../core/ClusterMonitor.js';
-import { I18nEngine } from '../core/I18nEngine.js';
+import { I18nEngine, stripEmoji } from '../core/I18nEngine.js';
 import { isDebugOn, startSpan, renderDebugFooter } from '../core/OpLog.js';
 import { CloudTTS } from '../core/CloudTTS.js';
+import { DeveloperMode } from '../core/DeveloperMode.js';
 
 // ANSI terminal color palette (Minimalist B&W + Traffic Light standard)
 const C = {
@@ -65,6 +66,8 @@ const accordions: AccordionState = {
 let lastDiagnosticReport: BootDiagnosticReport | null = null;
 let currentRole = 'general_assistant';
 let currentMode: ConsiliumMode = 'solo';
+// Emoji mode (task 1: evabot_emoji=off by default → strip emoji from output).
+let emojiStripOn = true;
 
 /**
  * ANSI Terminal Markdown Renderer for batch text
@@ -197,8 +200,8 @@ async function runAndPrintBootSequence(activeModel: string): Promise<void> {
   console.clear();
   console.log(`
 ${C.bold}${C.white}┌────────────────────────────────────────────────────────────────────────────┐
-│  ⚡ EVABOT ONLINE v0.0.1 MVP // CYBER-TERMINAL BOOT SEQUENCE              │
-│  Hybrid Architecture: Web Server (Face) ◄──► Agent Server (Brain)          │
+│  EVABOT ONLINE v0.0.1 MVP // CYBER-TERMINAL BOOT SEQUENCE              │
+│  Hybrid Architecture: Web Server (Face) ── Agent Server (Brain)          │
 └────────────────────────────────────────────────────────────────────────────┘${C.reset}
 `);
 
@@ -252,7 +255,7 @@ function renderDashboard(session: ChatSession): void {
   const ruBadge = lang === 'ru' ? `${C.green}${C.bold}[RU]${C.reset}` : 'RU';
 
   // Line 1: Single dot indicator, project name, version, status, latency
-  console.log(`${C.green}●${C.reset} ${C.bold}${C.white}EvaBot v0.0.1${C.reset}  ${C.green}${s.statusOnline}${C.reset}  ${C.gray}│${C.reset} ${s.ping} ${C.green}5ms${C.reset}  ${C.gray}│${C.reset} ${s.mesh} ${C.green}${meshLat}ms${C.reset}  ${C.gray}│${C.reset} ${s.live} ${C.green}∿∿∿${C.reset}`);
+  console.log(`${C.green}●${C.reset} ${C.bold}${C.white}EvaBot v0.0.1${C.reset}  ${C.green}${s.statusOnline}${C.reset}  ${C.gray}│${C.reset} ${s.ping} ${C.green}5ms${C.reset}  ${C.gray}│${C.reset} ${s.mesh} ${C.green}${meshLat}ms${C.reset}  ${C.gray}│${C.reset} ${s.live} ${C.green}${C.reset}`);
   // Line 2: Active model, tier, mode, model pool count, lang
   console.log(`${C.gray}${s.model}${C.reset} ${C.bold}${C.white}${session.getModel()}${C.reset} ${tierBadge}  ${C.gray}${s.mode}${C.reset} ${currentMode}  ${C.gray}${s.pool ? 'Pool:' : 'Pool:'}${C.reset} ${totalModels} models (/models)  ${C.gray}${s.lang}${C.reset} ${enBadge} ${ukBadge} ${ruBadge}`);
   // Line 3: System command list
@@ -260,7 +263,7 @@ function renderDashboard(session: ChatSession): void {
   // Line 4: Connected databases
   console.log(`${C.gray}${s.databasesLabel}${C.reset} ${C.green}${s.databasesValue}${C.reset}`);
   // Line 5: Live server cluster load telemetry with ASCII bars
-  console.log(`${C.gray}${s.loadLabel}${C.reset} Brain(Frankfurt) CPU ${C.green}[${makeBar(bCpuPct, 8)}]${C.reset} ${bCpuPct}% RAM ${C.green}[${makeBar(ramPct, 8)}]${C.reset} ${bUsedMem}/${bTotMem}GB (${ramPct}%) │ Face(Iowa) CPU ${C.green}[${makeBar(micro.cpuPct, 6)}]${C.reset} ${micro.cpuPct}% RAM ${C.green}[${makeBar(Math.round((micro.memUsedMb / (micro.memTotalMb || 1024)) * 100), 6)}]${C.reset} ${micro.memUsedMb}MB │ ${C.red}♥${C.reset} 72bpm\n`);
+  console.log(`${C.gray}${s.loadLabel}${C.reset} Brain(Frankfurt) CPU ${C.green}[${makeBar(bCpuPct, 8)}]${C.reset} ${bCpuPct}% RAM ${C.green}[${makeBar(ramPct, 8)}]${C.reset} ${bUsedMem}/${bTotMem}GB (${ramPct}%) │ Face(Iowa) CPU ${C.green}[${makeBar(micro.cpuPct, 6)}]${C.reset} ${micro.cpuPct}% RAM ${C.green}[${makeBar(Math.round((micro.memUsedMb / (micro.memTotalMb || 1024)) * 100), 6)}]${C.reset} ${micro.memUsedMb}MB │ ${C.red}*${C.reset} 72bpm\n`);
   // System greeting with timestamp
   console.log(`${C.gray}${getTimeStr()}${C.reset} ${C.yellow}system :${C.reset} ${s.greeting}\n`);
 }
@@ -292,6 +295,13 @@ ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/say <текст>${C.reset}           Озвучить текст через Google Cloud TTS → /tmp/evabot-say.mp3 (/скажи, /сказать)
   ${C.cyan}/clear${C.reset}                 Очистить историю сообщений
   ${C.cyan}/boot${C.reset}                  Повторить аппаратную самодиагностику двух серверов
+  ${C.cyan}/sys${C.reset}                   Самоідентифікація системи: модель, кластер, компанія, БЗ (/система)
+  ${C.cyan}/voices [uk|ru|en]${C.reset}     Каталог голосів TTS: Chirp3-HD + Wavenet (free), стать, поточні Єва/Адам
+  ${C.cyan}/voices set eva|adam <голос>${C.reset} Змінити голос персони (free-родини), дані: data/voice-prefs.json
+  ${C.cyan}/settings${C.reset}              Таблиця налаштувань: мова, модель, debug, TTS/STT/переклад ліміти (/налаштування)
+  ${C.cyan}/agents${C.reset}                Ростер агентів: 18 корпоративних ролей + 10 вузлів Сефірот (/агенти, /рота)
+  ${C.cyan}/emoji [on|off]${C.reset}        Емодзі у виводі (off = вирізати, за замовчуванням)
+  ${C.cyan}/developer [unlock|status|lock]${C.reset} Режим розробника за паролем (EVADEV_PASSWORD, TTL 2 год)
   ${C.cyan}/exit, /quit${C.reset}           Выйти из терминала
 `);
 }
@@ -330,11 +340,11 @@ async function handleConsiliumRun(mode: ConsiliumMode, prompt: string): Promise<
       synthesizerModel: 'gemini-2.5-pro',
       useKnowledgeBase: true,
       onProgress: (evt: ConsiliumProgressEvent) => {
-        console.log(`  ${C.cyan}▸ [${evt.type.toUpperCase()}]${C.reset} ${evt.message || ''}`);
+        console.log(`  ${C.cyan} [${evt.type.toUpperCase()}]${C.reset} ${evt.message || ''}`);
       }
     });
 
-    console.log(`\n${C.green}✔ ${mode.toUpperCase()} ЗАВЕРШЕН [${result.durationMs}ms]${C.reset}\n`);
+    console.log(`\n${C.green}[OK] ${mode.toUpperCase()} ЗАВЕРШЕН [${result.durationMs}ms]${C.reset}\n`);
     for (const turn of result.turns) {
       console.log(`${C.bold}${C.cyan}┌─ [${turn.name.toUpperCase()}] (${turn.model}) ──${C.reset}`);
       console.log(renderTerminalMarkdown(turn.content));
@@ -343,13 +353,13 @@ async function handleConsiliumRun(mode: ConsiliumMode, prompt: string): Promise<
 
     if (result.synthesis) {
       console.log(`${C.bold}${C.green}╔══════════════════════════════════════════════════════════════════════════════╗${C.reset}`);
-      console.log(`${C.bold}${C.green}║                   [★] ИТОГОВЫЙ КОНСЕНСУС-ОТЧЕТ ЭКСПЕРТОВ                     ║${C.reset}`);
+      console.log(`${C.bold}${C.green}║                   [] ИТОГОВЫЙ КОНСЕНСУС-ОТЧЕТ ЭКСПЕРТОВ                     ║${C.reset}`);
       console.log(`${C.bold}${C.green}╚══════════════════════════════════════════════════════════════════════════════╝${C.reset}`);
       console.log(renderTerminalMarkdown(result.synthesis));
       console.log(`\n${C.gray}Синтезировано консилиум-арбитром на базе gemini-2.5-pro${C.reset}\n`);
     }
   } catch (err: any) {
-    console.log(`${C.red}✖ Ошибка консилиума: ${err.message}${C.reset}`);
+    console.log(`${C.red}[X] Ошибка консилиума: ${err.message}${C.reset}`);
   }
 }
 
@@ -368,15 +378,15 @@ async function handleSay(arg: string): Promise<void> {
     try {
       fs.writeFileSync('/tmp/evabot-say.mp3', new Uint8Array(Buffer.from(result.base64Audio, 'base64')));
       const sizeKb = (fs.statSync('/tmp/evabot-say.mp3').size / 1024).toFixed(1);
-      console.log(`${C.green}✔ Аудио сохранено: /tmp/evabot-say.mp3 (${sizeKb} KB)${C.reset}`);
+      console.log(`${C.green}[OK] Аудио сохранено: /tmp/evabot-say.mp3 (${sizeKb} KB)${C.reset}`);
       console.log(`  ${C.gray}Голос: ${result.voice} | символов: ${result.charCount}${result.cached ? ' [кэш]' : ''} | осталось символов в этом месяце: ${result.charsLeftThisMonth}${C.reset}`);
     } catch (err: any) {
-      console.log(`${C.red}✖ Не удалось сохранить файл: ${err.message}${C.reset}`);
+      console.log(`${C.red}[X] Не удалось сохранить файл: ${err.message}${C.reset}`);
     }
   } else if (result.overCap) {
-    console.log(`${C.yellow}⚠ ${result.error}${C.reset}`);
+    console.log(`${C.yellow}[WRN] ${result.error}${C.reset}`);
   } else {
-    console.log(`${C.red}✖ TTS недоступен: ${result.error}${C.reset}`);
+    console.log(`${C.red}[X] TTS недоступен: ${result.error}${C.reset}`);
   }
 }
 
@@ -392,7 +402,7 @@ async function handleListen(arg: string): Promise<void> {
   }
   const filePath = path.resolve(arg);
   if (!fs.existsSync(filePath)) {
-    console.log(`${C.red}✖ Файл не найден: ${filePath}${C.reset}`);
+    console.log(`${C.red}[X] Файл не найден: ${filePath}${C.reset}`);
     return;
   }
   let audio: Buffer = fs.readFileSync(filePath);
@@ -405,7 +415,7 @@ async function handleListen(arg: string): Promise<void> {
     const { convertToFlac16k } = await import('../core/CloudSTT.js');
     const flac = convertToFlac16k(audio);
     if (!flac) {
-      console.log(`${C.red}✖ Не удалось конвертировать ${ext || 'файл'} в FLAC через ffmpeg.${C.reset}`);
+      console.log(`${C.red}[X] Не удалось конвертировать ${ext || 'файл'} в FLAC через ffmpeg.${C.reset}`);
       return;
     }
     audio = flac;
@@ -415,14 +425,25 @@ async function handleListen(arg: string): Promise<void> {
   console.log(`${C.gray}[*] Распознавание речи (${lang}, модель latest_long, only-free cap 50 мин/мес)...${C.reset}`);
   const result = await transcribeVoiceWithFallback(audio, { lang, encoding: encoding || 'OGG_OPUS' });
   if (result.ok && result.transcript) {
-    console.log(`${C.green}✔ Распознано (уверенность ${(result.confidence * 100).toFixed(0)}%, billed ${result.secondsBilled}s${result.usedFallbackFlac ? ', FLAC fallback' : ''}):${C.reset}`);
+    console.log(`${C.green}[OK] Распознано (уверенность ${(result.confidence * 100).toFixed(0)}%, billed ${result.secondsBilled}s${result.usedFallbackFlac ? ', FLAC fallback' : ''}):${C.reset}`);
     console.log(result.transcript);
   } else {
-    console.log(`${C.red}✖ Ошибка распознавания: ${result.error}${C.reset}`);
+    console.log(`${C.red}[X] Ошибка распознавания: ${result.error}${C.reset}`);
   }
 }
 
 async function main(): Promise<void> {
+  // Defensive emoji renderer (default ON = evabot_emoji=off): every byte the
+  // CLI prints passes through stripEmoji unless /emoji on disables it.
+  const rawStdoutWrite = process.stdout.write.bind(process.stdout);
+  (process.stdout as unknown as { write: (...args: unknown[]) => boolean }).write =
+    function (...args: unknown[]): boolean {
+      if (emojiStripOn && typeof args[0] === 'string') {
+        args[0] = stripEmoji(args[0]);
+      }
+      return rawStdoutWrite(...(args as [string]));
+    };
+
   // Smartest model auto-selection at entry with ranked fallback
   const smartest = ModelRatings.getSmartestFreeModel();
   const initialModel = smartest ? smartest.id : 'gemini-2.5-pro';
@@ -477,7 +498,7 @@ async function main(): Promise<void> {
         case '/locale': {
           const res = I18nEngine.setLocale(arg || 'en');
           renderDashboard(session);
-          console.log(`${C.green}✔ ${res.message}${C.reset}`);
+          console.log(`${C.green}[OK] ${res.message}${C.reset}`);
           break;
         }
 
@@ -511,8 +532,35 @@ async function main(): Promise<void> {
         case '/debug':
         case '/log':
         case '/monitor':
+        case '/sys':
           console.log(ModelCommand.execute(input));
           break;
+
+        case '/developer':
+          // RAW input keeps the password casing (execute → handleDeveloper
+          // parses the original string, normalizeCommand lowercases).
+          DeveloperMode.setActiveSession('cli');
+          console.log(ModelCommand.execute(input));
+          DeveloperMode.clearActiveSession();
+          break;
+          console.log(ModelCommand.execute(input));
+          break;
+
+        case '/voices':
+        case '/settings':
+        case '/agents':
+          console.log(ModelCommand.execute(input));
+          break;
+
+        case '/emoji': {
+          if (arg === 'on') { emojiStripOn = false; }
+          else if (arg === 'off') { emojiStripOn = true; }
+          else { emojiStripOn = !emojiStripOn; }
+          console.log(emojiStripOn
+            ? '[OK] Emoji mode OFF — емодзі вирізаються з виводу (за замовчуванням).'
+            : '[OK] Emoji mode ON — емодзі відображаються як є.');
+          break;
+        }
 
         case '/news':
           console.log(await ModelCommand.executeAsync(input));
@@ -535,19 +583,19 @@ async function main(): Promise<void> {
             console.log(`${C.yellow}Использование: /model <id> (напр. /model gemini-2.5-flash)${C.reset}`);
           } else if (ModelRegistry.isValidModel(arg)) {
             session.setModel(arg);
-            console.log(`${C.green}✔ Активная модель переключена на: ${C.bold}${arg}${C.reset}`);
+            console.log(`${C.green}[OK] Активная модель переключена на: ${C.bold}${arg}${C.reset}`);
           } else {
-            console.log(`${C.red}✖ Неизвестная модель: ${arg}. Используйте /models для просмотра.${C.reset}`);
+            console.log(`${C.red}[X] Неизвестная модель: ${arg}. Используйте /models для просмотра.${C.reset}`);
           }
           break;
 
         case '/mode':
           if (['solo', 'broadcast', 'dialogue', 'consilium'].includes(arg.toLowerCase())) {
             currentMode = arg.toLowerCase() as ConsiliumMode;
-            console.log(`${C.green}✔ Режим переключен на: ${C.bold}${currentMode.toUpperCase()}${C.reset}`);
+            console.log(`${C.green}[OK] Режим переключен на: ${C.bold}${currentMode.toUpperCase()}${C.reset}`);
           } else if (!arg) {
             currentMode = currentMode === 'solo' ? 'consilium' : 'solo';
-            console.log(`${C.green}✔ Режим переключен на: ${C.bold}${currentMode.toUpperCase()}${C.reset}`);
+            console.log(`${C.green}[OK] Режим переключен на: ${C.bold}${currentMode.toUpperCase()}${C.reset}`);
           } else {
             console.log(`${C.yellow}Использование: /mode <solo|dialogue|consilium>${C.reset}`);
           }
@@ -556,7 +604,7 @@ async function main(): Promise<void> {
         case '/role':
           if (CORPORATE_ROLES[arg]) {
             currentRole = arg;
-            console.log(`${C.green}✔ Роль установлена: ${C.bold}${arg}${C.reset}`);
+            console.log(`${C.green}[OK] Роль установлена: ${C.bold}${arg}${C.reset}`);
           } else {
             console.log(`${C.yellow}Доступные роли: ${Object.keys(CORPORATE_ROLES).join(', ')}${C.reset}`);
           }
@@ -593,18 +641,22 @@ async function main(): Promise<void> {
           session.clearHistory();
           console.clear();
           renderDashboard(session);
-          console.log(`${C.green}✔ История сообщений очищена.${C.reset}`);
+          console.log(`${C.green}[OK] История сообщений очищена.${C.reset}`);
           break;
 
         default: {
           // Multilingual aliases (UK/RU) of server commands → route through the
           // alias-normalizing registry (e.g. /історія → /history, /пошук → /search).
           const canonical = COMMAND_ALIASES[cmd];
-          if (canonical && ['/history', '/memory', '/search', '/find', '/services', '/servers', '/health', '/news', '/translate', '/products', '/who', '/debug', '/log', '/monitor', '/say', '/listen'].includes(canonical)) {
+          if (canonical && ['/history', '/memory', '/search', '/find', '/services', '/servers', '/health', '/news', '/translate', '/products', '/who', '/debug', '/log', '/monitor', '/say', '/listen', '/sys', '/developer', '/voices', '/settings', '/agents'].includes(canonical)) {
             if (canonical === '/say') {
               await handleSay(arg);
             } else if (canonical === '/listen') {
               await handleListen(arg);
+            } else if (canonical === '/developer') {
+              DeveloperMode.setActiveSession('cli');
+              console.log(ModelCommand.execute(input));
+              DeveloperMode.clearActiveSession();
             } else if (canonical === '/news' || canonical === '/translate') {
               console.log(await ModelCommand.executeAsync(input));
             } else {
@@ -612,7 +664,7 @@ async function main(): Promise<void> {
             }
           } else {
             const s = I18nEngine.getStrings();
-            console.log(`${C.red}✖ ${s.unknownCommand.replace('{cmd}', cmd)}${C.reset}`);
+            console.log(`${C.red}[X] ${s.unknownCommand.replace('{cmd}', cmd)}${C.reset}`);
           }
           break;
         }

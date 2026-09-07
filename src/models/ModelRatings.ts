@@ -12,9 +12,15 @@ import { ProductCatalog, CatalogLang } from '../core/ProductCatalog.js';
 import { CompanyKnowledge } from '../core/CompanyKnowledge.js';
 import { NewsEngine, NewsTagId } from '../core/NewsEngine.js';
 import { ProviderFallbackChain } from '../core/Resilience.js';
-import { translator, TranslateResult } from '../core/Translator.js';
+import { translator, TranslateResult, TRANSLATE_FREE_TIER_CHARS } from '../core/Translator.js';
 import { SephirotEngine, SEPHIROT_ROLES } from '../core/SephirotEngine.js';
+import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
+import { cloudTts, validateVoiceName, VOICE_CATALOG, familyRank, familyFreeAllowance, saveVoicePrefs, voicePrefsPath, VoicePrefs } from '../core/CloudTTS.js';
+import { readUsage as readSttUsage, monthKey as sttMonthKey, STT_MONTHLY_CAP_SECONDS } from '../core/CloudSTT.js';
+import { Config } from '../core/Config.js';
 import { OpLog, isDebugOn, setDebugOn, opLog } from '../core/OpLog.js';
+import { SystemContext, getLastUsedModel } from '../core/SystemContext.js';
+import { DeveloperMode } from '../core/DeveloperMode.js';
 
 export type ModelRatingDimension = 'quality' | 'speed' | 'context' | 'cost';
 
@@ -435,6 +441,27 @@ export const COMMAND_ALIASES: Record<string, string> = {
   '/распознать': '/listen',
   '/прослушать': '/listen',
   '/stt': '/listen',
+  // /sys (system self-awareness block)
+  '/система': '/sys',
+  '/системa': '/sys',
+  '/whereami': '/sys',
+  // /developer (password-protected developer mode)
+  '/девелопер': '/developer',
+  '/розробник': '/developer',
+  // /voices (TTS voice catalog + persona voice switch)
+  '/голоси': '/voices',
+  '/голоса': '/voices',
+  '/голос': '/voices',
+  '/звуки': '/voices',
+  // /settings (current settings table)
+  '/налаштування': '/settings',
+  '/настройки': '/settings',
+  '/настройка': '/settings',
+  // /agents (corporate roles + Sephirot roster)
+  '/агенти': '/agents',
+  '/агент': '/agents',
+  '/рота': '/agents',
+  '/роли-агентів': '/agents',
 };
 
 /**
@@ -522,9 +549,22 @@ export class ModelCommand {
         return this.handleLog(parts.slice(1));
       case '/monitor':
         return this.handleMonitor();
+      case '/sys':
+        return SystemContext.build();
+      case '/developer':
+        // Parsed from the RAW command so the password keeps its original casing.
+        return this.handleDeveloper(command);
+      case '/voices':
+        // RAW command keeps voice-name casing (Chirp3-HD, Aoede, ...);
+        // normalizeCommand lowercases everything, so re-parse raw args here.
+        return this.handleVoices(command);
+      case '/settings':
+        return this.handleSettings();
+      case '/agents':
+        return this.handleAgents();
       default:
         OpLog.getInstance().log('error', 'command', `unknown command: ${action}`);
-        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /translate, /health, /products, /who, /sephirot, /debug, /log, /monitor, /free, /paid, or /help.`;
+        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /translate, /health, /products, /who, /sephirot, /debug, /log, /monitor, /sys, /developer, /voices, /settings, /agents, /free, /paid, or /help.`;
     }
   }
 
@@ -550,7 +590,7 @@ export class ModelCommand {
     const lang = I18nEngine.getLocale();
     const cached = NewsEngine.getCachedText(lang, tags);
     if (cached) return cached;
-    return '📰 Рушій новин запускає перший збір (до ~10 c, 8s timeout на джерело).\n   Повторіть /news за мить — результат буде взято з кешу (15 хв).';
+    return 'NEWS Рушій новин запускає перший збір (до ~10 c, 8s timeout на джерело).\n   Повторіть /news за мить — результат буде взято з кешу (15 хв).';
   }
 
   /** Fully async /news handler (CLI / executeAsync): awaits the live fetch. */
@@ -610,11 +650,11 @@ export class ModelCommand {
   /** Renders the async translation result + usage footer. */
   private static formatTranslateReply(parsed: { to?: string; text?: string }, res: TranslateResult): string {
     if (!res.ok) {
-      return `🌐 ${res.error || 'Помилка перекладу.'}`;
+      return `${res.error || 'Помилка перекладу.'}`;
     }
     const joined = res.translations.join('\n');
     const src = res.detectedLanguageCode ? ` (авто: ${res.detectedLanguageCode})` : '';
-    return `🌐 Переклад → ${parsed.to}${src}:\n${joined}\n──────────────────────────────\n${translator.formatUsageFooter(res.usage)}`;
+    return `Переклад → ${parsed.to}${src}:\n${joined}\n──────────────────────────────\n${translator.formatUsageFooter(res.usage)}`;
   }
 
   /**
@@ -623,7 +663,7 @@ export class ModelCommand {
    */
   private static async handleTranslate(command: string): Promise<string> {
     const parsed = this.parseTranslateCommand(command);
-    if (parsed.error) return `🌐 ${parsed.error}`;
+    if (parsed.error) return `${parsed.error}`;
     const res = await translator.translate(parsed.text!, parsed.to!);
     return this.formatTranslateReply(parsed, res);
   }
@@ -632,18 +672,18 @@ export class ModelCommand {
    * Sync /translate fallback for the web registry (follows the /news pattern):
    * the network call cannot be awaited in ModelCommand.execute, so the real
    * translation runs in the background and its result/usage is appended to the
-   * operation log (visible via /log translate), while the user gets a ⏳ marker.
+   * operation log (visible via /log translate), while the user gets a [WAIT] marker.
    */
   private static handleTranslateSync(command: string): string {
     const parsed = this.parseTranslateCommand(command);
-    if (parsed.error) return `🌐 ${parsed.error}`;
+    if (parsed.error) return `${parsed.error}`;
     translator
       .translate(parsed.text!, parsed.to!)
       .then((res) => {
         OpLog.getInstance().log(res.ok ? 'info' : 'warn', 'command', `/translate → ${parsed.to}: ${res.ok ? res.translations.join(' | ').substring(0, 300) : res.error}`);
       })
       .catch(() => { /* never breaks the command path */ });
-    return `⏳ Переклад у процесі (до 10 с)... Результат з'явиться в журналі: /log translate.\n   У CLI той самий запит повертає переклад одразу.`;
+    return `[WAIT] Переклад у процесі (до 10 с)... Результат з'явиться в журналі: /log translate.\n   У CLI той самий запит повертає переклад одразу.`;
   }
 
 
@@ -655,7 +695,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  🕘 ИСТОРИЯ ЧАТА — ПОСЛЕДНИЕ ${messages.length} СООБЩЕНИЙ (все сессии)`);
+    lines.push(`  ИСТОРИЯ ЧАТА — ПОСЛЕДНИЕ ${messages.length} СООБЩЕНИЙ (все сессии)`);
     lines.push('═'.repeat(78));
 
     if (messages.length === 0) {
@@ -664,7 +704,7 @@ export class ModelCommand {
 
     for (const m of messages) {
       const when = new Date(m.ts).toISOString().replace('T', ' ').substring(0, 19);
-      const who = m.role === 'user' ? '👤 USER' : '🤖 BOT ';
+      const who = m.role === 'user' ? '[USER]' : '[BOT] ';
       const sessionTag = m.sessionId === 'consilium' ? '[consilium]' : `[${m.sessionId}]`;
       const preview = m.content.replace(/\s+/g, ' ');
       const shown = preview.length > 90 ? preview.substring(0, 87) + '...' : preview;
@@ -682,39 +722,39 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  🧠 ПАМЯТЬ СИСТЕМЫ (MEMORY STATS)');
+    lines.push('  ПАМЯТЬ СИСТЕМЫ (MEMORY STATS)');
     lines.push('═'.repeat(78));
 
     // Knowledge Base statistics
     try {
       const kbStats = knowledgeBase.getStats();
       const sqliteBackend = knowledgeBase.getAvailableBackends().find((b) => b.id === 'sqlite');
-      lines.push('  📚 БАЗА ЗНАНИЙ (Knowledge Base):');
+      lines.push('  БАЗА ЗНАНИЙ (Knowledge Base):');
       lines.push(`    • Документов в памяти   : ${kbStats.documentCount}`);
       lines.push(`    • FTS5 чанков (SQLite)  : ${sqliteBackend ? sqliteBackend.documentCount : 0}`);
       lines.push(`    • Активный бэкенд       : ${kbStats.name}`);
     } catch (err: any) {
-      lines.push(`  📚 БАЗА ЗНАНИЙ: недоступна (${err.message})`);
+      lines.push(`  БАЗА ЗНАНИЙ: недоступна (${err.message})`);
     }
 
     // Chat history database statistics
     try {
       const chatDb = ChatHistoryStore.getInstance();
       const counts = chatDb.countAll();
-      lines.push('  💬 ИСТОРИЯ ЧАТОВ (SQLite chat-history.db):');
+      lines.push('  ИСТОРИЯ ЧАТОВ (SQLite chat-history.db):');
       lines.push(`    • Всего сообщений       : ${counts.totalMessages}`);
       lines.push(`    • Сессий                : ${counts.sessions}`);
       lines.push(`    • Файл БД               : ${chatDb.getPath()}`);
     } catch (err: any) {
-      lines.push(`  💬 ИСТОРИЯ ЧАТОВ: недоступна (${err.message})`);
+      lines.push(`  ИСТОРИЯ ЧАТОВ: недоступна (${err.message})`);
     }
 
     // Vector store pointer
-    lines.push('  🗺️  ВЕКТОРНОЕ ХРАНИЛИЩЕ:');
+    lines.push('   ВЕКТОРНОЕ ХРАНИЛИЩЕ:');
     lines.push('    • ChromaDB              : knowledge-base/evaline-knowledge-base/chroma_db');
 
     lines.push('');
-    lines.push('  🔎 ЧТО ПОМНИТЬ / КАК ДОБРАТЬСЯ ДО ПАМЯТИ:');
+    lines.push('  ЧТО ПОМНИТЬ / КАК ДОБРАТЬСЯ ДО ПАМЯТИ:');
     lines.push('    • /search <запрос>      — полнотекстовый поиск по чатам и базе знаний');
     lines.push('    • /history [N]          — последние N сообщений всех сессий');
     lines.push('    • /kb search <запрос>   — поиск только по базе знаний EvaLine');
@@ -733,7 +773,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  🔍 ПОИСК: "${query}"`);
+    lines.push(`  ПОИСК: "${query}"`);
     lines.push('═'.repeat(78));
 
     // 1. Chat history FTS5 search
@@ -741,7 +781,7 @@ export class ModelCommand {
     try {
       const hits = ChatHistoryStore.getInstance().searchMessages(query, 5);
       chatHits = hits.length;
-      lines.push('  💬 ИСТОРИЯ ЧАТОВ:');
+      lines.push('  ИСТОРИЯ ЧАТОВ:');
       if (hits.length === 0) {
         lines.push('    • Совпадений в чатах не найдено.');
       }
@@ -760,7 +800,7 @@ export class ModelCommand {
     try {
       const docs = knowledgeBase.search(query, { limit: 5 });
       kbHits = docs.length;
-      lines.push('  📚 БАЗА ЗНАНИЙ:');
+      lines.push('  БАЗА ЗНАНИЙ:');
       if (docs.length === 0) {
         lines.push('    • Совпадений в базе знаний не найдено.');
       }
@@ -812,7 +852,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  ⚙️  СИСТЕМНЫЕ СЕРВИСЫ EVA (systemd / docker)');
+    lines.push('   СИСТЕМНЫЕ СЕРВИСЫ EVA (systemd / docker)');
     lines.push('═'.repeat(78));
 
     const units = [
@@ -834,7 +874,7 @@ export class ModelCommand {
     lines.push(`  ${'evabot-voice (if unit)'.padEnd(26)} ${this.checkServiceUnit('evabot-voice').padEnd(13)} Voice realtime relay`);
 
     lines.push('');
-    lines.push('  💾 БЭКЕНДЫ БАЗ ДАННЫХ:');
+    lines.push('  БЭКЕНДЫ БАЗ ДАННЫХ:');
     const chatDbPath = '/var/www/evabot-backend/data/chat-history.db';
     const ftsPath = '/var/www/evabot-backend/knowledge-base/evaline-knowledge-base/fts_index.db';
     const chromaPath = '/var/www/evabot-backend/knowledge-base/evaline-knowledge-base/chroma_db';
@@ -857,7 +897,7 @@ export class ModelCommand {
 
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  🌐 КЛАСТЕР EVA — ДВА СЕРВЕРА (brain + face)');
+    lines.push('  КЛАСТЕР EVA — ДВА СЕРВЕРА (brain + face)');
     lines.push('═'.repeat(78));
     lines.push('  [1] evabot-agent-vm (BRAIN / Frankfurt)');
     lines.push(`      Зона: europe-west3-a | Тип: c3-standard-8 (8 vCPU / 32 GB) | IP: 100.66.98.4`);
@@ -868,7 +908,7 @@ export class ModelCommand {
     lines.push(`      Зона: us-central1-a | Тип: e2-micro (2 vCPU / 1 GB) | IP: 136.114.26.252`);
     lines.push(`      CPU: ${micro.cpuPct}% | RAM: ${micro.memUsedMb}/${micro.memTotalMb} MB | Mesh latency: ${ClusterMonitor.getMeshLatency()}ms`);
     lines.push('');
-    lines.push('  ℹ️  Live-метрики кластера (реальные SSH-телеметрия микровиртуалки, latency mesh)');
+    lines.push('   Live-метрики кластера (реальные SSH-телеметрия микровиртуалки, latency mesh)');
     lines.push('     поставляет ClusterMonitor (src/core/ClusterMonitor.ts) — /servers показывает срез.');
     lines.push('═'.repeat(78));
     return lines.join('\n');
@@ -882,29 +922,29 @@ export class ModelCommand {
       case 'free':
         return ModelRatings.formatTopList(
           ModelRatings.getTopFree(limit),
-          `🏆 ТОП-${limit} БЕСПЛАТНЫХ МОДЕЛЕЙ (по качеству)`
+          `ТОП-${limit} БЕСПЛАТНЫХ МОДЕЛЕЙ (по качеству)`
         );
       case 'paid':
         return ModelRatings.formatTopList(
           ModelRatings.getTopPaid(limit),
-          `🏆 ТОП-${limit} ПЛАТНЫХ МОДЕЛЕЙ (по качеству)`
+          `ТОП-${limit} ПЛАТНЫХ МОДЕЛЕЙ (по качеству)`
         );
       case 'speed':
         return ModelRatings.formatTopList(
           ModelRatings.getTopBySpeed(true, limit),
-          `⚡ ТОП-${limit} САМЫХ БЫСТРЫХ БЕСПЛАТНЫХ`
+          `ТОП-${limit} САМЫХ БЫСТРЫХ БЕСПЛАТНЫХ`
         );
       case 'context':
         return ModelRatings.formatTopList(
           ModelRatings.getTopByContext(true, limit),
-          `📚 ТОП-${limit} БОЛЬШЕ КОНТЕКСТА (бесплатные)`
+          `ТОП-${limit} БОЛЬШЕ КОНТЕКСТА (бесплатные)`
         );
       case 'all':
       default:
         const freeTop = ModelRatings.getTopFree(5);
         const paidTop = ModelRatings.getTopPaid(5);
-        let result = ModelRatings.formatTopList(freeTop, `💰 ТОП-5 БЕСПЛАТНЫХ (из 46)`);
-        result += '\n' + ModelRatings.formatTopList(paidTop, `💳 ТОП-5 ПЛАТНЫХ (из 32)`);
+        let result = ModelRatings.formatTopList(freeTop, `ТОП-5 БЕСПЛАТНЫХ (из 46)`);
+        result += '\n' + ModelRatings.formatTopList(paidTop, `ТОП-5 ПЛАТНЫХ (из 32)`);
         result += '\n──────────────────────────────────────────────────────────────────────────────';
         result += '\nКоманды:';
         result += '\n  /top free [N]   - Топ N бесплатных';
@@ -922,7 +962,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  💰 ВСЕ БЕСПЛАТНЫЕ МОДЕЛИ (${models.length} моделей)`);
+    lines.push(`  ВСЕ БЕСПЛАТНЫЕ МОДЕЛИ (${models.length} моделей)`);
     lines.push('═'.repeat(78));
     lines.push('');
 
@@ -945,7 +985,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  💳 ВСЕ ПЛАТНЫЕ МОДЕЛИ (${models.length} моделей)`);
+    lines.push(`  ВСЕ ПЛАТНЫЕ МОДЕЛИ (${models.length} моделей)`);
     lines.push('═'.repeat(78));
     lines.push('');
 
@@ -972,12 +1012,12 @@ export class ModelCommand {
       const paid = ModelRegistry.getPaidOnlyModels();
       lines.push('');
       lines.push('═'.repeat(78));
-      lines.push('  📊 СВОДКА ПО МОДЕЛЯМ');
+      lines.push('  СВОДКА ПО МОДЕЛЯМ');
       lines.push('═'.repeat(78));
       lines.push('');
-      lines.push(`  💰 Бесплатных: ${free.length} моделей (${((free.length / (free.length + paid.length)) * 100).toFixed(0)}%)`);
-      lines.push(`  💳 Платных:    ${paid.length} моделей (${((paid.length / (free.length + paid.length)) * 100).toFixed(0)}%)`);
-      lines.push(`  📦 Всего:      ${free.length + paid.length} моделей`);
+      lines.push(`  Бесплатных: ${free.length} моделей (${((free.length / (free.length + paid.length)) * 100).toFixed(0)}%)`);
+      lines.push(`  Платных:    ${paid.length} моделей (${((paid.length / (free.length + paid.length)) * 100).toFixed(0)}%)`);
+      lines.push(`  Всего:      ${free.length + paid.length} моделей`);
       lines.push('');
       lines.push('  Команды:');
       lines.push('    /top             - Топ-5 free + топ-5 paid');
@@ -997,7 +1037,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  🔌 MCP СЕРВЕРЫ (Model Context Protocol Suite // 21 активный сервер)');
+    lines.push('  MCP СЕРВЕРЫ (Model Context Protocol Suite // 21 активный сервер)');
     lines.push('═'.repeat(78));
     lines.push('');
     lines.push('  Единый пул инструментов и интеграций, доступный всем агентам кластера:');
@@ -1036,7 +1076,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  🧠 LSP СЕРВЕРЫ (Language Server Protocol // Глобальные языковые демоны)');
+    lines.push('  LSP СЕРВЕРЫ (Language Server Protocol // Глобальные языковые демоны)');
     lines.push('═'.repeat(78));
     lines.push('');
     lines.push('  Все LSP-серверы установлены в PATH, 100% бесплатные, локальное исполнение:');
@@ -1108,9 +1148,9 @@ export class ModelCommand {
       const lines: string[] = [];
       lines.push('');
       lines.push('═'.repeat(78));
-      lines.push('  🌳 SEPHIROT CONSILIUM — СТАТУС');
+      lines.push('  [=] SEPHIROT CONSILIUM — СТАТУС');
       lines.push('═'.repeat(78));
-      lines.push(`  Стан        : ${status.running ? '⏳ ВИКОНУЄТЬСЯ' : status.error ? '❌ ПОМИЛКА' : '✅ ЗАВЕРШЕНО'}`);
+      lines.push(`  Стан        : ${status.running ? '[WAIT] ВИКОНУЄТЬСЯ' : status.error ? '[X] ПОМИЛКА' : '[OK] ЗАВЕРШЕНО'}`);
       lines.push(`  Тема        : ${status.topic || '—'}`);
       if (status.startedAt) lines.push(`  Запущено    : ${new Date(status.startedAt).toISOString()}`);
       if (status.finishedAt) lines.push(`  Завершено   : ${new Date(status.finishedAt).toISOString()}`);
@@ -1133,7 +1173,7 @@ export class ModelCommand {
     const topic = args.join(' ').trim();
     if (!topic) {
       return [
-        '🌳 SEPHIROT CONSILIUM (10 сфер Дерева Життя + Tetraxis):',
+        '[=] SEPHIROT CONSILIUM (10 сфер Дерева Життя + Tetraxis):',
         '  Використання:',
         '    /sephirot <тема>      — запустити консиліум 10 агентів (у фоні)',
         '    /sephirot status      — прогрес / останній синтез',
@@ -1150,7 +1190,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  🌳 ДЕРЕВО ЖИТТЯ — 10 СФЕР = 10 АГЕНТІВ (Tetraxis: Vision-Strategy-Execution-Feedback)');
+    lines.push('  [=] ДЕРЕВО ЖИТТЯ — 10 СФЕР = 10 АГЕНТІВ (Tetraxis: Vision-Strategy-Execution-Feedback)');
     lines.push('═'.repeat(78));
     for (const r of roles) {
       const parents = r.parentIds.length ? ` ← ${r.parentIds.join(', ')}` : ' ← (root)';
@@ -1171,7 +1211,7 @@ export class ModelCommand {
    * /debug [on|off|status|full] — debug mode + system diagnostics.
    *  - on/off toggles the server-side debug flag (DebugContext in OpLog.ts):
    *    while ON, 'debug'-level entries are recorded in OpLog and chat replies
-   *    (ChatRouter stream) get a `⚙ debug:` footer with model/provider/latency.
+   *    (ChatRouter stream) get a `debug:` footer with model/provider/latency.
    *  - full renders a full diagnostics dump (node, mem, breakers, OpLog stats,
    *    DB file sizes, omniroute proxy reachability).
    */
@@ -1182,9 +1222,9 @@ export class ModelCommand {
       const on = sub === 'on';
       setDebugOn(on);
       opLog.log('info', 'system', `debug mode ${on ? 'ON' : 'OFF'}`);
-      return `⚙ Debug mode ${on ? 'УВІМКНЕНО (ON)' : 'ВИМКНЕНО (OFF)'}.\n` +
+      return `Debug mode ${on ? 'УВІМКНЕНО (ON)' : 'ВИМКНЕНО (OFF)'}.\n` +
         (on
-          ? '  Тепер: (1) у відповідях чату з\'явиться футер ⚙ debug (model/provider/latency); (2) debug-записи пишуться в /log.'
+          ? '  Тепер: (1) у відповідях чату з\'явиться футер debug (model/provider/latency); (2) debug-записи пишуться в /log.'
           : '  Debug-записи більше не пишуться в /log (крім помилок).');
     }
 
@@ -1194,10 +1234,10 @@ export class ModelCommand {
 
     // status (default)
     return [
-      `⚙ Debug mode: ${isDebugOn() ? 'ON' : 'OFF'}`,
+      `Debug mode: ${isDebugOn() ? 'ON' : 'OFF'}`,
       '',
       '  Що змінює debug:',
-      '    • Футер у відповідях чату: `⚙ debug: model=... provider=... latency=...ms fallback=...`',
+      '    • Футер у відповідях чату: `debug: model=... provider=... latency=...ms fallback=...`',
       '    • Debug-записи рівня "debug" пишуться в журнал операцій (див. /log)',
       '    • /debug full — повна діагностика системи',
       '',
@@ -1211,7 +1251,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  🛠️  DEBUG FULL — ДІАГНОСТИКА СИСТЕМИ');
+    lines.push('   DEBUG FULL — ДІАГНОСТИКА СИСТЕМИ');
     lines.push('═'.repeat(78));
     lines.push(`  Node          : ${process.version} (${process.platform}/${process.arch})`);
     lines.push(`  Uptime        : proc ${(process.uptime() / 3600).toFixed(2)} h | OS ${(os.uptime() / 3600).toFixed(1)} h`);
@@ -1223,13 +1263,13 @@ export class ModelCommand {
     try {
       lines.push(ProviderFallbackChain.getHealthReport());
     } catch (err: any) {
-      lines.push(`  ⚠️ Breaker health недоступна: ${err.message}`);
+      lines.push(`  [WRN] Breaker health недоступна: ${err.message}`);
     }
 
     // OpLog stats
     try {
       const st = opLog.stats();
-      lines.push('  📜 OPLOG (журнал операцій):');
+      lines.push('  OPLOG (журнал операцій):');
       lines.push(`    • Буфер           : ${st.bufferSize}/1000 записів`);
       lines.push(`    • Рівні           : info ${st.byLevel.info} | warn ${st.byLevel.warn} | error ${st.byLevel.error} | debug ${st.byLevel.debug}`);
       lines.push(`    • Типи            : command ${st.byKind.command} | llm ${st.byKind.llm} | breaker ${st.byKind.breaker} | system ${st.byKind.system} | chat ${st.byKind.chat}`);
@@ -1238,7 +1278,7 @@ export class ModelCommand {
       }
       lines.push(`    • Файл            : ${st.filePath}${st.fileBytes !== undefined ? ` (${(st.fileBytes / 1024).toFixed(1)} KB)` : ' (ще не створено)'}`);
     } catch (err: any) {
-      lines.push(`  ⚠️ OpLog stats недоступні: ${err.message}`);
+      lines.push(`  [WRN] OpLog stats недоступні: ${err.message}`);
     }
     lines.push('─'.repeat(78));
 
@@ -1251,7 +1291,7 @@ export class ModelCommand {
     };
     let chatDbPath = 'unknown';
     try { chatDbPath = ChatHistoryStore.getInstance().getPath(); } catch { /* store unavailable */ }
-    lines.push('  💾 ФАЙЛИ ДАНИХ:');
+    lines.push('  ФАЙЛИ ДАНИХ:');
     lines.push(`    • chat-history.db : ${fmtSize(chatDbPath)} — ${chatDbPath}`);
     lines.push(`    • fts_index.db    : ${fmtSize(ftsPath)} — ${ftsPath}`);
     lines.push(`    • products.json   : ${fmtSize(productsPath)} — ${productsPath}`);
@@ -1259,7 +1299,7 @@ export class ModelCommand {
     lines.push('─'.repeat(78));
 
     // OmniRoute proxy reachability (3s timeout)
-    lines.push(`  🌐 OmniRoute proxy (http://100.66.98.4:20128/v1/models): ${this.probeOmniroute()}`);
+    lines.push(`  OmniRoute proxy (http://100.66.98.4:20128/v1/models): ${this.probeOmniroute()}`);
     lines.push('═'.repeat(78));
     return lines.join('\n');
   }
@@ -1307,7 +1347,7 @@ export class ModelCommand {
 
     const entries = opLog.query({ limit, level, kind, textLike });
 
-    const ICON: Record<string, string> = { info: 'ℹ️', warn: '⚠️', error: '✖️', debug: '🐞' };
+    const ICON: Record<string, string> = { info: 'i', warn: '[WRN]', error: '[X]', debug: '[DBG]' };
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
@@ -1316,7 +1356,7 @@ export class ModelCommand {
       kind ? `kind=${kind}` : null,
       textLike ? `text~"${textLike}"` : null,
     ].filter(Boolean).join(', ');
-    lines.push(`  📜 ЖУРНАЛ ОПЕРАЦІЙ — ОСТАННІ ${entries.length} ЗАПИСІВ${filters ? ` (${filters})` : ''}`);
+    lines.push(`  ЖУРНАЛ ОПЕРАЦІЙ — ОСТАННІ ${entries.length} ЗАПИСІВ${filters ? ` (${filters})` : ''}`);
     lines.push('═'.repeat(78));
 
     if (entries.length === 0) {
@@ -1346,7 +1386,7 @@ export class ModelCommand {
       report = fs.readFileSync(reportPath, 'utf8');
     } catch {
       return [
-        '⚠️ Звіт модельного монітора не знайдено: data/model-monitor/REPORT.md',
+        '[WRN] Звіт модельного монітора не знайдено: data/model-monitor/REPORT.md',
         '   Запустіть генератор звіту: python3 scripts/model-monitor.py',
         '   Після завершення повторіть /monitor.',
       ].join('\n');
@@ -1356,14 +1396,14 @@ export class ModelCommand {
     const sections = report.split(/\n(?=## )/);
     const top = sections.filter((s) => /^## .*TOP-10/i.test(s));
     if (top.length === 0) {
-      return '⚠️ У REPORT.md не знайдено секцій TOP-10. Запустіть: python3 scripts/model-monitor.py';
+      return '[WRN] У REPORT.md не знайдено секцій TOP-10. Запустіть: python3 scripts/model-monitor.py';
     }
 
-    const dateMatch = report.match(/#\s+📡 Модельный монитор — ([^\n]+)/);
+    const dateMatch = report.match(/#\s+(?:> )?Модельный монитор — ([^\n]+)/);
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  📡 МОДЕЛЬНИЙ МОНІТОР — ТОП-10 (авто-агрегація джерел)');
+    lines.push('  > МОДЕЛЬНИЙ МОНІТОР — ТОП-10 (авто-агрегація джерел)');
     lines.push('═'.repeat(78));
     if (dateMatch) lines.push(`  Звіт: ${dateMatch[1].trim()}`);
     for (const s of top) {
@@ -1371,6 +1411,229 @@ export class ModelCommand {
       lines.push('');
     }
     lines.push('  Оновити звіт: python3 scripts/model-monitor.py');
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  /**
+   * /developer — password-protected developer mode (FEATURE 2).
+   * Parsed from the RAW command string so the password keeps its casing
+   * (normalizeCommand lowercases everything). The password is never echoed
+   * back and is masked before chat persistence (DeveloperMode.maskPasswordIn).
+   */
+  private static handleDeveloper(raw: string): string {
+    const parsed = DeveloperMode.parseCommand(raw);
+    const usage = [
+      'РЕЖИМ РОЗРОБНИКА (/developer):',
+      '  Використання:',
+      '    /developer unlock <пароль> — розблокувати сесію (TTL 2 год)',
+      '    /developer status          — стан сесії + залишок TTL',
+      '    /developer lock            — зачинити режим',
+      '  Синоніми: /девелопер, /розробник',
+    ].join('\n');
+    if (!parsed || parsed.sub === 'help') {
+      return usage;
+    }
+
+    const session = DeveloperMode.resolveSession();
+    switch (parsed.sub) {
+      case 'unlock': {
+        if (!DeveloperMode.getPassword()) {
+          return 'режим недоступний: встанови EVADEV_PASSWORD';
+        }
+        if (!parsed.password) {
+          return 'Використання: /developer unlock <пароль>';
+        }
+        const ok = DeveloperMode.unlock(session, parsed.password);
+        return ok
+          ? `[UNLOCK] Режим розробника АКТИВОВАНО (сесія ${session}, авто-закриття через 2 год).`
+          : '[LOCK] Невірний пароль. Режим розробника не активовано.';
+      }
+      case 'status':
+        return DeveloperMode.statusLine(session);
+      case 'lock':
+        return DeveloperMode.lock(session)
+          ? `[LOCK] Режим розробника зачинено (сесія ${session}).`
+          : `[LOCK] Режим розробника не був активним (сесія ${session}).`;
+      default:
+        return usage;
+    }
+  }
+
+  /**
+   * /voices [uk|ru|en] — ONLY-FREE voice catalog grouped by language and
+   * family (Chirp3-HD first — most natural, same 1M chars/mo free tier as
+   * Wavenet). Shows gender, [FREE] marker, current Eva/Adam selection and
+   * the monthly char usage vs cap. Alias-driven by /голоси, /голоса, /звуки.
+   */
+  private static handleVoices(rawCommand: string): string {
+    // Re-parse from the RAW string: voice names are case-sensitive
+    // (uk-UA-Chirp3-HD-Kore) and normalizeCommand would lowercase them.
+    const rawParts = (rawCommand || '').trim().split(/\s+/);
+    const rawArgs = rawParts.slice(1);
+    const sub = (rawArgs[0] || '').toLowerCase();
+    if (sub === 'set') {
+      return this.handleVoicesSet(rawArgs.slice(1));
+    }
+
+    const langs: Array<{ code: string; label: string }> = [
+      { code: 'uk', label: 'uk-UA' },
+      { code: 'ru', label: 'ru-RU' },
+      { code: 'en', label: 'en-US' },
+    ];
+    const langFilter = sub || '';
+    const selected = langFilter
+      ? langs.filter((l) => l.code === langFilter || l.label.toLowerCase() === langFilter)
+      : langs;
+    if (selected.length === 0) {
+      return [
+        'Використання: /voices [uk|ru|en]',
+        '  /voices            — усі мови (uk, ru, en)',
+        '  /voices uk         — лише uk-UA',
+        '  /voices set eva <voice-name>  — змінити голос Єви',
+        '  /voices set adam <voice-name> — змінити голос Адама',
+      ].join('\n');
+    }
+
+    const eva = cloudTts.getEvaVoice();
+    const adam = cloudTts.getAdamVoice();
+    const used = cloudTts.getMonthChars();
+    const cap = cloudTts.getCap();
+
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  ГОЛОСИ TTS — ЛИШЕ FREE-РОДИНИ (Chirp3-HD і Wavenet: 1M симв/міс безкоштовно)');
+    lines.push('═'.repeat(78));
+    for (const l of selected) {
+      const entries = VOICE_CATALOG
+        .filter((v) => v.name.startsWith(`${l.label}-`))
+        .sort((a, b) => familyRank(a.family) - familyRank(b.family) || a.name.localeCompare(b.name));
+      let currentFamily: string | null = null;
+      for (const v of entries) {
+        if (v.family !== currentFamily) {
+          currentFamily = v.family;
+          lines.push(`  [${l.label}] ${v.family.toUpperCase()} — ${familyFreeAllowance(v.family).toLocaleString('en-US')} симв/міс FREE`);
+        }
+        const tag = v.name === eva ? '  <-- EVA' : v.name === adam ? '  <-- ADAM' : '';
+        lines.push(`      ${v.name}  (${v.gender})  [FREE]${tag}`);
+      }
+    }
+    lines.push('─'.repeat(78));
+    lines.push(`  Поточний вибір: Eva = ${eva} | Adam = ${adam}`);
+    lines.push(`  TTS ліміт цього місяця: ${used.toLocaleString('en-US')} / ${cap.toLocaleString('en-US')} симв.`);
+    lines.push('  Змінити голос: /voices set eva|adam <voice-name> (лише free-родини;');
+    lines.push('  зберігається у data/voice-prefs.json).');
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  /**
+   * /voices set eva|adam <voice-name> — switches a persona voice after
+   * ONLY-FREE validation (chirp3-hd/wavenet/neural2/standard families only;
+   * paid-only families such as studio are rejected). Persists to
+   * data/voice-prefs.json and hot-reloads the CloudTTS singleton.
+   */
+  private static handleVoicesSet(args: string[]): string {
+    const persona = (args[0] || '').toLowerCase();
+    const voiceName = (args[1] || '').trim();
+    if ((persona !== 'eva' && persona !== 'adam') || !voiceName || args.length > 2) {
+      return [
+        'Використання: /voices set eva|adam <voice-name>',
+        '  Приклад: /voices set eva uk-UA-Chirp3-HD-Kore',
+        '  Дозволені (free-only) родини: chirp3-hd, wavenet, neural2, standard.',
+        '  Дивіться доступні голоси: /voices [uk|ru|en]',
+      ].join('\n');
+    }
+
+    const v = validateVoiceName(voiceName);
+    if (!v.ok) {
+      return `[ERROR] Голос відхилено: ${v.error}`;
+    }
+
+    const key = persona === 'eva' ? 'evaVoice' : 'adamVoice';
+    saveVoicePrefs({ [key]: voiceName } as VoicePrefs);
+    cloudTts.reloadVoicePrefs();
+    const applied = persona === 'eva' ? cloudTts.getEvaVoice() : cloudTts.getAdamVoice();
+    return [
+      `[OK] Голос ${persona === 'eva' ? 'Єви (Eva)' : 'Адама (Adam)'} змінено на ${applied} (${v.family}, ${v.gender}, FREE).`,
+      `  Збережено: ${voicePrefsPath()}`,
+      `  Активні голоси: Eva = ${cloudTts.getEvaVoice()} | Adam = ${cloudTts.getAdamVoice()}`,
+    ].join('\n');
+  }
+
+  /**
+   * /settings (aliases: /налаштування, /настройки) — table of the current
+   * system state, assembled from the existing singletons (I18nEngine,
+   * SystemContext, OpLog debug flag, CloudTTS, CloudSTT, Translator,
+   * DeveloperMode). Client-side toggles (autocorrect, emoji) are marked as
+   * such because their state lives in the browser localStorage.
+   */
+  private static handleSettings(): string {
+    const locale = I18nEngine.getLocale();
+    const lastUsed = getLastUsedModel();
+    const ttsUsage = cloudTts.getUsage();
+    const sttUsage = readSttUsage();
+    const sttUsed = sttUsage.month === sttMonthKey() ? sttUsage.secondsUsed : 0;
+    const trUsage = translator.getUsage();
+    const session = DeveloperMode.resolveSession();
+    const devStatus = DeveloperMode.statusLine(session);
+
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  ПОТОЧНІ НАЛАШТУВАННЯ (/settings)');
+    lines.push('═'.repeat(78));
+    lines.push(`  Locale           : ${locale.toUpperCase()} (en|uk|ru — /lang)`);
+    lines.push(`  Mode             : per-session solo|consilium (/mode; за замовчуванням solo)`);
+    lines.push(`  Model (default)  : ${Config.defaultModel}`);
+    lines.push(`  Model (last used): ${lastUsed ? `${lastUsed.model} (${lastUsed.provider})` : '(ще не зафіксовано)'}`);
+    lines.push(`  Debug            : ${isDebugOn() ? 'ON' : 'OFF'} (/debug on|off|full)`);
+    lines.push(`  TTS              : ON; Eva = ${cloudTts.getEvaVoice()} | Adam = ${cloudTts.getAdamVoice()}`);
+    lines.push(`  TTS usage        : ${ttsUsage.chars.toLocaleString('en-US')} / ${cloudTts.getCap().toLocaleString('en-US')} симв/міс (${ttsUsage.month})`);
+    lines.push(`  STT usage        : ${sttUsed.toLocaleString('en-US')} / ${STT_MONTHLY_CAP_SECONDS.toLocaleString('en-US')} сек/міс (${sttUsage.month})`);
+    lines.push(`  Translate usage  : ${trUsage.chars.toLocaleString('en-US')} / ${TRANSLATE_FREE_TIER_CHARS.toLocaleString('en-US')} симв/міс (${trUsage.month})`);
+    lines.push(`  Autocorrect      : клієнтський перемикач (/autocorrect on|off у веб-UI)`);
+    lines.push(`  Emoji mode       : клієнтський перемикач (/emoji on|off; за замовчуванням OFF — емодзі вирізаються)`);
+    lines.push(`  Developer mode   : ${devStatus}`);
+    lines.push(`  Session id       : ${session}`);
+    lines.push('═'.repeat(78));
+    return lines.join('\n');
+  }
+
+  /**
+   * /agents (aliases: /агенти, /рота, /роли-агентів) — two-section agent
+   * roster: 18 corporate roles (CORPORATE_ROLES) + 10 Sephirot Tree-of-Life
+   * nodes (SEPHIROT_ROLES). Adam/Eva personas are marked explicitly.
+   */
+  private static handleAgents(): string {
+    const corporate = Object.values(CORPORATE_ROLES);
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  РОСТЕР АГЕНТІВ (/agents) — КОРПОРАЦІЯ + СЕФІРОТ');
+    lines.push('═'.repeat(78));
+
+    lines.push(`  [CORPORATE] ШІ-корпорація — ${corporate.length} ролей:`);
+    let i = 1;
+    for (const role of corporate) {
+      const persona = /Adam/i.test(role.name) ? ' [ADAM]' : /Eva/i.test(role.name) ? ' [EVA]' : '';
+      lines.push(`   ${String(i).padStart(2)}. ${role.id.padEnd(18)} ${role.name} | модель: ${role.preferredModel}${persona}`);
+      i++;
+    }
+
+    lines.push('');
+    lines.push(`  [SEPHIROT] Дерево Життя — ${SEPHIROT_ROLES.length} вузлів (консиліум):`);
+    let j = 1;
+    for (const node of SEPHIROT_ROLES) {
+      const persona = node.voicePersona === 'neutral' ? '' : ` [${node.voicePersona.toUpperCase()}]`;
+      lines.push(`   ${String(j).padStart(2)}. ${node.sephira} | ${node.nameEn} — ${node.title} | модель: ${node.model}${persona}`);
+      j++;
+    }
+
+    lines.push('─'.repeat(78));
+    lines.push(`  Всього: ${corporate.length} корпоративних ролей + ${SEPHIROT_ROLES.length} вузлів Сефірот = ${corporate.length + SEPHIROT_ROLES.length} агентів.`);
+    lines.push('  Персони озвучки: [EVA] — голос Єви, [ADAM] — голос Адама, решта neutral.');
     lines.push('═'.repeat(78));
     return lines.join('\n');
   }
@@ -1394,7 +1657,7 @@ export class ModelCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  📋 ТЕХНИЧЕСКИЙ ПАСПОРТ МОДЕЛИ: ${model.name.toUpperCase()}`);
+    lines.push(`  ТЕХНИЧЕСКИЙ ПАСПОРТ МОДЕЛИ: ${model.name.toUpperCase()}`);
     lines.push('═'.repeat(78));
     lines.push(`  ID модели        : ${model.id}`);
     lines.push(`  Провайдер        : ${model.provider} [Категория: ${model.category}]`);

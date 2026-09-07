@@ -28,7 +28,7 @@ export const STT_ENDPOINT = 'https://speech.googleapis.com/v1/speech:recognize';
 export const STT_PROJECT_HEADER = 'evabot-agent-server';
 /** v1 standard model → included in the 60 min/month free tier (chirp is V2-only, paid from min 1). */
 export const STT_MODEL = 'latest_long';
-/** 3600 s free tier − 600 s safety margin = 3000 s. */
+/** 3600 s free tier  600 s safety margin = 3000 s. */
 export const STT_MONTHLY_CAP_SECONDS = 3000;
 export const STT_TIMEOUT_MS = 15_000;
 
@@ -105,8 +105,8 @@ export function resetUsageForTest(): void {
 
 /**
  * Size-based duration estimate used when no explicit duration is provided:
- *  - FLAC / LINEAR16 16 kHz mono 16-bit ≈ 32 000 bytes/s
- *  - Opus (OGG/WEBM) ≈ 48 kbps ≈ 6 000 bytes/s (typical Telegram voice)
+ *  - FLAC / LINEAR16 16 kHz mono 16-bit  32 000 bytes/s
+ *  - Opus (OGG/WEBM)  48 kbps  6 000 bytes/s (typical Telegram voice)
  * Always rounds up to the next whole second (Google rounds up too).
  */
 export function estimateAudioSeconds(sizeBytes: number, encoding: SttEncoding = 'OGG_OPUS', sampleRate: number = 16000): number {

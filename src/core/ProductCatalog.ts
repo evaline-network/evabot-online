@@ -184,7 +184,7 @@ export class ProductCatalog {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  🏭 ${s.title}`);
+    lines.push(`  [PROD] ${s.title}`);
     lines.push('═'.repeat(78));
     lines.push(`  ${s.products}: ${st.total}   |   ${s.updated}: ${st.updatedAt}`);
     lines.push('─'.repeat(78));
@@ -207,7 +207,7 @@ export class ProductCatalog {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  🏭 ${s.title} — ${s.filter}: "${query}" (${products.length} ${s.matches})`);
+    lines.push(`  [PROD] ${s.title} — ${s.filter}: "${query}" (${products.length} ${s.matches})`);
     lines.push('═'.repeat(78));
     if (products.length === 0) {
       lines.push(`  ${s.noMatch}`);
@@ -231,7 +231,7 @@ export class ProductCatalog {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  🏭 ${s.title} (${products.length} ${s.products.toLowerCase()})`);
+    lines.push(`  [PROD] ${s.title} (${products.length} ${s.products.toLowerCase()})`);
     lines.push('═'.repeat(78));
     for (const p of products) {
       this.appendProduct(lines, p, lang, true);
@@ -243,7 +243,7 @@ export class ProductCatalog {
   private static appendProduct(lines: string[], p: Product, lang: CatalogLang, full: boolean): void {
     const s = LABELS[lang] || LABELS.en;
     const na = s.na;
-    lines.push(`  ▸ [${p.category}] ${normName(p, lang)}`);
+    lines.push(`   [${p.category}] ${normName(p, lang)}`);
     if (full || p.sizes.length) lines.push(`      ${s.sizes.padEnd(12)}: ${listOrNa(p.sizes, na)}`);
     if (full || p.thickness) lines.push(`      ${s.thickness.padEnd(12)}: ${p.thickness || na}`);
     if (full || p.colors.length) lines.push(`      ${s.colors.padEnd(12)}: ${listOrNa(p.colors, na)}`);

@@ -205,7 +205,7 @@ export class AgentBuilder {
   }
 
   /**
-   * 🌟 EvaLine Enterprise Business Swarm
+   * * EvaLine Enterprise Business Swarm
    * Specialized 10-Agent AI Corporation specifically designed for EvaLine Ukraine:
    * Automotive mats, EVA polymer sheet production, SCM, Nova Poshta, export, and 24/7 customer care.
    */
@@ -357,7 +357,7 @@ export class AgentBuilder {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  🏢 КОНСТРУКТОР АГЕНТОВ // ${company.name.toUpperCase()}`);
+    lines.push(`  [BIZ] КОНСТРУКТОР АГЕНТОВ // ${company.name.toUpperCase()}`);
     lines.push('═'.repeat(78));
     lines.push(`  Категория: ${company.tier} │ Ростер: 10 специализированных агентов`);
     lines.push(`  Экономика: Инфраструктура $${company.totalHourlyCostUSD}/час │ Ср. задача $${company.averageTaskCostUSD}`);

@@ -56,7 +56,7 @@ export class KnowledgeBaseCommand {
   private static handleHelp(): string {
     return `
 ╔══════════════════════════════════════════════════════════════════════╗
-║                  📚 KNOWLEDGE BASE COMMANDS                          ║
+║                  [KB] KNOWLEDGE BASE COMMANDS                          ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                      ║
 ║  /kb on              - Enable Knowledge Base                        ║
@@ -81,12 +81,12 @@ export class KnowledgeBaseCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  📚 KNOWLEDGE BASE STATUS');
+    lines.push('  [KB] KNOWLEDGE BASE STATUS');
     lines.push('═'.repeat(78));
     lines.push('');
     lines.push(`  Active Backend:    ${stats.name} (${stats.id})`);
     lines.push(`  Description:       ${stats.description}`);
-    lines.push(`  Status:            ${stats.enabled ? '[ENABLED] ✅' : '[DISABLED] ❌'}`);
+    lines.push(`  Status:            ${stats.enabled ? '[ENABLED] [OK]' : '[DISABLED] [X]'}`);
     lines.push(`  Total Documents:   ${stats.documentCount}`);
     lines.push(`  Languages:         ${stats.languages.join(', ').toUpperCase()}`);
     lines.push(`  Sources:           ${stats.sources.length} unique files`);
@@ -94,7 +94,7 @@ export class KnowledgeBaseCommand {
     lines.push('  Available Backends:');
     for (const backend of knowledgeBase.getAvailableBackends()) {
       const active = backend.id === stats.id ? ' ← ACTIVE' : '';
-      const avail = backend.enabled ? '✓' : '○';
+      const avail = backend.enabled ? '[OK]' : '○';
       lines.push(`    ${avail} ${backend.id.padEnd(10)} - ${backend.name}${active}`);
     }
     lines.push('');
@@ -127,7 +127,7 @@ export class KnowledgeBaseCommand {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  📚 KNOWLEDGE BASE DOCUMENTS (${docs.length} total)`);
+    lines.push(`  [KB] KNOWLEDGE BASE DOCUMENTS (${docs.length} total)`);
     if (filter.language) lines.push(`  Filter: Language=${filter.language.toUpperCase()}`);
     if (filter.category) lines.push(`  Filter: Category=${filter.category}`);
     lines.push('═'.repeat(78));

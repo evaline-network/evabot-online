@@ -417,11 +417,11 @@
 
   <!-- Header Rows -->
   <div class="header-block">
-    <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> <span id="lbl-ping">Ping:</span> <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator">∿∿∿</span></div>
-    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">Gemini 3.8 Flash <span class="c-ok">[FREE]</span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">78 models (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span> <span class="cmd-link" id="tts-toggle" onclick="VoiceEngine.toggleTtsMute()" title="TTS on/off">🔊</span></div>
-    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
+    <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> <span id="lbl-ping">Ping:</span> <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator"></span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">Gemini 3.8 Flash <span class="c-ok">[FREE]</span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">78 models (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="handleCommand('/products')">/products</span><span class="cmd-link" onclick="handleCommand('/who')">/who</span><span class="cmd-link" onclick="setLanguage(state.lang)">/lang</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/sephirot')">/sephirot</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/history')">/history</span><span class="cmd-link" onclick="handleCommand('/memory')">/memory</span><span class="cmd-link" onclick="handleCommand('/search')">/search</span><span class="cmd-link" onclick="handleCommand('/services')">/services</span><span class="cmd-link" onclick="handleCommand('/servers')">/servers</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
     <div class="tui-line" id="db-line"><span class="c-dim" id="lbl-databases">Databases:</span> <span class="c-ok" id="db-values">Chroma Vector (1075 embeddings) [OK] · SQLite FTS5 (1086 chunks) [OK] · Memory KB (178 docs) [OK]</span></div>
-    <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">[■■░░░░░░]</span> 25% RAM <span class="c-ok">[■░░░░░░░]</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">[░░░░░░]</span> 2% RAM <span class="c-ok">[■■■░░░]</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">♥</span> 72bpm</span></div>
+    <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">[■■░░░░░░]</span> 25% RAM <span class="c-ok">[■░░░░░░░]</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">[░░░░░░]</span> 2% RAM <span class="c-ok">[■■■░░░]</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">*</span> 72bpm</span></div>
   </div>
 
   <!-- Messages stream -->
@@ -436,7 +436,8 @@
     <div class="ac-box" id="ac-box"></div>
     <span class="prompt-char">&gt;</span>
     <textarea id="user-input" placeholder="Type a message or command (/help)..." autofocus></textarea>
-    <button class="mic-btn" id="mic-btn" title="Voice input (🎤)" onclick="VoiceEngine.toggle()">🎤</button>
+    <button class="mic-btn" id="mic-btn" title="Voice input [ MIC ]" onclick="VoiceEngine.toggle()">[ MIC ]</button>
+    <span class="mic-btn" id="tts-toggle" onclick="VoiceEngine.toggleTtsMute()" title="TTS on/off">[ TTS:ON ]</span>
   </div>
 
   <!-- Models Modal -->
@@ -496,7 +497,7 @@
       VOCAB_CAP: 500,
 
       // All slash commands recognized locally or proxied via /api/models/command
-      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'search', 'find', 'services', 'servers', 'health', 'debug', 'log', 'monitor', 'translate', 'news', 'autocorrect', 'voice', 'tts'],
+      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'search', 'find', 'services', 'servers', 'health', 'debug', 'log', 'monitor', 'translate', 'news', 'autocorrect', 'voice', 'tts', 'voices', 'settings', 'agents', 'emoji'],
 
       // Short localized descriptions (condensed from the I18N help blocks)
       CMD_DESC: {
@@ -529,6 +530,10 @@
         autocorrect: { en: 'Toggle typo auto-correction', uk: 'Автокорекція описок', ru: 'Автокоррекция опечаток' },
         voice: { en: 'Voice input & persona', uk: 'Голосовий ввід і персона', ru: 'Голосовой ввод и персона' },
         tts: { en: 'Text-to-speech on/off', uk: 'Озвучення відповідей', ru: 'Озвучивание ответов' },
+        voices: { en: 'TTS voice catalog & set eva|adam', uk: 'Каталог голосів TTS, /voices set eva|adam', ru: 'Каталог голосов TTS, /voices set eva|adam' },
+        settings: { en: 'Current settings table', uk: 'Таблиця поточних налаштувань', ru: 'Таблица текущих настроек' },
+        agents: { en: 'Roster: 18 roles + 10 Sephirot', uk: 'Ростер: 18 ролей + 10 Сефірот', ru: 'Ростер: 18 ролей + 10 Сфирот' },
+        emoji: { en: 'Emoji rendering on/off', uk: 'Емодзі у виводі on/off', ru: 'Эмодзи в выводе on/off' },
         help: { en: 'Show this guide', uk: 'Показати довідку', ru: 'Показать справку' },
         '?': { en: 'Show this guide', uk: 'Показати довідку', ru: 'Показать справку' },
       },
@@ -667,13 +672,13 @@
       // Mask code fences & URLs so corrections never touch them.
       protectSegments(text) {
         const masked = [];
-        const stash = (m) => { masked.push(m); return '￰' + (masked.length - 1) + '￰'; };
+        const stash = (m) => { masked.push(m); return '' + (masked.length - 1) + ''; };
         let out = text.replace(/```[\s\S]*?(?:```|$)/g, stash);
         out = out.replace(/https?:\/\/\S+|www\.\S+/gi, stash);
         return {
           text: out,
           masked,
-          restore: (s) => s.replace(/￰(\d+)￰/g, (_, i) => masked[+i] !== undefined ? masked[+i] : ''),
+          restore: (s) => s.replace(/(\d+)/g, (_, i) => masked[+i] !== undefined ? masked[+i] : ''),
         };
       },
 
@@ -761,8 +766,8 @@
         const dict = this.lexiconSet();
         const vocab = this.loadVocab();
         for (const w of Object.keys(vocab)) dict.add(w.toLowerCase());
-        out = out.split(/(￰\d+￰)/g).map((seg) => {
-          if (/^￰\d+￰$/.test(seg)) return seg;
+        out = out.split(/(\d+)/g).map((seg) => {
+          if (/^\d+$/.test(seg)) return seg;
           return seg.replace(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu, (w) => {
             const lw = w.toLowerCase();
             if (lw.length < 5 || dict.has(lw)) return w;
@@ -885,6 +890,10 @@
   /autocorrect [on|off]   - Smart typo auto-correction (learned lexicon)
   /voice [on|off|eva|adam]- Voice input mic & TTS persona (Eva/Adam)
   /tts [on|off]           - Speak assistant replies aloud
+  /voices [uk|ru|en]      - TTS voice catalog (Chirp3-HD/Wavenet free), /voices set eva|adam <voice>
+  /settings               - Current settings table (locale, model, TTS/STT/translate usage)
+  /agents                 - Roster: 18 corporate roles + 10 Sephirot nodes
+  /emoji [on|off]         - Emoji rendering in replies (off = strip, default)
   /help , /?              - Display this guide`,
         switched: 'Language switched to English (EN). Interface updated instantly.',
         cleared: 'Screen cleared.',
@@ -896,7 +905,7 @@
         fixedToast: 'fixed: {from} → {to}',
         autocorrectOn: 'Auto-correction ENABLED.',
         autocorrectOff: 'Auto-correction disabled.',
-        voiceOn: 'Voice input enabled. Click 🎤 to dictate.',
+        voiceOn: 'Voice input enabled. Click [ MIC ] to dictate.',
         voiceOff: 'Voice input disabled.',
         voicePersona: 'TTS persona set to ',
         voiceUnsupported: 'Speech recognition not supported (use Chrome/Edge).',
@@ -954,6 +963,10 @@
   /autocorrect [on|off]   - Розумна автокорекція описок (лексикон, що навчається)
   /voice [on|off|eva|adam]- Голосовий ввід та персона озвучки (Єва/Адам)
   /tts [on|off]           - Озвучення відповідей асистента
+  /voices [uk|ru|en]      - Каталог голосів TTS (Chirp3-HD/Wavenet free), /voices set eva|adam <голос>
+  /settings               - Таблиця поточних налаштувань (мова, модель, ліміти TTS/STT/перекладу)
+  /agents                 - Ростер: 18 корпоративних ролей + 10 вузлів Сефірот
+  /emoji [on|off]         - Емодзі у відповідях (off = вирізати, за замовчуванням)
   /help , /?              - Ця довідка`,
         switched: 'Мову перемкнено на українську (UK). Інтерфейс оновлено миттєво.',
         cleared: 'Екран очищено.',
@@ -965,7 +978,7 @@
         fixedToast: 'виправлено: {from} → {to}',
         autocorrectOn: 'Автокорекцію УВІМКНЕНО.',
         autocorrectOff: 'Автокорекцію вимкнено.',
-        voiceOn: 'Голосовий ввід увімкнено. Натисніть 🎤 для диктування.',
+        voiceOn: 'Голосовий ввід увімкнено. Натисніть [ MIC ] для диктування.',
         voiceOff: 'Голосовий ввід вимкнено.',
         voicePersona: 'Персону озвучки змінено на ',
         voiceUnsupported: 'Розпізнавання мови не підтримується (використовуйте Chrome/Edge).',
@@ -1023,6 +1036,10 @@
   /autocorrect [on|off]   - Умная автокоррекция опечаток (обучаемый лексикон)
   /voice [on|off|eva|adam]- Голосовой ввод и персона озвучки (Ева/Адам)
   /tts [on|off]           - Озвучивание ответов ассистента
+  /voices [uk|ru|en]      - Каталог голосов TTS (Chirp3-HD/Wavenet free), /voices set eva|adam <голос>
+  /settings               - Таблица текущих настроек (язык, модель, лимиты TTS/STT/перевода)
+  /agents                 - Ростер: 18 корпоративных ролей + 10 узлов Сфирот
+  /emoji [on|off]         - Эмодзи в ответах (off = вырезать, по умолчанию)
   /help , /?              - Эта справка`,
         switched: 'Язык переключен на русский (RU). Интерфейс обновлен мгновенно.',
         cleared: 'Экран очищен.',
@@ -1034,7 +1051,7 @@
         fixedToast: 'исправлено: {from} → {to}',
         autocorrectOn: 'Автокоррекция ВКЛЮЧЕНА.',
         autocorrectOff: 'Автокоррекция выключена.',
-        voiceOn: 'Голосовой ввод включен. Нажмите 🎤 для диктовки.',
+        voiceOn: 'Голосовой ввод включен. Нажмите [ MIC ] для диктовки.',
         voiceOff: 'Голосовой ввод отключен.',
         voicePersona: 'Персона озвучки изменена на ',
         voiceUnsupported: 'Распознавание речи не поддерживается (используйте Chrome/Edge).',
@@ -1190,6 +1207,50 @@
       return text;
     }
 
+    // =====================================================================
+    // Defensive emoji renderer (task 1): evabot_emoji=off by default.
+    // User-typed text is kept intact; rendered replies (assistant/system/
+    // command output) get emoji stripped or replaced by ASCII equivalents.
+    // Box-drawing + geometric symbols (─│┌┐└┘├┤┬┴┼═║╔╗╚╝ ●○◆■□▪▫) survive.
+    // =====================================================================
+    const EMOJI_ASCII = {
+      '\u{1F3A4}': '[ MIC ]',
+      '\u{1F50A}': '[ TTS:ON ]',
+      '\u{1F507}': '[ TTS:OFF ]',
+      '\u2705': '[OK]',
+      '\u274C': '[X]',
+      '\u2714': '[OK]',
+      '\u2716': '[X]',
+      '\u26A0': '[WRN]',
+      '\u1F512': '[LOCK]',
+      '\u1F513': '[UNLOCK]',
+      '\u231B': '[WAIT]',
+      '\u1F41B': '[DBG]',
+      '\u1F333': '[=]',
+      '\u1F4E1': '>',
+      '\u1F4F0': 'NEWS',
+      '\u1F916': '[BOT]',
+      '\u1F464': '[USER]',
+      '\u26A1': '*',
+      '\u2699': '*',
+      '\u2605': '*',
+      '\u2665': '*',
+      '\u2696': '*',
+    };
+
+    function stripEmoji(s) {
+      if (!s) return '';
+      return String(s).replace(
+        /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{1F1E6}-\u{1F1FF}]/gu,
+        (m) => EMOJI_ASCII[m] !== undefined ? EMOJI_ASCII[m] : '',
+      );
+    }
+
+    // 'off' is the default → emoji shown only when evabot_emoji === 'on'.
+    function emojiOn() {
+      return localStorage.getItem('evabot_emoji') === 'on';
+    }
+
     function addMessage(role, text) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'msg';
@@ -1204,7 +1265,8 @@
 
       const bodySpan = document.createElement('span');
       bodySpan.className = 'msg-body';
-      bodySpan.innerHTML = renderMarkdown(text);
+      // Defensive renderer: strip emoji from rendered replies (user-typed text stays intact).
+      bodySpan.innerHTML = renderMarkdown((emojiOn() || role === 'user') ? text : stripEmoji(text));
 
       msgDiv.appendChild(timeSpan);
       msgDiv.appendChild(roleSpan);
@@ -1236,7 +1298,7 @@
       }
     }
 
-    const pulseFrames = ['∿∿∿', '≈≈≈', '≋≋≋', '∼∼∼', '∿≈∿', '≈≋≈'];
+    const pulseFrames = ['', '', '', '', '', ''];
     let pulseIdx = 0;
     let heartRate = 72;
 
@@ -1254,7 +1316,7 @@
 
       heartRate = 70 + Math.floor(Math.sin(Date.now() / 2500) * 5 + (Math.random() * 3));
       const heartEl = document.getElementById('heartbeat-indicator');
-      if (heartEl) heartEl.innerHTML = `<span style="color:var(--red)">♥</span> ${heartRate}bpm`;
+      if (heartEl) heartEl.innerHTML = `<span style="color:var(--red)">*</span> ${heartRate}bpm`;
 
       try {
         const res = await fetch('/api/health');
@@ -1319,7 +1381,7 @@
     function toggleMode() {
       if (state.currentMode === 'solo') {
         state.currentMode = 'consilium';
-        addMessage('system', '⚖ Активирован режим КОНСИЛИУМ. Запросы анализируются несколькими моделями с итоговым синтезом.');
+        addMessage('system', '* Активирован режим КОНСИЛИУМ. Запросы анализируются несколькими моделями с итоговым синтезом.');
       } else {
         state.currentMode = 'solo';
         addMessage('system', 'Режим переключен на SOLO (диалог с активной моделью).');
@@ -1329,7 +1391,7 @@
 
     async function sendConsiliumMessage(text) {
       addMessage('user', text);
-      const waitNotice = addMessage('system', '⚖ Запуск консилиума моделей... Выполняется коллегиальный анализ.');
+      const waitNotice = addMessage('system', '* Запуск консилиума моделей... Выполняется коллегиальный анализ.');
       setStatus(true, true);
       state.isGenerating = true;
 
@@ -1572,6 +1634,16 @@
         } else {
           await sendConsiliumMessage(prompt);
         }
+        return;
+      }
+
+      if (lower.startsWith('/emoji')) {
+        const arg = lower.split(/\s+/)[1];
+        const next = arg === 'on' ? 'on' : arg === 'off' ? 'off' : (emojiOn() ? 'off' : 'on');
+        localStorage.setItem('evabot_emoji', next);
+        addMessage('system', next === 'on'
+          ? 'Emoji mode: ON (emoji preserved in rendered replies).'
+          : 'Emoji mode: OFF (emoji stripped from rendered replies, default).');
         return;
       }
 
@@ -1821,7 +1893,7 @@
       updateTtsToggle() {
         const el = document.getElementById('tts-toggle');
         if (el) {
-          el.textContent = this.ttsOn ? '🔊' : '🔇';
+          el.textContent = this.ttsOn ? '[ TTS:ON ]' : '[ TTS:OFF ]';
           el.className = this.ttsOn ? 'cmd-link' : 'cmd-link c-dim';
         }
       },

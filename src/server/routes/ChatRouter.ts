@@ -9,9 +9,13 @@ import { logger } from '../../core/Logger.js';
 import { ChatHistoryStore, CONSILIUM_SESSION_ID } from '../../core/ChatHistoryStore.js';
 import { I18nEngine } from '../../core/I18nEngine.js';
 import { isDebugOn, startSpan, renderDebugFooter } from '../../core/OpLog.js';
+import { SystemContext, recordLastUsedModel } from '../../core/SystemContext.js';
+import { DeveloperMode } from '../../core/DeveloperMode.js';
 
 /**
  * Fire-and-forget chat persistence: a DB failure must never break the chat flow.
+ * Password masking: "/developer unlock <pwd>" lines are persisted with the
+ * password argument replaced by **** so secrets never reach ChatHistoryStore.
  */
 function persistChatMessage(
   sessionId: string,
@@ -23,7 +27,7 @@ function persistChatMessage(
     ChatHistoryStore.getInstance().appendMessage({
       sessionId,
       role,
-      content,
+      content: DeveloperMode.maskPasswordIn(content),
       model: model || '',
       lang: I18nEngine.getLocale(),
     });
@@ -47,7 +51,9 @@ export class ChatRouter extends Router {
         return;
       }
       const targetModel = model || Config.defaultModel;
-      const client = new UniversalLlmClient(apiKey || Config.geminiApiKey || undefined);
+      const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
+      const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
+      const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
 
       let effectiveInstruction = this.resolveSystemInstruction(roleId, systemInstruction);
 
@@ -62,8 +68,16 @@ export class ChatRouter extends Router {
         }
       }
 
+      // System-awareness (FEATURE 1) + developer block (FEATURE 2), appended
+      // AFTER the existing system prompt building (role/LocalePolicy/rules/KB).
+      effectiveInstruction += `\n${SystemContext.build()}`;
+      if (DeveloperMode.isUnlocked(chatSessionId)) {
+        effectiveInstruction += `\n${SystemContext.DEVELOPER_BLOCK}`;
+      }
+
       const messages = [...history, { role: 'user', content: message.trim() }];
-      const span = startSpan(targetModel, client.resolveProvider(targetModel, provider));
+      recordLastUsedModel(targetModel, usedProvider);
+      const span = startSpan(targetModel, usedProvider);
       const responseText = await client.generateContent(targetModel, messages, {
         systemInstruction: effectiveInstruction,
         provider: provider as LlmProvider | undefined,
@@ -72,7 +86,6 @@ export class ChatRouter extends Router {
       span.end();
       const debugFooter = isDebugOn() ? `\n${renderDebugFooter(span)}` : '';
 
-      const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
       persistChatMessage(chatSessionId, 'user', message.trim(), targetModel);
       persistChatMessage(chatSessionId, 'assistant', responseText, targetModel);
 
@@ -93,7 +106,9 @@ export class ChatRouter extends Router {
         return;
       }
       const targetModel = model || Config.defaultModel;
-      const client = new UniversalLlmClient(apiKey || Config.geminiApiKey || undefined);
+      const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
+      const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
+      const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
 
       let effectiveInstruction = this.resolveSystemInstruction(roleId, systemInstruction);
 
@@ -108,10 +123,16 @@ export class ChatRouter extends Router {
         }
       }
 
-      const messages = [...history, { role: 'user', content: message.trim() }];
-      const span = startSpan(targetModel, client.resolveProvider(targetModel, provider));
+      // System-awareness (FEATURE 1) + developer block (FEATURE 2).
+      effectiveInstruction += `\n${SystemContext.build()}`;
+      if (DeveloperMode.isUnlocked(chatSessionId)) {
+        effectiveInstruction += `\n${SystemContext.DEVELOPER_BLOCK}`;
+      }
 
-      const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
+      const messages = [...history, { role: 'user', content: message.trim() }];
+      recordLastUsedModel(targetModel, usedProvider);
+      const span = startSpan(targetModel, usedProvider);
+
       persistChatMessage(chatSessionId, 'user', message.trim(), targetModel);
 
       ctx.res.writeHead(200, {

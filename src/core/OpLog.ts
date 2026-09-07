@@ -68,7 +68,7 @@ export function setDebugOn(value: boolean): void {
   debugState.enabled = value;
 }
 
-/** A latency span for one LLM round-trip (used for the ⚙ debug footer). */
+/** A latency span for one LLM round-trip (used for the * debug footer). */
 export interface DebugSpan {
   model: string;
   provider: string;
@@ -99,10 +99,10 @@ export function startSpan(model: string, provider: string): DebugSpan {
   return span;
 }
 
-/** Renders the `⚙ debug:` footer line shown in chat replies while debug is ON. */
+/** Renders the `* debug:` footer line shown in chat replies while debug is ON. */
 export function renderDebugFooter(span: DebugSpan): string {
   const latency = span.latencyMs ?? Date.now() - span.startTs;
-  return `⚙ debug: model=${span.model} provider=${span.provider} latency=${latency}ms fallback=${span.fallback ?? '—'}`;
+  return `* debug: model=${span.model} provider=${span.provider} latency=${latency}ms fallback=${span.fallback ?? '—'}`;
 }
 
 /* ────────────────────────────────  OpLog  ──────────────────────────────── */

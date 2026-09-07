@@ -129,7 +129,7 @@ const TRANSLATIONS: Record<Lang, TranslationStrings> = {
     controlPanelBtn: '[ ↓ CONTROL PANEL // SYSTEM DECK ]',
     returnTerminalBtn: '[ ↑ RETURN TO TERMINAL ]',
     clearChatBtn: '[ CLR ]',
-    transmitBtn: '[ TRANSMIT ↵ ]',
+    transmitBtn: '[ TRANSMIT  ]',
     stopBtn: '[ STOP ]',
     inputPlaceholder: 'Enter cyber command or query prompt (Enter to send, Shift+Enter for newline)...',
     inputLegend: 'Enter: Transmit • Shift+Enter: Linebreak • EvaBot Core v0.2.0',
@@ -214,7 +214,7 @@ const TRANSLATIONS: Record<Lang, TranslationStrings> = {
     controlPanelBtn: '[ ↓ ПАНЕЛЬ КЕРУВАННЯ // СИСТЕМНИЙ ДЕК ]',
     returnTerminalBtn: '[ ↑ ПОВЕРНУТИСЯ ДО ТЕРМІНАЛУ ]',
     clearChatBtn: '[ ОЧИСТИТИ ]',
-    transmitBtn: '[ ВІДПРАВИТИ ↵ ]',
+    transmitBtn: '[ ВІДПРАВИТИ  ]',
     stopBtn: '[ ЗУПИНИТИ ]',
     inputPlaceholder: 'Введіть кібер-команду або запит (Enter для відправки, Shift+Enter для нового рядка)...',
     inputLegend: 'Enter: Відправити • Shift+Enter: Перенос рядка • Ядро EvaBot v0.2.0',
@@ -299,7 +299,7 @@ const TRANSLATIONS: Record<Lang, TranslationStrings> = {
     controlPanelBtn: '[ ↓ КОНТРОЛЬНАЯ ПАНЕЛЬ // СИСТЕМНЫЙ ДЕК ]',
     returnTerminalBtn: '[ ↑ ВЕРНУТЬСЯ В ТЕРМИНАЛ ]',
     clearChatBtn: '[ ОЧИСТИТЬ ]',
-    transmitBtn: '[ ОТПРАВИТЬ ↵ ]',
+    transmitBtn: '[ ОТПРАВИТЬ  ]',
     stopBtn: '[ ОСТАНОВИТЬ ]',
     inputPlaceholder: 'Введите кибер-команду или запрос (Enter для отправки, Shift+Enter для новой строки)...',
     inputLegend: 'Enter: Отправить • Shift+Enter: Перенос строки • Ядро EvaBot v0.2.0',
@@ -1217,7 +1217,7 @@ Execute commands or submit analytical inquiries below. Click '[ ↓ CONTROL PANE
 
     const notif = document.createElement('div');
     notif.className = 'text-center my-2 text-xs font-mono text-zinc-500';
-    notif.innerHTML = `✦ ${this.renderMarkdown(text)}`;
+    notif.innerHTML = ` ${this.renderMarkdown(text)}`;
     container.appendChild(notif);
     this.scrollToBottom();
   }

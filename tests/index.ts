@@ -19,10 +19,13 @@ import { runDebugLogTests } from './debug_log.test.js';
 import { runTranslateTests } from './translate.test.js';
 import { runCloudTtsTests } from './cloudtts.test.js';
 import { runCloudSttTests } from './cloudstt.test.js';
+import { runDeveloperModeTests } from './developer_mode.test.js';
+import { runUiParityTests } from './ui_parity.test.js';
+import { runGeminiRoutingTests } from './gemini_routing.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
-  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (22 test suites)');
+  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (25 test suites)');
   console.log('================================================================\n');
 
   const results = [
@@ -48,6 +51,9 @@ async function runAllTests(): Promise<void> {
     await runTranslateTests(),
     await runCloudTtsTests(),
     await runCloudSttTests(),
+    await runDeveloperModeTests(),
+    await runUiParityTests(),
+    await runGeminiRoutingTests(),
   ];
 
   const testNames = [
@@ -73,6 +79,9 @@ async function runAllTests(): Promise<void> {
     'TranslateTests',
     'CloudTtsTests',
     'CloudSttTests',
+    'DeveloperModeTests',
+    'UiParityTests',
+    'GeminiRoutingTests',
   ];
 
   let allPassed = true;
@@ -88,7 +97,7 @@ async function runAllTests(): Promise<void> {
 
   console.log('\n================================================================');
   if (allPassed) {
-    console.log('✅ ALL 22 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
+    console.log('✅ ALL 25 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
     console.log('================================================================\n');
     process.exit(0);
   } else {

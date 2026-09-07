@@ -6,6 +6,8 @@ import { applyLocalePolicy } from '../core/LocalePolicy.js';
 import { ChatHistoryStore } from '../core/ChatHistoryStore.js';
 import { I18nEngine, SupportedLocale } from '../core/I18nEngine.js';
 import { logger } from '../core/Logger.js';
+import { SystemContext, recordLastUsedModel } from '../core/SystemContext.js';
+import { DeveloperMode } from '../core/DeveloperMode.js';
 
 /**
  * Thin chat-engine facade shared by the Telegram transport.
@@ -38,7 +40,7 @@ export class ChatEngine {
   private historyLimit: number;
 
   constructor(options: { apiKey?: string; model?: string; historyLimit?: number } = {}) {
-    this.client = new UniversalLlmClient(options.apiKey || Config.geminiApiKey || undefined);
+    this.client = new UniversalLlmClient(options.apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
     this.kbConnector = new KnowledgeBaseConnector();
     this.historyLimit = options.historyLimit ?? 12;
   }
@@ -55,6 +57,9 @@ export class ChatEngine {
     const targetModel = request.model || Config.defaultModel;
     const useKnowledgeBase = request.useKnowledgeBase !== false;
     const useHistory = request.useHistory !== false;
+
+    // Track the actually-used model for SystemContext (FEATURE 1).
+    recordLastUsedModel(targetModel, this.client.resolveProvider(targetModel, request.provider));
 
     const store = ChatHistoryStore.getInstance();
     let history: Array<{ role: string; content: string }> = [];
@@ -77,8 +82,15 @@ export class ChatEngine {
           effectiveInstruction += `\n${this.kbConnector.formatContextForPrompt(docs)}`;
         }
       } catch (err: any) {
-        logger.warn('ChatEngine', `KB retrieval skipped: ${err.message}`);
+        logger.warn('ChatEngine', `KB retrieval skipped for ${sessionId}: ${err.message}`);
       }
+    }
+
+    // System-awareness (FEATURE 1) + developer block (FEATURE 2), appended
+    // after the existing system prompt building (LocalePolicy/rules/KB).
+    effectiveInstruction += `\n${SystemContext.build()}`;
+    if (DeveloperMode.isUnlocked(sessionId)) {
+      effectiveInstruction += `\n${SystemContext.DEVELOPER_BLOCK}`;
     }
 
     const messages: UniversalMessage[] = [
@@ -104,7 +116,7 @@ export class ChatEngine {
       ChatHistoryStore.getInstance().appendMessage({
         sessionId,
         role,
-        content,
+        content: DeveloperMode.maskPasswordIn(content),
         model,
         lang: locale || I18nEngine.getLocale(),
       });

@@ -226,7 +226,7 @@ export class Translator {
 
   /** Usage footer for command replies: chars used / cap + free-tier note. */
   public formatUsageFooter(usage: { month: string; chars: number }): string {
-    return `📡 Переклад-лічильник: ${usage.chars}/${TRANSLATE_MONTHLY_CAP} символів цього місяця (free tier: 500 000/міс — cloud.google.com/translate/pricing).`;
+    return `[NET] Переклад-лічильник: ${usage.chars}/${TRANSLATE_MONTHLY_CAP} символів цього місяця (free tier: 500 000/міс — cloud.google.com/translate/pricing).`;
   }
 }
 

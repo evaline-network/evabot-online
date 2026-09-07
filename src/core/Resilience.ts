@@ -246,14 +246,14 @@ export class ProviderFallbackChain {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  🩺 HEALTH ОТЧЁТ LLM-ПРОВАЙДЕРОВ (CircuitBreakers)');
+    lines.push('   HEALTH ОТЧЁТ LLM-ПРОВАЙДЕРОВ (CircuitBreakers)');
     lines.push('═'.repeat(78));
     lines.push('  ПРОВАЙДЕР    СТАТУС      СБОЕВ  ПОСЛЕДНЯЯ ОШИБКА');
     lines.push('─'.repeat(78));
 
     for (const name of BREAKER_PROVIDER_NAMES) {
       const snap = getBreaker(name).snapshot();
-      const icon = snap.state === 'closed' ? '✅' : snap.state === 'half-open' ? '🟡' : '⛔';
+      const icon = snap.state === 'closed' ? '[OK]' : snap.state === 'half-open' ? '[HALF]' : '[OPEN]';
       const lastErr = snap.lastError ? snap.lastError.substring(0, 36) : '—';
       lines.push(
         `  ${name.padEnd(12)} ${icon} ${snap.state.padEnd(8)} ${String(snap.consecutiveFailures).padEnd(6)} ${lastErr}`

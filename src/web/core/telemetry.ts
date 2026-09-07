@@ -1,6 +1,6 @@
 import type { SiteConfig, MeshHealth } from './config.js';
 
-const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+const SPINNER_FRAMES = ['', '', '', '', '', '', '', '', '', ''];
 
 function pad(n: number): string {
   return n < 10 ? '0' + String(n) : String(n);

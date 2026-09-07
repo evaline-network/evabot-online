@@ -84,7 +84,7 @@ export const DEFAULT_RULES: AgentRule[] = [
     priority: 3,
     enforced: true,
     source: 'system',
-    description: 'Single-viewport, 16px Roboto font standard, zero border boxes, monochrome B&W + 3 signal colors (🟢/🟡/🔴).',
+    description: 'Single-viewport, 16px Roboto font standard, zero border boxes, monochrome B&W + 3 signal colors ([OK]/[MED]/[HIGH]).',
     ruleText:
       'INTERFACE ERGONOMICS: Output clean, readable GitHub-flavored Markdown. Use concise, structured lists and clean tables. Do not produce verbose filler. Maintain exact parity between terminal CLI and web interfaces.',
   },

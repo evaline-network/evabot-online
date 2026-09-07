@@ -268,7 +268,7 @@ def main():
         prev_ids = {m["id"] for m in prev.get(prev_key, [])}
         lines = []
         for i, m in enumerate(top, 1):
-            mark = " 🆕" if m["id"] not in prev_ids and prev else ""
+            mark = " [NEW]" if m["id"] not in prev_ids and prev else ""
             extra = f" · ctx {m['ctx']:,}" if m.get("ctx") else ""
             if not m["free"]:
                 extra += f" · ${m['in_price']:.2f} in / ${m['out_price']:.2f} out за 1M"
@@ -284,13 +284,13 @@ description: Авто-агрегация топ-10 источников: акт�
 
 # 📡 Модельный монитор — {report_time.strftime('%Y-%m-%d %H:%M UTC')}
 
-## 🆓 TOP-10 FREE для кодинга
+## [FREE] TOP-10 FREE для кодинга
 
 | # | Модель | Score | |
 |---|--------|-------|--|
 {rows(free_top, "free")}
 
-## 💎 TOP-10 PAID для кодинга
+## [PAID] TOP-10 PAID для кодинга
 
 | # | Модель | Score | |
 |---|--------|-------|--|

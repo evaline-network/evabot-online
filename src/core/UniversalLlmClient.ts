@@ -26,7 +26,11 @@ export class UniversalLlmClient {
   private geminiClient: GeminiClient;
 
   constructor(apiKeyOrToken?: string) {
-    this.geminiClient = new GeminiClient(apiKeyOrToken || Config.geminiApiKey || undefined);
+    // When paid Vertex traffic is explicitly enabled (EVA_VERTEX_ENABLED=1),
+    // do NOT seed the free-tier key as an explicit credential — leave the
+    // GeminiClient free to resolve the Vertex bearer per its ONLY-FREE policy.
+    const seedKey = apiKeyOrToken || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined;
+    this.geminiClient = new GeminiClient(seedKey);
   }
 
   /**

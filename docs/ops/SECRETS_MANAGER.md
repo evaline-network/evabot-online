@@ -72,6 +72,32 @@ Priority keep-list (the 6): `openrouter`, `gemini`, `groq`, `cerebras`, `mistral
 
 Alternatively, disable the 6 low-priority secrets' versions (they can be re-enabled) — secrets remain listed but inactive versions don't count.
 
+## Free-tier демоція (2026-09-07)
+
+Executed on 2026-09-07: disabled the 6 low-priority versions (v1 of each) to bring active version count from **12 → 6** (exactly at free-tier limit). Disabled, not destroyed — values are preserved and can be re-enabled.
+
+| Secret | Version | Before | After |
+|---|---|---|---|
+| `evabot-openrouter-api-key` | 1 | ENABLED | ENABLED (kept) |
+| `evabot-gemini-api-key` | 1 | ENABLED | ENABLED (kept) |
+| `evabot-groq-api-key` | 1 | ENABLED | ENABLED (kept) |
+| `evabot-cerebras-api-key` | 1 | ENABLED | ENABLED (kept) |
+| `evabot-mistral-api-key` | 1 | ENABLED | ENABLED (kept) |
+| `evabot-together-api-key` | 1 | ENABLED | ENABLED (kept) |
+| `evabot-kilo-dummy` | 1 | ENABLED | **DISABLED** |
+| `evabot-cloudflare-account-id` | 1 | ENABLED | **DISABLED** |
+| `evabot-litellm-master-key` | 1 | ENABLED | **DISABLED** |
+| `evabot-cloudflare-api-token` | 1 | ENABLED | **DISABLED** |
+| `evabot-hf-token` | 1 | ENABLED | **DISABLED** |
+| `evabot-zai-api-key` | 1 | ENABLED | **DISABLED** |
+
+Notes:
+
+- Active versions across all secrets: **6** (before: 12). Disabled versions do not count toward the free-tier quota.
+- Disabled secrets keep their values in the source file `/opt/omniroute/omniroute.env` (which remains the live source of truth for omniroute) and remain stored in Secret Manager. Nothing was destroyed.
+- Re-enable any of them at any time: `gcloud secrets versions enable 1 --secret=<name> --project evabot-agent-server`.
+- **Rotation rule:** `versions add` creates a *new* active version — on any secret update, immediately disable the previous version (`gcloud secrets versions disable <prev-id> --secret=<name>`) to stay ≤6 active versions.
+
 ## Migration plan for omniroute (NOT yet executed)
 
 Option A — init-script pull (recommended, no new deps):

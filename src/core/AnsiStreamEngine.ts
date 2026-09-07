@@ -4,7 +4,7 @@
  * 
  * Features:
  * - Line-by-line reactive streaming and chunk buffering
- * - Traffic light badges (🟢 🟡 🔴) and status indicators
+ * - Traffic light badges ([OK] [MED] [HIGH]) and status indicators
  * - Clean headers, banners, dividers, and prompt symbols
  * - Robust monospace table formatter with auto-column width and border styles
  * - 1:1 parity across ANSI Terminal, Plain Text files, and Web HTML
@@ -76,7 +76,7 @@ export function stripAnsi(text: string): string {
 
 /**
  * Calculates visible terminal character width.
- * Accounts for 2-column emojis (🟢, 🟡, 🔴, etc.) and wide characters.
+ * Accounts for 2-column emojis ([OK], [MED], [HIGH], etc.) and wide characters.
  */
 export function visibleWidth(text: string): number {
   const clean = stripAnsi(text);
@@ -201,18 +201,18 @@ export function trafficLightIcon(status: TrafficLightStatus): string {
     case 'ok':
     case 'online':
     case 'free':
-      return '🟢';
+      return '[OK]';
     case 'yellow':
     case 'warn':
     case 'standby':
     case 'paid':
-      return '🟡';
+      return '[MED]';
     case 'red':
     case 'error':
     case 'offline':
-      return '🔴';
+      return '[HIGH]';
     default:
-      return '⚪';
+      return '[--]';
   }
 }
 
@@ -239,7 +239,7 @@ export function trafficLightColor(status: TrafficLightStatus): string {
 
 /**
  * Generates standard cyber-terminal traffic light badge:
- * e.g. "🟢 ONLINE", "🟡 STANDBY", "🔴 OFFLINE", "🟢 FREE QUOTA"
+ * e.g. "[OK] ONLINE", "[MED] STANDBY", "[HIGH] OFFLINE", "[OK] FREE QUOTA"
  */
 export function statusBadge(status: TrafficLightStatus, customLabel?: string): string {
   const icon = trafficLightIcon(status);
@@ -329,11 +329,11 @@ export function formatBanner(lines: string[], title = 'EVABOT ONLINE v0.0.1 MVP'
 export function promptSymbol(mode: string = 'solo'): string {
   switch (mode.toLowerCase()) {
     case 'consilium':
-      return `${AnsiColors.green}👥 ❯${AnsiColors.reset}`;
+      return `${AnsiColors.green}[TEAM] ❯${AnsiColors.reset}`;
     case 'dialogue':
-      return `${AnsiColors.cyan}💬 ❯${AnsiColors.reset}`;
+      return `${AnsiColors.cyan}❯${AnsiColors.reset}`;
     case 'broadcast':
-      return `${AnsiColors.yellow}📡 ❯${AnsiColors.reset}`;
+      return `${AnsiColors.yellow}[NET] ❯${AnsiColors.reset}`;
     default:
       return `${AnsiColors.brightGreen}❯${AnsiColors.reset}`;
   }
@@ -758,7 +758,7 @@ export class AnsiStreamWriter extends EventEmitter {
   }
 
   /**
-   * Set dynamic prefix for streamed lines (e.g. `│ ` or `▸ `)
+   * Set dynamic prefix for streamed lines (e.g. `│ ` or ` `)
    */
   public setPrefix(prefix: string): void {
     this.prefix = prefix;

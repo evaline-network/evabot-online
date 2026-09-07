@@ -295,7 +295,7 @@ export class AccountingEngine {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  💰 ФИНАНСОВЫЙ ОТЧЕТ И КАЛЬКУЛЯТОР СЕБЕСТОИМОСТИ (COST LEDGER)');
+    lines.push('  $ ФИНАНСОВЫЙ ОТЧЕТ И КАЛЬКУЛЯТОР СЕБЕСТОИМОСТИ (COST LEDGER)');
     lines.push('═'.repeat(78));
     lines.push('');
     lines.push('  [1] ИНФРАСТРУКТУРА КЛАСТЕРА И ПОДПИСКИ (ФИКСИРОВАННЫЕ РАСХОДЫ // OpEx):');
@@ -345,7 +345,7 @@ export class AccountingEngine {
     }
 
     lines.push('  ────────────────────────────────────────────────────────────────────────────');
-    lines.push('  💡 ВЫВОД: Себестоимость создания агента на базе Gemini 3.8 / 3.1 Pro равна $0.00.');
+    lines.push('  * ВЫВОД: Себестоимость создания агента на базе Gemini 3.8 / 3.1 Pro равна $0.00.');
     lines.push(`  Базовая стоимость работы роя из 10 агентов: $${(totalInfraHourly).toFixed(4)}/час за весь кластер.`);
     lines.push('');
     lines.push(CapitalExpenses.formatCapitalSection());

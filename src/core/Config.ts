@@ -1,8 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { DEFAULT_GEMINI_API_KEY } from './GoogleAuthProvider.js';
 
 export interface SystemConfig {
   geminiApiKey: string;
+  /**
+   * ONLY-FREE rule: Vertex AI (paid, on-demand per-token) is DISABLED by
+   * default. Set env EVA_VERTEX_ENABLED=1 to explicitly opt in to paid
+   * Vertex bearer-token traffic.
+   */
+  vertexEnabled: boolean;
   defaultModel: string;
   serverPort: number;
   serverHost: string;
@@ -18,6 +25,7 @@ export interface SystemConfig {
   ttsVoiceEva: string;
   ttsVoiceAdam: string;
   ttsMonthlyCharCap: number;
+  developerPassword: string;
 }
 
 /**
@@ -53,7 +61,10 @@ function loadDotEnv(): void {
 loadDotEnv();
 
 export const Config: SystemConfig = {
-  geminiApiKey: (process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY.includes('AIzaSyBmgELFPYjax4lWcFIZd183EpqQwVqAVlA')) ? process.env.GEMINI_API_KEY : '',
+  // Gemini free-tier key: explicit GEMINI_API_KEY env wins; otherwise fall
+  // back to the built-in default key (generativelanguage free tier, $0).
+  geminiApiKey: process.env.GEMINI_API_KEY?.trim() || DEFAULT_GEMINI_API_KEY,
+  vertexEnabled: process.env.EVA_VERTEX_ENABLED === '1',
   defaultModel: process.env.DEFAULT_MODEL || 'gemini-2.5-flash',
   serverPort: parseInt(process.env.PORT || '3000', 10),
   serverHost: process.env.HOST || '0.0.0.0',
@@ -70,11 +81,15 @@ export const Config: SystemConfig = {
   opencodeBaseUrl: process.env.OPENCODE_BASE_URL || 'http://100.66.98.4:20128/v1',
   opencodeApiKey: process.env.OPENCODE_API_KEY || '',
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
-  // Cloud TTS (ONLY-FREE rule): Wavenet family = 1M chars/month free tier.
-  // Default cap 900_000 leaves a safety margin under the free allowance so we
-  // never silently spend money. Verified 2026-09: official pricing page
-  // https://cloud.google.com/text-to-speech/pricing
-  ttsVoiceEva: process.env.TTS_VOICE_EVA || 'uk-UA-Wavenet-B',
-  ttsVoiceAdam: process.env.TTS_VOICE_ADAM || 'ru-RU-Wavenet-D',
+  // Cloud TTS (ONLY-FREE rule): Chirp3-HD voices sound far more natural than
+  // Wavenet AND share the 1M chars/month free tier (verified 2026-09,
+  // https://cloud.google.com/text-to-speech/pricing). Default cap 900_000
+  // leaves a safety margin under the free allowance so we never spend money.
+  // Runtime override: data/voice-prefs.json (written by /voices set).
+  ttsVoiceEva: process.env.TTS_VOICE_EVA || 'uk-UA-Chirp3-HD-Aoede',
+  ttsVoiceAdam: process.env.TTS_VOICE_ADAM || 'ru-RU-Chirp3-HD-Fenrir',
   ttsMonthlyCharCap: parseInt(process.env.TTS_MONTHLY_CHAR_CAP || '900000', 10),
+  // Developer mode gate (FEATURE /developer): NO default password — when the
+  // env var is missing, /developer must report "режим недоступний".
+  developerPassword: process.env.EVADEV_PASSWORD || '',
 };

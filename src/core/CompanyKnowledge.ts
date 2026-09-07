@@ -190,7 +190,7 @@ export class CompanyKnowledge {
     lines.push('');
     lines.push('═'.repeat(78));
     if (!id) {
-      lines.push(`  👥 ${s.unknown} "${roleId}"`);
+      lines.push(`  [TEAM] ${s.unknown} "${roleId}"`);
       lines.push('─'.repeat(78));
       lines.push(`  ${s.usageList}`);
       lines.push(`  ${Object.keys(KNOWLEDGE_MATRIX).join(', ')}`);
@@ -199,7 +199,7 @@ export class CompanyKnowledge {
     }
     const role = CORPORATE_ROLES[id];
     const k = KNOWLEDGE_MATRIX[id];
-    lines.push(`  👥 ${s.role.toUpperCase()}: ${role ? role.name : id}`);
+    lines.push(`  [TEAM] ${s.role.toUpperCase()}: ${role ? role.name : id}`);
     if (role) lines.push(`      ${role.title} | ${role.department} | access: ${role.knowledgeAccessLevel}`);
     lines.push('─'.repeat(78));
     lines.push(`  ${s.domains}:`);
@@ -218,19 +218,19 @@ export class CompanyKnowledge {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  🧭 ${s.title}`);
+    lines.push(`  [NAV] ${s.title}`);
     lines.push('═'.repeat(78));
     for (const id of Object.keys(KNOWLEDGE_MATRIX)) {
       const role = CORPORATE_ROLES[id];
       const k = KNOWLEDGE_MATRIX[id];
-      lines.push(`  ▸ ${id.padEnd(18)} ${(role ? role.title : id).substring(0, 58)}`);
+      lines.push(`   ${id.padEnd(18)} ${(role ? role.title : id).substring(0, 58)}`);
       lines.push(`      ${s.domains}: ${k.domains.join(', ')}`);
       lines.push(`      ${s.exchanges}: ${k.exchangesWith.join(', ')}`);
     }
     lines.push('─'.repeat(78));
-    lines.push(`  📦 ${s.productStats}: ${st.total} products / ${Object.keys(st.byCategory).length} categories (data/products.json, updated ${st.updatedAt})`);
+    lines.push(`  [PKG] ${s.productStats}: ${st.total} products / ${Object.keys(st.byCategory).length} categories (data/products.json, updated ${st.updatedAt})`);
     lines.push('─'.repeat(78));
-    lines.push(`  ℹ️  ${s.usageList}`);
+    lines.push(`  i  ${s.usageList}`);
     lines.push('═'.repeat(78));
     return lines.join('\n');
   }
@@ -238,7 +238,7 @@ export class CompanyKnowledge {
   /** Info-exchange flows list. */
   public static formatExchange(lang: CatalogLang = 'en'): string {
     const lines: string[] = [];
-    lines.push('  🔄 INFO EXCHANGE FLOWS:');
+    lines.push('  [FLOW] INFO EXCHANGE FLOWS:');
     for (const e of INFO_EXCHANGE) {
       lines.push(`    • ${e.from} → ${e.to}: ${e.what}`);
     }

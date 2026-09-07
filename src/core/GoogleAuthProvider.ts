@@ -11,18 +11,41 @@ export interface AuthCredentials {
   account: string;
 }
 
+/**
+ * Built-in fallback Gemini API key (generativelanguage.googleapis.com).
+ * ONLY-FREE rule: keys on the Gemini API free tier cost $0.
+ * !! This legacy literal is REVOKED (verified 2026-09-07: API_KEY_INVALID) —
+ * kept only as a last-resort constant per the ONLY-FREE resolution chain.
+ * The live free-tier key is provisioned via GEMINI_API_KEY (backend .env) and
+ * Secret Manager secret `evabot-gemini-api-key` (project gen-lang-client-0091776451,
+ * Gemini API free tier, $0).
+ * TODO: rotate — load the live key from Secret Manager at boot and remove the
+ * literal from source control.
+ */
+export const DEFAULT_GEMINI_API_KEY = 'AIzaSyBmgELFPYjax4lWcFIZd183EpqQwVqAVlA';
+
 export class GoogleAuthProvider {
   private static cachedCredentials: AuthCredentials | null = null;
   private static expiresAt: number = 0;
 
   /**
    * Resolves the active Google Cloud / Google AI credentials automatically.
+   * NOTE: bearer-first resolution is intended for Google Cloud APIs
+   * (Translator, CloudTTS, CloudSTT) which require OAuth tokens.
+   * Gemini (generativelanguage.googleapis.com) must NOT use these bearer
+   * tokens (scope-insufficient on that endpoint) — GeminiClient resolves its
+   * free-tier API key separately (GEMINI_API_KEY env → DEFAULT_GEMINI_API_KEY).
+   *
+   * IMPORTANT: this method must NEVER return the Gemini API key (GEMINI_API_KEY
+   * env is an AIza/AQ **API key**, not a bearer token — cloud consumers send it
+   * as `Authorization: Bearer` and would get 401). The env branch was removed:
+   * cloud consumers always get an OAuth bearer here.
+   *
    * Order of precedence:
    * 1. In-memory unexpired cache
-   * 2. GEMINI_API_KEY environment variable / .env
-   * 3. Google Compute Engine VM Metadata Token (100% native on GCP instances)
-   * 4. Google ADC (Application Default Credentials) refresh_token exchange for evabot.online@gmail.com
-   * 5. Local gcloud CLI access token
+   * 2. Google Compute Engine VM Metadata Token (100% native on GCP instances)
+   * 3. Google ADC (Application Default Credentials) refresh_token exchange for evabot.online@gmail.com
+   * 4. Local gcloud CLI access token
    */
   public static async getCredentials(): Promise<AuthCredentials | null> {
     const now = Date.now();
@@ -30,23 +53,7 @@ export class GoogleAuthProvider {
       return this.cachedCredentials;
     }
 
-    // 1. Environment Variable
-    if (
-      process.env.GEMINI_API_KEY &&
-      process.env.GEMINI_API_KEY.trim() &&
-      !process.env.GEMINI_API_KEY.includes('AIzaSyBmgELFPYjax4lWcFIZd183EpqQwVqAVlA')
-    ) {
-      this.cachedCredentials = {
-        token: process.env.GEMINI_API_KEY.trim(),
-        type: 'api_key',
-        source: 'Environment (GEMINI_API_KEY)',
-        account: 'evabot.online@gmail.com',
-      };
-      this.expiresAt = now + 24 * 3600 * 1000;
-      return this.cachedCredentials;
-    }
-
-    // 2. Google ADC refresh token exchange (full cloud-platform scope for evabot.online@gmail.com)
+    // 1. Google ADC refresh token exchange (full cloud-platform scope for evabot.online@gmail.com)
     const adcToken = await this.exchangeAdcRefreshToken();
     if (adcToken) {
       this.cachedCredentials = {

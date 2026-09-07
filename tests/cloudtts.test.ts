@@ -52,10 +52,10 @@ export async function runCloudTtsTests(): Promise<boolean> {
   // 1. Voice resolution (persona aliases)
   {
     const tts = new CloudTTS({ dataDir: makeTmp(), getCredentials: fakeCreds });
-    assert(tts.resolveVoice({ persona: 'eva' }) === 'uk-UA-Wavenet-B', 'persona eva → uk-UA-Wavenet-B (female, Wavenet free tier)');
-    assert(tts.resolveVoice({ persona: 'adam' }) === 'ru-RU-Wavenet-D', 'persona adam → ru-RU-Wavenet-D (male, Wavenet free tier)');
-    assert(tts.resolveVoice({ lang: 'ru-RU' }) === 'ru-RU-Wavenet-D', 'lang ru → adam voice');
-    assert(tts.resolveVoice({ lang: 'uk-UA' }) === 'uk-UA-Wavenet-B', 'lang uk → eva voice');
+    assert(tts.resolveVoice({ persona: 'eva' }) === 'uk-UA-Chirp3-HD-Aoede', 'persona eva → uk-UA-Chirp3-HD-Aoede (female, Chirp3-HD 1M chars/mo free)');
+    assert(tts.resolveVoice({ persona: 'adam' }) === 'ru-RU-Chirp3-HD-Fenrir', 'persona adam → ru-RU-Chirp3-HD-Fenrir (male, Chirp3-HD 1M chars/mo free)');
+    assert(tts.resolveVoice({ lang: 'ru-RU' }) === 'ru-RU-Chirp3-HD-Fenrir', 'lang ru → adam voice');
+    assert(tts.resolveVoice({ lang: 'uk-UA' }) === 'uk-UA-Chirp3-HD-Aoede', 'lang uk → eva voice');
     assert(tts.resolveVoice({ voiceName: 'uk-UA-Standard-B' }) === 'uk-UA-Standard-B', 'explicit voiceName wins over persona');
     assert(voiceFamily('uk-UA-Wavenet-B') === 'wavenet', 'family detection: Wavenet');
     assert(voiceFamily('ru-RU-Chirp3-HD-Kore') === 'chirp3-hd', 'family detection: Chirp3-HD');
@@ -78,7 +78,7 @@ export async function runCloudTtsTests(): Promise<boolean> {
     const tts = new CloudTTS({ dataDir: dir, fetchFn: mockFetch(calls), getCredentials: fakeCreds });
     const r1 = await tts.synthesize('Привіт, я Ева', { persona: 'eva' });
     assert(r1.ok === true && r1.base64Audio === 'U29tZUF1ZGlvQnl0ZXM=', 'synthesize returns base64 audio on success');
-    assert(r1.voice === 'uk-UA-Wavenet-B', 'synthesize uses eva voice');
+    assert(r1.voice === 'uk-UA-Chirp3-HD-Aoede', 'synthesize uses eva voice');
     assert(r1.charCount === 'Привіт, я Ева'.length, 'charCount matches text length');
     assert(tts.getMonthChars() === 'Привіт, я Ева'.length, 'monthly counter charged after successful synthesis');
     assert(calls.length === 1, 'exactly one API call');
@@ -160,8 +160,8 @@ export async function runCloudTtsTests(): Promise<boolean> {
   // 10. /api/tts/status contract fields
   {
     const tts = new CloudTTS({ dataDir: makeTmp(), getCredentials: fakeCreds });
-    assert(typeof tts.getCap() === 'number' && tts.getCap() === 900_000, 'default cap = 900,000 chars/month (Wavenet free-tier safety margin)');
-    assert(tts.getEvaVoice() === 'uk-UA-Wavenet-B' && tts.getAdamVoice() === 'ru-RU-Wavenet-D', 'status exposes eva/adam default voices');
+    assert(typeof tts.getCap() === 'number' && tts.getCap() === 900_000, 'default cap = 900,000 chars/month (Chirp3-HD/Wavenet free-tier safety margin)');
+    assert(tts.getEvaVoice() === 'uk-UA-Chirp3-HD-Aoede' && tts.getAdamVoice() === 'ru-RU-Chirp3-HD-Fenrir', 'status exposes eva/adam default Chirp3-HD voices');
   }
 
   console.log('--- CloudTTS tests done ---');

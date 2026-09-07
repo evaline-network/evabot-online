@@ -342,7 +342,7 @@ export class NewsEngine {
     const data = items || (cache ? cache.items : []);
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  📰 НОВИНИ EVALINE — ${data.length} Material Feed (${new Date().toISOString().replace('T', ' ').substring(0, 16)} UTC)`);
+    lines.push(`  NEWS НОВИНИ EVALINE — ${data.length} Material Feed (${new Date().toISOString().replace('T', ' ').substring(0, 16)} UTC)`);
     lines.push('═'.repeat(78));
 
     if (data.length === 0) {
@@ -357,7 +357,7 @@ export class NewsEngine {
       const catItems = data.filter((i) => i.category === tag);
       if (catItems.length === 0) continue;
       lines.push('');
-      lines.push(`  ▸ ${cat.labels[lang] || cat.labels.en} (${catItems.length}):`);
+      lines.push(`   ${cat.labels[lang] || cat.labels.en} (${catItems.length}):`);
       for (const item of catItems) {
         if (shown >= MAX_ITEMS_SHOWN) break;
         const date = item.date ? new Date(item.date).toISOString().replace('T', ' ').substring(0, 16) : '—';
@@ -371,7 +371,7 @@ export class NewsEngine {
 
     if (partialErrors.length > 0) {
       lines.push('');
-      lines.push(`  ⚠ Недоступні джерела (${partialErrors.length}): ${partialErrors[0]}`);
+      lines.push(`  [WRN] Недоступні джерела (${partialErrors.length}): ${partialErrors[0]}`);
     }
     lines.push('');
     lines.push('  Використання: /news [тег] — war | odessa | economy | eva | trends | evaline');

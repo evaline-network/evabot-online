@@ -21,11 +21,12 @@
  * to browser TTS.
  *
  * Persona voice mapping (verified from live GET /v1/voices, 2066 voices):
- *   Ева (female) → uk-UA-Wavenet-B (FEMALE, Wavenet free tier)
- *   Адам (male)  → ru-RU-Wavenet-D (MALE,   Wavenet free tier)
- * uk-UA beyond Chirp3-HD also offers Standard-B (F) and Wavenet-B (F);
- * ru-RU offers Standard A-E and Wavenet A-E — so no Chirp3-HD is needed at
- * all and the whole feature stays inside the free tier.
+ *   Ева (female) → uk-UA-Chirp3-HD-Aoede  (FEMALE, Chirp3-HD 1M chars/mo free)
+ *   Адам (male)  → ru-RU-Chirp3-HD-Fenrir (MALE,   Chirp3-HD 1M chars/mo free)
+ * Chirp3-HD voices sound far more natural than Wavenet AND have the same
+ * 1M chars/month free allowance (verified 2026-09, official pricing page).
+ * Runtime overrides: data/voice-prefs.json (written by /voices set) wins over
+ * these defaults; explicit constructor opts (tests) win over everything.
  *
  * Extras:
  *   - Monthly usage counter persisted at data/tts-usage.json {month, chars}.
@@ -118,6 +119,150 @@ export function languageCodeOf(voiceName: string): string {
   return parts.length >= 2 ? `${parts[0]}-${parts[1]}` : 'en-US';
 }
 
+// ============================================================================
+// Voice catalog + ONLY-FREE family validation (drives the /voices command).
+// Free families: chirp3-hd, wavenet, neural2, standard (1M–4M chars/mo free).
+// Paid-only families (e.g. studio) are rejected by /voices set.
+// ============================================================================
+
+export type CatalogVoiceFamily = 'chirp3-hd' | 'wavenet' | 'neural2' | 'standard';
+
+export interface CatalogVoice {
+  name: string;
+  family: CatalogVoiceFamily;
+  gender: 'FEMALE' | 'MALE';
+  free: boolean;
+}
+
+/** Families allowed by /voices set (all free-tier). Studio/others rejected. */
+export const FREE_VOICE_FAMILIES: ReadonlySet<string> = new Set<CatalogVoiceFamily>([
+  'chirp3-hd', 'wavenet', 'neural2', 'standard',
+]);
+
+/** Family → sort rank for /voices listing (Chirp3-HD first, most natural). */
+export function familyRank(family: string): number {
+  switch (family) {
+    case 'chirp3-hd': return 0;
+    case 'wavenet': return 1;
+    case 'neural2': return 2;
+    case 'standard': return 3;
+    default: return 9;
+  }
+}
+
+const CHIRP3_FEMALE = ['Aoede', 'Autonoe', 'Callirrhoe', 'Despina', 'Erinome', 'Gacrux', 'Kore', 'Laomedeia', 'Leda', 'Pulcherrima', 'Sadr', 'Vindemiatrix', 'Zephyr'];
+const CHIRP3_MALE = ['Achernar', 'Achird', 'Algenib', 'Algol', 'Alnilam', 'Charon', 'Enceladus', 'Fenrir', 'Iapetus', 'Orus', 'Puck', 'Umbriel', 'Zubenelgenubi'];
+
+function catalogVoicesFor(locales: string[]): CatalogVoice[] {
+  const out: CatalogVoice[] = [];
+  for (const loc of locales) {
+    for (const n of CHIRP3_FEMALE) out.push({ name: `${loc}-Chirp3-HD-${n}`, family: 'chirp3-hd', gender: 'FEMALE', free: true });
+    for (const n of CHIRP3_MALE) out.push({ name: `${loc}-Chirp3-HD-${n}`, family: 'chirp3-hd', gender: 'MALE', free: true });
+  }
+  return out;
+}
+
+const UK_WAVENET: Array<[string, CatalogVoiceFamily, 'FEMALE' | 'MALE']> = [
+  ['uk-UA-Wavenet-B', 'wavenet', 'FEMALE'],
+  ['uk-UA-Standard-B', 'standard', 'FEMALE'],
+];
+
+const RU_WAVENET: Array<[string, CatalogVoiceFamily, 'FEMALE' | 'MALE']> = [
+  ['ru-RU-Wavenet-A', 'wavenet', 'FEMALE'],
+  ['ru-RU-Wavenet-D', 'wavenet', 'MALE'],
+  ['ru-RU-Standard-A', 'standard', 'FEMALE'],
+  ['ru-RU-Standard-B', 'standard', 'FEMALE'],
+  ['ru-RU-Standard-D', 'standard', 'MALE'],
+  ['ru-RU-Standard-E', 'standard', 'MALE'],
+];
+
+const EN_WAVENET: Array<[string, CatalogVoiceFamily, 'FEMALE' | 'MALE']> = [
+  ['en-US-Wavenet-A', 'wavenet', 'FEMALE'],
+  ['en-US-Wavenet-B', 'wavenet', 'MALE'],
+  ['en-US-Wavenet-C', 'wavenet', 'FEMALE'],
+  ['en-US-Wavenet-D', 'wavenet', 'MALE'],
+  ['en-US-Wavenet-E', 'wavenet', 'FEMALE'],
+  ['en-US-Wavenet-F', 'wavenet', 'MALE'],
+  ['en-US-Standard-A', 'standard', 'FEMALE'],
+  ['en-US-Standard-B', 'standard', 'MALE'],
+  ['en-US-Standard-C', 'standard', 'FEMALE'],
+  ['en-US-Standard-D', 'standard', 'MALE'],
+  ['en-US-Standard-E', 'standard', 'FEMALE'],
+  ['en-US-Standard-F', 'standard', 'MALE'],
+];
+
+/** Static ONLY-FREE voice catalog per language (Chirp3-HD + Wavenet tiers). */
+export const VOICE_CATALOG: CatalogVoice[] = [
+  ...catalogVoicesFor(['uk-UA', 'ru-RU', 'en-US']),
+  ...UK_WAVENET.map(([name, family, gender]) => ({ name, family, gender, free: true })),
+  ...RU_WAVENET.map(([name, family, gender]) => ({ name, family, gender, free: true })),
+  ...EN_WAVENET.map(([name, family, gender]) => ({ name, family, gender, free: true })),
+];
+
+export interface VoiceValidationResult {
+  ok: boolean;
+  family?: CatalogVoiceFamily;
+  gender?: string;
+  error?: string;
+}
+
+/** Validates a voice name against the ONLY-FREE catalog + family whitelist. */
+export function validateVoiceName(voiceName: string): VoiceValidationResult {
+  const entry = VOICE_CATALOG.find((v) => v.name === voiceName);
+  if (!entry) {
+    return {
+      ok: false,
+      error: `unknown voice "${voiceName}" (not in the free catalog — use /voices to list available voices)`,
+    };
+  }
+  if (!FREE_VOICE_FAMILIES.has(entry.family)) {
+    return {
+      ok: false,
+      family: entry.family,
+      error: `voice family "${entry.family}" is NOT in the free-family list (allowed: ${[...FREE_VOICE_FAMILIES].join(', ')})`,
+    };
+  }
+  return { ok: true, family: entry.family, gender: entry.gender };
+}
+
+// ============================================================================
+// Voice preferences persistence (data/voice-prefs.json, written by /voices set)
+// ============================================================================
+
+export interface VoicePrefs {
+  evaVoice?: string;
+  adamVoice?: string;
+}
+
+/** Default location of the persisted voice preferences file. */
+export function voicePrefsPath(dataDir: string = path.resolve(process.cwd(), 'data')): string {
+  return path.join(dataDir, 'voice-prefs.json');
+}
+
+/** Loads data/voice-prefs.json (if present and valid). Never throws. */
+export function loadVoicePrefs(dataDir: string = path.resolve(process.cwd(), 'data')): VoicePrefs {
+  try {
+    const p = voicePrefsPath(dataDir);
+    if (fs.existsSync(p)) {
+      const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+      const prefs: VoicePrefs = {};
+      if (typeof raw.evaVoice === 'string' && raw.evaVoice) prefs.evaVoice = raw.evaVoice;
+      if (typeof raw.adamVoice === 'string' && raw.adamVoice) prefs.adamVoice = raw.adamVoice;
+      return prefs;
+    }
+  } catch {
+    // Corrupt file → fall back to defaults.
+  }
+  return {};
+}
+
+/** Persists data/voice-prefs.json {evaVoice, adamVoice}. */
+export function saveVoicePrefs(prefs: VoicePrefs, dataDir: string = path.resolve(process.cwd(), 'data')): void {
+  fs.mkdirSync(dataDir, { recursive: true });
+  const merged = { ...loadVoicePrefs(dataDir), ...prefs };
+  fs.writeFileSync(voicePrefsPath(dataDir), JSON.stringify(merged, null, 2), 'utf8');
+}
+
 /** Builds the exact JSON body for POST /v1/text:synthesize. */
 export function buildSynthesizeRequest(text: string, voiceName: string): Record<string, unknown> {
   return {
@@ -138,8 +283,8 @@ export class CloudTTS {
   private readonly fetchFn: typeof fetch;
   private readonly getCredentials: () => Promise<{ token: string } | null>;
   private readonly cap: number;
-  private readonly evaVoice: string;
-  private readonly adamVoice: string;
+  private evaVoice: string;
+  private adamVoice: string;
   private readonly timeoutMs: number;
   private usage: TtsUsageState | null = null;
   private voicesReady: boolean = false;
@@ -153,9 +298,19 @@ export class CloudTTS {
       return creds ? { token: creds.token } : null;
     });
     this.cap = opts.cap ?? 900_000;
-    this.evaVoice = opts.evaVoice || 'uk-UA-Wavenet-B';
-    this.adamVoice = opts.adamVoice || 'ru-RU-Wavenet-D';
+    // Voice precedence: explicit opts (tests) > data/voice-prefs.json
+    // (/voices set) > Chirp3-HD defaults (most natural free-tier voices).
+    const prefs = loadVoicePrefs(this.dataDir);
+    this.evaVoice = opts.evaVoice || prefs.evaVoice || 'uk-UA-Chirp3-HD-Aoede';
+    this.adamVoice = opts.adamVoice || prefs.adamVoice || 'ru-RU-Chirp3-HD-Fenrir';
     this.timeoutMs = opts.timeoutMs ?? 10_000;
+  }
+
+  /** Re-reads data/voice-prefs.json into the live instance (after /voices set). */
+  public reloadVoicePrefs(): void {
+    const prefs = loadVoicePrefs(this.dataDir);
+    if (prefs.evaVoice) this.evaVoice = prefs.evaVoice;
+    if (prefs.adamVoice) this.adamVoice = prefs.adamVoice;
   }
 
   /** Explicit voice name (env override) wins, then persona, then lang guess. */

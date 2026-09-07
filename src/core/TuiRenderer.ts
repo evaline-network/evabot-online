@@ -146,7 +146,7 @@ export class TuiRenderer {
     let telemetryBlock = '[ РЕАЛЬНАЯ ТЕЛЕМЕТРИЯ ДВУХ СЕРВЕРОВ // REALTIME DUAL-NODE TELEMETRY ]:\n';
     telemetryBlock += `  • EVABRAIN (Compute Core / ФРГ): CPU: ${bLoad} (${bCpuPct}%) ${this.makeBar(bCpuPct)} | RAM: ${bUsedMem}/${bTotMem} GB (${bRamPct}%) | Uptime: ${bUptime} | Статус: [HEALTHY]\n`;
     telemetryBlock += `  • EVAFACE  (Edge Ingress / США): Load: ${micro.loadAvg.split(',')[0]} (${micro.cpuPct}%) ${this.makeBar(micro.cpuPct)} | RAM: ${micro.memUsedMb}/${micro.memTotalMb} MB (${Math.round((micro.memUsedMb / micro.memTotalMb) * 100)}%) | Uptime: ${micro.uptimeStr} | Ingress: [Caddy HTTP/3 OK]\n`;
-    telemetryBlock += `  • WIREGUARD MESH BACKBONE:       100.125.200.49 (US) ⟷ 100.66.98.4 (EU) | Latency: ${latency} ms RTT | Потери: [0.0%]\n`;
+    telemetryBlock += `  • WIREGUARD MESH BACKBONE:       100.125.200.49 (US)  100.66.98.4 (EU) | Latency: ${latency} ms RTT | Потери: [0.0%]\n`;
     telemetryBlock += `  • ПУЛ МОДЕЛЕЙ И КЛАСТЕРА:        Активно: 78 моделей онлайн (Gemini, Claude, DeepSeek) | Режим: [ONLINE]`;
 
     let procBlock = '[ РЕАЛЬНЫЕ ПРОЦЕССЫ КЛАСТЕРА // LIVE PROCESS WATCHER ]:\n';
@@ -209,7 +209,7 @@ export class TuiRenderer {
     }
 
     let out = '';
-    out += `┌── EVALINE CONSOLE // ${d.domain} [${d.badge}] ── ● LIVE ── [◐ ТЕМА] ──┐\n`;
+    out += `┌── EVALINE CONSOLE // ${d.domain} [${d.badge}] ── ● LIVE ── [ ТЕМА] ──┐\n`;
     out += '│                                                                          │\n';
     out += `> УЗЕЛ         : ${d.domain} [${d.badge}]\n`;
     out += `> РОЛЬ         : ${d.role}\n`;
@@ -605,11 +605,11 @@ export class TuiRenderer {
       <span class="bold">EVALINE CONSOLE // ${d.domain} [${d.badge}]</span>
       <span class="led-live">●</span> <span class="c-ok bold">LIVE</span>
       <span class="c-dim">UTC: <span id="clock-utc">${nowUtc}</span></span>
-      <span class="spinner" id="spin">⠋</span>
+      <span class="spinner" id="spin"></span>
     </div>
     <div class="topbar-right">
-      <button class="tui-btn" id="theme-btn" onclick="toggleTheme()" title="Горячая клавиша: T">[◐ ТЕМА: DARK]</button>
-      <button class="tui-btn" onclick="manualRefresh()">[↻ СИНХР]</button>
+      <button class="tui-btn" id="theme-btn" onclick="toggleTheme()" title="Горячая клавиша: T">[ ТЕМА: DARK]</button>
+      <button class="tui-btn" onclick="manualRefresh()">[ СИНХР]</button>
     </div>
   </div>
 
@@ -637,7 +637,7 @@ ${crossLinksListHtml}
       <div class="tui-title">[ РЕАЛЬНАЯ ТЕЛЕМЕТРИЯ ДВУХ СЕРВЕРОВ // REALTIME DUAL-NODE TELEMETRY ]:</div>
       <div class="tui-line">  <strong class="c-fg">• EVABRAIN (Compute Core / ФРГ):</strong> CPU: <span id="b-cpu" class="c-ok">${bLoad} (${bCpuPct}%)</span> <span id="b-cpu-bar">${this.makeBar(bCpuPct)}</span> | RAM: <span id="b-ram" class="c-fg">${bUsedMem}/${bTotMem} GB (${bRamPct}%)</span> | Uptime: <span id="b-uptime" class="c-ok">${bUptime}</span> | Статус: <span class="badge badge-ok">[HEALTHY]</span></div>
       <div class="tui-line">  <strong class="c-fg">• EVAFACE  (Edge Ingress / США):</strong> Load: <span id="f-load" class="c-ok">${micro.loadAvg.split(',')[0]} (${micro.cpuPct}%)</span> <span id="f-load-bar">${this.makeBar(micro.cpuPct)}</span> | RAM: <span id="f-ram" class="c-fg">${micro.memUsedMb}/${micro.memTotalMb} MB (${Math.round((micro.memUsedMb / micro.memTotalMb) * 100)}%)</span> | Uptime: <span id="f-uptime" class="c-ok">${micro.uptimeStr}</span> | Ingress: <span class="badge badge-ok">[Caddy HTTP/3 OK]</span></div>
-      <div class="tui-line">  <strong class="c-fg">• WIREGUARD MESH BACKBONE:</strong>       100.125.200.49 (US) ⟷ 100.66.98.4 (EU) | Latency: <span id="m-rtt" class="c-ok bold">${latency} ms RTT</span> | Потери: <span class="badge badge-ok">[0.0%]</span></div>
+      <div class="tui-line">  <strong class="c-fg">• WIREGUARD MESH BACKBONE:</strong>       100.125.200.49 (US)  100.66.98.4 (EU) | Latency: <span id="m-rtt" class="c-ok bold">${latency} ms RTT</span> | Потери: <span class="badge badge-ok">[0.0%]</span></div>
       <div class="tui-line">  <strong class="c-fg">• ПУЛ МОДЕЛЕЙ И КЛАСТЕРА:</strong>        Активно: <span id="b-models" class="c-ok bold">78 моделей онлайн</span> (Gemini, Claude, DeepSeek) | Режим: <span class="badge badge-ok">[ONLINE]</span></div>
     </div>
 
@@ -709,12 +709,12 @@ ${logRowsHtml || '<div class="c-dim">[Сбор телеметрии активе
       document.documentElement.classList.add('theme-light');
       document.body.classList.add('theme-light');
       const btn = document.getElementById('theme-btn');
-      if (btn) btn.textContent = '[◐ ТЕМА: LIGHT]';
+      if (btn) btn.textContent = '[ ТЕМА: LIGHT]';
     } else {
       document.documentElement.classList.remove('theme-light');
       document.body.classList.remove('theme-light');
       const btn = document.getElementById('theme-btn');
-      if (btn) btn.textContent = '[◐ ТЕМА: DARK]';
+      if (btn) btn.textContent = '[ ТЕМА: DARK]';
     }
   }
   applyTheme(currentTheme);
@@ -729,7 +729,7 @@ ${logRowsHtml || '<div class="c-dim">[Сбор телеметрии активе
   applyTheme(currentTheme);
 
   // Spinner
-  const spinChars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  const spinChars = ['', '', '', '', '', '', '', '', '', ''];
   let spinIdx = 0;
   setInterval(() => {
     spinIdx = (spinIdx + 1) % spinChars.length;

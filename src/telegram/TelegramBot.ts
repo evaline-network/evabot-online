@@ -4,13 +4,14 @@ import { Config } from '../core/Config.js';
 import { logger, LogCategory } from '../core/Logger.js';
 import { I18nEngine, SupportedLocale } from '../core/I18nEngine.js';
 import { transcribeVoiceWithFallback, type SttLanguage, type SttResult } from '../core/CloudSTT.js';
+import { DeveloperMode } from '../core/DeveloperMode.js';
 import { ChatEngine } from './ChatEngine.js';
 
 export const TELEGRAM_MESSAGE_LIMIT = 4096;
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
 const RATE_LIMIT_INTERVAL_MS = 1000;
-const VOICE_PLACEHOLDER = '⚠️ Не вдалося завантажити голосове повідомлення. Спробуйте ще раз.';
-const VOICE_PREFIX = '🎙 Розпізнано:';
+const VOICE_PLACEHOLDER = '[WRN] Не вдалося завантажити голосове повідомлення. Спробуйте ще раз.';
+const VOICE_PREFIX = ' Розпізнано:';
 
 /** Async transcriber injected for tests; production default = Google CloudSTT with FLAC fallback. */
 export type VoiceTranscriber = (audio: Buffer, lang: SttLanguage) => Promise<SttResult>;
@@ -204,7 +205,7 @@ export class TelegramBot {
     if (!text) return;
 
     if (!from || (!from.username && !from.first_name)) {
-      await this.sendMessage(chatId, '⚠️ Please register a Telegram account (set a username or name) to chat with EvaBot.');
+      await this.sendMessage(chatId, '[WRN] Please register a Telegram account (set a username or name) to chat with EvaBot.');
       return;
     }
 
@@ -221,7 +222,7 @@ export class TelegramBot {
 
     if (raw.startsWith('/start')) {
       const strings = I18nEngine.getStrings(locale);
-      await this.sendMessage(chatId, `🤖 ${strings.greeting}\n\n${I18nEngine.formatHelp(locale)}`);
+      await this.sendMessage(chatId, `[BOT] ${strings.greeting}\n\n${I18nEngine.formatHelp(locale)}`);
       return;
     }
 
@@ -243,6 +244,17 @@ export class TelegramBot {
       return;
     }
 
+    // /developer keeps the RAW command: normalizeCommand lowercases the whole
+    // line, which would corrupt mixed-case passwords (DeveloperMode.parseCommand
+    // does its own head-alias resolution).
+    if (canonicalHead === '/developer') {
+      const sessionId = `${HISTORY_SESSION_PREFIX}${chatId}`;
+      DeveloperMode.setActiveSession(sessionId);
+      const output = this.execute(raw);
+      await this.sendMessage(chatId, output);
+      return;
+    }
+
     const commandText = normalizeCommand(raw);
     const output = this.execute(commandText);
     await this.sendMessage(chatId, output);
@@ -256,7 +268,7 @@ export class TelegramBot {
       await this.sendMessage(chatId, response.text);
     } catch (err: any) {
       logger.error(LogCategory.SYSTEM, 'TelegramBot', `Chat error for ${sessionId}: ${err.message}`);
-      await this.sendMessage(chatId, `⚠️ Chat engine error: ${err.message}`);
+      await this.sendMessage(chatId, `[WRN] Chat engine error: ${err.message}`);
     }
   }
 
@@ -272,7 +284,7 @@ export class TelegramBot {
     const voice = message.voice;
     if (!voice) return;
     if (!from || (!from.username && !from.first_name)) {
-      await this.sendMessage(chatId, '⚠️ Please register a Telegram account to send voice messages.');
+      await this.sendMessage(chatId, '[WRN] Please register a Telegram account to send voice messages.');
       return;
     }
 
@@ -291,7 +303,7 @@ export class TelegramBot {
     const result = await this.transcriber(audio, lang);
     if (!result.ok || !result.transcript) {
       logger.warn(LogCategory.SYSTEM, 'TelegramBot', `Voice transcription failed: ${result.error}`);
-      await this.sendMessage(chatId, `⚠️ Не вдалося розпізнати голосове повідомлення${result.error ? ` (${result.error})` : ''}.`);
+      await this.sendMessage(chatId, `[WRN] Не вдалося розпізнати голосове повідомлення${result.error ? ` (${result.error})` : ''}.`);
       return;
     }
 
@@ -321,7 +333,7 @@ export class TelegramBot {
     }
     await this.api('sendMessage', {
       chat_id: chatId,
-      text: '⌨️ Top-8 free models — tap to inspect:',
+      text: ' Top-8 free models — tap to inspect:',
       reply_markup: { keyboard: rows, resize_keyboard: true, one_time_keyboard: true },
     });
   }

@@ -152,13 +152,13 @@ export class Security {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push('  🛡️  SECURITY STATUS REPORT');
+    lines.push('    SECURITY STATUS REPORT');
     lines.push('═'.repeat(78));
     lines.push('');
     lines.push(`  Blocked IPs:       ${stats.blockedIPs.length}`);
     if (stats.blockedIPs.length > 0) {
       for (const ip of stats.blockedIPs) {
-        lines.push(`    🚫 ${ip}`);
+        lines.push(`     ${ip}`);
       }
     } else {
       lines.push('    (none)');

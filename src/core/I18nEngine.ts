@@ -74,8 +74,15 @@ const DICTIONARY: Record<SupportedLocale, LocaleDefinition> = {
       { cmd: '/debug [on|off|full]', desc: 'Debug mode: latency footer in replies & /log debug entries' },
       { cmd: '/log [N] [filter]', desc: 'Operation log tail: filter by level/kind/text' },
       { cmd: '/monitor', desc: 'Model monitor: TOP-10 free/paid coding models' },
-      { cmd: '/say <text>', desc: 'Cloud TTS (Google WaveNet free tier): speak text, save /tmp/evabot-say.mp3' },
+      { cmd: '/say <text>', desc: 'Cloud TTS (Google Chirp3-HD/Wavenet free tier): speak text to /tmp/evabot-say.mp3' },
+      { cmd: '/voices [uk|ru|en]', desc: 'Voice catalog: Chirp3-HD & Wavenet free families, gender + current Eva/Adam pick' },
+      { cmd: '/voices set eva|adam <voice>', desc: 'Switch TTS persona voice (free families only), persisted in data/voice-prefs.json' },
+      { cmd: '/settings', desc: 'Current settings table: locale, model, debug, TTS/STT/translate usage, developer mode' },
+      { cmd: '/agents', desc: 'Agent roster: 18 corporate roles + 10 Sephirot Tree-of-Life nodes' },
+      { cmd: '/emoji [on|off]', desc: 'Emoji rendering in replies (off = strip emoji, default)' },
       { cmd: '/listen <file>', desc: 'Transcribe a local audio file via Google Cloud STT (uk/ru/en)' },
+      { cmd: '/sys', desc: 'Self-awareness: current model, cluster, company, KB stats' },
+      { cmd: '/developer [unlock|status|lock]', desc: 'Password-protected developer mode (EVADEV_PASSWORD, TTL 2h)' },
       { cmd: '/clear', desc: 'Clear terminal screen' },
     ],
     langSwitched: 'Language switched to English (EN). Interface updated instantly.',
@@ -129,8 +136,15 @@ const DICTIONARY: Record<SupportedLocale, LocaleDefinition> = {
       { cmd: '/debug [on|off|full]', desc: 'Режим налагодження: футер латентності у відповідях і debug-записи в /log' },
       { cmd: '/log [N] [фільтр]', desc: 'Журнал операцій: останні N записів, фільтр за рівнем/типом/текстом' },
       { cmd: '/monitor', desc: 'Модельний монітор: ТОП-10 free/paid моделей для кодингу' },
-      { cmd: '/say <текст>', desc: 'Хмарний TTS (Google WaveNet free tier): озвучити текст у /tmp/evabot-say.mp3 ("/скажи", "/сказать")' },
+      { cmd: '/say <текст>', desc: 'Хмарний TTS (Google Chirp3-HD/Wavenet free tier): озвучити текст у /tmp/evabot-say.mp3 ("/скажи", "/сказать")' },
+      { cmd: '/voices [uk|ru|en]', desc: 'Каталог голосів: Chirp3-HD та Wavenet (free tier), стать + поточний вибір Єва/Адам' },
+      { cmd: '/voices set eva|adam <voice>', desc: 'Змінити голос персони (лише free-родини), зберігається у data/voice-prefs.json' },
+      { cmd: '/settings', desc: 'Таблиця поточних налаштувань: мова, модель, debug, TTS/STT/переклад ліміти, режим розробника' },
+      { cmd: '/agents', desc: 'Ростер агентів: 18 корпоративних ролей + 10 вузлів Сефірот (Дерево Життя)' },
+      { cmd: '/emoji [on|off]', desc: 'Відображення емодзі у відповідях (off = вирізати, за замовчуванням)' },
       { cmd: '/listen <файл>', desc: 'Розпізнати локальний аудіофайл через Google Cloud STT ("/розпізнай <файл>")' },
+      { cmd: '/sys', desc: 'Самоідентифікація системи: модель, кластер, компанія, БЗ' },
+      { cmd: '/developer [unlock|status|lock]', desc: 'Захищений паролем режим розробника (EVADEV_PASSWORD, TTL 2 год)' },
       { cmd: '/clear', desc: 'Очистити екран термінала' },
     ],
     langSwitched: 'Мову перемкнено на українську (UK). Інтерфейс оновлено миттєво.',
@@ -184,8 +198,15 @@ const DICTIONARY: Record<SupportedLocale, LocaleDefinition> = {
       { cmd: '/debug [on|off|full]', desc: 'Режим отладки: футер латентности в ответах и debug-записи в /log' },
       { cmd: '/log [N] [фильтр]', desc: 'Журнал операций: последние N записей, фильтр по уровню/типу/тексту' },
       { cmd: '/monitor', desc: 'Модельный монитор: ТОП-10 free/paid моделей для кодинга' },
-      { cmd: '/say <текст>', desc: 'Облачный TTS (Google WaveNet free tier): озвучить текст в /tmp/evabot-say.mp3 ("/скажи", "/сказать")' },
+      { cmd: '/say <текст>', desc: 'Облачный TTS (Google Chirp3-HD/Wavenet free tier): озвучить текст в /tmp/evabot-say.mp3 ("/скажи", "/сказать")' },
+      { cmd: '/voices [uk|ru|en]', desc: 'Каталог голосов: Chirp3-HD и Wavenet (free tier), пол + текущий выбор Ева/Адам' },
+      { cmd: '/voices set eva|adam <voice>', desc: 'Сменить голос персоны (только free-семейства), сохраняется в data/voice-prefs.json' },
+      { cmd: '/settings', desc: 'Таблица текущих настроек: язык, модель, debug, лимиты TTS/STT/перевода, режим разработчика' },
+      { cmd: '/agents', desc: 'Ростер агентов: 18 корпоративных ролей + 10 узлов Сфирот (Древо Жизни)' },
+      { cmd: '/emoji [on|off]', desc: 'Отображение эмодзи в ответах (off = вырезать, по умолчанию)' },
       { cmd: '/listen <файл>', desc: 'Распознать локальный аудиофайл через Google Cloud STT ("/распознать <файл>")' },
+      { cmd: '/sys', desc: 'Самоидентификация системы: модель, кластер, компания, БЗ' },
+      { cmd: '/developer [unlock|status|lock]', desc: 'Защищённый паролем режим разработчика (EVADEV_PASSWORD, TTL 2 ч)' },
       { cmd: '/clear', desc: 'Очистить экран терминала' },
     ],
     langSwitched: 'Язык переключен на русский (RU). Интерфейс обновлен мгновенно.',
@@ -225,7 +246,7 @@ export class I18nEngine {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  ⚡ ${s.helpTitle}`);
+    lines.push(`  ${s.helpTitle}`);
     lines.push('═'.repeat(78));
     for (const c of s.helpCommands) {
       lines.push(`  ${c.cmd.padEnd(30)} - ${c.desc}`);
@@ -233,4 +254,48 @@ export class I18nEngine {
     lines.push('═'.repeat(78));
     return lines.join('\n');
   }
+}
+
+/**
+ * Emoji → ASCII replacement map used by the defensive renderer stripEmoji().
+ * Box-drawing and geometric symbols (─│┌┐└┘├┤┬┴┼═║╔╗╚╝ ●○◆■□▪▫) are NEVER
+ * touched: the rule is "no codepoints above U+2B00 except the allowed set".
+ */
+export const EMOJI_ASCII: Record<string, string> = {
+  '🎤': '[ MIC ]',
+  '🔊': '[ TTS:ON ]',
+  '🔇': '[ TTS:OFF ]',
+  '✅': '[OK]',
+  '❌': '[X]',
+  '✔': '[OK]',
+  '✖': '[X]',
+  '⚠': '[WRN]',
+  '🔒': '[LOCK]',
+  '🔓': '[UNLOCK]',
+  '⏳': '[WAIT]',
+  '🐞': '[DBG]',
+  '🌳': '[=]',
+  '📡': '>',
+  '📰': 'NEWS',
+  '🤖': '[BOT]',
+  '👤': '[USER]',
+  '⚡': '*',
+  '⚙': '*',
+  '★': '*',
+  '♥': '*',
+  '⚖': '*',
+};
+
+/**
+ * Defensive renderer: strips/replaces emoji (including surrogate pairs and
+ * variation selectors) from text before it is displayed. Allowed Unicode
+ * symbols (box drawing, ●○◐◆■□▪▫) pass through untouched. When the map has
+ * an ASCII equivalent it is used, otherwise the codepoint is removed.
+ */
+export function stripEmoji(input: string): string {
+  if (!input) return '';
+  return input.replace(
+    /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{1F1E6}-\u{1F1FF}]/gu,
+    (m: string) => EMOJI_ASCII[m] ?? '',
+  );
 }

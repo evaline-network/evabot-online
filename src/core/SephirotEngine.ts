@@ -343,7 +343,7 @@ export class SephirotEngine {
       logger.error('SephirotEngine', `Background sephirot run failed: ${err.message}`);
     });
     return (
-      `🌳 SEPHIROT CONSILIUM — запущено (10 сфер Дерева Життя, Tetraxis loops).\n` +
+      ` SEPHIROT CONSILIUM — запущено (10 сфер Дерева Життя, Tetraxis loops).\n` +
       `  Тема: "${cleanTopic}"\n` +
       `  Це може тривати кілька хвилин. Прогрес/результат: /sephirot status\n` +
       `  Синтез буде збережено в сесії "sephirot" чат-історії (/history, /search).`

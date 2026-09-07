@@ -2,6 +2,7 @@ import { Router, withErrorHandling } from './Router.js';
 import { ModelRegistry } from '../../models/ModelRegistry.js';
 import { ModelRatings, ModelCommand } from '../../models/ModelRatings.js';
 import { logger, LogCategory } from '../../core/Logger.js';
+import { DeveloperMode } from '../../core/DeveloperMode.js';
 
 export function createModelsRouter(): Router {
   const router = new Router();
@@ -62,8 +63,13 @@ export function createModelsRouter(): Router {
   router.post('/api/models/command', withErrorHandling(async (ctx) => {
     const body = await ctx.parseJsonBody();
     const command = body.command || '';
+    // Bind /developer unlock to the chat session that sent the command
+    // (ChatRouter uses the same sessionId for the developer prompt block).
+    DeveloperMode.setActiveSession(typeof body.sessionId === 'string' ? body.sessionId : undefined);
     const result = ModelCommand.execute(command);
-    logger.info(LogCategory.USER, 'MODEL_COMMAND', command, { ip: ctx.clientIp });
+    DeveloperMode.clearActiveSession();
+    // The raw password never reaches the operation log either.
+    logger.info(LogCategory.USER, 'MODEL_COMMAND', DeveloperMode.maskPasswordIn(command), { ip: ctx.clientIp });
     ctx.sendJson(200, { result });
   }));
 

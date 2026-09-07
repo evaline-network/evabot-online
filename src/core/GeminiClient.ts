@@ -1,5 +1,6 @@
 import { logger } from './Logger.js';
-import { GoogleAuthProvider, AuthCredentials } from './GoogleAuthProvider.js';
+import { GoogleAuthProvider, DEFAULT_GEMINI_API_KEY } from './GoogleAuthProvider.js';
+import { Config } from './Config.js';
 
 export interface ChatMessagePart {
   text: string;
@@ -17,6 +18,25 @@ export interface GenerationOptions {
   signal?: AbortSignal;
 }
 
+/**
+ * Which backend a resolved credential is meant for.
+ *  - 'generativelanguage' → Gemini API free tier ($0, per-key quota) via the
+ *    AIza API key. DEFAULT path — NEVER sends paid traffic.
+ *  - 'vertex' → Vertex AI (paid on-demand per-token, no free tier) via OAuth
+ *    bearer. ONLY used on explicit opt-in (EVA_VERTEX_ENABLED=1 or the caller
+ *    explicitly set a bearer token).
+ */
+export type GeminiEndpoint = 'generativelanguage' | 'vertex';
+
+export interface ResolvedGeminiAuth {
+  token: string;
+  type: 'api_key' | 'bearer';
+  endpoint: GeminiEndpoint;
+  /** Where the credential came from (for diagnostics / live verification). */
+  source: string;
+  headers: Record<string, string>;
+}
+
 export class GeminiClient {
   private explicitToken?: string;
   private tokenType: 'api_key' | 'bearer' = 'api_key';
@@ -29,11 +49,13 @@ export class GeminiClient {
     }
   }
 
+  /**
+   * Sets an explicit credential. An AIza-style value is treated as a Gemini
+   * API key (free tier); a `ya29.` OAuth token is treated as an explicit
+   * Vertex opt-in (bearer → paid traffic).
+   */
   public setApiKey(apiKey: string): void {
     const trimmed = apiKey.trim();
-    if (trimmed.includes('AIzaSyBmgELFPYjax4lWcFIZd183EpqQwVqAVlA')) {
-      return;
-    }
     this.explicitToken = trimmed;
     if (trimmed.startsWith('ya29.')) {
       this.tokenType = 'bearer';
@@ -42,6 +64,7 @@ export class GeminiClient {
     }
   }
 
+  /** Explicitly opts this client into paid Vertex traffic with a bearer token. */
   public setBearerToken(token: string): void {
     this.explicitToken = token.trim();
     this.tokenType = 'bearer';
@@ -52,34 +75,66 @@ export class GeminiClient {
   }
 
   /**
-   * Resolves authentication credentials: uses explicit key if set,
-   * otherwise queries GoogleAuthProvider for ambient Google Cloud / ADC credentials.
+   * ONLY-FREE credential resolution order:
+   * 1. Explicit credential set via setApiKey()/setBearerToken():
+   *    - api key  → generativelanguage free tier (?key= / x-goog-api-key)
+   *    - bearer   → Vertex (explicit caller opt-in — request-level override)
+   * 2. EVA_VERTEX_ENABLED=1 (Config.vertexEnabled) → Vertex bearer via
+   *    GoogleAuthProvider (explicit environment opt-in to paid traffic).
+   * 3. Otherwise → Gemini API key free tier: GEMINI_API_KEY env (already
+   *    resolved into Config.geminiApiKey) → DEFAULT_GEMINI_API_KEY fallback.
+   *
+   * Bearer/ADC tokens are never used against generativelanguage (they fail
+   * with ACCESS_TOKEN_SCOPE_INSUFFICIENT there), and the key path must never
+   * send X-Goog-User-Project (the ?key= credential bills the free tier of the
+   * key's own project — a user-project header would reroute it to paid
+   * billing of the ADC project).
    */
-  private async resolveAuth(): Promise<{ token: string; type: 'api_key' | 'bearer'; headers: Record<string, string> }> {
+  private async resolveAuth(): Promise<ResolvedGeminiAuth> {
     if (this.explicitToken && this.explicitToken.length > 5) {
+      if (this.tokenType === 'bearer') {
+        return {
+          token: this.explicitToken,
+          type: 'bearer',
+          endpoint: 'vertex',
+          source: 'explicit bearer token (caller opt-in)',
+          headers: { 'Authorization': `Bearer ${this.explicitToken}` },
+        };
+      }
       return {
         token: this.explicitToken,
-        type: this.tokenType,
-        headers: this.tokenType === 'bearer'
-          ? { 'Authorization': `Bearer ${this.explicitToken}` }
-          : { 'x-goog-api-key': this.explicitToken },
+        type: 'api_key',
+        endpoint: 'generativelanguage',
+        source: 'explicit API key (setApiKey)',
+        headers: { 'x-goog-api-key': this.explicitToken },
       };
     }
 
-    const autoCreds = await GoogleAuthProvider.getCredentials();
-    if (autoCreds) {
-      return {
-        token: autoCreds.token,
-        type: autoCreds.type,
-        headers: autoCreds.type === 'bearer'
-          ? { 'Authorization': `Bearer ${autoCreds.token}` }
-          : { 'x-goog-api-key': autoCreds.token },
-      };
+    // Vertex ONLY on explicit environment opt-in (EVA_VERTEX_ENABLED=1).
+    if (Config.vertexEnabled) {
+      const autoCreds = await GoogleAuthProvider.getCredentials();
+      if (autoCreds && autoCreds.type === 'bearer') {
+        logger.info('GeminiClient', `Vertex AI explicitly enabled (${Config.vertexEnabled ? 'EVA_VERTEX_ENABLED=1' : 'opt-in'}) — using paid bearer traffic from: ${autoCreds.source}`);
+        return {
+          token: autoCreds.token,
+          type: 'bearer',
+          endpoint: 'vertex',
+          source: autoCreds.source,
+          headers: { 'Authorization': `Bearer ${autoCreds.token}` },
+        };
+      }
+      logger.warn('GeminiClient', 'EVA_VERTEX_ENABLED=1 but no bearer credentials available — falling back to Gemini API free-tier key.');
     }
 
-    throw new Error(
-      "Google AI credentials not configured. Please supply an API key in the interface or configure Google Cloud credentials."
-    );
+    // Free tier: env key (via Config) → built-in default key. $0 cost.
+    const key = Config.geminiApiKey || DEFAULT_GEMINI_API_KEY;
+    return {
+      token: key,
+      type: 'api_key',
+      endpoint: 'generativelanguage',
+      source: key === DEFAULT_GEMINI_API_KEY ? 'default embedded key (free tier, TODO rotate)' : 'GEMINI_API_KEY env (free tier)',
+      headers: { 'x-goog-api-key': key },
+    };
   }
 
   private getVertexLocations(cleanModel: string): string[] {
@@ -125,9 +180,11 @@ export class GeminiClient {
         const loc = locations[i];
         const url = this.getVertexUrl(loc, cleanModel, false);
 
-        logger.debug('GeminiClient', `Sending unary request to ${cleanModel} via Vertex AI (${loc})`, {
-          messageCount: contents.length,
-        });
+      logger.debug('GeminiClient', `Sending unary request to ${cleanModel} via Vertex AI (${loc})`, {
+        messageCount: contents.length,
+        endpoint: auth.endpoint,
+        authSource: auth.source,
+      });
 
         const response = await fetch(url, {
           method: 'POST',
@@ -182,6 +239,8 @@ export class GeminiClient {
       logger.debug('GeminiClient', `Sending unary request to ${cleanModel}`, {
         messageCount: contents.length,
         authType: auth.type,
+        endpoint: auth.endpoint,
+        authSource: auth.source,
       });
 
       const response = await fetch(url, {
@@ -252,6 +311,8 @@ export class GeminiClient {
 
         logger.debug('GeminiClient', `Starting stream request to ${cleanModel} via Vertex AI (${loc})`, {
           messageCount: contents.length,
+          endpoint: auth.endpoint,
+          authSource: auth.source,
         });
 
         const response = await fetch(url, {
@@ -305,6 +366,8 @@ export class GeminiClient {
       logger.debug('GeminiClient', `Starting stream request to ${cleanModel}`, {
         messageCount: contents.length,
         authType: auth.type,
+        endpoint: auth.endpoint,
+        authSource: auth.source,
       });
 
       const response = await fetch(url, {

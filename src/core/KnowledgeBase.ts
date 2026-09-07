@@ -443,7 +443,7 @@ export class KnowledgeBase {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
-    lines.push(`  📚 EVALINE KNOWLEDGE BASE RESULTS (${docs.length} documents)`);
+    lines.push(`  [KB] EVALINE KNOWLEDGE BASE RESULTS (${docs.length} documents)`);
     lines.push(`  Query: "${query}"`);
     lines.push(`  Active Backend: ${this.getStats().name} (${this.getStats().documentCount} indexed records)`);
     lines.push('═'.repeat(78));

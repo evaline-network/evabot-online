@@ -64,10 +64,10 @@ const SEVERITY_COLORS: Record<AlertSeverity, string> = {
 };
 
 const SEVERITY_EMOJI: Record<AlertSeverity, string> = {
-  low: '🔵',
-  medium: '🟡',
-  high: '🔴',
-  critical: '🚨',
+  low: '[LOW]',
+  medium: '[MED]',
+  high: '[HIGH]',
+  critical: '[CRIT]',
 };
 
 export class AlertManager {
