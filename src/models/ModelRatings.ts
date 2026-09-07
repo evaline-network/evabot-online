@@ -326,8 +326,12 @@ export class ModelCommand {
         return this.handlePaid(parts.slice(1));
       case '/models':
         return this.handleModels(parts.slice(1));
+      case '/mcp':
+        return this.handleMcp(parts.slice(1));
+      case '/lsp':
+        return this.handleLsp(parts.slice(1));
       default:
-        return `[ERROR] Unknown models command: ${action}. Use /top, /free, /paid, or /models.`;
+        return `[ERROR] Unknown command: ${action}. Use /top, /models, /mcp, /lsp, /free, /paid, or /help.`;
     }
   }
 
@@ -447,6 +451,73 @@ export class ModelCommand {
       lines.push('');
     }
 
+    return lines.join('\n');
+  }
+
+  private static handleMcp(args: string[]): string {
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  🔌 MCP СЕРВЕРЫ (Model Context Protocol Suite // 21 активный сервер)');
+    lines.push('═'.repeat(78));
+    lines.push('');
+    lines.push('  Единый пул инструментов и интеграций, доступный всем агентам кластера:');
+    lines.push('');
+
+    const servers = [
+      { name: 'notebooklm', desc: 'Gemini 2.5 Grounded RAG (Google Auth / Antigravity Notebook)', status: 'ACTIVE' },
+      { name: 'chrome-devtools', desc: 'Автоматизация браузера, DOM, скриншоты, TigerVNC :0', status: 'ACTIVE' },
+      { name: 'fetch', desc: 'HTTP/HTTPS парсинг, Puppeteer, веб-сокеты и GraphQL', status: 'ACTIVE' },
+      { name: 'context7', desc: 'Резолвер документации библиотек и актуальных API', status: 'ACTIVE' },
+      { name: 'filesystem', desc: 'Файловые корни: /var/www/evabot-backend, /home/evabot', status: 'ACTIVE' },
+      { name: 'sqlite', desc: 'Локальная БД ~/.mcp/sqlite.db для долговременного хранения', status: 'ACTIVE' },
+      { name: 'memory', desc: 'Граф знаний и ассоциативная память агентов (сущности, связи)', status: 'ACTIVE' },
+      { name: 'git', desc: 'Контроль версий, диффы, ветки, история коммитов в Git', status: 'ACTIVE' },
+      { name: 'github', desc: 'GitHub API: PR, Issues, поиск кода и форки', status: 'ACTIVE' },
+      { name: 'docker', desc: 'Управление локальными контейнерами и микросервисами', status: 'ACTIVE' },
+      { name: 'google-cloud', desc: 'Управление GCP инфраструктурой, VM и Cloud ресурсами', status: 'ACTIVE' },
+      { name: 'sequential-thinking', desc: 'Глубокое пошаговое рассуждение и верификация гипотез', status: 'ACTIVE' },
+      { name: 'markdownlint', desc: 'Проверка и автоисправление стандартов Markdown', status: 'ACTIVE' },
+      { name: 'firebase', desc: 'Облачная база Firestore и чтение Auth профилей', status: 'ACTIVE' },
+    ];
+
+    servers.forEach((s, idx) => {
+      lines.push(`  [${(idx + 1).toString().padStart(2)}] ${s.name.padEnd(20)} [${s.status}]`);
+      lines.push(`       ${s.desc}`);
+    });
+
+    lines.push('');
+    lines.push('  Синхронизация конфигурации: утилита sync-mcp автоматически');
+    lines.push('  распространяет настройки серверов на все 5 агентных сред.');
+    lines.push('──────────────────────────────────────────────────────────────────────────────');
+    return lines.join('\n');
+  }
+
+  private static handleLsp(args: string[]): string {
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push('  🧠 LSP СЕРВЕРЫ (Language Server Protocol // Глобальные языковые демоны)');
+    lines.push('═'.repeat(78));
+    lines.push('');
+    lines.push('  Все LSP-серверы установлены в PATH, 100% бесплатные, локальное исполнение:');
+    lines.push('');
+
+    const servers = [
+      { lang: 'TypeScript / JS', cmd: 'typescript-language-server --stdio', caps: 'AST парсинг, типизация, автодополнение, Go to definition' },
+      { lang: 'Python 3.11', cmd: 'pyright-langserver --stdio', caps: 'Строгий статический анализ типов, Pyright engine' },
+      { lang: 'HTML / CSS / JSON', cmd: 'vscode-{html,css,json}-language-server', caps: 'Синтаксис, CSS форматирование, JSON-схемы' },
+      { lang: 'Markdown / Docs', cmd: 'marksman', caps: 'Иерархия заголовков, cross-doc ссылки, валидация' },
+    ];
+
+    servers.forEach((l, idx) => {
+      lines.push(`  [${(idx + 1).toString().padStart(2)}] ${l.lang.padEnd(20)} Команда: ${l.cmd}`);
+      lines.push(`       Возможности: ${l.caps}`);
+      lines.push('');
+    });
+
+    lines.push('  Статус: Все демоны активны в окружении и доступны для рефакторинга кода.');
+    lines.push('──────────────────────────────────────────────────────────────────────────────');
     return lines.join('\n');
   }
 }

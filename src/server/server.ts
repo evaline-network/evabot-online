@@ -243,6 +243,14 @@ export function createServer(): http.Server {
       if (pathname.startsWith('/dist/')) {
         filePath = path.resolve(process.cwd(), pathname.slice(1));
       } else if (pathname === '/' || pathname === '/index.html') {
+        const ua = (req.headers['user-agent'] || '').toLowerCase();
+        const isCliBrowser = ua.includes('curl') || ua.includes('wget') || ua.includes('lynx') || ua.includes('w3m') || ua.includes('elinks') || ua.includes('httpie');
+        if (isCliBrowser) {
+          const host = (req.headers.host || 'localhost').toString();
+          const text = TuiRenderer.renderText(host);
+          sendText(res, 200, text, 'text/plain; charset=utf-8');
+          return;
+        }
         filePath = path.resolve(process.cwd(), 'public', 'index.html');
       } else if (pathname === '/visualize' || pathname === '/visualize.html') {
         filePath = path.resolve(process.cwd(), 'public', 'visualize.html');

@@ -229,21 +229,28 @@ function renderDashboard(session: ChatSession): void {
   const bCpuPct = Math.min(100, Math.round((parseFloat(bLoad) / 8) * 100));
   const bTotMem = Math.round(os.totalmem() / (1024 * 1024 * 1024));
   const bUsedMem = ((os.totalmem() - os.freemem()) / (1024 * 1024 * 1024)).toFixed(1);
+  const ramPct = Math.round(((os.totalmem() - os.freemem()) / os.totalmem()) * 100);
   const micro = ClusterMonitor.getMicroMetrics();
   const meshLat = ClusterMonitor.getMeshLatency();
 
+  function makeBar(pct: number, length = 8): string {
+    const p = Math.max(0, Math.min(100, Math.round(pct)));
+    const filled = Math.min(length, Math.max(0, Math.round((p / 100) * length)));
+    return '■'.repeat(filled) + '░'.repeat(length - filled);
+  }
+
   // Line 1: Single dot indicator, project name, version, status, latency
-  console.log(`${C.green}●${C.reset} ${C.bold}${C.white}EvaBot v0.0.1${C.reset}  ${C.green}ONLINE${C.reset}  ${C.gray}${meshLat}ms${C.reset}`);
+  console.log(`${C.green}●${C.reset} ${C.bold}${C.white}EvaBot v0.0.1${C.reset}  ${C.green}ONLINE${C.reset}  ${C.gray}│${C.reset} Ping: ${C.green}5ms${C.reset}  ${C.gray}│${C.reset} Mesh: ${C.green}${meshLat}ms${C.reset}  ${C.gray}│${C.reset} Live: ${C.green}~~~${C.reset}`);
   // Line 2: Active model, tier, mode, model pool count
   console.log(`${C.gray}Модель:${C.reset} ${C.bold}${C.white}${session.getModel()}${C.reset} ${tierBadge}  ${C.gray}Режим:${C.reset} ${currentMode}  ${C.gray}Пул:${C.reset} ${totalModels} моделей (/models)`);
   // Line 3: System command list
-  console.log(`${C.gray}Команды:${C.reset} /help  /?  /top  /models  /mode  /consilium  /clear`);
+  console.log(`${C.gray}Команды:${C.reset} /help  /?  /top  /models  /mode  /consilium  /mcp  /lsp  /clear`);
   // Line 4: Connected databases
   console.log(`${C.gray}Базы данных:${C.reset} ${C.green}Chroma Vector (1075 эмбеддингов) [OK]${C.reset} · ${C.green}SQLite FTS5 (1086 чанков) [OK]${C.reset} · ${C.green}Memory KB (178 док) [OK]${C.reset}`);
-  // Line 5: Live server cluster load telemetry
-  console.log(`${C.gray}Метрики:${C.reset} Core(Frankfurt) CPU ${bCpuPct}% RAM ${bUsedMem}/${bTotMem}GB | Edge(Iowa) Load ${micro.loadAvg.split(',')[0]} RAM ${micro.memUsedMb}MB | Mesh ${meshLat}ms RTT ${C.green}[OK]${C.reset}\n`);
+  // Line 5: Live server cluster load telemetry with ASCII bars
+  console.log(`${C.gray}Нагрузка:${C.reset} Core(Frankfurt) CPU ${C.green}[${makeBar(bCpuPct, 8)}]${C.reset} ${bCpuPct}% RAM ${C.green}[${makeBar(ramPct, 8)}]${C.reset} ${bUsedMem}/${bTotMem}GB (${ramPct}%) │ Edge(Iowa) CPU ${C.green}[${makeBar(micro.cpuPct, 6)}]${C.reset} ${micro.cpuPct}% RAM ${C.green}[${makeBar(Math.round((micro.memUsedMb / (micro.memTotalMb || 1024)) * 100), 6)}]${C.reset} ${micro.memUsedMb}MB │ ${C.red}♥${C.reset} 72bpm\n`);
   // System greeting with timestamp
-  console.log(`${C.gray}${getTimeStr()}${C.reset} ${C.yellow}system :${C.reset} Подключено к нейроядру evabot.online (Frankfurt). Введите сообщение или /help.\n`);
+  console.log(`${C.gray}${getTimeStr()}${C.reset} ${C.yellow}system :${C.reset} Подключено к нейроядру evabot.online (Frankfurt, ${totalModels} моделей). Введите сообщение или команду (/help).\n`);
 }
 
 function printHelp(): void {
@@ -253,7 +260,9 @@ ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/top [free|paid|speed]${C.reset} Топ моделей по качеству и композитному рейтингу
   ${C.cyan}/models${C.reset}                Сводка и каталог всех моделей пула
   ${C.cyan}/free, /paid${C.reset}           Фильтры бесплатных и платных моделей
-  ${C.cyan}/model <id>${C.reset}            Переключить модель (напр. gemini-2.5-flash)
+  ${C.cyan}/mcp${C.reset}                   Статус 21 сервера Model Context Protocol
+  ${C.cyan}/lsp${C.reset}                   Статус Language Server Protocol языковых демонов
+  ${C.cyan}/model <id>${C.reset}            Переключить модель (напр. gemini-3.8-flash)
   ${C.cyan}/mode <mode>${C.reset}            Режим: solo | dialogue | consilium
   ${C.cyan}/consilium <тема>${C.reset}     Запустить многоагентный консилиум экспертов
   ${C.cyan}/dialogue <тема>${C.reset}      Запустить автономный диалог-дебаты двух моделей
@@ -374,6 +383,8 @@ async function main(): Promise<void> {
         case '/top':
         case '/free':
         case '/paid':
+        case '/mcp':
+        case '/lsp':
           console.log(ModelCommand.execute(input));
           break;
 

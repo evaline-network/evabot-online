@@ -78,7 +78,7 @@ if command -v gcloud &> /dev/null; then
     set -e
     cd /var/www/evabot-backend 2>/dev/null || cd /home/evabot/Desktop/evabot-online 2>/dev/null || cd ~/evabot-online
     git pull origin main || true
-    npm install --production 2>/dev/null || true
+    npm install 2>/dev/null || true
     npm run build 2>/dev/null || true
     
     # Restart backend
