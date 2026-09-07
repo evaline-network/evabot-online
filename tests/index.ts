@@ -10,10 +10,11 @@ import { runPluginManagerTests, runEventBusTests } from './plugin-manager.test.j
 import { runLLMProvidersTests } from './llm-providers.test.js';
 import { runKnowledgeBaseTests } from './knowledge-base.test.js';
 import { runPluginConsiliumTests } from './consilium-new.test.js';
+import { runAccountingAndBuilderTests } from './accounting_and_builder.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
-  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (12 test suites)');
+  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (14 test suites)');
   console.log('================================================================\n');
 
   const results = [
@@ -30,6 +31,7 @@ async function runAllTests(): Promise<void> {
     await runLLMProvidersTests(),
     await runKnowledgeBaseTests(),
     await runPluginConsiliumTests(),
+    await runAccountingAndBuilderTests(),
   ];
 
   const testNames = [
@@ -46,6 +48,7 @@ async function runAllTests(): Promise<void> {
     'LLMProvidersTests',
     'KnowledgeBaseTests',
     'ConsiliumNewTests',
+    'AccountingAndBuilderTests',
   ];
 
   let allPassed = true;

@@ -244,7 +244,7 @@ function renderDashboard(session: ChatSession): void {
   // Line 2: Active model, tier, mode, model pool count
   console.log(`${C.gray}Модель:${C.reset} ${C.bold}${C.white}${session.getModel()}${C.reset} ${tierBadge}  ${C.gray}Режим:${C.reset} ${currentMode}  ${C.gray}Пул:${C.reset} ${totalModels} моделей (/models)`);
   // Line 3: System command list
-  console.log(`${C.gray}Команды:${C.reset} /help  /?  /top  /models  /mode  /consilium  /mcp  /lsp  /clear`);
+  console.log(`${C.gray}Команды:${C.reset} /help  /?  /top  /models  /cost  /company  /mode  /consilium  /mcp  /lsp  /clear`);
   // Line 4: Connected databases
   console.log(`${C.gray}Базы данных:${C.reset} ${C.green}Chroma Vector (1075 эмбеддингов) [OK]${C.reset} · ${C.green}SQLite FTS5 (1086 чанков) [OK]${C.reset} · ${C.green}Memory KB (178 док) [OK]${C.reset}`);
   // Line 5: Live server cluster load telemetry with ASCII bars
@@ -259,6 +259,9 @@ ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/help, /?${C.reset}              Показать это руководство
   ${C.cyan}/top [free|paid|speed]${C.reset} Топ моделей по качеству и композитному рейтингу
   ${C.cyan}/models${C.reset}                Сводка и каталог всех моделей пула
+  ${C.cyan}/info <id>${C.reset}            Паспорт модели, квоты, бенчмарки и цены
+  ${C.cyan}/company [free|paid]${C.reset}  Ростер 10 специализированных ИИ-агентов компании
+  ${C.cyan}/cost${C.reset}                  Бухгалтерия, расходы на токены и себестоимость агентов
   ${C.cyan}/free, /paid${C.reset}           Фильтры бесплатных и платных моделей
   ${C.cyan}/mcp${C.reset}                   Статус 21 сервера Model Context Protocol
   ${C.cyan}/lsp${C.reset}                   Статус Language Server Protocol языковых демонов
@@ -385,6 +388,14 @@ async function main(): Promise<void> {
         case '/paid':
         case '/mcp':
         case '/lsp':
+        case '/cost':
+        case '/finance':
+        case '/budget':
+        case '/company':
+        case '/team':
+        case '/roster':
+        case '/info':
+        case '/inspect':
           console.log(ModelCommand.execute(input));
           break;
 

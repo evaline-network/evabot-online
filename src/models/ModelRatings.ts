@@ -1,4 +1,6 @@
 import { ModelRegistry, GeminiModelInfo } from './ModelRegistry.js';
+import { AccountingEngine } from '../core/AccountingEngine.js';
+import { AgentBuilder } from '../core/AgentBuilder.js';
 
 export type ModelRatingDimension = 'quality' | 'speed' | 'context' | 'cost';
 
@@ -330,8 +332,19 @@ export class ModelCommand {
         return this.handleMcp(parts.slice(1));
       case '/lsp':
         return this.handleLsp(parts.slice(1));
+      case '/cost':
+      case '/finance':
+      case '/budget':
+        return AccountingEngine.formatCostReport();
+      case '/company':
+      case '/team':
+      case '/roster':
+        return this.handleCompany(parts.slice(1));
+      case '/info':
+      case '/inspect':
+        return this.handleInfo(parts.slice(1));
       default:
-        return `[ERROR] Unknown command: ${action}. Use /top, /models, /mcp, /lsp, /free, /paid, or /help.`;
+        return `[ERROR] Unknown command: ${action}. Use /top, /models, /mcp, /lsp, /cost, /company, /info, /free, /paid, or /help.`;
     }
   }
 
@@ -518,6 +531,61 @@ export class ModelCommand {
 
     lines.push('  Статус: Все демоны активны в окружении и доступны для рефакторинга кода.');
     lines.push('──────────────────────────────────────────────────────────────────────────────');
+    return lines.join('\n');
+  }
+
+  private static handleCompany(args: string[]): string {
+    const tier = args[0]?.toLowerCase() || 'free';
+    if (tier === 'paid') {
+      return AgentBuilder.formatCompanyReport(AgentBuilder.buildPaidCompany());
+    }
+    return AgentBuilder.formatCompanyReport(AgentBuilder.buildFreeCompany());
+  }
+
+  private static handleInfo(args: string[]): string {
+    const query = args[0]?.toLowerCase();
+    if (!query) {
+      return `Использование: /info <model_id> (напр. /info gemini-3.8-flash или /info claude-3-7-sonnet)`;
+    }
+
+    const model = ModelRegistry.getAllModels().find(
+      (m) => m.id.toLowerCase() === query || m.name.toLowerCase().includes(query) || m.id.toLowerCase().includes(query)
+    );
+
+    if (!model) {
+      return `[ERROR] Модель "${query}" не найдена в каталоге 78 моделей. Используйте /models для поиска.`;
+    }
+
+    const rating = ModelRatings.computeRating(model);
+    const isFree = model.pricing.freeTierStatus === '100% Free Quota Available';
+    const lines: string[] = [];
+    lines.push('');
+    lines.push('═'.repeat(78));
+    lines.push(`  📋 ТЕХНИЧЕСКИЙ ПАСПОРТ МОДЕЛИ: ${model.name.toUpperCase()}`);
+    lines.push('═'.repeat(78));
+    lines.push(`  ID модели        : ${model.id}`);
+    lines.push(`  Провайдер        : ${model.provider} [Категория: ${model.category}]`);
+    lines.push(`  Протокол вызова  : ${model.protocol} │ Рекомендовано: ${model.recommended ? 'ДА' : 'НЕТ'}`);
+    lines.push(`  Тарифный статус  : ${isFree ? '100% FREE QUOTA' : 'PAID / COMMERCIAL'}`);
+    lines.push('─'.repeat(78));
+    lines.push(`  Контекстное окно : ${model.contextWindow.toLocaleString()} токенов (~${(model.contextWindow / 1000).toFixed(0)}k)`);
+    lines.push(`  Макс. ответ      : ${model.maxOutputTokens.toLocaleString()} токенов`);
+    lines.push('─'.repeat(78));
+    lines.push(`  СТОИМОСТЬ ТОКЕНОВ:`);
+    lines.push(`    • Входящие     : ${model.pricing.inputPer1MTokensUSD} (${model.pricing.inputPer1MTokensEUR})`);
+    lines.push(`    • Исходящие    : ${model.pricing.outputPer1MTokensUSD} (${model.pricing.outputPer1MTokensEUR})`);
+    lines.push(`    • Квоты / Лимит: ${model.pricing.freeTierDetails}`);
+    lines.push('─'.repeat(78));
+    lines.push(`  РЕЙТИНГ И БЕНЧМАРКИ (Оценка системы: ${rating.composite}/100):`);
+    lines.push(`    • Интеллект / Кодинг : ${rating.quality}/100`);
+    lines.push(`    • Новизна (2026 fleet): ${rating.recency}/100`);
+    lines.push(`    • Скорость генерации : ${rating.speed}/100`);
+    lines.push(`    • Емкость контекста  : ${rating.context}/100`);
+    lines.push(`    • Экономичность      : ${rating.cost}/100`);
+    lines.push('─'.repeat(78));
+    lines.push(`  ОПИСАНИЕ:`);
+    lines.push(`    ${model.description}`);
+    lines.push('═'.repeat(78));
     return lines.join('\n');
   }
 }
