@@ -1,0 +1,4 @@
+# Knowledge base
+knowledge-base/evaline-com-ua/site/**/*.md
+knowledge-base/evaline-knowledge-base/chroma_db/
+knowledge-base/evaline-knowledge-base/fts_index.db

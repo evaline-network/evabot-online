@@ -1,4 +1,5 @@
 import { logger, LogCategory } from './Logger.js';
+import { alertManager } from './AlertManager.js';
 
 export interface RateLimitEntry {
   count: number;
@@ -87,6 +88,12 @@ export class Security {
           totalCount: entry.count,
           suspiciousCount,
         });
+        alertManager.high(
+          'IP Auto-Blocked',
+          `IP ${ip} blocked automatically after ${suspiciousCount} suspicious requests`,
+          'security',
+          { ip, suspiciousCount, totalCount: entry.count }
+        ).catch(() => {});
       }
     }
 
@@ -117,6 +124,8 @@ export class Security {
     entry.blockedUntil = Date.now() + durationMs;
     ipStore.set(ip, entry);
     logger.warn(LogCategory.SYSTEM, 'SECURITY', `MANUAL BLOCK: ${ip} for ${durationMs}ms`, { reason });
+    alertManager.medium('IP Blocked Manually', `IP ${ip} blocked. Reason: ${reason}`, 'security', { ip, reason, durationMs })
+      .catch(() => {});
   }
 
   public static unblockIP(ip: string): void {

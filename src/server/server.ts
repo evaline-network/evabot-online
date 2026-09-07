@@ -2,21 +2,20 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { ModelRegistry } from '../models/ModelRegistry.js';
-import { ModelRatings, ModelCommand } from '../models/ModelRatings.js';
-import { UniversalLlmClient, LlmProvider } from '../core/UniversalLlmClient.js';
-import { ConsiliumEngine, ConsiliumMode, ConsiliumParticipant } from '../core/ConsiliumEngine.js';
-import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
-import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
-import { GeminiClient } from '../core/GeminiClient.js';
-import { BootDiagnostics } from '../core/BootDiagnostics.js';
+import { logger, LogCategory } from '../core/Logger.js';
 import { Config } from '../core/Config.js';
-import { logger, LogLevel, LogCategory } from '../core/Logger.js';
-import { ClusterMonitor } from '../core/ClusterMonitor.js';
-import { TuiRenderer } from '../core/TuiRenderer.js';
-import { knowledgeBase, KnowledgeBackend } from '../core/KnowledgeBase.js';
-import { KnowledgeBaseCommand } from '../core/KnowledgeBaseCommand.js';
+import { knowledgeBase } from '../core/KnowledgeBase.js';
 import { Security, securityConfig } from '../core/Security.js';
+import { ClusterMonitor } from '../core/ClusterMonitor.js';
+import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
+import { TuiRenderer } from '../core/TuiRenderer.js';
+import { createModelsRouter } from './routes/ModelsRouter.js';
+import { createKbRouter } from './routes/KbRouter.js';
+import { createLogsRouter } from './routes/LogsRouter.js';
+import { createSecurityRouter } from './routes/SecurityRouter.js';
+import { createAlertsRouter } from './routes/AlertsRouter.js';
+import { Router, createRouteContext } from './routes/Router.js';
+import { ChatRouter } from './routes/ChatRouter.js';
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -29,6 +28,7 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 function sendJson(res: http.ServerResponse, statusCode: number, data: any): void {
+  if (res.headersSent) return;
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
@@ -38,37 +38,81 @@ function sendJson(res: http.ServerResponse, statusCode: number, data: any): void
   res.end(JSON.stringify(data));
 }
 
+function sendText(res: http.ServerResponse, statusCode: number, text: string, contentType: string = 'text/plain; charset=utf-8'): void {
+  if (res.headersSent) return;
+  res.writeHead(statusCode, {
+    'Content-Type': contentType,
+    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
+    'Access-Control-Allow-Origin': '*',
+  });
+  res.end(text);
+}
+
 function parseJsonBody(req: http.IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', (chunk) => {
       body += chunk;
-      if (body.length > 5 * 1024 * 1024) { // 5MB limit
-        reject(new Error('Request body too large'));
-      }
+      if (body.length > 5 * 1024 * 1024) reject(new Error('Request body too large'));
     });
     req.on('end', () => {
-      if (!body.trim()) {
-        resolve({});
-        return;
-      }
-      try {
-        resolve(JSON.parse(body));
-      } catch {
-        reject(new Error('Malformed JSON body'));
-      }
+      if (!body.trim()) return resolve({});
+      try { resolve(JSON.parse(body)); } catch { reject(new Error('Malformed JSON body')); }
     });
     req.on('error', reject);
   });
 }
 
+function buildRouter(): Router {
+  const router = new Router();
+  
+  router.get('/api/health', async (ctx) => {
+    const creds = await GoogleAuthProvider.getCredentials();
+    ctx.sendJson(200, {
+      status: 'online', version: 'v0.0.2', server: 'evabot-online-edge',
+      uptimeSeconds: Math.floor(process.uptime()),
+      memoryUsageMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),
+      systemLoad: os.loadavg()[0].toFixed(2),
+      cpuCores: os.cpus().length,
+      totalMemoryMb: Math.round(os.totalmem() / (1024 * 1024)),
+      freeMemoryMb: Math.round(os.freemem() / (1024 * 1024)),
+      availableModels: 78,
+      hasServerApiKey: Boolean(creds),
+      authSource: creds ? creds.source : 'None',
+      kbEnabled: true,
+      securityEnabled: true,
+    });
+  });
+  
+  const subRouters = [
+    createModelsRouter(),
+    createKbRouter(),
+    createLogsRouter(),
+    createSecurityRouter(),
+    createAlertsRouter(),
+  ];
+  
+  for (const sub of subRouters) {
+    for (const route of (sub as any).routes) {
+      router.add(route.method, route.pattern as string, route.handler);
+    }
+  }
+  
+  const chatRouter = new ChatRouter();
+  for (const route of (chatRouter as any).routes) {
+    router.add(route.method, route.pattern as string, route.handler);
+  }
+  
+  return router;
+}
+
 export function createServer(): http.Server {
   ClusterMonitor.init();
-  
-  // Initialize Knowledge Base on startup
   knowledgeBase.initialize().catch((err) => {
     logger.error(LogCategory.KB, 'INIT', `Failed to initialize KB: ${err.message}`);
   });
+  
+  const router = buildRouter();
   
   return http.createServer(async (req, res) => {
     const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
@@ -78,44 +122,7 @@ export function createServer(): http.Server {
     const userAgent = (req.headers['user-agent'] as string) || 'unknown';
     const method = req.method || 'GET';
     
-    // 🛡️ SECURITY: Check if IP is blocked
-    if (securityConfig.blockedIPs.has(clientIp)) {
-      logger.warn(LogCategory.SYSTEM, 'SECURITY', `Blocked IP request: ${clientIp} -> ${method} ${pathname}`);
-      res.writeHead(403, { 'Content-Type': 'text/plain' });
-      res.end('403 Forbidden - Your IP has been blocked due to suspicious activity');
-      return;
-    }
-    
-    // 🛡️ SECURITY: Rate limiting
-    const rateCheck = Security.checkRateLimit(clientIp);
-    res.setHeader('X-RateLimit-Limit', securityConfig.rateLimit.maxRequests.toString());
-    res.setHeader('X-RateLimit-Remaining', rateCheck.remaining.toString());
-    res.setHeader('X-RateLimit-Reset', Math.ceil(rateCheck.resetIn / 1000).toString());
-    
-    if (!rateCheck.allowed) {
-      logger.warn(LogCategory.SYSTEM, 'SECURITY', `Rate limit exceeded: ${clientIp}`);
-      res.writeHead(429, { 
-        'Content-Type': 'text/plain',
-        'Retry-After': Math.ceil(rateCheck.resetIn / 1000).toString()
-      });
-      res.end('429 Too Many Requests');
-      return;
-    }
-    
-    // 🛡️ SECURITY: Check suspicious paths
-    const suspCheck = Security.isSuspicious(pathname, method);
-    if (suspCheck.suspicious) {
-      Security.recordSuspicious(clientIp, suspCheck.reason || 'unknown');
-    }
-    
-    // Log response
-    res.on('finish', () => {
-      const duration = Date.now() - startTime;
-      logger.logHttpRequest(method, pathname, res.statusCode, duration, clientIp, userAgent);
-    });
-
-    // Handle CORS preflight
-    if (req.method === 'OPTIONS') {
+    if (method === 'OPTIONS') {
       res.writeHead(204, {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -124,689 +131,80 @@ export function createServer(): http.Server {
       res.end();
       return;
     }
-
-    // Health Check & System Status
-    if (pathname === '/api/health' && req.method === 'GET') {
-      const creds = await GoogleAuthProvider.getCredentials();
-      sendJson(res, 200, {
-        status: 'online',
-        version: 'v0.0.1 MVP',
-        server: 'evabot-online-edge',
-        uptimeSeconds: Math.floor(process.uptime()),
-        memoryUsageMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),
-        systemLoad: os.loadavg()[0].toFixed(2),
-        cpuCores: os.cpus().length,
-        totalMemoryMb: Math.round(os.totalmem() / (1024 * 1024)),
-        freeMemoryMb: Math.round(os.freemem() / (1024 * 1024)),
-        availableModels: ModelRegistry.getAllModels().length,
-        hasServerApiKey: Boolean(creds),
-        authSource: creds ? creds.source : 'None',
-        account: creds ? creds.account : 'evabot.online@gmail.com',
-        supportedProviders: ['google', 'omniroute', 'openrouter', 'opencode'],
-        omnirouteEndpoint: Config.omnirouteBaseUrl,
-        availableRolesCount: Object.keys(CORPORATE_ROLES).length,
-        cluster: {
-          evaBrain: {
-            host: 'evabot-agent-vm',
-            role: 'AI Neural Core, Consilium & API Backend',
-            location: 'europe-west3-a (Frankfurt, Germany)',
-            ipWan: '34.159.202.82',
-            ipMesh: '100.66.98.4',
-            cpu: '8 vCPU (Intel Xeon Sapphire Rapids)',
-            systemLoad: os.loadavg()[0].toFixed(2),
-            memoryTotalMb: Math.round(os.totalmem() / (1024 * 1024)),
-            memoryFreeMb: Math.round(os.freemem() / (1024 * 1024)),
-            memoryUsedMb: Math.round((os.totalmem() - os.freemem()) / (1024 * 1024)),
-            status: 'HEALTHY [OK]',
-          },
-          evaFace: {
-            host: 'evaline-micro-vm',
-            role: 'Edge Ingress, Caddy & Mesh Gateway',
-            location: 'us-central1-a (Iowa, USA)',
-            ipWan: '136.114.26.252',
-            ipMesh: '100.125.200.49',
-            cpu: '2 vCPU (e2-micro)',
-            loadAvg: ClusterMonitor.getMicroMetrics().loadAvg,
-            cpuPct: ClusterMonitor.getMicroMetrics().cpuPct,
-            memoryTotalMb: ClusterMonitor.getMicroMetrics().memTotalMb,
-            memoryUsedMb: ClusterMonitor.getMicroMetrics().memUsedMb,
-            memoryFreeMb: ClusterMonitor.getMicroMetrics().memFreeMb,
-            memoryAvailMb: ClusterMonitor.getMicroMetrics().memAvailMb,
-            uptimeStr: ClusterMonitor.getMicroMetrics().uptimeStr,
-            oomShield: 'ACTIVE',
-            webServer: 'Caddy 2.11 (TLS 1.3 / HTTP/3 QUIC)',
-            domains: ['evabot.online', 'evaline.network', 'evaline.online', 'evaline.website'],
-            status: 'HEALTHY [OK]',
-          },
-          wireguard: {
-            status: 'OPERATIONAL [OK]',
-            tunnel: '100.125.200.49 (USA) <-> 100.66.98.4 (Germany)',
-            cipher: 'ChaCha20-Poly1305',
-            latencyMs: ClusterMonitor.getMeshLatency(),
-          },
-          processes: ClusterMonitor.getProcesses(),
+    
+    // Security
+    if (securityConfig.blockedIPs.has(clientIp)) {
+      logger.warn(LogCategory.SYSTEM, 'SECURITY', `Blocked IP: ${clientIp} -> ${method} ${pathname}`);
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('403 Forbidden');
+      return;
+    }
+    
+    const rateCheck = Security.checkRateLimit(clientIp);
+    res.setHeader('X-RateLimit-Limit', securityConfig.rateLimit.maxRequests.toString());
+    res.setHeader('X-RateLimit-Remaining', rateCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', Math.ceil(rateCheck.resetIn / 1000).toString());
+    
+    if (!rateCheck.allowed) {
+      res.writeHead(429, { 'Retry-After': Math.ceil(rateCheck.resetIn / 1000).toString() });
+      res.end('429 Too Many Requests');
+      return;
+    }
+    
+    const suspCheck = Security.isSuspicious(pathname, method);
+    if (suspCheck.suspicious) Security.recordSuspicious(clientIp, suspCheck.reason || 'unknown');
+    
+    res.on('finish', () => {
+      const duration = Date.now() - startTime;
+      logger.logHttpRequest(method, pathname, res.statusCode, duration, clientIp, userAgent);
+    });
+    
+    // Try router
+    const match = router.match(method, pathname);
+    if (match) {
+      const ctx = createRouteContext(req, res, pathname, parsedUrl, {
+        sendJson: (status, data) => sendJson(res, status, data),
+        sendText: (status, text) => sendText(res, status, text),
+        parseJsonBody: () => parseJsonBody(req),
+      });
+      await match.route.handler(ctx);
+      return;
+    }
+    
+    // Static files
+    if (pathname.startsWith('/dist/') || pathname === '/') {
+      let filePath = '';
+      if (pathname.startsWith('/dist/')) {
+        filePath = path.resolve(process.cwd(), pathname.slice(1));
+      } else {
+        // Root - serve index.html
+        const indexPath = path.resolve(process.cwd(), 'public', 'index.html');
+        if (fs.existsSync(indexPath)) {
+          const content = fs.readFileSync(indexPath);
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(content);
+          return;
         }
-      });
-      return;
-    }
-
-    // Live Real-Time Logs & Process Inspection
-    if (pathname === '/api/logs' && req.method === 'GET') {
-      sendJson(res, 200, {
-        success: true,
-        clusterTime: new Date().toISOString(),
-        meshLatencyMs: ClusterMonitor.getMeshLatency(),
-        microMetrics: ClusterMonitor.getMicroMetrics(),
-        domainLogs: ClusterMonitor.getDomainLogs(),
-        systemLogs: ClusterMonitor.getSystemLogs(),
-        processes: ClusterMonitor.getProcesses(),
-      });
-      return;
-    }
-
-    // Live Boot Sequence & Diagnostics Probe
-    if (pathname === '/api/diagnostics/boot' && req.method === 'GET') {
-      const activeModel = parsedUrl.searchParams.get('model') || 'gemini-3.8-flash';
-      const report = await BootDiagnostics.runDiagnostics(activeModel);
-      sendJson(res, 200, report);
-      return;
-    }
-
-    // Master Chronicle & Daily Worklog API Endpoints (TSV / LOG / TXT / MD)
-    if (pathname === '/api/worklog' && req.method === 'GET') {
-      const tsvPath = path.resolve(process.cwd(), 'worklog.tsv');
-      const logPath = path.resolve(process.cwd(), 'worklog.log');
-      const mdPath = path.resolve(process.cwd(), 'WORKLOG.md');
-      
-      let rows: Array<{ timestamp: string; host: string; actor: string; category: string; status: string; event: string }> = [];
-      if (fs.existsSync(tsvPath)) {
-        const lines = fs.readFileSync(tsvPath, 'utf8').trim().split('\n');
-        for (let i = 1; i < lines.length; i++) {
-          const parts = lines[i].split('\t');
-          if (parts.length >= 6) {
-            rows.push({
-              timestamp: parts[0],
-              host: parts[1],
-              actor: parts[2],
-              category: parts[3],
-              status: parts[4],
-              event: parts.slice(5).join('\t'),
-            });
-          }
-        }
-      }
-
-      sendJson(res, 200, {
-        success: true,
-        totalEvents: rows.length,
-        updatedAt: fs.existsSync(tsvPath) ? fs.statSync(tsvPath).mtime.toISOString() : new Date().toISOString(),
-        rows: rows,
-        formats: {
-          tsv: '/api/worklog/tsv',
-          log: '/api/worklog/log',
-          txt: '/api/worklog/txt',
-          raw: '/api/worklog/raw',
-        },
-      });
-      return;
-    }
-
-    if ((pathname === '/api/worklog/tsv' || pathname === '/api/worklog.tsv') && req.method === 'GET') {
-      const tsvPath = path.resolve(process.cwd(), 'worklog.tsv');
-      if (fs.existsSync(tsvPath)) {
-        res.writeHead(200, {
-          'Content-Type': 'text/tab-separated-values; charset=utf-8',
-          'Access-Control-Allow-Origin': '*',
-        });
-        res.end(fs.readFileSync(tsvPath, 'utf8'));
-      } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('worklog.tsv not found');
-      }
-      return;
-    }
-
-    if ((pathname === '/api/worklog/log' || pathname === '/api/worklog.log') && req.method === 'GET') {
-      const logPath = path.resolve(process.cwd(), 'worklog.log');
-      if (fs.existsSync(logPath)) {
-        res.writeHead(200, {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Access-Control-Allow-Origin': '*',
-        });
-        res.end(fs.readFileSync(logPath, 'utf8'));
-      } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('worklog.log not found');
-      }
-      return;
-    }
-
-    if ((pathname === '/api/worklog/txt' || pathname === '/api/worklog.txt') && req.method === 'GET') {
-      const txtPath = path.resolve(process.cwd(), 'worklog.txt');
-      if (fs.existsSync(txtPath)) {
-        res.writeHead(200, {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Access-Control-Allow-Origin': '*',
-        });
-        res.end(fs.readFileSync(txtPath, 'utf8'));
-      } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('worklog.txt not found');
-      }
-      return;
-    }
-
-    if (pathname === '/api/worklog/raw' && req.method === 'GET') {
-      const worklogPath = path.resolve(process.cwd(), 'WORKLOG.md');
-      if (fs.existsSync(worklogPath)) {
-        const md = fs.readFileSync(worklogPath, 'utf8');
-        res.writeHead(200, {
-          'Content-Type': 'text/markdown; charset=utf-8',
-          'Access-Control-Allow-Origin': '*',
-        });
-        res.end(md);
-      } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('WORKLOG.md not found');
-      }
-      return;
-    }
-
-    // Model List & Categorization
-    if (pathname === '/api/models' && req.method === 'GET') {
-      sendJson(res, 200, {
-        models: ModelRegistry.getAllModels(),
-        categories: ModelRegistry.getCategories(),
-        defaultModel: Config.defaultModel,
-        stats: {
-          total: ModelRegistry.getAllModels().length,
-          free: ModelRegistry.getFreeModels().length,
-          paid: ModelRegistry.getPaidOnlyModels().length,
-        },
-      });
-      return;
-    }
-
-    // Free Models Only
-    if (pathname === '/api/models/free' && req.method === 'GET') {
-      const models = ModelRegistry.getFreeModels();
-      sendJson(res, 200, {
-        count: models.length,
-        models: models.map((m) => ({
-          ...m,
-          rating: ModelRatings.computeRating(m),
-        })),
-      });
-      return;
-    }
-
-    // Paid Models Only
-    if (pathname === '/api/models/paid' && req.method === 'GET') {
-      const models = ModelRegistry.getPaidOnlyModels();
-      sendJson(res, 200, {
-        count: models.length,
-        models: models.map((m) => ({
-          ...m,
-          rating: ModelRatings.computeRating(m),
-        })),
-      });
-      return;
-    }
-
-    // Top Models (by dimension)
-    if (pathname === '/api/models/top' && req.method === 'GET') {
-      const dimension = (parsedUrl.searchParams.get('dimension') || 'quality') as 'quality' | 'speed' | 'context' | 'cost';
-      const limit = parseInt(parsedUrl.searchParams.get('limit') || '10', 10);
-      const freeOnly = parsedUrl.searchParams.get('free') === 'true';
-
-      const entries = ModelRatings.rankByDimension(dimension, limit, freeOnly);
-      sendJson(res, 200, {
-        dimension,
-        freeOnly,
-        limit,
-        count: entries.length,
-        entries,
-      });
-      return;
-    }
-
-    // Execute Model Command (for terminal)
-    if (pathname === '/api/models/command' && req.method === 'POST') {
-      try {
-        const body = await parseJsonBody(req);
-        const command = body.command || '';
-        const result = ModelCommand.execute(command);
-        sendJson(res, 200, { result });
-      } catch (err: any) {
-        sendJson(res, 500, { error: err.message });
-      }
-      return;
-    }
-
-    // ===========================================================
-    // KNOWLEDGE BASE ENDPOINTS
-    // ===========================================================
-
-    // KB Status
-    if (pathname === '/api/kb/status' && req.method === 'GET') {
-      const stats = knowledgeBase.getStats();
-      const backends = knowledgeBase.getAvailableBackends();
-      sendJson(res, 200, {
-        active: stats,
-        available: backends,
-        totalDocuments: stats.documentCount,
-      });
-      return;
-    }
-
-    // KB Search
-    if (pathname === '/api/kb/search' && req.method === 'GET') {
-      const query = parsedUrl.searchParams.get('q') || '';
-      const limit = parseInt(parsedUrl.searchParams.get('limit') || '5', 10);
-      const language = parsedUrl.searchParams.get('language') || undefined;
-      const category = parsedUrl.searchParams.get('category') || undefined;
-      
-      if (!query) {
-        sendJson(res, 400, { error: 'Missing "q" query parameter' });
-        return;
       }
       
-      const results = knowledgeBase.search(query, { limit, language: language as any, category });
-      sendJson(res, 200, {
-        query,
-        count: results.length,
-        results: results.map(d => ({
-          id: d.id,
-          title: d.title,
-          category: d.category,
-          language: d.language,
-          tags: d.tags,
-          source: d.source,
-          preview: d.content.substring(0, 300),
-        })),
-      });
-      return;
-    }
-
-    // KB List Documents
-    if (pathname === '/api/kb/list' && req.method === 'GET') {
-      const language = parsedUrl.searchParams.get('language') || undefined;
-      const category = parsedUrl.searchParams.get('category') || undefined;
-      const docs = knowledgeBase.listDocuments({ language, category });
-      sendJson(res, 200, {
-        count: docs.length,
-        documents: docs.map(d => ({
-          id: d.id,
-          title: d.title,
-          category: d.category,
-          language: d.language,
-          tags: d.tags,
-          source: d.source,
-          contentLength: d.content.length,
-        })),
-      });
-      return;
-    }
-
-    // KB Set Backend
-    if (pathname === '/api/kb/backend' && req.method === 'POST') {
-      try {
-        const body = await parseJsonBody(req);
-        const backend = body.backend as KnowledgeBackend;
-        if (!['memory', 'json', 'sqlite', 'vector'].includes(backend)) {
-          sendJson(res, 400, { error: 'Invalid backend. Use: memory, json, sqlite, vector' });
-          return;
-        }
-        knowledgeBase.setBackend(backend);
-        sendJson(res, 200, { backend, message: `Backend switched to ${backend}` });
-      } catch (err: any) {
-        sendJson(res, 500, { error: err.message });
-      }
-      return;
-    }
-
-    // KB Command (for terminal-style /kb commands)
-    if (pathname === '/api/kb/command' && req.method === 'POST') {
-      try {
-        const body = await parseJsonBody(req);
-        const command = body.command || '';
-        const result = KnowledgeBaseCommand.execute(command);
-        sendJson(res, 200, { result });
-      } catch (err: any) {
-        sendJson(res, 500, { error: err.message });
-      }
-      return;
-    }
-
-    // ===========================================================
-    // LOGS ENDPOINTS
-    // ===========================================================
-
-    // List log files
-    if (pathname === '/api/logs/files' && req.method === 'GET') {
-      const files = logger.listLogFiles();
-      const stats = logger.getLogFiles();
-      sendJson(res, 200, { files, paths: stats });
-      return;
-    }
-
-    // Read log file
-    if (pathname === '/api/logs/read' && req.method === 'GET') {
-      const filename = parsedUrl.searchParams.get('file') || 'evabot.log';
-      const lines = parseInt(parsedUrl.searchParams.get('lines') || '200', 10);
-      const content = logger.readLogFile(filename, lines);
-      sendJson(res, 200, { filename, lines, content });
-      return;
-    }
-
-    // Get recent in-memory logs
-    if (pathname === '/api/logs/recent' && req.method === 'GET') {
-      const limit = parseInt(parsedUrl.searchParams.get('limit') || '50', 10);
-      const levelStr = parsedUrl.searchParams.get('level');
-      const category = parsedUrl.searchParams.get('category');
-      const level = levelStr ? LogLevel[levelStr.toUpperCase() as keyof typeof LogLevel] : undefined;
-      const logs = logger.getRecentLogs(limit, level, category || undefined);
-      sendJson(res, 200, { count: logs.length, logs });
-      return;
-    }
-
-    // ===========================================================
-    // SECURITY ENDPOINTS
-    // ===========================================================
-
-    if (pathname === '/api/security/status' && req.method === 'GET') {
-      sendJson(res, 200, Security.getStats());
-      return;
-    }
-
-    if (pathname === '/api/security/report' && req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end(Security.getSecurityReport());
-      return;
-    }
-
-    if (pathname === '/api/security/block' && req.method === 'POST') {
-      try {
-        const body = await parseJsonBody(req);
-        const { ip, reason, durationMs } = body;
-        if (!ip) {
-          sendJson(res, 400, { error: 'Missing "ip" parameter' });
-          return;
-        }
-        Security.blockIP(ip, reason || 'manual block', durationMs);
-        sendJson(res, 200, { blocked: ip, reason });
-      } catch (err: any) {
-        sendJson(res, 500, { error: err.message });
-      }
-      return;
-    }
-
-    if (pathname === '/api/security/unblock' && req.method === 'POST') {
-      try {
-        const body = await parseJsonBody(req);
-        const { ip } = body;
-        if (!ip) {
-          sendJson(res, 400, { error: 'Missing "ip" parameter' });
-          return;
-        }
-        Security.unblockIP(ip);
-        sendJson(res, 200, { unblocked: ip });
-      } catch (err: any) {
-        sendJson(res, 500, { error: err.message });
-      }
-      return;
-    }
-
-    // EvaLine Corporate Roles Endpoint
-    if (pathname === '/api/roles' && req.method === 'GET') {
-      const rolesList = Object.values(CORPORATE_ROLES).map((role) => ({
-        id: role.id,
-        name: role.name,
-        title: role.title,
-        department: role.department,
-        description: role.description,
-        preferredModel: role.preferredModel,
-        suggestedTemperature: role.suggestedTemperature,
-        knowledgeAccessLevel: role.knowledgeAccessLevel,
-        systemPrompt: role.systemPrompt,
-      }));
-
-      sendJson(res, 200, {
-        roles: rolesList,
-        count: rolesList.length,
-      });
-      return;
-    }
-
-    // Chat (Unary non-streaming via UniversalLlmClient)
-    if (pathname === '/api/chat' && req.method === 'POST') {
-      try {
-        const body = await parseJsonBody(req);
-        const { message, model, history = [], apiKey, systemInstruction, provider } = body;
-
-        if (!message || typeof message !== 'string') {
-          sendJson(res, 400, { error: 'Missing or invalid "message" parameter' });
-          return;
-        }
-
-        const targetModel = model || Config.defaultModel;
-        const client = new UniversalLlmClient(apiKey || Config.geminiApiKey || undefined);
-
-        const messages = [
-          ...history,
-          { role: 'user', content: message.trim() },
-        ];
-
-        const responseText = await client.generateContent(targetModel, messages, {
-          systemInstruction: systemInstruction || Config.defaultSystemInstruction,
-          provider: provider as LlmProvider | undefined,
-          apiKey,
-        });
-
-        sendJson(res, 200, {
-          response: responseText,
-          model: targetModel,
-          provider: client.resolveProvider(targetModel, provider),
-        });
-      } catch (err: any) {
-        logger.error('Server', `Chat error: ${err.message}`);
-        const status = (err.message && (err.message.includes('credentials') || err.message.includes('API key'))) ? 401 : 500;
-        sendJson(res, status, { error: err.message || 'Internal server error' });
-      }
-      return;
-    }
-
-    // Chat (Real-time SSE Streaming via UniversalLlmClient)
-    if (pathname === '/api/chat/stream' && req.method === 'POST') {
-      try {
-        const body = await parseJsonBody(req);
-        const { message, model, history = [], apiKey, systemInstruction, provider } = body;
-
-        if (!message || typeof message !== 'string') {
-          sendJson(res, 400, { error: 'Missing or invalid "message" parameter' });
-          return;
-        }
-
-        const targetModel = model || Config.defaultModel;
-        const client = new UniversalLlmClient(apiKey || Config.geminiApiKey || undefined);
-
-        const messages = [
-          ...history,
-          { role: 'user', content: message.trim() },
-        ];
-
-        res.writeHead(200, {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'Cache-Control': 'no-cache, no-transform',
-          'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
-        });
-
-        const fullText = await client.streamContent(
-          targetModel,
-          messages,
-          (chunk) => {
-            res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
-          },
-          {
-            systemInstruction: systemInstruction || Config.defaultSystemInstruction,
-            provider: provider as LlmProvider | undefined,
-            apiKey,
-          }
-        );
-
-        res.write(`data: ${JSON.stringify({ done: true, fullText })}\n\n`);
-        res.end();
-      } catch (err: any) {
-        logger.error('Server', `Stream error: ${err.message}`);
-        if (!res.headersSent) {
-          sendJson(res, 500, { error: err.message || 'Internal server error' });
-        } else {
-          res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
-          res.end();
-        }
-      }
-      return;
-    }
-
-    // Consilium Multi-Agent Engine (Solo, Broadcast, Dialogue, Consilium)
-    if (pathname === '/api/consilium' && req.method === 'POST') {
-      try {
-        const body = await parseJsonBody(req);
-        const {
-          prompt,
-          mode = 'consilium',
-          models,
-          participants,
-          rounds,
-          synthesizerModel,
-          systemInstruction,
-          apiKey,
-          useKnowledgeBase = true,
-        } = body;
-
-        if (!prompt || typeof prompt !== 'string') {
-          sendJson(res, 400, { error: 'Missing or invalid "prompt" parameter' });
-          return;
-        }
-
-        const validModes: ConsiliumMode[] = ['solo', 'broadcast', 'dialogue', 'consilium'];
-        if (!validModes.includes(mode)) {
-          sendJson(res, 400, {
-            error: `Invalid "mode" parameter. Expected one of: ${validModes.join(', ')}`,
-          });
-          return;
-        }
-
-        const engine = new ConsiliumEngine(apiKey || Config.geminiApiKey || undefined);
-
-        const result = await engine.run({
-          mode,
-          prompt: prompt.trim(),
-          models,
-          participants,
-          rounds: typeof rounds === 'number' ? rounds : undefined,
-          synthesizerModel,
-          systemInstruction,
-          apiKey,
-          useKnowledgeBase: Boolean(useKnowledgeBase),
-        });
-
-        sendJson(res, 200, {
-          success: true,
-          result,
-        });
-      } catch (err: any) {
-        logger.error('Server', `Consilium error: ${err.message}`);
-        sendJson(res, 500, { error: err.message || 'Consilium execution error' });
-      }
-      return;
-    }
-
-    // Raw un-ui Markdown & Text Template Serving
-    if (pathname === '/raw' || pathname === '/site.unui.md' || pathname === '/site.unui.txt' || pathname === '/unui' || pathname.endsWith('.unui.md') || pathname.endsWith('.unui.txt')) {
-      const host = (req.headers.host || 'evabot.online').toString();
-      if (pathname.endsWith('.unui.txt') || pathname === '/site.unui.txt') {
-        const raw = TuiRenderer.getRawTextTemplate(host);
-        res.writeHead(200, {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
-          'Access-Control-Allow-Origin': '*',
-        });
-        res.end(raw);
-        return;
-      }
-      const raw = TuiRenderer.getRawTemplate(host);
-      res.writeHead(200, {
-        'Content-Type': 'text/markdown; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
-        'Access-Control-Allow-Origin': '*',
-      });
-      res.end(raw);
-      return;
-    }
-
-    // Unified TUI & Console Dynamic Serving (curl / terminal browsers / modern browsers)
-    if (pathname === '/' || pathname === '/index.html' || pathname === '/terminal.txt' || pathname === '/plain') {
-      const host = (req.headers.host || 'evabot.online').toString();
-      const userAgent = (req.headers['user-agent'] || '').toLowerCase();
-      const isCurlOrCli = pathname === '/terminal.txt' || pathname === '/plain' || /(curl|wget|httpie)/i.test(userAgent);
-
-      if (isCurlOrCli) {
-        const text = TuiRenderer.renderText(host);
-        res.writeHead(200, {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'Access-Control-Allow-Origin': '*',
-        });
-        res.end(text);
-        return;
-      } else {
-        const html = TuiRenderer.renderHtml(host);
-        res.writeHead(200, {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'Clear-Site-Data': '"cache"',
-          'Access-Control-Allow-Origin': '*',
-        });
-        res.end(html);
+      if (filePath && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        const ext = path.extname(filePath).toLowerCase();
+        const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+        res.writeHead(200, { 'Content-Type': contentType });
+        fs.createReadStream(filePath).pipe(res);
         return;
       }
     }
-
-    // Static File Serving
-    let filePath = '';
-    if (pathname.startsWith('/dist/')) {
-      filePath = path.resolve(process.cwd(), pathname.slice(1));
-    } else {
-      filePath = path.resolve(process.cwd(), 'public', pathname.slice(1));
-    }
-
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      const ext = path.extname(filePath).toLowerCase();
-      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-      res.writeHead(200, {
-        'Content-Type': contentType,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-      });
-      fs.createReadStream(filePath).pipe(res);
-      return;
-    }
-
-    // 404 Fallback
-    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Not Found');
+    
+    // 404
+    sendText(res, 404, 'Not Found');
   });
 }
 
 export function startServer(port: number = Config.serverPort, host: string = Config.serverHost): void {
   const server = createServer();
   server.listen(port, host, () => {
-    logger.info('Server', `[+] EvaBot HTTP Server listening on http://${host}:${port}`);
+    logger.info(LogCategory.SYSTEM, 'Server', `[+] EvaBot HTTP Server listening on http://${host}:${port}`);
   });
 }
 

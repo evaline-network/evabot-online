@@ -1694,4 +1694,67 @@ export class ModelRegistry {
   public static getPaidOnlyModels(): GeminiModelInfo[] {
     return COMPLETE_GOOGLE_MODEL_CATALOG.filter((m) => m.pricing.freeTierStatus === 'Paid / Pay-As-You-Go Only');
   }
+
+  public static getTop10FreeModels(): GeminiModelInfo[] {
+    return this.getFreeModels().slice(0, 10);
+  }
+
+  public static getTop10PaidSmartestModels(): GeminiModelInfo[] {
+    return this.getPaidOnlyModels().slice(0, 10);
+  }
+
+  public static estimateTokens(text: string): number {
+    if (!text) return 0;
+    return Math.ceil(text.length / 4);
+  }
+
+  public static calculateCost(
+    modelId: string,
+    promptTokens: number,
+    completionTokens: number,
+  ): TokenCostEstimate {
+    const model = this.getModelById(modelId);
+    if (!model) {
+      return { inputCost: 0, outputCost: 0, totalCost: 0, currency: 'USD', costUSD: 0, costEUR: 0 };
+    }
+
+    const inputPriceStr = model.pricing.inputPer1MTokensUSD;
+    const outputPriceStr = model.pricing.outputPer1MTokensUSD;
+    const inputPriceEurStr = model.pricing.inputPer1MTokensEUR;
+    const outputPriceEurStr = model.pricing.outputPer1MTokensEUR;
+
+    const inputRateUSD = this.parsePrice(inputPriceStr);
+    const outputRateUSD = this.parsePrice(outputPriceStr);
+    const inputRateEUR = this.parsePrice(inputPriceEurStr);
+    const outputRateEUR = this.parsePrice(outputPriceEurStr);
+
+    const costUSD = (promptTokens / 1_000_000) * inputRateUSD + (completionTokens / 1_000_000) * outputRateUSD;
+    const costEUR = (promptTokens / 1_000_000) * inputRateEUR + (completionTokens / 1_000_000) * outputRateEUR;
+
+    return {
+      inputCost: (promptTokens / 1_000_000) * inputRateUSD,
+      outputCost: (completionTokens / 1_000_000) * outputRateUSD,
+      totalCost: costUSD,
+      currency: 'USD',
+      costUSD,
+      costEUR,
+    };
+  }
+
+  private static parsePrice(priceStr: string): number {
+    const match = priceStr.match(/\$([\d.]+)/);
+    if (match) return parseFloat(match[1]);
+    const eurMatch = priceStr.match(/€([\d.]+)/);
+    if (eurMatch) return parseFloat(eurMatch[1]);
+    return 0;
+  }
+}
+
+export interface TokenCostEstimate {
+  inputCost: number;
+  outputCost: number;
+  totalCost: number;
+  currency: 'USD' | 'EUR';
+  costUSD: number;
+  costEUR: number;
 }

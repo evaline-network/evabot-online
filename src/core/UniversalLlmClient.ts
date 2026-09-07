@@ -52,7 +52,6 @@ export class UniversalLlmClient {
     if (modelInfo) {
       if (
         modelInfo.category.startsWith('OpenRouter') ||
-        modelInfo.tier === 'OpenRouter Paid' ||
         modelInfo.tier === '100% Free Community' ||
         modelInfo.provider === 'OpenRouter'
       ) {

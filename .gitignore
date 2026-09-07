@@ -1,12 +1,48 @@
+# Dependencies
 node_modules/
-dist/*.map
+package-lock.json
+
+# Build artifacts
+dist/
+*.map
+*.tsbuildinfo
+
+# Logs
 logs/
-.env
-.DS_Store
 *.log
+worklog.log
+worklog.txt
+
+# Secrets
+.env
+.env.*
+!.env.example
+.env.bak
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # Local artifacts
 __pycache__/
 *.pyc
 .playwright-mcp/
 archive_full/
+.archive/
+
+# Legacy
+legacy_archive/
+
+# Voice (deprecated)
+src/plugins/
+src/web/voice/
+
+# Knowledge base binary files
+knowledge-base/evaline-knowledge-base/chroma_db/
+knowledge-base/evaline-knowledge-base/fts_index.db

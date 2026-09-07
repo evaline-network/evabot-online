@@ -1,71 +1,158 @@
-# EvaBot & Evaline Online // Modular Enterprise Ecosystem
+# EvaBot Online v0.0.2 // Cyber-Terminal
 
-Autonomous AI agent platform and cloud infrastructure deployed on **Google Cloud Platform (GCP)**.
+**Universal Multi-Model AI Terminal with EvaLine Knowledge Base, Security & Alerting**
 
-- **Production URL:** [https://evabot.online](https://evabot.online)
-- **Edge Proxy:** `evaline-micro-vm` (e2-micro Always Free, Iowa, us-central1-a)
-- **Compute Core:** `evabot-agent-vm` (c3-standard-8 Sapphire Rapids, Frankfurt, europe-west3-a)
-- **AI Core:** Google AI Pro (Gemini 2.0 / 1.5 Pro) with 2,000,000 token context window
-- **Security:** Private WireGuard Mesh (Tailscale 100.125.200.49), TLS 1.3, HTTP/3 QUIC (Caddy)
-- **Locale Policy:** based in Odesa, Ukraine (UA); finances strictly USD ($) / EUR (€).
+---
 
-## Repository Layout (2026 refactor)
-
-Strict split between business logic and UI:
-
-- `backend/` — **FastAPI** (Python). All business logic: model registry, cost engine,
-  consilium engine, roles, chat/stream endpoints, voice config, locale policy, diagnostics.
-  Run: `python3 run.py` → `http://0.0.0.0:8000`
-- `frontend/` — **TypeScript + Vite** (no framework). Stateless UI that pulls models,
-  costs, roles, voice config from the backend. Run: `npx vite --port 5173`
-  (dev proxy `/api` → `http://127.0.0.1:8000`). Build: `npm run build` (`tsc --noEmit && vite build`).
-- `scripts/dev.sh` — starts backend + frontend together.
-- `scripts/archive.sh` — full snapshot tar.gz into `archive_full/`.
-- `archive_full/`, `legacy_archive/` — archived snapshots of the pre-refactor monolith.
-
-## EvaNet Terminology (6-letter glossary)
-
-| Term | Role | Node |
-|---|---|---|
-| **EvaBot** | AI agent core | this repository (`evabot-online`) |
-| **EvaNet** | Network | Tailscale mesh: EvaBrain ↔ laptop ↔ EvaCell ↔ EvaPalm |
-| **EvaFace** | Edge | `evaline-micro-vm` (Iowa, Caddy → evabot.online) |
-| **EvaBrain** | Compute | `evabot-agent-vm` (Frankfurt, c3-standard-8) |
-| **EvaCell** | Mobile | Pixel 10 Pro XL (Tailscale `100.80.216.27`, ADB over Wi-Fi `:5555`) |
-| **EvaPalm** | Mobile | Oppo A5 Pro 5G (USB via macbook, ADB `55PZDIBIFIPVEMAE`) |
-| **EvaLink** | Bridges | `~/eva-link/` + `~/ssh-bridge/` (SSH/ADB tunnels, keys, scripts) |
-| **EvaHub** | Control | `EvaBrain` :3000 — telemetry & command hub |
-
-Full glossary: [`docs/GLOSSARY.md`](docs/GLOSSARY.md) · Mobile bridge: `~/eva-link/eva-link.sh status`
-
-## Architecture Overview
-
-1. **Screen 1:** Gemini Conversational Core & Live Gemini Voice Assistant
-2. **Screen 2:** Live Physical & Virtual Cluster Telemetry (10 vCPUs, 33 GB RAM, 120 GB Storage)
-3. **Screen 3:** Financial & OpEx Cost Analytics (Strictly USD $ and EUR €)
-4. **Screen 4:** AI Model Hub (Top-10 Smartest Frontier & Top-10 Free-Tier Models)
-5. **Screen 5:** Omnichannel Messenger Gateways (Telegram, WhatsApp, Viber, Facebook Messenger)
-6. **Screen 6:** Chronological Audit Log & Multilingual Neural Female Voice Engine (EN / RU / UK)
-
-## Standalone Terminal CLI
-
-Run the standalone interactive terminal client directly via Python:
+## 🎯 Quick Start
 
 ```bash
-python3 evabot-cli.py
+cd /var/www/evabot-backend
+npm install && npm run build && npm run start
 ```
 
-Run non-interactive automated self-test:
+**Production:** [https://evabot.online](https://evabot.online)  
+**Local:** http://localhost:3000  
+**External IP:** http://34.159.202.82:3000
+
+---
+
+## ✨ Features v0.0.2
+
+- 🛡️ **Security** — IP blocking, rate limiting, 8 malicious IPs blocked, 17 attack patterns
+- 📚 **Knowledge Base** — 182 EvaLine documents, 6 languages, /kb command
+- 🤖 **78 AI Models** — 46 free + 32 paid, with Quality/Speed/Context/Cost ratings
+- 🚨 **Alerts** — 6 channels (console, file, webhook, email, syslog, desktop)
+- 📊 **Logging** — 12 categories, 3 files, HTTP request tracking
+- 💬 **Chat** — streaming, consilium (multi-agent), 8 corporate roles
+
+### Terminal Commands
+```
+/top              - Top models
+/kb status        - Knowledge base
+/kb search EVA    - Search KB
+/free             - All free models
+/paid             - All paid models
+/models           - Summary
+/help             - All commands
+```
+
+---
+
+## 🔌 API (30+ endpoints)
+
+| Module | Endpoints |
+|--------|-----------|
+| **System** | `/api/health`, `/api/roles` |
+| **Models** | `/api/models`, `/models/free`, `/models/paid`, `/models/top` |
+| **Chat** | `/api/chat`, `/api/chat/stream`, `/api/consilium` |
+| **Knowledge** | `/api/kb/{status,search,list,backend,command}` |
+| **Security** | `/api/security/{status,report,block,unblock}` |
+| **Logs** | `/api/logs/{files,read,recent}` |
+| **Alerts** | `/api/alerts`, `/api/alerts/send`, `/api/alerts/channel` |
+
+---
+
+## 📚 Documentation
+
+**👉 [docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) — полный индекс документации**
+
+| Документ | Описание |
+|----------|----------|
+| [CHANGELOG.md](CHANGELOG.md) | История версий |
+| [docs/changelog/](docs/changelog/) | Changelog details |
+| [docs/worklog/](docs/worklog/) | Журнал событий по датам |
+| [docs/architecture/](docs/architecture/) | Архитектура системы |
+| [docs/security/](docs/security/) | Аудит безопасности |
+| [docs/models/](docs/models/) | Каталог моделей |
+| [docs/roadmap/](docs/roadmap/) | Планы развития |
+| [docs/kanban/](docs/kanban/) | Канбан доска |
+| [docs/deployment/](docs/deployment/) | Деплой и CI/CD |
+| [docs/development/](docs/development/) | Development docs |
+
+---
+
+## 🏗️ Architecture
+
+```
+src/
+├── server/                    # HTTP server
+│   ├── server.ts             # 211 lines (main entry)
+│   └── routes/               # 7 modular routers
+│       ├── Router.ts         # Base Router class
+│       ├── ChatRouter.ts     # /api/chat/*
+│       ├── ModelsRouter.ts   # /api/models/*
+│       ├── KbRouter.ts       # /api/kb/*
+│       ├── LogsRouter.ts     # /api/logs/*
+│       ├── SecurityRouter.ts # /api/security/*
+│       └── AlertsRouter.ts   # /api/alerts/*
+├── core/                      # Business logic
+│   ├── Logger.ts             # 12 log categories
+│   ├── Security.ts           # IP blocking + rate limiting
+│   ├── AlertManager.ts       # Multi-channel alerts
+│   ├── KnowledgeBase.ts      # 182 documents
+│   ├── ConsiliumEngine.ts    # Multi-agent
+│   ├── UniversalLlmClient.ts # Multi-provider
+│   └── ...
+├── models/                    # ModelRegistry (78 models)
+└── web/                       # Frontend TypeScript
+```
+
+**Deployment:**
+- **EvaBrain (Backend)**: Frankfurt `evabot-agent-vm` c3-standard-8
+- **EvaFace (Frontend)**: Iowa `evaline-micro-vm` e2-micro (Always Free)
+- **WireGuard Mesh**: 100.66.98.4 ↔ 100.125.200.49
+
+---
+
+## 🛡️ Security
+
+**Blocked IPs (8):** 45.148.10.9, 43.157.188.74, 159.195.17.105, 67.205.2.98, 43.166.136.202, 43.165.2.110, 43.164.1.211, 43.156.232.154
+
+**Attack Detection:** 432 WordPress exploit attempts (CVE-2024-31210, CVE-2024-32336) blocked automatically.
+
+**Configure alerts:**
+```bash
+export ALERT_WEBHOOK_URL=https://hooks.slack.com/...
+export ALERT_EMAIL_TO=admin@evaline.online
+export SYSLOG_HOST=logs.evaline.online
+```
+
+📄 [docs/security/SECURITY_AUDIT.md](docs/security/SECURITY_AUDIT.md)
+
+---
+
+## 📊 Stats
+
+| Metric | Value |
+|--------|-------|
+| Version | v0.0.2 |
+| TypeScript files | 37 |
+| Lines of code | 11,272 |
+| API endpoints | 30+ |
+| AI Models | 78 (46 free + 32 paid) |
+| KB documents | 182 (6 languages) |
+| Routers | 7 modular |
+| TypeScript errors | 0 |
+| Security status | ✅ 8 IPs blocked |
+| Uptime | ✅ Online |
+
+---
+
+## 🛠️ Development
 
 ```bash
-python3 evabot-cli.py --test
+npm install              # Install deps
+npm run build           # Build TypeScript
+npm run start           # Start server
+npm run cli             # TypeScript CLI
+npm test                # Run tests
+./deploy-sync.sh "msg"  # Build + commit + push + deploy
 ```
 
-## Documentation
+**GitHub:** https://github.com/evaline-network/evabot-online
 
-- English: `evabot_modular_architecture.en.md`
-- Ukrainian: `evabot_modular_architecture.uk.md`
+---
 
-## License
-
-Proprietary © 2026 EvaBot Ecosystem.
+**© 2026 Evaline Corporation (Ukraine, Odesa)**  
+**Status:** ✅ Production Ready
