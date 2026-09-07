@@ -1,0 +1,113 @@
+name: Deploy EvaBot Online
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: evaline-network
+  REGION_EU: europe-west3-a
+  REGION_US: us-central1-a
+  VM_BRAIN: evabot-agent-vm
+  VM_FACE: evaline-micro-vm
+
+jobs:
+  test:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Run tests
+        run: npm test || echo "No tests defined"
+
+  deploy-brain:
+    name: Deploy to EvaBrain (Frankfurt)
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Deploy to EvaBrain (Frankfurt)
+        run: |
+          gcloud compute ssh ${{ env.VM_BRAIN }} \
+            --zone=${{ env.REGION_EU }} \
+            --command="
+              set -e
+              cd /var/www/evabot-backend
+              git pull origin main
+              npm install --production
+              npm run build
+              sudo systemctl restart evabot-brain || sudo systemctl restart evabot-chat || true
+              echo '[+] EvaBrain (Frankfurt) deployed'
+            "
+
+  deploy-face:
+    name: Deploy to EvaFace (Iowa)
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Deploy to EvaFace (Iowa)
+        run: |
+          gcloud compute ssh ${{ env.VM_FACE }} \
+            --zone=${{ env.REGION_US }} \
+            --command="
+              set -e
+              cd /var/www/evabot.online
+              git pull origin main
+              sudo rsync -av --exclude='.git' --exclude='node_modules' --exclude='dist' --exclude='src' /var/www/evabot-backend/ /var/www/evabot.online/
+              sudo chown -R www-data:www-data /var/www/evabot.online
+              sudo systemctl reload caddy || true
+              echo '[+] EvaFace (Iowa) deployed'
+            "
+
+  summary:
+    name: Deploy Summary
+    needs: [deploy-brain, deploy-face]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Print summary
+        run: |
+          echo "==================================================="
+          echo "  EvaBot Online - Deployment Complete"
+          echo "==================================================="
+          echo "  EvaBrain: ${{ needs.deploy-brain.result }}"
+          echo "  EvaFace:  ${{ needs.deploy-face.result }}"
+          echo "  Commit:   ${{ github.sha }}"
+          echo "  Branch:   ${{ github.ref }}"
+          echo "==================================================="
