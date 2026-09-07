@@ -1,0 +1,141 @@
+# EvaBot Online // Caddy Configuration
+# Reverse proxy + WAF + Security Headers
+# Deploy to: /etc/caddy/Caddyfile on evaline-micro-vm (Iowa)
+
+{
+    # Global options
+    email admin@evabot.online
+    admin localhost:2019
+}
+
+# ============================================
+# BLOCK LIST - Known malicious IPs
+# ============================================
+# WordPress exploit bots (45.148.10.9 = Techoff SRV, NL)
+# Add new IPs dynamically via /api/security/block
+
+(security_blocklist) {
+    @blocked_ips {
+        remote_ip 45.148.10.9 43.157.188.74 159.195.17.105 67.205.2.98 43.166.136.202 43.165.2.110 43.164.1.211 43.156.232.154
+    }
+    handle @blocked_ips {
+        respond "403 Forbidden - Your IP has been blocked" 403
+    }
+    handle {
+        # Pass through to normal handling
+        {args[0]}
+    }
+}
+
+# ============================================
+# SUSPICIOUS PATH BLOCKER
+# ============================================
+(security_paths) {
+    @suspicious {
+        path /wp-* /wordpress* /blog/wp-* /xmlrpc.php
+        path /admin* /administrator*
+        path /phpmyadmin* /pma* /myadmin*
+        path /.env* /.git* /backup* /backups*
+        path /*.sql /*.bak /*.tar.gz /*.zip
+    }
+    handle @suspicious {
+        respond "404 Not Found" 404
+    }
+    handle {
+        {args[0]}
+    }
+}
+
+# ============================================
+# MAIN SITE: evabot.online
+# ============================================
+evabot.online, evaline.online, evaline.network, evaline.website {
+    # Security Headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        # Strict CSP - only same-origin
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com"
+        # Remove server info
+        -Server
+    }
+
+    # Rate Limiting (basic)
+    rate_limit {
+        zone backend 100m
+        events 100
+        window 60s
+    }
+
+    # API routes -> Backend (Frankfurt via WireGuard)
+    @api {
+        path /api/*
+    }
+    handle @api {
+        reverse_proxy 100.66.98.4:3000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto https
+            transport http {
+                dial_timeout 10s
+                response_header_timeout 60s
+            }
+        }
+    }
+
+    # Static files
+    @static {
+        path /dist/* /public/* /*.css /*.js /*.svg /*.png /*.ico /*.woff*
+    }
+    handle @static {
+        root * /var/www/evabot.online
+        file_server {
+            precompressed gzip br
+            hide .git .env
+        }
+    }
+
+    # Health check passthrough
+    @health {
+        path /health /ping
+    }
+    handle @health {
+        respond "OK" 200
+    }
+
+    # Main HTML
+    handle {
+        root * /var/www/evabot.online
+        file_server
+    }
+
+    # Logging
+    log {
+        level INFO
+        output file /var/log/caddy/evabot.log {
+            roll_size 100mb
+            roll_keep 10
+        }
+    }
+}
+
+# ============================================
+# Admin API (localhost only)
+# ============================================
+localhost:2019 {
+    basicauth {
+        admin $2a$14$XXXXXXXXXXXXXXXXXXXXX
+    }
+    respond /api/security/* "Admin API" 200
+}
+
+# ============================================
+# Grafana/Prometheus metrics endpoint
+# ============================================
+metrics.evabot.online {
+    reverse_proxy localhost:9090
+}

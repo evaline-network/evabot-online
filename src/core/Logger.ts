@@ -8,6 +8,21 @@ export enum LogLevel {
   ERROR = 3,
 }
 
+export enum LogCategory {
+  SYSTEM = 'SYSTEM',
+  HTTP = 'HTTP',
+  USER = 'USER',
+  LLM = 'LLM',
+  MODEL = 'MODEL',
+  KB = 'KB',
+  STORAGE = 'STORAGE',
+  AUTH = 'AUTH',
+  PROCESS = 'PROCESS',
+  DIAG = 'DIAG',
+  CLI = 'CLI',
+  BROWSER = 'BROWSER',
+}
+
 const LEVEL_NAMES: Record<LogLevel, string> = {
   [LogLevel.DEBUG]: 'DEBUG',
   [LogLevel.INFO]: 'INFO',
@@ -22,23 +37,60 @@ const LEVEL_COLORS: Record<LogLevel, string> = {
   [LogLevel.ERROR]: '\x1b[31m\x1b[1m',
 };
 
+const CATEGORY_COLORS: Record<LogCategory, string> = {
+  [LogCategory.SYSTEM]: '\x1b[35m',
+  [LogCategory.HTTP]: '\x1b[34m',
+  [LogCategory.USER]: '\x1b[32m',
+  [LogCategory.LLM]: '\x1b[33m',
+  [LogCategory.MODEL]: '\x1b[36m',
+  [LogCategory.KB]: '\x1b[95m',
+  [LogCategory.STORAGE]: '\x1b[93m',
+  [LogCategory.AUTH]: '\x1b[91m',
+  [LogCategory.PROCESS]: '\x1b[96m',
+  [LogCategory.DIAG]: '\x1b[37m',
+  [LogCategory.CLI]: '\x1b[32m',
+  [LogCategory.BROWSER]: '\x1b[94m',
+};
+
 const RESET_COLOR = '\x1b[0m';
+
+export interface LogEntry {
+  timestamp: string;
+  level: string;
+  category: string;
+  tag: string;
+  message: string;
+  meta?: any;
+  sessionId?: string;
+  userId?: string;
+  ip?: string;
+  userAgent?: string;
+  durationMs?: number;
+}
 
 export class Logger {
   private static instance: Logger;
-  private logFilePath: string | null = null;
-  private minLevel: LogLevel = LogLevel.INFO;
+  private logsDir: string | null = null;
+  private mainLogPath: string | null = null;
+  private userLogPath: string | null = null;
+  private errorLogPath: string | null = null;
+  private minLevel: LogLevel = LogLevel.DEBUG;
+  private inMemoryBuffer: LogEntry[] = [];
+  private maxBufferSize: number = 1000;
+  private sessionId: string = '';
 
   private constructor() {
     try {
-      const logsDir = path.resolve(process.cwd(), 'logs');
-      if (!fs.existsSync(logsDir)) {
-        fs.mkdirSync(logsDir, { recursive: true });
+      this.logsDir = path.resolve(process.cwd(), 'logs');
+      if (!fs.existsSync(this.logsDir)) {
+        fs.mkdirSync(this.logsDir, { recursive: true });
       }
-      this.logFilePath = path.join(logsDir, 'evabot.log');
+      const date = new Date().toISOString().split('T')[0];
+      this.mainLogPath = path.join(this.logsDir, 'evabot.log');
+      this.userLogPath = path.join(this.logsDir, `user-actions-${date}.log`);
+      this.errorLogPath = path.join(this.logsDir, `errors-${date}.log`);
     } catch {
-      // In browser or non-filesystem environments, skip file logging
-      this.logFilePath = null;
+      this.logsDir = null;
     }
   }
 
@@ -53,51 +105,170 @@ export class Logger {
     this.minLevel = level;
   }
 
-  private formatMessage(level: LogLevel, tag: string, message: string): string {
-    const timestamp = new Date().toISOString();
-    return `[${timestamp}] [${LEVEL_NAMES[level]}] [${tag}] ${message}`;
+  public setSession(sessionId: string): void {
+    this.sessionId = sessionId;
   }
 
-  private write(level: LogLevel, tag: string, message: string, meta?: any): void {
+  public getSession(): string {
+    return this.sessionId;
+  }
+
+  public getRecentLogs(limit: number = 100, level?: LogLevel, category?: string): LogEntry[] {
+    let entries = [...this.inMemoryBuffer];
+    if (level !== undefined) {
+      entries = entries.filter(e => e.level === LEVEL_NAMES[level]);
+    }
+    if (category !== undefined) {
+      entries = entries.filter(e => e.category === category);
+    }
+    return entries.slice(-limit).reverse();
+  }
+
+  public getLogFiles(): { main: string; user: string; errors: string; dir: string } {
+    return {
+      main: this.mainLogPath || '',
+      user: this.userLogPath || '',
+      errors: this.errorLogPath || '',
+      dir: this.logsDir || '',
+    };
+  }
+
+  public readLogFile(filename: string, lines: number = 200): string {
+    if (!this.logsDir) return '';
+    const filePath = path.join(this.logsDir, filename);
+    if (!fs.existsSync(filePath)) return '';
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const allLines = content.split('\n');
+      return allLines.slice(-lines).join('\n');
+    } catch (e: any) {
+      return `[ERROR] Cannot read log: ${e.message}`;
+    }
+  }
+
+  public listLogFiles(): string[] {
+    if (!this.logsDir) return [];
+    try {
+      return fs.readdirSync(this.logsDir).filter(f => f.endsWith('.log'));
+    } catch {
+      return [];
+    }
+  }
+
+  private formatMessage(level: LogLevel, category: string, tag: string, message: string, meta?: any): LogEntry {
+    return {
+      timestamp: new Date().toISOString(),
+      level: LEVEL_NAMES[level],
+      category,
+      tag,
+      message,
+      meta,
+      sessionId: this.sessionId || undefined,
+    };
+  }
+
+  private write(level: LogLevel, category: string, tag: string, message: string, meta?: any): void {
     if (level < this.minLevel) return;
 
-    const formatted = this.formatMessage(level, tag, message);
+    const entry = this.formatMessage(level, category, tag, message, meta);
+    
+    this.inMemoryBuffer.push(entry);
+    if (this.inMemoryBuffer.length > this.maxBufferSize) {
+      this.inMemoryBuffer.shift();
+    }
+
+    const sessionStr = this.sessionId ? ` [${this.sessionId}]` : '';
+    const line = `[${entry.timestamp}] [${entry.level}] [${category}]${sessionStr} [${tag}] ${message}`;
+    const metaStr = meta !== undefined ? ` ${JSON.stringify(meta)}` : '';
+    const fullLine = line + metaStr;
     const color = LEVEL_COLORS[level] || '';
 
-    // Console output
-    if (meta !== undefined) {
-      console.log(`${color}${formatted}${RESET_COLOR}`, meta);
-    } else {
-      console.log(`${color}${formatted}${RESET_COLOR}`);
-    }
+    console.log(`${color}${line}${RESET_COLOR}${meta ? ` ${color}${JSON.stringify(meta)}${RESET_COLOR}` : ''}`);
 
-    // Persistent file output
-    if (this.logFilePath) {
+    if (this.mainLogPath) {
       try {
-        const fileContent = meta !== undefined 
-          ? `${formatted} ${JSON.stringify(meta)}\n` 
-          : `${formatted}\n`;
-        fs.appendFileSync(this.logFilePath, fileContent, 'utf8');
-      } catch {
-        // Silently continue if writing to file fails
-      }
+        fs.appendFileSync(this.mainLogPath, fullLine + '\n', 'utf8');
+      } catch {}
+    }
+    if (category === LogCategory.USER && this.userLogPath) {
+      try {
+        fs.appendFileSync(this.userLogPath, fullLine + '\n', 'utf8');
+      } catch {}
+    }
+    if (level === LogLevel.ERROR && this.errorLogPath) {
+      try {
+        fs.appendFileSync(this.errorLogPath, fullLine + '\n', 'utf8');
+      } catch {}
     }
   }
 
-  public debug(tag: string, message: string, meta?: any): void {
-    this.write(LogLevel.DEBUG, tag, message, meta);
+  public debug(tag: string, message: string, meta?: any): void;
+  public debug(category: LogCategory, tag: string, message: string, meta?: any): void;
+  public debug(arg1: any, arg2: any, arg3?: any, arg4?: any): void {
+    if (typeof arg1 === 'string') {
+      this.write(LogLevel.DEBUG, LogCategory.SYSTEM, arg1, arg2, arg3);
+    } else {
+      this.write(LogLevel.DEBUG, arg1, arg2, arg3, arg4);
+    }
   }
 
-  public info(tag: string, message: string, meta?: any): void {
-    this.write(LogLevel.INFO, tag, message, meta);
+  public info(tag: string, message: string, meta?: any): void;
+  public info(category: LogCategory, tag: string, message: string, meta?: any): void;
+  public info(arg1: any, arg2: any, arg3?: any, arg4?: any): void {
+    if (typeof arg1 === 'string') {
+      this.write(LogLevel.INFO, LogCategory.SYSTEM, arg1, arg2, arg3);
+    } else {
+      this.write(LogLevel.INFO, arg1, arg2, arg3, arg4);
+    }
   }
 
-  public warn(tag: string, message: string, meta?: any): void {
-    this.write(LogLevel.WARN, tag, message, meta);
+  public warn(tag: string, message: string, meta?: any): void;
+  public warn(category: LogCategory, tag: string, message: string, meta?: any): void;
+  public warn(arg1: any, arg2: any, arg3?: any, arg4?: any): void {
+    if (typeof arg1 === 'string') {
+      this.write(LogLevel.WARN, LogCategory.SYSTEM, arg1, arg2, arg3);
+    } else {
+      this.write(LogLevel.WARN, arg1, arg2, arg3, arg4);
+    }
   }
 
-  public error(tag: string, message: string, meta?: any): void {
-    this.write(LogLevel.ERROR, tag, message, meta);
+  public error(tag: string, message: string, meta?: any): void;
+  public error(category: LogCategory, tag: string, message: string, meta?: any): void;
+  public error(arg1: any, arg2: any, arg3?: any, arg4?: any): void {
+    if (typeof arg1 === 'string') {
+      this.write(LogLevel.ERROR, LogCategory.SYSTEM, arg1, arg2, arg3);
+    } else {
+      this.write(LogLevel.ERROR, arg1, arg2, arg3, arg4);
+    }
+  }
+
+  public logUserAction(action: string, details: any, ip?: string, userAgent?: string): void {
+    this.write(LogLevel.INFO, LogCategory.USER, 'USER_ACTION', action, {
+      ...details,
+      ip,
+      userAgent,
+    });
+  }
+
+  public logHttpRequest(method: string, path: string, status: number, durationMs: number, ip?: string, userAgent?: string): void {
+    this.write(LogLevel.INFO, LogCategory.HTTP, 'REQUEST', `${method} ${path}`, {
+      method, path, status, durationMs, ip, userAgent,
+    });
+  }
+
+  public logLlmCall(model: string, provider: string, promptTokens: number, responseTokens: number, durationMs: number, cost?: number): void {
+    this.write(LogLevel.INFO, LogCategory.LLM, 'LLM_CALL', `${model} via ${provider}`, {
+      model, provider, promptTokens, responseTokens, durationMs, cost,
+    });
+  }
+
+  public startTimer(label: string): () => number {
+    const start = Date.now();
+    return () => {
+      const duration = Date.now() - start;
+      this.debug(LogCategory.PROCESS, label, `Completed in ${duration}ms`);
+      return duration;
+    };
   }
 }
 

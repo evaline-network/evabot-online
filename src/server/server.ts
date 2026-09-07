@@ -11,9 +11,12 @@ import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
 import { GeminiClient } from '../core/GeminiClient.js';
 import { BootDiagnostics } from '../core/BootDiagnostics.js';
 import { Config } from '../core/Config.js';
-import { logger } from '../core/Logger.js';
+import { logger, LogLevel, LogCategory } from '../core/Logger.js';
 import { ClusterMonitor } from '../core/ClusterMonitor.js';
 import { TuiRenderer } from '../core/TuiRenderer.js';
+import { knowledgeBase, KnowledgeBackend } from '../core/KnowledgeBase.js';
+import { KnowledgeBaseCommand } from '../core/KnowledgeBaseCommand.js';
+import { Security, securityConfig } from '../core/Security.js';
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -61,9 +64,55 @@ function parseJsonBody(req: http.IncomingMessage): Promise<any> {
 
 export function createServer(): http.Server {
   ClusterMonitor.init();
+  
+  // Initialize Knowledge Base on startup
+  knowledgeBase.initialize().catch((err) => {
+    logger.error(LogCategory.KB, 'INIT', `Failed to initialize KB: ${err.message}`);
+  });
+  
   return http.createServer(async (req, res) => {
     const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     const pathname = parsedUrl.pathname;
+    const startTime = Date.now();
+    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress || 'unknown';
+    const userAgent = (req.headers['user-agent'] as string) || 'unknown';
+    const method = req.method || 'GET';
+    
+    // 🛡️ SECURITY: Check if IP is blocked
+    if (securityConfig.blockedIPs.has(clientIp)) {
+      logger.warn(LogCategory.SYSTEM, 'SECURITY', `Blocked IP request: ${clientIp} -> ${method} ${pathname}`);
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('403 Forbidden - Your IP has been blocked due to suspicious activity');
+      return;
+    }
+    
+    // 🛡️ SECURITY: Rate limiting
+    const rateCheck = Security.checkRateLimit(clientIp);
+    res.setHeader('X-RateLimit-Limit', securityConfig.rateLimit.maxRequests.toString());
+    res.setHeader('X-RateLimit-Remaining', rateCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', Math.ceil(rateCheck.resetIn / 1000).toString());
+    
+    if (!rateCheck.allowed) {
+      logger.warn(LogCategory.SYSTEM, 'SECURITY', `Rate limit exceeded: ${clientIp}`);
+      res.writeHead(429, { 
+        'Content-Type': 'text/plain',
+        'Retry-After': Math.ceil(rateCheck.resetIn / 1000).toString()
+      });
+      res.end('429 Too Many Requests');
+      return;
+    }
+    
+    // 🛡️ SECURITY: Check suspicious paths
+    const suspCheck = Security.isSuspicious(pathname, method);
+    if (suspCheck.suspicious) {
+      Security.recordSuspicious(clientIp, suspCheck.reason || 'unknown');
+    }
+    
+    // Log response
+    res.on('finish', () => {
+      const duration = Date.now() - startTime;
+      logger.logHttpRequest(method, pathname, res.statusCode, duration, clientIp, userAgent);
+    });
 
     // Handle CORS preflight
     if (req.method === 'OPTIONS') {
@@ -328,6 +377,180 @@ export function createServer(): http.Server {
         const command = body.command || '';
         const result = ModelCommand.execute(command);
         sendJson(res, 200, { result });
+      } catch (err: any) {
+        sendJson(res, 500, { error: err.message });
+      }
+      return;
+    }
+
+    // ===========================================================
+    // KNOWLEDGE BASE ENDPOINTS
+    // ===========================================================
+
+    // KB Status
+    if (pathname === '/api/kb/status' && req.method === 'GET') {
+      const stats = knowledgeBase.getStats();
+      const backends = knowledgeBase.getAvailableBackends();
+      sendJson(res, 200, {
+        active: stats,
+        available: backends,
+        totalDocuments: stats.documentCount,
+      });
+      return;
+    }
+
+    // KB Search
+    if (pathname === '/api/kb/search' && req.method === 'GET') {
+      const query = parsedUrl.searchParams.get('q') || '';
+      const limit = parseInt(parsedUrl.searchParams.get('limit') || '5', 10);
+      const language = parsedUrl.searchParams.get('language') || undefined;
+      const category = parsedUrl.searchParams.get('category') || undefined;
+      
+      if (!query) {
+        sendJson(res, 400, { error: 'Missing "q" query parameter' });
+        return;
+      }
+      
+      const results = knowledgeBase.search(query, { limit, language: language as any, category });
+      sendJson(res, 200, {
+        query,
+        count: results.length,
+        results: results.map(d => ({
+          id: d.id,
+          title: d.title,
+          category: d.category,
+          language: d.language,
+          tags: d.tags,
+          source: d.source,
+          preview: d.content.substring(0, 300),
+        })),
+      });
+      return;
+    }
+
+    // KB List Documents
+    if (pathname === '/api/kb/list' && req.method === 'GET') {
+      const language = parsedUrl.searchParams.get('language') || undefined;
+      const category = parsedUrl.searchParams.get('category') || undefined;
+      const docs = knowledgeBase.listDocuments({ language, category });
+      sendJson(res, 200, {
+        count: docs.length,
+        documents: docs.map(d => ({
+          id: d.id,
+          title: d.title,
+          category: d.category,
+          language: d.language,
+          tags: d.tags,
+          source: d.source,
+          contentLength: d.content.length,
+        })),
+      });
+      return;
+    }
+
+    // KB Set Backend
+    if (pathname === '/api/kb/backend' && req.method === 'POST') {
+      try {
+        const body = await parseJsonBody(req);
+        const backend = body.backend as KnowledgeBackend;
+        if (!['memory', 'json', 'sqlite', 'vector'].includes(backend)) {
+          sendJson(res, 400, { error: 'Invalid backend. Use: memory, json, sqlite, vector' });
+          return;
+        }
+        knowledgeBase.setBackend(backend);
+        sendJson(res, 200, { backend, message: `Backend switched to ${backend}` });
+      } catch (err: any) {
+        sendJson(res, 500, { error: err.message });
+      }
+      return;
+    }
+
+    // KB Command (for terminal-style /kb commands)
+    if (pathname === '/api/kb/command' && req.method === 'POST') {
+      try {
+        const body = await parseJsonBody(req);
+        const command = body.command || '';
+        const result = KnowledgeBaseCommand.execute(command);
+        sendJson(res, 200, { result });
+      } catch (err: any) {
+        sendJson(res, 500, { error: err.message });
+      }
+      return;
+    }
+
+    // ===========================================================
+    // LOGS ENDPOINTS
+    // ===========================================================
+
+    // List log files
+    if (pathname === '/api/logs/files' && req.method === 'GET') {
+      const files = logger.listLogFiles();
+      const stats = logger.getLogFiles();
+      sendJson(res, 200, { files, paths: stats });
+      return;
+    }
+
+    // Read log file
+    if (pathname === '/api/logs/read' && req.method === 'GET') {
+      const filename = parsedUrl.searchParams.get('file') || 'evabot.log';
+      const lines = parseInt(parsedUrl.searchParams.get('lines') || '200', 10);
+      const content = logger.readLogFile(filename, lines);
+      sendJson(res, 200, { filename, lines, content });
+      return;
+    }
+
+    // Get recent in-memory logs
+    if (pathname === '/api/logs/recent' && req.method === 'GET') {
+      const limit = parseInt(parsedUrl.searchParams.get('limit') || '50', 10);
+      const levelStr = parsedUrl.searchParams.get('level');
+      const category = parsedUrl.searchParams.get('category');
+      const level = levelStr ? LogLevel[levelStr.toUpperCase() as keyof typeof LogLevel] : undefined;
+      const logs = logger.getRecentLogs(limit, level, category || undefined);
+      sendJson(res, 200, { count: logs.length, logs });
+      return;
+    }
+
+    // ===========================================================
+    // SECURITY ENDPOINTS
+    // ===========================================================
+
+    if (pathname === '/api/security/status' && req.method === 'GET') {
+      sendJson(res, 200, Security.getStats());
+      return;
+    }
+
+    if (pathname === '/api/security/report' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end(Security.getSecurityReport());
+      return;
+    }
+
+    if (pathname === '/api/security/block' && req.method === 'POST') {
+      try {
+        const body = await parseJsonBody(req);
+        const { ip, reason, durationMs } = body;
+        if (!ip) {
+          sendJson(res, 400, { error: 'Missing "ip" parameter' });
+          return;
+        }
+        Security.blockIP(ip, reason || 'manual block', durationMs);
+        sendJson(res, 200, { blocked: ip, reason });
+      } catch (err: any) {
+        sendJson(res, 500, { error: err.message });
+      }
+      return;
+    }
+
+    if (pathname === '/api/security/unblock' && req.method === 'POST') {
+      try {
+        const body = await parseJsonBody(req);
+        const { ip } = body;
+        if (!ip) {
+          sendJson(res, 400, { error: 'Missing "ip" parameter' });
+          return;
+        }
+        Security.unblockIP(ip);
+        sendJson(res, 200, { unblocked: ip });
       } catch (err: any) {
         sendJson(res, 500, { error: err.message });
       }

@@ -521,25 +521,49 @@
       
       if (lowerCmd === '/help' || lowerCmd === '/?') {
         addSystemMessage(`ДОСТУПНЫЕ КОМАНДЫ:
-/top [filter] [N]  - Топ-N моделей (filter: free|paid|speed|context)
-/free             - Все 46 бесплатных моделей
-/paid             - Все 32 платные модели
-/models           - Сводка по моделям
-/clear            - Очистить экран
-/help             - Эта справка
+
+╔═══ МОДЕЛИ ═══╗
+  /top [filter] [N]  - Топ-N моделей (filter: free|paid|speed|context)
+  /free             - Все бесплатные модели
+  /paid             - Все платные модели
+  /models           - Сводка по моделям
+
+╔═══ БАЗА ЗНАНИЙ (EvaLine) ═══╗
+  /kb               - Управление KB (help)
+  /kb status        - Статус базы знаний
+  /kb search <q>    - Поиск в базе знаний
+  /kb list [lang]   - Список документов
+  /kb backend <t>   - Переключить backend (memory|json|sqlite|vector)
+
+╔═══ СИСТЕМА ═══╗
+  /clear            - Очистить экран
+  /help             - Эта справка
 
 Примеры:
-  /top             - Топ-5 free + топ-5 paid
-  /top free 10     - Топ-10 бесплатных
-  /top speed 5     - 5 самых быстрых
-  /top context 5   - 5 с самым большим контекстом
-  /free            - Список всех бесплатных`);
+  /top free 10
+  /kb search EVA килимки
+  /kb backend memory`);
         return;
       }
       
       if (lowerCmd.startsWith('/top') || lowerCmd.startsWith('/free') || lowerCmd.startsWith('/paid') || lowerCmd.startsWith('/models')) {
         try {
           const response = await fetch('/api/models/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command: cmd })
+          });
+          const data = await response.json();
+          addSystemMessage(data.result);
+        } catch (e) {
+          addSystemMessage(`[ERROR] Не удалось выполнить команду: ${e.message}`);
+        }
+        return;
+      }
+      
+      if (lowerCmd.startsWith('/kb')) {
+        try {
+          const response = await fetch('/api/kb/command', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command: cmd })
