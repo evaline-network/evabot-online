@@ -12,6 +12,7 @@ import { ProductCatalog, CatalogLang } from '../core/ProductCatalog.js';
 import { CompanyKnowledge } from '../core/CompanyKnowledge.js';
 import { NewsEngine, NewsTagId } from '../core/NewsEngine.js';
 import { ProviderFallbackChain } from '../core/Resilience.js';
+import { translator, TranslateResult } from '../core/Translator.js';
 import { SephirotEngine, SEPHIROT_ROLES } from '../core/SephirotEngine.js';
 import { OpLog, isDebugOn, setDebugOn, opLog } from '../core/OpLog.js';
 
@@ -362,6 +363,9 @@ export const COMMAND_ALIASES: Record<string, string> = {
   '/vm': '/servers',
   // /models
   '/моделі': '/models',
+  // /say (Cloud TTS)
+  '/скажи': '/say',
+  '/сказать': '/say',
   '/модели': '/models',
   // /help
   '/допомога': '/help',
@@ -421,6 +425,16 @@ export const COMMAND_ALIASES: Record<string, string> = {
   '/монитор': '/monitor',
   '/рейтинг': '/monitor',
   '/топ-моделей': '/monitor',
+  // /translate (Google Cloud Translation v3)
+  '/переклад': '/translate',
+  '/перевод': '/translate',
+  '/переклади': '/translate',
+  '/перевести': '/translate',
+  // /listen (Google Cloud Speech-to-Text of a local audio file)
+  '/розпізнай': '/listen',
+  '/распознать': '/listen',
+  '/прослушать': '/listen',
+  '/stt': '/listen',
 };
 
 /**
@@ -494,6 +508,8 @@ export class ModelCommand {
         return ProviderFallbackChain.getHealthReport();
       case '/news':
         return this.handleNewsSync(parts.slice(1));
+      case '/translate':
+        return this.handleTranslateSync(command);
       case '/products':
         return this.handleProducts(parts.slice(1));
       case '/who':
@@ -508,7 +524,7 @@ export class ModelCommand {
         return this.handleMonitor();
       default:
         OpLog.getInstance().log('error', 'command', `unknown command: ${action}`);
-        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /health, /products, /who, /sephirot, /debug, /log, /monitor, /free, /paid, or /help.`;
+        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /translate, /health, /products, /who, /sephirot, /debug, /log, /monitor, /free, /paid, or /help.`;
     }
   }
 
@@ -521,6 +537,9 @@ export class ModelCommand {
     if (cmd.startsWith('/news')) {
       const args = cmd.split(/\s+/).slice(1);
       return this.handleNews(args);
+    }
+    if (cmd.startsWith('/translate')) {
+      return this.handleTranslate(command);
     }
     return this.execute(command);
   }
@@ -555,6 +574,78 @@ export class ModelCommand {
     }
     return ids.length > 0 ? ids : undefined;
   }
+
+  /**
+   * /translate <to> <text> — Google Cloud Translation v3 (exported for tests).
+   * Parses the ORIGINAL (non-lowercased) command so the text to translate keeps
+   * its casing; the head token is alias-resolved (/переклад, /перевод, ...).
+   */
+  public static parseTranslateCommand(raw: string): { to?: string; text?: string; error?: string } {
+    const trimmed = (raw || '').trim();
+    const head = trimmed.split(/\s+/)[0] || '';
+    const canonical = COMMAND_ALIASES[head.toLowerCase().replace(/['`´ʼ’]/g, "'")] || head.toLowerCase();
+    if (canonical !== '/translate') {
+      return { error: 'not-a-translate-command' };
+    }
+    const rest = trimmed.slice(head.length).trim();
+    if (!rest) {
+      return {
+        error: `Використання: /translate <мова> <текст>\n   Приклади: /translate uk Привіт світ | /translate en какой прогноз цен на EVA\n   Синоніми: /переклад, /перевод, /переклади, /перевести`,
+      };
+    }
+    const spaceIdx = rest.indexOf(' ');
+    const target = spaceIdx === -1 ? rest : rest.slice(0, spaceIdx);
+    const text = spaceIdx === -1 ? '' : rest.slice(spaceIdx + 1).trim();
+    if (!/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/i.test(target)) {
+      return {
+        error: `Першим аргументом має бути код мови цілі (uk, en, ru, pl, ro, de, ...).\n   Отримано: "${target}". Використання: /translate <мова> <текст>`,
+      };
+    }
+    if (!text) {
+      return { error: 'Порожній текст для перекладу. Використання: /translate <мова> <текст>' };
+    }
+    return { to: target.toLowerCase(), text };
+  }
+
+  /** Renders the async translation result + usage footer. */
+  private static formatTranslateReply(parsed: { to?: string; text?: string }, res: TranslateResult): string {
+    if (!res.ok) {
+      return `🌐 ${res.error || 'Помилка перекладу.'}`;
+    }
+    const joined = res.translations.join('\n');
+    const src = res.detectedLanguageCode ? ` (авто: ${res.detectedLanguageCode})` : '';
+    return `🌐 Переклад → ${parsed.to}${src}:\n${joined}\n──────────────────────────────\n${translator.formatUsageFooter(res.usage)}`;
+  }
+
+  /**
+   * Async /translate handler (CLI + executeAsync): awaits the live API call.
+   * Never throws into the command path — all failures are formatted replies.
+   */
+  private static async handleTranslate(command: string): Promise<string> {
+    const parsed = this.parseTranslateCommand(command);
+    if (parsed.error) return `🌐 ${parsed.error}`;
+    const res = await translator.translate(parsed.text!, parsed.to!);
+    return this.formatTranslateReply(parsed, res);
+  }
+
+  /**
+   * Sync /translate fallback for the web registry (follows the /news pattern):
+   * the network call cannot be awaited in ModelCommand.execute, so the real
+   * translation runs in the background and its result/usage is appended to the
+   * operation log (visible via /log translate), while the user gets a ⏳ marker.
+   */
+  private static handleTranslateSync(command: string): string {
+    const parsed = this.parseTranslateCommand(command);
+    if (parsed.error) return `🌐 ${parsed.error}`;
+    translator
+      .translate(parsed.text!, parsed.to!)
+      .then((res) => {
+        OpLog.getInstance().log(res.ok ? 'info' : 'warn', 'command', `/translate → ${parsed.to}: ${res.ok ? res.translations.join(' | ').substring(0, 300) : res.error}`);
+      })
+      .catch(() => { /* never breaks the command path */ });
+    return `⏳ Переклад у процесі (до 10 с)... Результат з'явиться в журналі: /log translate.\n   У CLI той самий запит повертає переклад одразу.`;
+  }
+
 
   private static handleHistory(args: string[]): string {
     const limit = Math.max(1, Math.min(200, parseInt(args[0] || '20', 10) || 20));

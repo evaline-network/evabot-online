@@ -16,10 +16,13 @@ import { runProductsTests } from './products.test.js';
 import { runTelegramTests } from './telegram.test.js';
 import { runResilienceTests } from './resilience.test.js';
 import { runDebugLogTests } from './debug_log.test.js';
+import { runTranslateTests } from './translate.test.js';
+import { runCloudTtsTests } from './cloudtts.test.js';
+import { runCloudSttTests } from './cloudstt.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
-  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (19 test suites)');
+  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (22 test suites)');
   console.log('================================================================\n');
 
   const results = [
@@ -42,6 +45,9 @@ async function runAllTests(): Promise<void> {
     await runTelegramTests(),
     await runResilienceTests(),
     await runDebugLogTests(),
+    await runTranslateTests(),
+    await runCloudTtsTests(),
+    await runCloudSttTests(),
   ];
 
   const testNames = [
@@ -64,6 +70,9 @@ async function runAllTests(): Promise<void> {
     'TelegramTests',
     'ResilienceTests',
     'DebugLogTests',
+    'TranslateTests',
+    'CloudTtsTests',
+    'CloudSttTests',
   ];
 
   let allPassed = true;
@@ -79,7 +88,7 @@ async function runAllTests(): Promise<void> {
 
   console.log('\n================================================================');
   if (allPassed) {
-    console.log('✅ ALL 19 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
+    console.log('✅ ALL 22 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
     console.log('================================================================\n');
     process.exit(0);
   } else {

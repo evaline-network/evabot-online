@@ -17,6 +17,7 @@ import { createLogsRouter } from './routes/LogsRouter.js';
 import { createSecurityRouter } from './routes/SecurityRouter.js';
 import { createAlertsRouter } from './routes/AlertsRouter.js';
 import { createPluginsRouter } from './routes/PluginsRouter.js';
+import { createVoiceRouter } from './routes/VoiceRouter.js';
 import { Router, createRouteContext } from './routes/Router.js';
 import { ChatRouter } from './routes/ChatRouter.js';
 import { startTelegramBot } from '../telegram/TelegramBot.js';
@@ -141,6 +142,7 @@ function buildRouter(): Router {
     createSecurityRouter(),
     createAlertsRouter(),
     createPluginsRouter(),
+    createVoiceRouter(),
   ];
   
   for (const sub of subRouters) {

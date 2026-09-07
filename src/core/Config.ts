@@ -15,6 +15,9 @@ export interface SystemConfig {
   opencodeBaseUrl: string;
   opencodeApiKey: string;
   telegramBotToken: string;
+  ttsVoiceEva: string;
+  ttsVoiceAdam: string;
+  ttsMonthlyCharCap: number;
 }
 
 /**
@@ -67,4 +70,11 @@ export const Config: SystemConfig = {
   opencodeBaseUrl: process.env.OPENCODE_BASE_URL || 'http://100.66.98.4:20128/v1',
   opencodeApiKey: process.env.OPENCODE_API_KEY || '',
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
+  // Cloud TTS (ONLY-FREE rule): Wavenet family = 1M chars/month free tier.
+  // Default cap 900_000 leaves a safety margin under the free allowance so we
+  // never silently spend money. Verified 2026-09: official pricing page
+  // https://cloud.google.com/text-to-speech/pricing
+  ttsVoiceEva: process.env.TTS_VOICE_EVA || 'uk-UA-Wavenet-B',
+  ttsVoiceAdam: process.env.TTS_VOICE_ADAM || 'ru-RU-Wavenet-D',
+  ttsMonthlyCharCap: parseInt(process.env.TTS_MONTHLY_CHAR_CAP || '900000', 10),
 };

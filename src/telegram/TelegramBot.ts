@@ -3,12 +3,17 @@ import { ModelRatings } from '../models/ModelRatings.js';
 import { Config } from '../core/Config.js';
 import { logger, LogCategory } from '../core/Logger.js';
 import { I18nEngine, SupportedLocale } from '../core/I18nEngine.js';
+import { transcribeVoiceWithFallback, type SttLanguage, type SttResult } from '../core/CloudSTT.js';
 import { ChatEngine } from './ChatEngine.js';
 
 export const TELEGRAM_MESSAGE_LIMIT = 4096;
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
 const RATE_LIMIT_INTERVAL_MS = 1000;
-const VOICE_PLACEHOLDER = 'Voice transcription: coming soon (Whisper via Groq available)';
+const VOICE_PLACEHOLDER = '⚠️ Не вдалося завантажити голосове повідомлення. Спробуйте ще раз.';
+const VOICE_PREFIX = '🎙 Розпізнано:';
+
+/** Async transcriber injected for tests; production default = Google CloudSTT with FLAC fallback. */
+export type VoiceTranscriber = (audio: Buffer, lang: SttLanguage) => Promise<SttResult>;
 const HISTORY_SESSION_PREFIX = 'tg-';
 
 export interface TelegramCommandExecutor {
@@ -85,16 +90,18 @@ export class TelegramBot {
   private apiBase: string;
   private chatEngine: ChatEngine;
   private execute: TelegramCommandExecutor;
+  private transcriber: VoiceTranscriber;
   private chatLocales: Map<number, SupportedLocale> = new Map();
   private chatQueues: Map<number, Promise<void>> = new Map();
   private chatLastRun: Map<number, number> = new Map();
   private offset: number = 0;
   private running: boolean = false;
 
-  constructor(options: { token?: string; apiBase?: string; execute?: TelegramCommandExecutor } = {}) {
+  constructor(options: { token?: string; apiBase?: string; execute?: TelegramCommandExecutor; transcriber?: VoiceTranscriber } = {}) {
     this.token = options.token || Config.telegramBotToken;
     this.apiBase = options.apiBase || TELEGRAM_API_BASE;
     this.execute = options.execute || ((command) => ModelCommand.execute(command));
+    this.transcriber = options.transcriber || ((audio, lang) => transcribeVoiceWithFallback(audio, { lang }));
     this.chatEngine = new ChatEngine();
   }
 
@@ -254,10 +261,10 @@ export class TelegramBot {
   }
 
   /**
-   * Voice messages (.ogg/opus): structured placeholder handler.
-   * STT is intentionally NOT implemented yet — when Whisper-via-Groq lands,
-   * replace downloadAndForgetVoice with transcription and feed the transcript
-   * into handleChatMessage.
+   * Voice messages (.ogg/opus, 48 kHz): download → Google CloudSTT (OGG_OPUS,
+   * FLAC 16 kHz fallback inside transcribeVoiceWithFallback) → send transcript
+   * as reply, then treat the transcript like typed text: '/…' runs as a
+   * command, otherwise it flows into the normal chat engine.
    */
   private async handleVoiceMessage(message: TelegramMessage): Promise<void> {
     const chatId = message.chat.id;
@@ -268,22 +275,42 @@ export class TelegramBot {
       await this.sendMessage(chatId, '⚠️ Please register a Telegram account to send voice messages.');
       return;
     }
+
+    let audio: Buffer | null = null;
     try {
-      await this.downloadVoiceFile(voice.file_id);
+      audio = await this.downloadVoiceFile(voice.file_id);
     } catch (err: any) {
-      logger.warn(LogCategory.SYSTEM, 'TelegramBot', `Voice download skipped: ${err.message}`);
+      logger.warn(LogCategory.SYSTEM, 'TelegramBot', `Voice download failed: ${err.message}`);
     }
-    await this.sendMessage(chatId, VOICE_PLACEHOLDER);
+    if (!audio) {
+      await this.sendMessage(chatId, VOICE_PLACEHOLDER);
+      return;
+    }
+
+    const lang = localeToSttLang(this.getChatLocale(chatId));
+    const result = await this.transcriber(audio, lang);
+    if (!result.ok || !result.transcript) {
+      logger.warn(LogCategory.SYSTEM, 'TelegramBot', `Voice transcription failed: ${result.error}`);
+      await this.sendMessage(chatId, `⚠️ Не вдалося розпізнати голосове повідомлення${result.error ? ` (${result.error})` : ''}.`);
+      return;
+    }
+
+    await this.sendMessage(chatId, `${VOICE_PREFIX} ${result.transcript}`);
+    if (result.transcript.startsWith('/')) {
+      await this.handleCommand(chatId, result.transcript);
+    } else {
+      await this.handleChatMessage(chatId, result.transcript);
+    }
   }
 
-  private async downloadVoiceFile(fileId: string): Promise<string | null> {
+  private async downloadVoiceFile(fileId: string): Promise<Buffer | null> {
     const file = await this.api<{ file_path?: string }>('getFile', { file_id: fileId });
     const filePath = file?.file_path;
     if (!filePath) return null;
     const res = await fetch(`${this.apiBase}/file/bot${this.token}/${filePath}`);
     const buf = Buffer.from(await res.arrayBuffer());
-    logger.info(LogCategory.SYSTEM, 'TelegramBot', `Downloaded voice file ${filePath} (${buf.length} bytes) — STT pending`);
-    return filePath;
+    logger.info(LogCategory.SYSTEM, 'TelegramBot', `Downloaded voice file ${filePath} (${buf.length} bytes)`);
+    return buf.length > 0 ? buf : null;
   }
 
   public async sendModelsKeyboard(chatId: number): Promise<void> {
@@ -317,6 +344,11 @@ export class TelegramBot {
 }
 
 let singleton: TelegramBot | null = null;
+
+/** Maps a chat locale to a Google STT language code. */
+export function localeToSttLang(locale: SupportedLocale): SttLanguage {
+  return locale === 'uk' ? 'uk-UA' : locale === 'ru' ? 'ru-RU' : 'en-US';
+}
 
 export function startTelegramBot(): void {
   if (!TelegramBot.isEnabled()) {

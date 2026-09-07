@@ -496,7 +496,7 @@
       VOCAB_CAP: 500,
 
       // All slash commands recognized locally or proxied via /api/models/command
-      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'search', 'find', 'services', 'servers', 'health', 'debug', 'log', 'monitor', 'autocorrect', 'voice', 'tts'],
+      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'search', 'find', 'services', 'servers', 'health', 'debug', 'log', 'monitor', 'translate', 'news', 'autocorrect', 'voice', 'tts'],
 
       // Short localized descriptions (condensed from the I18N help blocks)
       CMD_DESC: {
@@ -879,6 +879,7 @@
   /memory                 - Memory stats: KB docs, FTS chunks, chat DB
   /search <query>         - Full-text search across chats and knowledge base
   /find <query>           - Alias of /search
+  /translate <to> <text>  - Google Translate: /translate uk Привіт світ (500k chars/mo free)
   /services               - Systemd/docker services and DB backends status
   /servers                - Cluster: evabot-agent-vm + evaline-micro-vm
   /autocorrect [on|off]   - Smart typo auto-correction (learned lexicon)
@@ -1657,7 +1658,9 @@
         if (!SR) {
           if (mic) {
             mic.style.opacity = '0.3';
-            mic.title = 'Speech recognition not supported (Chrome/Edge)';
+            // Server-side STT fallback available: POST /api/stt (Google Cloud Speech-to-Text,
+            // OGG/WEBM/FLAC, free-tier capped at 50 min/month). See docs/ops/CLOUD_STT.md.
+            mic.title = 'Speech recognition not supported (Chrome/Edge) — server fallback via POST /api/stt';
           }
         } else {
           try {
@@ -1674,6 +1677,12 @@
             rec.onerror = (e) => {
               console.warn('Speech recognition error:', e.error);
               this.stop();
+              // Optional server fallback hook: on SR failure, POST a short
+              // MediaRecorder recording to /api/stt (WEBM_OPUS). Skipped
+              // silently when MediaRecorder/getUserMedia is unavailable.
+              if (e.error && e.error !== 'aborted' && e.error !== 'not-allowed') {
+                this.fallbackServerStt();
+              }
             };
             rec.onend = () => this.stop();
             this.recognition = rec;
@@ -1692,6 +1701,38 @@
 
       enabled() {
         return localStorage.getItem('evabot_voice') !== 'off';
+      },
+
+      // Optional hook: server-side STT via POST /api/stt (WEBM_OPUS).
+      // Records up to 6 s with MediaRecorder and sends the raw webm body;
+      // on any failure it returns silently (no UI change).
+      async fallbackServerStt() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') return;
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const recorder = new MediaRecorder(stream);
+          const chunks = [];
+          recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+          recorder.onstop = async () => {
+            stream.getTracks().forEach((t) => t.stop());
+            try {
+              const res = await fetch('/api/stt?lang=' + encodeURIComponent(this.langCode()) + '&encoding=WEBM_OPUS&sampleRate=48000', {
+                method: 'POST',
+                headers: { 'Content-Type': 'audio/webm' },
+                body: new Blob(chunks, { type: 'audio/webm' }),
+              });
+              if (!res.ok) return;
+              const data = await res.json();
+              if (data && data.transcript) {
+                const text = (userInput.value ? userInput.value.replace(/\s+$/, '') + ' ' : '') + data.transcript;
+                userInput.value = text;
+                userInput.focus();
+              }
+            } catch (err) { /* skip silently */ }
+          };
+          recorder.start();
+          setTimeout(() => { if (recorder.state !== 'inactive') recorder.stop(); }, 6000);
+        } catch (err) { /* skip silently */ }
       },
 
       applyVoiceEnabled() {
@@ -1810,8 +1851,7 @@
       },
 
       speak(text) {
-        if (!this.ttsOn || !window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
+        if (!this.ttsOn) return;
         const cleanText = String(text || '')
           .replace(/```[\s\S]*?```/g, ' [Code omitted] ')
           .replace(/`([^`]+)`/g, '$1')
@@ -1821,6 +1861,33 @@
           .replace(/\s+/g, ' ')
           .trim();
         if (!cleanText) return;
+        // Cloud TTS first (Google Cloud WaveNet free tier, ONLY-FREE capped at
+        // 900k chars/mo server-side). Persona pitch/rate only apply to the
+        // browser fallback below. On any failure → existing browser TTS.
+        const persona = this.persona;
+        const lang = this.langCode();
+        fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: cleanText.slice(0, 350), persona, lang }),
+        }).then((r) => r.json()).then((data) => {
+          if (data && data.ok && data.audioBase64) {
+            try {
+              const audio = new Audio('data:audio/mp3;base64,' + data.audioBase64);
+              audio.play().catch(() => this.speakBrowser(cleanText));
+            } catch (e) {
+              this.speakBrowser(cleanText);
+            }
+          } else {
+            this.speakBrowser(cleanText);
+          }
+        }).catch(() => this.speakBrowser(cleanText));
+      },
+
+      // Legacy browser speechSynthesis fallback (persona pitch/rate apply here).
+      speakBrowser(cleanText) {
+        if (!this.ttsOn || !window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
         const spokenSlice = cleanText.length > 350 ? `${cleanText.slice(0, 350)}...` : cleanText;
         const utterance = new SpeechSynthesisUtterance(spokenSlice);
         utterance.lang = this.langCode();

@@ -13,9 +13,12 @@
 
 import readline from 'node:readline';
 import os from 'node:os';
+import fs from 'node:fs';
+import path from 'node:path';
 import { ChatSession } from '../core/ChatSession.js';
 import { ModelRegistry } from '../models/ModelRegistry.js';
 import { ModelRatings, ModelCommand, COMMAND_ALIASES } from '../models/ModelRatings.js';
+import { transcribeVoiceWithFallback, type SttLanguage } from '../core/CloudSTT.js';
 import { BootDiagnostics, BootDiagnosticReport } from '../core/BootDiagnostics.js';
 import { UniversalLlmClient } from '../core/UniversalLlmClient.js';
 import { ConsiliumEngine, ConsiliumMode, ConsiliumProgressEvent } from '../core/ConsiliumEngine.js';
@@ -23,6 +26,7 @@ import { CORPORATE_ROLES } from '../core/CorporateRoles.js';
 import { ClusterMonitor } from '../core/ClusterMonitor.js';
 import { I18nEngine } from '../core/I18nEngine.js';
 import { isDebugOn, startSpan, renderDebugFooter } from '../core/OpLog.js';
+import { CloudTTS } from '../core/CloudTTS.js';
 
 // ANSI terminal color palette (Minimalist B&W + Traffic Light standard)
 const C = {
@@ -285,6 +289,7 @@ ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/monitor${C.reset}               Модельний монітор: ТОП-10 free/paid моделей для кодингу
   ${C.cyan}/dialogue <тема>${C.reset}      Запустить автономный диалог-дебаты двух моделей
   ${C.cyan}/role <id>${C.reset}             Выбрать роль: architect, devops, security_auditor
+  ${C.cyan}/say <текст>${C.reset}           Озвучить текст через Google Cloud TTS → /tmp/evabot-say.mp3 (/скажи, /сказать)
   ${C.cyan}/clear${C.reset}                 Очистить историю сообщений
   ${C.cyan}/boot${C.reset}                  Повторить аппаратную самодиагностику двух серверов
   ${C.cyan}/exit, /quit${C.reset}           Выйти из терминала
@@ -345,6 +350,75 @@ async function handleConsiliumRun(mode: ConsiliumMode, prompt: string): Promise<
     }
   } catch (err: any) {
     console.log(`${C.red}✖ Ошибка консилиума: ${err.message}${C.reset}`);
+  }
+}
+
+/**
+ * /say <text> — Cloud TTS (Google Cloud Wavenet, ONLY-FREE capped): saves the
+ * synthesized MP3 to /tmp/evabot-say.mp3 and prints path + size + chars left.
+ */
+async function handleSay(arg: string): Promise<void> {
+  if (!arg) {
+    console.log(`${C.yellow}Использование: /say <текст> | /скажи <текст> | /сказать <текст>${C.reset}`);
+    return;
+  }
+  const tts = new CloudTTS();
+  const result = await tts.synthesize(arg, { persona: 'eva' });
+  if (result.ok && result.base64Audio) {
+    try {
+      fs.writeFileSync('/tmp/evabot-say.mp3', new Uint8Array(Buffer.from(result.base64Audio, 'base64')));
+      const sizeKb = (fs.statSync('/tmp/evabot-say.mp3').size / 1024).toFixed(1);
+      console.log(`${C.green}✔ Аудио сохранено: /tmp/evabot-say.mp3 (${sizeKb} KB)${C.reset}`);
+      console.log(`  ${C.gray}Голос: ${result.voice} | символов: ${result.charCount}${result.cached ? ' [кэш]' : ''} | осталось символов в этом месяце: ${result.charsLeftThisMonth}${C.reset}`);
+    } catch (err: any) {
+      console.log(`${C.red}✖ Не удалось сохранить файл: ${err.message}${C.reset}`);
+    }
+  } else if (result.overCap) {
+    console.log(`${C.yellow}⚠ ${result.error}${C.reset}`);
+  } else {
+    console.log(`${C.red}✖ TTS недоступен: ${result.error}${C.reset}`);
+  }
+}
+
+/**
+ * /listen <file> — transcribe a local audio file via Google Cloud STT
+ * (v1 latest_long, ONLY-FREE monthly cap). Converts unsupported containers
+ * (mp3/wav/etc.) to FLAC 16 kHz mono via ffmpeg before the request.
+ */
+async function handleListen(arg: string): Promise<void> {
+  if (!arg) {
+    console.log(`${C.yellow}Использование: /listen <файл> | /розпізнай <файл> | /распознать <файл>${C.reset}`);
+    return;
+  }
+  const filePath = path.resolve(arg);
+  if (!fs.existsSync(filePath)) {
+    console.log(`${C.red}✖ Файл не найден: ${filePath}${C.reset}`);
+    return;
+  }
+  let audio: Buffer = fs.readFileSync(filePath);
+  const ext = path.extname(filePath).toLowerCase();
+  const encoding = ext === '.ogg' || ext === '.opus' ? 'OGG_OPUS'
+    : ext === '.flac' ? 'FLAC'
+    : ext === '.webm' ? 'WEBM_OPUS'
+    : null;
+  if (!encoding) {
+    const { convertToFlac16k } = await import('../core/CloudSTT.js');
+    const flac = convertToFlac16k(audio);
+    if (!flac) {
+      console.log(`${C.red}✖ Не удалось конвертировать ${ext || 'файл'} в FLAC через ffmpeg.${C.reset}`);
+      return;
+    }
+    audio = flac;
+    console.log(`${C.gray}[*] Конвертировано в FLAC 16 kHz mono (${(flac.length / 1024).toFixed(1)} KB)${C.reset}`);
+  }
+  const lang: SttLanguage = I18nEngine.getLocale() === 'uk' ? 'uk-UA' : I18nEngine.getLocale() === 'ru' ? 'ru-RU' : 'en-US';
+  console.log(`${C.gray}[*] Распознавание речи (${lang}, модель latest_long, only-free cap 50 мин/мес)...${C.reset}`);
+  const result = await transcribeVoiceWithFallback(audio, { lang, encoding: encoding || 'OGG_OPUS' });
+  if (result.ok && result.transcript) {
+    console.log(`${C.green}✔ Распознано (уверенность ${(result.confidence * 100).toFixed(0)}%, billed ${result.secondsBilled}s${result.usedFallbackFlac ? ', FLAC fallback' : ''}):${C.reset}`);
+    console.log(result.transcript);
+  } else {
+    console.log(`${C.red}✖ Ошибка распознавания: ${result.error}${C.reset}`);
   }
 }
 
@@ -444,6 +518,10 @@ async function main(): Promise<void> {
           console.log(await ModelCommand.executeAsync(input));
           break;
 
+        case '/translate':
+          console.log(await ModelCommand.executeAsync(input));
+          break;
+
         case '/models':
           if (arg) {
             printAllModels();
@@ -500,6 +578,16 @@ async function main(): Promise<void> {
           }
           break;
 
+        case '/say':
+        case '/скажи':
+        case '/сказать':
+          await handleSay(arg);
+          break;
+
+        case '/listen':
+          await handleListen(arg);
+          break;
+
         case '/clear':
         case '/cls':
           session.clearHistory();
@@ -512,8 +600,12 @@ async function main(): Promise<void> {
           // Multilingual aliases (UK/RU) of server commands → route through the
           // alias-normalizing registry (e.g. /історія → /history, /пошук → /search).
           const canonical = COMMAND_ALIASES[cmd];
-          if (canonical && ['/history', '/memory', '/search', '/find', '/services', '/servers', '/health', '/news', '/products', '/who', '/debug', '/log', '/monitor'].includes(canonical)) {
-            if (canonical === '/news') {
+          if (canonical && ['/history', '/memory', '/search', '/find', '/services', '/servers', '/health', '/news', '/translate', '/products', '/who', '/debug', '/log', '/monitor', '/say', '/listen'].includes(canonical)) {
+            if (canonical === '/say') {
+              await handleSay(arg);
+            } else if (canonical === '/listen') {
+              await handleListen(arg);
+            } else if (canonical === '/news' || canonical === '/translate') {
               console.log(await ModelCommand.executeAsync(input));
             } else {
               console.log(ModelCommand.execute(input));
