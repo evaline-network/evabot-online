@@ -4,7 +4,7 @@ import { AccountingEngine, AgentUnitCostSpec } from './AccountingEngine.js';
 export interface AgentPersona {
   roleId: string;
   title: string;
-  department: 'Leadership' | 'Engineering' | 'Quality & Security' | 'Research & Operations';
+  department: 'Leadership' | 'Engineering' | 'Quality & Security' | 'Research & Operations' | 'Sales & CRM' | 'Production & SCM' | 'Finance & Tax' | 'Marketing & Channels' | 'Legal & Support';
   mission: string;
   assignedModelId: string;
   assignedModelName: string;
@@ -16,7 +16,7 @@ export interface AgentPersona {
 
 export interface AgentCompany {
   name: string;
-  tier: 'Free Frontier Fleet' | 'Commercial Flagship Fleet';
+  tier: 'Free Frontier Fleet' | 'Commercial Flagship Fleet' | 'EvaLine Enterprise Business Swarm';
   description: string;
   roster: AgentPersona[];
   totalHourlyCostUSD: number;
@@ -204,13 +204,105 @@ export class AgentBuilder {
     return this.assembleCompany('EvaLine Commercial Titan Enterprise (Paid Flagship Fleet)', 'Commercial Flagship Fleet', specs);
   }
 
+  /**
+   * 🌟 EvaLine Enterprise Business Swarm
+   * Specialized 10-Agent AI Corporation specifically designed for EvaLine Ukraine:
+   * Automotive mats, EVA polymer sheet production, SCM, Nova Poshta, export, and 24/7 customer care.
+   */
+  public static buildEvaLineBusinessCompany(): AgentCompany {
+    const specs = [
+      {
+        roleId: 'evaline_ceo',
+        title: 'EvaDirector (CEO & Strategic AI Business Planner)',
+        department: 'Leadership' as const,
+        mission: 'Стратегическое управление производством EvaLine в Одессе, антикризисное планирование при блэкаутах, экспортная экспансия в ЕС.',
+        modelId: 'gemini-3.8-flash',
+        tools: ['sequential-thinking', 'memory', 'sqlite'],
+      },
+      {
+        roleId: 'evaline_sales',
+        title: 'EvaSales (Mat Configurator & B2C/B2B Lead Engine)',
+        department: 'Sales & CRM' as const,
+        mission: 'Подбор автоковриков по марке/году авто (1000+ лекал), расчет ячеек (ромб/сота), окантовки, шильдиков, подпятников, инвойсы UAH/EUR/USD.',
+        modelId: 'gemini-3.1-pro',
+        tools: ['sqlite', 'notebooklm', 'memory'],
+      },
+      {
+        roleId: 'evaline_scm',
+        title: 'EvaLogistics (Nova Poshta API & EU Export SCM)',
+        department: 'Production & SCM' as const,
+        mission: 'Интеграция с API Новой Почты (создание ТТН, габариты рулонов EVA), экспорт в ЕС (Польша, Румыния, Молдова, Германия), таможня УКТВЭД 3921.',
+        modelId: 'gemini-3.1-flash',
+        tools: ['fetch', 'filesystem', 'google-cloud'],
+      },
+      {
+        roleId: 'evaline_production',
+        title: 'EvaMaster (2D Cutting & CNC/Press Optimizer)',
+        department: 'Production & SCM' as const,
+        mission: '2D-Nest алгоритмы раскроя листов EVA (минимизация отходов до <7%), расчет плотности (50-75 Shore), графики работы термопрессов с генераторами.',
+        modelId: 'qwen/qwen-2.5-coder-32b-instruct:free',
+        tools: ['filesystem', 'sqlite'],
+      },
+      {
+        roleId: 'evaline_support',
+        title: 'EvaSupport 24/7 (Multilingual Omnichannel Bot)',
+        department: 'Legal & Support' as const,
+        mission: 'Круглосуточный саппорт клиентов на 6 языках (UA/EN/PL/RO/DE/RU) через Telegram/Viber/Web, мгновенный статус заказа по ТТН и свойствам материала.',
+        modelId: 'omniroute/gemini-3.8-flash',
+        tools: ['notebooklm', 'memory', 'chrome-devtools'],
+      },
+      {
+        roleId: 'evaline_marketing',
+        title: 'EvaMarket (Prom/Rozetka/Allegro & Multilingual SEO)',
+        department: 'Marketing & Channels' as const,
+        mission: 'Генерация карточек и фидов Prom.ua, Rozetka, OLX, Allegro (PL), Amazon/eBay, мультиязычное SEO-продвижение, мониторинг цен конкурентов.',
+        modelId: 'omniroute/gemini-3.1-pro',
+        tools: ['fetch', 'chrome-devtools'],
+      },
+      {
+        roleId: 'evaline_cfo',
+        title: 'EvaCFO (Polymer Costing, Margin & Multicurrency)',
+        department: 'Finance & Tax' as const,
+        mission: 'Калькуляция себестоимости листа EVA (толщина 2..40мм, твердость 20..75 Shore), расчет маржинальности партий, валютный контроль и финплан.',
+        modelId: 'deepseek/deepseek-r1:free',
+        tools: ['sequential-thinking', 'sqlite'],
+      },
+      {
+        roleId: 'evaline_qa',
+        title: 'EvaQuality (ISO/CE Standards, ТУ & Sanitary Certs)',
+        department: 'Quality & Security' as const,
+        mission: 'Аудит соответствия ТУ, санитарно-гигиенических заключений МОЗ Украины (СЭС), сертификатов CE для ЕС, паспорта качества партий (водопоглощение <0.1%).',
+        modelId: 'gemini-2.5-pro',
+        tools: ['knowledge-base', 'markdownlint'],
+      },
+      {
+        roleId: 'evaline_partner',
+        title: 'EvaPartner (B2B Regional Dealer & Dropshipping Hub)',
+        department: 'Sales & CRM' as const,
+        mission: 'Онбординг региональных дилеров, дропшиппинг автоковриков, оптовые скидки от объема (50м², 500м², 2000м²), дилерские прайс-листы.',
+        modelId: 'gemini-2.5-flash',
+        tools: ['sqlite', 'memory'],
+      },
+      {
+        roleId: 'evaline_legal',
+        title: 'EvaLegal (Wartime Resilience & Force Majeure Counsel)',
+        department: 'Legal & Support' as const,
+        mission: 'ВЭД-контракты (Incoterms FCA/DAP), справки ТПП Украины о форс-мажоре при обстрелах/блэкаутах, защита бренда и ТМ EvaLine в Украине и ЕС.',
+        modelId: 'meta-llama/llama-3.3-70b-instruct:free',
+        tools: ['memory', 'filesystem', 'markdownlint'],
+      },
+    ];
+
+    return this.assembleCompany('EvaLine Enterprise Business Swarm (Ukraine & EU Operations)', 'EvaLine Enterprise Business Swarm', specs);
+  }
+
   private static assembleCompany(
     name: string,
-    tier: 'Free Frontier Fleet' | 'Commercial Flagship Fleet',
+    tier: 'Free Frontier Fleet' | 'Commercial Flagship Fleet' | 'EvaLine Enterprise Business Swarm',
     specs: Array<{
       roleId: string;
       title: string;
-      department: 'Leadership' | 'Engineering' | 'Quality & Security' | 'Research & Operations';
+      department: 'Leadership' | 'Engineering' | 'Quality & Security' | 'Research & Operations' | 'Sales & CRM' | 'Production & SCM' | 'Finance & Tax' | 'Marketing & Channels' | 'Legal & Support';
       mission: string;
       modelId: string;
       tools: string[];
@@ -225,7 +317,7 @@ export class AgentBuilder {
         id: s.modelId,
         name: s.modelId,
         contextWindow: 128000,
-        pricing: { freeTierStatus: tier.includes('Free') ? '100% Free Quota Available' : 'Paid / Pay-As-You-Go Only' },
+        pricing: { freeTierStatus: (tier.includes('Free') || tier.includes('EvaLine')) ? '100% Free Quota Available' : 'Paid / Pay-As-You-Go Only' },
       } as any;
 
       const isFree = model.pricing.freeTierStatus === '100% Free Quota Available';

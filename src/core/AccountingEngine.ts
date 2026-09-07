@@ -36,7 +36,7 @@ export class AccountingEngine {
   // Baseline GCP Cluster & Service Subscriptions (Monthly OpEx)
   private static readonly INFRA_INVENTORY: InfraCostItem[] = [
     {
-      resource: 'Compute Core (evabot-agent-vm)',
+      resource: 'EvaBrain Core (evabot-agent-vm)',
       specification: '8 vCPU Intel Sapphire Rapids, 32 GB RAM',
       location: 'GCP europe-west3-a (Frankfurt)',
       monthlyCostUSD: 178.40,
@@ -44,7 +44,7 @@ export class AccountingEngine {
       category: 'compute',
     },
     {
-      resource: 'Edge Ingress (evaline-micro-vm)',
+      resource: 'EvaFace Edge (evaline-micro-vm)',
       specification: '2 vCPU e2-micro, 1 GB RAM (OOM Shield)',
       location: 'GCP us-central1-a (Iowa)',
       monthlyCostUSD: 7.14,

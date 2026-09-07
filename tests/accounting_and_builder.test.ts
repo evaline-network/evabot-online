@@ -53,6 +53,11 @@ export function runAccountingAndBuilderTests(): boolean {
   assert(paidCompany.roster.length === 10, `Paid company has exactly 10 agents (found ${paidCompany.roster.length})`);
   assert(paidCompany.roster[0].assignedModelId === 'claude-3-7-sonnet', 'Paid company #1 is claude-3-7-sonnet');
 
+  const evalineCompany = AgentBuilder.buildEvaLineBusinessCompany();
+  assert(evalineCompany.roster.length === 10, `EvaLine business company has exactly 10 agents (found ${evalineCompany.roster.length})`);
+  assert(evalineCompany.roster[0].roleId === 'evaline_ceo', 'EvaLine company #1 is EvaDirector');
+  assert(evalineCompany.roster[1].roleId === 'evaline_sales', 'EvaLine company #2 is EvaSales mat configurator');
+
   const freeRosterReport = AgentBuilder.formatCompanyReport(freeCompany);
   assert(freeRosterReport.includes('КОНСТРУКТОР АГЕНТОВ'), 'Company report renders header');
   assert(freeRosterReport.includes('CEO & System Architect'), 'Company report lists roles');
@@ -63,6 +68,9 @@ export function runAccountingAndBuilderTests(): boolean {
 
   const companyCmd = ModelCommand.execute('/company free');
   assert(companyCmd.toUpperCase().includes('EVALINE AUTONOMOUS AI ENTERPRISE'), 'Command /company free executes AgentBuilder');
+
+  const evalineCmd = ModelCommand.execute('/evaline');
+  assert(evalineCmd.toUpperCase().includes('EVALINE ENTERPRISE BUSINESS SWARM'), 'Command /evaline executes EvaLine business swarm');
 
   const infoCmd = ModelCommand.execute('/info gemini-3.8-flash');
   assert(infoCmd.includes('ТЕХНИЧЕСКИЙ ПАСПОРТ МОДЕЛИ: GEMINI 3.8 FLASH'), 'Command /info returns model passport');

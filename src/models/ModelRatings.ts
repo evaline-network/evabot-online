@@ -339,6 +339,8 @@ export class ModelCommand {
       case '/company':
       case '/team':
       case '/roster':
+      case '/evaline':
+      case '/business':
         return this.handleCompany(parts.slice(1));
       case '/info':
       case '/inspect':
@@ -535,11 +537,14 @@ export class ModelCommand {
   }
 
   private static handleCompany(args: string[]): string {
-    const tier = args[0]?.toLowerCase() || 'free';
+    const tier = args[0]?.toLowerCase() || 'evaline';
+    if (tier === 'free') {
+      return AgentBuilder.formatCompanyReport(AgentBuilder.buildFreeCompany());
+    }
     if (tier === 'paid') {
       return AgentBuilder.formatCompanyReport(AgentBuilder.buildPaidCompany());
     }
-    return AgentBuilder.formatCompanyReport(AgentBuilder.buildFreeCompany());
+    return AgentBuilder.formatCompanyReport(AgentBuilder.buildEvaLineBusinessCompany());
   }
 
   private static handleInfo(args: string[]): string {

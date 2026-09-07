@@ -248,7 +248,7 @@ function renderDashboard(session: ChatSession): void {
   // Line 4: Connected databases
   console.log(`${C.gray}Базы данных:${C.reset} ${C.green}Chroma Vector (1075 эмбеддингов) [OK]${C.reset} · ${C.green}SQLite FTS5 (1086 чанков) [OK]${C.reset} · ${C.green}Memory KB (178 док) [OK]${C.reset}`);
   // Line 5: Live server cluster load telemetry with ASCII bars
-  console.log(`${C.gray}Нагрузка:${C.reset} Core(Frankfurt) CPU ${C.green}[${makeBar(bCpuPct, 8)}]${C.reset} ${bCpuPct}% RAM ${C.green}[${makeBar(ramPct, 8)}]${C.reset} ${bUsedMem}/${bTotMem}GB (${ramPct}%) │ Edge(Iowa) CPU ${C.green}[${makeBar(micro.cpuPct, 6)}]${C.reset} ${micro.cpuPct}% RAM ${C.green}[${makeBar(Math.round((micro.memUsedMb / (micro.memTotalMb || 1024)) * 100), 6)}]${C.reset} ${micro.memUsedMb}MB │ ${C.red}♥${C.reset} 72bpm\n`);
+  console.log(`${C.gray}Нагрузка:${C.reset} Brain(Frankfurt) CPU ${C.green}[${makeBar(bCpuPct, 8)}]${C.reset} ${bCpuPct}% RAM ${C.green}[${makeBar(ramPct, 8)}]${C.reset} ${bUsedMem}/${bTotMem}GB (${ramPct}%) │ Face(Iowa) CPU ${C.green}[${makeBar(micro.cpuPct, 6)}]${C.reset} ${micro.cpuPct}% RAM ${C.green}[${makeBar(Math.round((micro.memUsedMb / (micro.memTotalMb || 1024)) * 100), 6)}]${C.reset} ${micro.memUsedMb}MB │ ${C.red}♥${C.reset} 72bpm\n`);
   // System greeting with timestamp
   console.log(`${C.gray}${getTimeStr()}${C.reset} ${C.yellow}system :${C.reset} Подключено к нейроядру evabot.online (Frankfurt, ${totalModels} моделей). Введите сообщение или команду (/help).\n`);
 }
