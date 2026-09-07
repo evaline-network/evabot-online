@@ -419,6 +419,7 @@
 
       chatContainer.appendChild(msgDiv);
       chatContainer.scrollTop = chatContainer.scrollHeight;
+      window.scrollTo(0, document.body.scrollHeight);
       return bodySpan;
     }
 
@@ -631,6 +632,7 @@
                   accumulatedText += data.chunk;
                   botBody.innerHTML = renderMarkdown(accumulatedText);
                   chatContainer.scrollTop = chatContainer.scrollHeight;
+                  window.scrollTo(0, document.body.scrollHeight);
                 }
               } catch (e) {}
             }
