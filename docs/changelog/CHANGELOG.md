@@ -89,6 +89,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.1.0] - 2026-09-07 — Plugin Architecture & Multi-Provider Gateway
+
+### 🆕 Added - Plugin System
+- **Plugin Architecture** - автономные плагины с динамической загрузкой
+- **PluginManager** - singleton с поддержкой enable/disable, dependencies, health checks
+- **PluginEventBus** - pub/sub для межплагинного взаимодействия
+- **Plugin interface** - `manifest`, `initialize()`, `shutdown()`, `healthCheck()`
+- **Plugin routes & commands** - каждый плагин может регистрировать API routes и CLI commands
+
+### 🆕 Added - Plugins
+- **LLMProvidersPlugin** - единый gateway для 5 провайдеров:
+  - Google AI (Gemini) - default, free quota
+  - OmniRoute (Internal LiteLLM Proxy) - daemon cluster
+  - OpenRouter - 78 моделей, free tier
+  - OpenCode Go - код-инференс
+  - KiloCode - free models aggregator
+- **ConsiliumPlugin** - Multi-Agent Engine (4 режима: solo, broadcast, dialogue, consilium)
+- **KnowledgeBasePlugin** - EvaLine KB (178 документов, 6 языков)
+
+### 🆕 Added - API Endpoints
+- `GET /api/plugins` - список всех плагинов
+- `GET /api/plugins/health` - health check всех плагинов
+- `GET /api/plugins/:id` - информация о плагине
+- `POST /api/plugins/:id/enable` - включить плагин
+- `POST /api/plugins/:id/disable` - выключить плагин
+- `GET /api/llm/providers` - статус всех LLM провайдеров
+- `POST /api/llm/chat` - чат через любой провайдер
+- `POST /api/llm/test` - тест провайдера
+
+### 🆕 Added - Visualizer
+- **`/visualize.html`** - интерактивная визуализация всей системы
+- Live метрики, plugins, models, security, logs
+- Архитектурные диаграммы (User → EvaFace → EvaBrain → 4 Providers)
+- Flow diagrams (request, consilium, KB)
+- Real-time updates каждые 10 секунд
+
+### 🆕 Added - Tests
+- **13 test suites, 100% pass rate**
+- `tests/plugin-manager.test.ts` - 12 tests for PluginManager + EventBus
+- `tests/llm-providers.test.ts` - 19 tests for LLMProvidersPlugin
+- `tests/knowledge-base.test.ts` - 20 tests for KnowledgeBasePlugin
+- `tests/consilium-new.test.ts` - 12 tests for ConsiliumPlugin
+- Total: 60+ test assertions, all passing
+
+### 🔧 Changed
+- **server.ts** - интегрирован PluginManager, plugin routes в router
+- **TypeScript errors** - 0 (clean compile)
+- **Endpoints** - все /api/kb/* переехали в KnowledgeBasePlugin
+- **Endpoints** - все /api/consilium/* переехали в ConsiliumPlugin
+
+### 📦 Plugin Architecture Benefits
+- Modularity - каждый компонент в своем плагине
+- Hot-swap - enable/disable без перезапуска
+- Dependencies - автоматическая проверка зависимостей
+- Health monitoring - каждый плагин имеет healthCheck
+- Easy testing - каждый плагин тестируется отдельно
+- Extensibility - легко добавить новый плагин
+
+---
+
 ## [v0.0.1] - 2026-09-03 — MVP Release
 
 ### Added

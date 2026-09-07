@@ -6,11 +6,15 @@ import { runUniversalClientTests } from './universal_client.test.js';
 import { runConsiliumTests } from './consilium.test.js';
 import { runRolesTests } from './roles.test.js';
 import { runAnsiStreamEngineTests } from './ansi_stream_engine.test.js';
+import { runPluginManagerTests, runEventBusTests } from './plugin-manager.test.js';
+import { runLLMProvidersTests } from './llm-providers.test.js';
+import { runKnowledgeBaseTests } from './knowledge-base.test.js';
+import { runPluginConsiliumTests } from './consilium-new.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
-  console.log('⚡ EVABOT MODULAR MULTI-LLM & CONSILIUM — AUTOMATED TEST SUITE');
-  console.log('================================================================');
+  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (12 test suites)');
+  console.log('================================================================\n');
 
   const results = [
     await runModelTests(),
@@ -21,6 +25,11 @@ async function runAllTests(): Promise<void> {
     await runConsiliumTests(),
     await runRolesTests(),
     await runAnsiStreamEngineTests(),
+    await runPluginManagerTests(),
+    await runEventBusTests(),
+    await runLLMProvidersTests(),
+    await runKnowledgeBaseTests(),
+    await runPluginConsiliumTests(),
   ];
 
   const testNames = [
@@ -32,17 +41,27 @@ async function runAllTests(): Promise<void> {
     'ConsiliumTests',
     'RolesTests',
     'AnsiStreamEngineTests',
+    'PluginManagerTests',
+    'EventBusTests',
+    'LLMProvidersTests',
+    'KnowledgeBaseTests',
+    'ConsiliumNewTests',
   ];
-  results.forEach((res, i) => {
-    if (!res) console.error(`❌ Suite FAILED: ${testNames[i]}`);
-    else console.log(`✓ Suite PASSED: ${testNames[i]}`);
-  });
 
-  const allPassed = results.every(Boolean);
+  let allPassed = true;
+  console.log('\n================================================================');
+  results.forEach((res, i) => {
+    if (res) {
+      console.log(`✓ Suite PASSED: ${testNames[i]}`);
+    } else {
+      console.error(`❌ Suite FAILED: ${testNames[i]}`);
+      allPassed = false;
+    }
+  });
 
   console.log('\n================================================================');
   if (allPassed) {
-    console.log('✅ ALL 8 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
+    console.log('✅ ALL 13 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
     console.log('================================================================\n');
     process.exit(0);
   } else {

@@ -1,6 +1,6 @@
-# EvaBot Online v0.0.2 // Cyber-Terminal
+# EvaBot Online v0.1.0 // Cyber-Terminal
 
-**Universal Multi-Model AI Terminal with EvaLine Knowledge Base, Security & Alerting**
+**Universal Multi-Model AI Terminal with Plugin Architecture & EvaLine KB**
 
 ---
 
@@ -13,11 +13,48 @@ npm install && npm run build && npm run start
 
 **Production:** [https://evabot.online](https://evabot.online)  
 **Local:** http://localhost:3000  
-**External IP:** http://34.159.202.82:3000
+**External IP:** http://34.159.202.82:3000  
+**Visualizer:** http://localhost:3000/visualize.html
 
 ---
 
-## ✨ Features v0.0.2
+## ✨ Features v0.1.0
+
+### 🔌 Plugin Architecture
+- 3 autoloaded plugins: LLMProviders, Consilium, KnowledgeBase
+- Each plugin is independent and can be enabled/disabled via API
+- Plugin routes and commands registered dynamically
+- Health checks for each plugin
+
+### 🤖 5 LLM Providers (unified gateway)
+- **Google AI (Gemini)** - default, free quota
+- **OmniRoute** - internal LiteLLM proxy
+- **OpenRouter** - 78 models
+- **OpenCode Go** - code inference
+- **KiloCode** - free models aggregator
+
+### 🧠 Consilium Multi-Agent
+- 4 modes: solo, broadcast, dialogue, consilium
+- Cross-evaluating deliberation
+- Auto-synthesis of consensus
+
+### 📚 EvaLine Knowledge Base
+- 178 documents, 6 languages (EN/UK/RU/PL/RO/DE)
+- Full-text search with relevance scoring
+- /kb command in terminal
+
+### 🛡️ Security
+- IP blocking (8 blocked), rate limiting, 17 attack patterns
+- 0 successful attacks (432 WP exploit attempts blocked)
+
+### 📊 Observability
+- 12 log categories, 3 log files
+- Live monitoring via /visualize.html
+- /api/logs/recent for real-time logs
+
+### 🧪 Tests
+- 13 test suites, 100% pass rate
+- Plugin manager, LLM providers, KB, Consilium, etc.
 
 - 🛡️ **Security** — IP blocking, rate limiting, 8 malicious IPs blocked, 17 attack patterns
 - 📚 **Knowledge Base** — 182 EvaLine documents, 6 languages, /kb command

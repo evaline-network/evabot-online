@@ -4,16 +4,18 @@ import path from 'node:path';
 import os from 'node:os';
 import { logger, LogCategory } from '../core/Logger.js';
 import { Config } from '../core/Config.js';
-import { knowledgeBase } from '../core/KnowledgeBase.js';
 import { Security, securityConfig } from '../core/Security.js';
 import { ClusterMonitor } from '../core/ClusterMonitor.js';
 import { GoogleAuthProvider } from '../core/GoogleAuthProvider.js';
-import { TuiRenderer } from '../core/TuiRenderer.js';
+import { pluginManager } from '../core/plugin-system/PluginManager.js';
+import { consiliumPlugin } from '../plugins/consilium/index.js';
+import { knowledgeBasePlugin } from '../plugins/knowledge-base/index.js';
+import { llmProvidersPlugin } from '../plugins/llm-providers/index.js';
 import { createModelsRouter } from './routes/ModelsRouter.js';
-import { createKbRouter } from './routes/KbRouter.js';
 import { createLogsRouter } from './routes/LogsRouter.js';
 import { createSecurityRouter } from './routes/SecurityRouter.js';
 import { createAlertsRouter } from './routes/AlertsRouter.js';
+import { createPluginsRouter } from './routes/PluginsRouter.js';
 import { Router, createRouteContext } from './routes/Router.js';
 import { ChatRouter } from './routes/ChatRouter.js';
 
@@ -63,13 +65,28 @@ function parseJsonBody(req: http.IncomingMessage): Promise<any> {
   });
 }
 
+async function initializePlugins(): Promise<void> {
+  logger.info(LogCategory.SYSTEM, 'Server', 'Initializing plugin system...');
+  await pluginManager.register(llmProvidersPlugin);
+  await pluginManager.register(consiliumPlugin);
+  await pluginManager.register(knowledgeBasePlugin);
+  
+  const list = pluginManager.list();
+  logger.info(LogCategory.SYSTEM, 'Server', `Loaded ${list.length} plugins: ${list.map(p => p.id).join(', ')}`);
+}
+
 function buildRouter(): Router {
   const router = new Router();
   
   router.get('/api/health', async (ctx) => {
     const creds = await GoogleAuthProvider.getCredentials();
+    const pluginList = pluginManager.list();
+    const pluginStatuses = await pluginManager.healthCheckAll();
+    
     ctx.sendJson(200, {
-      status: 'online', version: 'v0.0.2', server: 'evabot-online-edge',
+      status: 'online',
+      version: 'v0.1.0',
+      server: 'evabot-online-edge',
       uptimeSeconds: Math.floor(process.uptime()),
       memoryUsageMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),
       systemLoad: os.loadavg()[0].toFixed(2),
@@ -79,23 +96,42 @@ function buildRouter(): Router {
       availableModels: 78,
       hasServerApiKey: Boolean(creds),
       authSource: creds ? creds.source : 'None',
-      kbEnabled: true,
-      securityEnabled: true,
+      plugins: {
+        loaded: pluginList.length,
+        active: pluginList.filter(p => p.enabled).length,
+        list: pluginList,
+        health: pluginStatuses,
+      },
     });
   });
   
   const subRouters = [
     createModelsRouter(),
-    createKbRouter(),
     createLogsRouter(),
     createSecurityRouter(),
     createAlertsRouter(),
+    createPluginsRouter(),
   ];
   
   for (const sub of subRouters) {
     for (const route of (sub as any).routes) {
       router.add(route.method, route.pattern as string, route.handler);
     }
+  }
+  
+  const pluginRoutes = pluginManager.getAllPluginRoutes();
+  for (const pr of pluginRoutes) {
+    router.add(pr.method, pr.path, async (ctx) => {
+      const body = ctx.method === 'GET' ? null : await ctx.parseJsonBody().catch(() => ({}));
+      const queryObj: any = {};
+      ctx.query.forEach((v, k) => { queryObj[k] = v; });
+      try {
+        const result = await pr.handler(body || {}, queryObj);
+        ctx.sendJson(200, result);
+      } catch (err: any) {
+        ctx.sendJson(err.statusCode || 500, { error: err.message });
+      }
+    });
   }
   
   const chatRouter = new ChatRouter();
@@ -108,9 +144,6 @@ function buildRouter(): Router {
 
 export function createServer(): http.Server {
   ClusterMonitor.init();
-  knowledgeBase.initialize().catch((err) => {
-    logger.error(LogCategory.KB, 'INIT', `Failed to initialize KB: ${err.message}`);
-  });
   
   const router = buildRouter();
   
@@ -132,7 +165,6 @@ export function createServer(): http.Server {
       return;
     }
     
-    // Security
     if (securityConfig.blockedIPs.has(clientIp)) {
       logger.warn(LogCategory.SYSTEM, 'SECURITY', `Blocked IP: ${clientIp} -> ${method} ${pathname}`);
       res.writeHead(403, { 'Content-Type': 'text/plain' });
@@ -159,7 +191,6 @@ export function createServer(): http.Server {
       logger.logHttpRequest(method, pathname, res.statusCode, duration, clientIp, userAgent);
     });
     
-    // Try router
     const match = router.match(method, pathname);
     if (match) {
       const ctx = createRouteContext(req, res, pathname, parsedUrl, {
@@ -167,17 +198,22 @@ export function createServer(): http.Server {
         sendText: (status, text) => sendText(res, status, text),
         parseJsonBody: () => parseJsonBody(req),
       });
-      await match.route.handler(ctx);
+      try {
+        await match.route.handler(ctx);
+      } catch (err: any) {
+        logger.error(LogCategory.HTTP, 'ROUTE', `${method} ${pathname}: ${err.message}`);
+        if (!res.headersSent) {
+          sendJson(res, 500, { error: err.message || 'Internal server error' });
+        }
+      }
       return;
     }
     
-    // Static files
     if (pathname.startsWith('/dist/') || pathname === '/') {
       let filePath = '';
       if (pathname.startsWith('/dist/')) {
         filePath = path.resolve(process.cwd(), pathname.slice(1));
       } else {
-        // Root - serve index.html
         const indexPath = path.resolve(process.cwd(), 'public', 'index.html');
         if (fs.existsSync(indexPath)) {
           const content = fs.readFileSync(indexPath);
@@ -196,15 +232,28 @@ export function createServer(): http.Server {
       }
     }
     
-    // 404
     sendText(res, 404, 'Not Found');
   });
 }
 
-export function startServer(port: number = Config.serverPort, host: string = Config.serverHost): void {
+export async function startServerAsync(port: number = Config.serverPort, host: string = Config.serverHost): Promise<void> {
+  await initializePlugins();
   const server = createServer();
+  
   server.listen(port, host, () => {
     logger.info(LogCategory.SYSTEM, 'Server', `[+] EvaBot HTTP Server listening on http://${host}:${port}`);
+  });
+  
+  process.on('SIGTERM', async () => {
+    logger.info(LogCategory.SYSTEM, 'Server', 'Shutting down...');
+    await pluginManager.shutdownAll();
+    server.close();
+  });
+}
+
+export function startServer(port: number = Config.serverPort, host: string = Config.serverHost): void {
+  startServerAsync(port, host).catch(err => {
+    logger.error(LogCategory.SYSTEM, 'Server', `Failed to start: ${err.message}`);
   });
 }
 
