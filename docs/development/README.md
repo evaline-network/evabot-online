@@ -6,16 +6,13 @@
 
 ## 📂 Содержание
 
-### [`v0.0.1-IMPLEMENTATION.md`](./v0.0.1-IMPLEMENTATION.md)
-Отчет о реализации v0.0.1 (MVP):
-- Что сделано
-- API endpoints
-- Тесты
-- Структура проекта
-
 ### История версий
-- v0.0.1 (MVP, 2026-09-03) — см. v0.0.1-IMPLEMENTATION.md
-- v0.0.2 (Security + KB, 2026-09-07) — см. [../worklog/v0.0.2-release.md](../worklog/v0.0.2-release.md)
+- v0.0.1 (MVP, 2026-09-03) — см. [../changelog/CHANGELOG.md](../changelog/CHANGELOG.md) (раздел v0.0.1)
+- v0.0.2 (Security + KB, 2026-09-07) — см. [../changelog/CHANGELOG.md](../changelog/CHANGELOG.md) (раздел v0.0.2)
+
+### Implementation Notes
+Детальные отчеты о реализации можно найти в CHANGELOG.md для каждой версии.
+Для v0.0.1 и v0.0.2 отчеты были объединены в единый CHANGELOG.
 
 ---
 

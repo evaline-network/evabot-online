@@ -23,7 +23,7 @@
 
 - [`../deployment/MONOREPO.md`](../deployment/MONOREPO.md) — monorepo структура
 - [`../models/MODELS_CATALOG.md`](../models/MODELS_CATALOG.md) — каталог моделей
-- [`../worklog/v0.0.2-release.md`](../worklog/v0.0.2-release.md) — изменения v0.0.2
+- [`../changelog/CHANGELOG.md`](../changelog/CHANGELOG.md) — изменения v0.0.2
 
 ---
 

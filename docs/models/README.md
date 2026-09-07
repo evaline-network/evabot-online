@@ -6,7 +6,7 @@
 
 ## 📂 Содержание
 
-### [`MODELS_CATALOG.md`](./MODELS_CATALOG.md)
+### [MODELS_CATALOG.md](./MODELS_CATALOG.md)
 Полный каталог моделей (78):
 - 46 бесплатных (FREE)
 - 32 платных (PAID)
@@ -14,9 +14,8 @@
 - Рейтинги: Quality, Speed, Context, Cost
 - Цены в USD ($) и EUR (€)
 
-### Официальные каталоги
-- [`../model_catalog.en.md`](../model_catalog.en.md) — официальный Google Model Garden
-- [`../MODELS.2026.md`](../MODELS.2026.md) — модели 2026
+### Дополнительно
+- [`../../MODELS.2026.md`](../../MODELS.2026.md) — модели 2026 (корневой файл)
 
 ---
 

@@ -75,11 +75,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`config/fail2ban-filter.conf`** - fail2ban filter for EvaBot logs
 - **`config/fail2ban-jail.conf`** - 2 jails (attack + rate)
 - **`.github/workflows/deploy.yml`** - CI/CD for 2-server monorepo deploy
-- **`SECURITY_AUDIT.md`** - full security audit report
-- **`MODELS_CATALOG.md`** - separated free/paid models
-- **`MONOREPO_README.md`** - monorepo documentation
-- **`IMPLEMENTATION-v001.md`** - v0.0.1 implementation report
-- **`README-v001.md`** - v0.0.1 documentation
+- **`docs/security/SECURITY_AUDIT.md`** - full security audit report
+- **`docs/models/MODELS_CATALOG.md`** - separated free/paid models
+- **`docs/deployment/MONOREPO.md`** - monorepo documentation
+- **`docs/development/v0.0.1-IMPLEMENTATION.md`** - v0.0.1 implementation report
 
 ### 🔒 Security
 - Detected and blocked **432 WordPress exploit attempts** from IP 45.148.10.9 (Techoff SRV, NL)

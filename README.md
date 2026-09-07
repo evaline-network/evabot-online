@@ -59,7 +59,7 @@ npm install && npm run build && npm run start
 
 | Документ | Описание |
 |----------|----------|
-| [CHANGELOG.md](CHANGELOG.md) | История версий |
+| [CHANGELOG.md](docs/changelog/CHANGELOG.md) | История версий |
 | [docs/changelog/](docs/changelog/) | Changelog details |
 | [docs/worklog/](docs/worklog/) | Журнал событий по датам |
 | [docs/architecture/](docs/architecture/) | Архитектура системы |
