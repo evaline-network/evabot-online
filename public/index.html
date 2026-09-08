@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EvaBot v0.0.1</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2300e676'/%3E%3C/svg%3E">
   <link rel="preload" as="font" type="font/woff2" href="/fonts/Roboto-Variable.woff2" crossorigin>
   <style>
     /* Self-hosted Roboto (variable, wght 100-900) — no external font CDN dependency */
@@ -621,10 +622,22 @@
         'сервер', 'сервера', 'серверы', 'консилиум', 'нейросеть', 'история', 'статус', 'ошибка',
         'ошибки', 'токены', 'бюджет', 'помоги', 'напиши', 'скажи', 'покажи', 'сделай', 'задача',
         'отчет', 'проект', 'команда', 'параметры', 'проверка', 'вопрос', 'ответ',
+        'коврики', 'коврик', 'заказ', 'заказать', 'производство', 'производитель', 'цена',
+        'сколько', 'стоит', 'оплата', 'оплатить', 'доставка', 'доставить', 'срок', 'неделя',
+        'дней', 'размер', 'толщина', 'цвет', 'черный', 'серый', 'материал', 'евалайн',
+        'качество', 'гарантия', 'рекламация', 'возврат', 'обмен', 'отправка', 'почта',
+        'счет', 'чек', 'скидка', 'акция', 'товар', 'товары', 'наличие', 'образец',
+        'звоните', 'телефон', 'адрес', 'автомобиль', 'салон', 'багажник', 'пол',
         'привіт', 'дякую', 'будь', 'ласка', 'перевір', 'моделі', 'сервери', 'консиліум',
         'нейромережа', 'історія', 'статус', 'помилка', 'помилки', 'токени', 'бюджет',
         'допоможи', 'напиши', 'скажи', 'покажи', 'зроби', 'задача', 'звіт', 'проєкт',
         'команда', 'параметри', 'питання', 'відповідь',
+        'килимки', 'килимок', 'замовлення', 'замовити', 'виробництво', 'виробник', 'ціна',
+        'скільки', 'коштує', 'оплата', 'оплатити', 'доставка', 'доставити', 'термін',
+        'тиждень', 'розмір', 'товщина', 'колір', 'чорний', 'сірий', 'матеріал', 'евалайн',
+        'EvaLine', 'якість', 'гарантія', 'рекламація', 'повернення', 'обмін', 'відправка',
+        'пошта', 'рахунок', 'чек', 'знижка', 'акція', 'товар', 'товари', 'наявність',
+        'зразок', 'телефон', 'адреса', 'автомобіль', 'салон', 'багажник', 'підлога', 'добре',
       ],
 
       // ---------- pure fuzzy primitives ----------
@@ -831,7 +844,9 @@
         for (const w of Object.keys(vocab)) dict.add(w.toLowerCase());
         out = out.split(/(\d+)/g).map((seg) => {
           if (/^\d+$/.test(seg)) return seg;
-          return seg.replace(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu, (w) => {
+          return seg.replace(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu, (w, offset) => {
+            // never touch slash-command tokens (e.g. '/hist', '/voices')
+            if (offset > 0 && seg[offset - 1] === '/') return w;
             const lw = w.toLowerCase();
             if (lw.length < 5 || dict.has(lw)) return w;
             const c = this.correctWord(lw, dict);
@@ -1051,6 +1066,11 @@
         voicePersona: 'Персону озвучки змінено на ',
         voiceUnsupported: 'Розпізнавання мови не підтримується (використовуйте Chrome/Edge).',
         voiceListening: 'Слухаю...',
+        voiceDenied: 'Доступ до мікрофона заборонено. Дозвольте його через іконку в адресному рядку.',
+        voiceNoMic: 'Мікрофон не знайдено.',
+        voiceNoSpeech: 'Мовлення не розпізнано. Спробуйте ще раз.',
+        voiceRecording: 'Запис 6 с для серверного розпізнавання...',
+        voiceSttErr: 'Помилка розпізнавання: ',
         ttsOn: 'Озвучення увімкнено — Єва озвучуватиме відповіді.',
         ttsOff: 'Озвучення вимкнено.',
         historyEmpty: 'Історія діалогу порожня.',
@@ -1124,6 +1144,11 @@
         voicePersona: 'Персона озвучки изменена на ',
         voiceUnsupported: 'Распознавание речи не поддерживается (используйте Chrome/Edge).',
         voiceListening: 'Слушаю...',
+        voiceDenied: 'Доступ к микрофону запрещен. Разрешите его через значок в адресной строке.',
+        voiceNoMic: 'Микрофон не найден.',
+        voiceNoSpeech: 'Речь не распознана. Попробуйте еще раз.',
+        voiceRecording: 'Запись 6 с для серверного распознавания...',
+        voiceSttErr: 'Ошибка распознавания: ',
         ttsOn: 'Озвучивание включено — Ева будет озвучивать ответы.',
         ttsOff: 'Озвучивание выключено.',
         historyEmpty: 'История диалога пуста.',
@@ -1439,6 +1464,24 @@
           if (lat < 100) pingText.className = 'c-ok bold';
           else if (lat < 250) pingText.className = 'c-wrn bold';
           else pingText.className = 'c-err bold';
+
+          // Live database status line (Chroma / FTS5 / MemoryKB / MCP)
+          if (data.databases) {
+            const db = data.databases;
+            const parts = [];
+            if (db.chroma) parts.push(`Chroma Vector (${db.chroma.count} embeddings) [${db.chroma.status}]`);
+            if (db.fts) parts.push(`SQLite FTS5 (${db.fts.count} chunks) [${db.fts.status}]`);
+            if (db.memoryKb) parts.push(`Memory KB (${db.memoryKb.count} docs) [${db.memoryKb.status}]`);
+            if (db.mcp) parts.push(`MCP [${db.mcp.status}]`);
+            const dbValues = document.getElementById('db-values');
+            if (dbValues && parts.length) {
+              const localized = state.lang === 'en' ? parts : parts.map(p =>
+                p.replace('embeddings', state.lang === 'uk' ? 'ембедінгів' : 'эмбеддингов')
+                 .replace('chunks', state.lang === 'uk' ? 'чанків' : 'чанков')
+                 .replace('docs', state.lang === 'uk' ? 'док' : 'док'));
+              dbValues.textContent = localized.join(' · ');
+            }
+          }
 
           if (data.telemetry) {
             const f = data.telemetry.frankfurt;
@@ -1864,10 +1907,9 @@
         const mic = document.getElementById('mic-btn');
         if (!SR) {
           if (mic) {
-            mic.style.opacity = '0.3';
-            // Server-side STT fallback available: POST /api/stt (Google Cloud Speech-to-Text,
-            // OGG/WEBM/FLAC, free-tier capped at 50 min/month). See docs/ops/CLOUD_STT.md.
-            mic.title = 'Speech recognition not supported (Chrome/Edge) — server fallback via POST /api/stt';
+            // Server-side STT fallback is available (start() launches it when
+            // recognition is missing), so the mic stays fully usable.
+            mic.title = 'Browser speech recognition unavailable — server STT fallback via POST /api/stt';
           }
         } else {
           try {
@@ -1884,10 +1926,15 @@
             rec.onerror = (e) => {
               console.warn('Speech recognition error:', e.error);
               this.stop();
-              // Optional server fallback hook: on SR failure, POST a short
-              // MediaRecorder recording to /api/stt (WEBM_OPUS). Skipped
-              // silently when MediaRecorder/getUserMedia is unavailable.
-              if (e.error && e.error !== 'aborted' && e.error !== 'not-allowed') {
+              // Surface every failure class to the user (was: console only).
+              const d = I18N[state.lang] || I18N.en;
+              if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                showToast(d.voiceDenied);
+              } else if (e.error === 'audio-capture') {
+                showToast(d.voiceNoMic);
+              } else if (e.error === 'no-speech') {
+                showToast(d.voiceNoSpeech);
+              } else if (e.error && e.error !== 'aborted') {
                 this.fallbackServerStt();
               }
             };
@@ -1910,36 +1957,64 @@
         return localStorage.getItem('evabot_voice') !== 'off';
       },
 
-      // Optional hook: server-side STT via POST /api/stt (WEBM_OPUS).
-      // Records up to 6 s with MediaRecorder and sends the raw webm body;
-      // on any failure it returns silently (no UI change).
+      // Server-side STT via POST /api/stt (WEBM_OPUS / OGG_OPUS).
+      // Records up to 6 s with MediaRecorder and sends the raw body;
+      // every failure is surfaced via toast (never silent). Returns false
+      // when the recording path is unavailable in this browser.
       async fallbackServerStt() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') return;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') return false;
+        const d = I18N[state.lang] || I18N.en;
+        const mime = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg']
+          .find((m) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
+        const encoding = mime.indexOf('ogg') !== -1 ? 'OGG_OPUS' : 'WEBM_OPUS';
+        let stream;
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const recorder = new MediaRecorder(stream);
-          const chunks = [];
-          recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-          recorder.onstop = async () => {
-            stream.getTracks().forEach((t) => t.stop());
-            try {
-              const res = await fetch('/api/stt?lang=' + encodeURIComponent(this.langCode()) + '&encoding=WEBM_OPUS&sampleRate=48000', {
-                method: 'POST',
-                headers: { 'Content-Type': 'audio/webm' },
-                body: new Blob(chunks, { type: 'audio/webm' }),
-              });
-              if (!res.ok) return;
-              const data = await res.json();
-              if (data && data.transcript) {
-                const text = (userInput.value ? userInput.value.replace(/\s+$/, '') + ' ' : '') + data.transcript;
-                userInput.value = text;
-                userInput.focus();
-              }
-            } catch (err) { /* skip silently */ }
-          };
-          recorder.start();
-          setTimeout(() => { if (recorder.state !== 'inactive') recorder.stop(); }, 6000);
-        } catch (err) { /* skip silently */ }
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (err) {
+          const name = err && err.name ? err.name : '';
+          if (name === 'NotAllowedError' || name === 'PermissionDeniedError' || name === 'SecurityError') {
+            showToast(d.voiceDenied);
+          } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+            showToast(d.voiceNoMic);
+          } else {
+            showToast(d.voiceSttErr + (name || 'getUserMedia failed'));
+          }
+          return false;
+        }
+        const mic = document.getElementById('mic-btn');
+        if (mic) mic.classList.add('recording');
+        showToast(d.voiceRecording);
+        const recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+        const chunks = [];
+        recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+        recorder.onstop = async () => {
+          stream.getTracks().forEach((t) => t.stop());
+          if (mic) mic.classList.remove('recording');
+          const type = (mime || recorder.mimeType || 'audio/webm').split(';')[0];
+          try {
+            const res = await fetch('/api/stt?lang=' + encodeURIComponent(this.langCode()) + '&encoding=' + encoding + '&sampleRate=48000', {
+              method: 'POST',
+              headers: { 'Content-Type': type },
+              body: new Blob(chunks, { type: type }),
+            });
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+              showToast(d.voiceSttErr + (data && data.error ? String(data.error).slice(0, 90) : 'HTTP ' + res.status));
+              return;
+            }
+            if (!data || !data.transcript) {
+              showToast(d.voiceNoSpeech);
+              return;
+            }
+            userInput.value = (userInput.value ? userInput.value.replace(/\s+$/, '') + ' ' : '') + data.transcript;
+            userInput.focus();
+          } catch (err) {
+            showToast(d.voiceSttErr + (err && err.message ? err.message : 'network'));
+          }
+        };
+        recorder.start();
+        setTimeout(() => { if (recorder.state !== 'inactive') recorder.stop(); }, 6000);
+        return true;
       },
 
       applyVoiceEnabled() {
@@ -1961,9 +2036,13 @@
       },
 
       start() {
+        const d = I18N[state.lang] || I18N.en;
         if (!this.recognition) {
-          const d = I18N[state.lang] || I18N.en;
-          showToast(d.voiceUnsupported);
+          // No SpeechRecognition in this browser → record 6 s and use the
+          // server STT (POST /api/stt) instead of only showing a warning.
+          this.fallbackServerStt().then((started) => {
+            if (!started) showToast(d.voiceUnsupported);
+          });
           return;
         }
         // keep whatever the user already typed; dictation appends to it
@@ -1971,7 +2050,6 @@
         try {
           this.recognition.lang = this.langCode();
           this.recognition.start();
-          const d = I18N[state.lang] || I18N.en;
           showToast(d.voiceListening);
         } catch (e) {
           console.warn('Failed to start speech recognition:', e);
