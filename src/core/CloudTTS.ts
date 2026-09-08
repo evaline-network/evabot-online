@@ -84,7 +84,8 @@ const TTS_VOICES_ENDPOINT = 'https://texttospeech.googleapis.com/v1/voices';
 const USER_PROJECT = 'evabot-agent-server';
 
 /** Voice family derived from the voice name (drives pricing metadata). */
-export function voiceFamily(voiceName: string): 'chirp3-hd' | 'wavenet' | 'neural2' | 'studio' | 'standard' {
+export function voiceFamily(voiceName: string): 'edge-neural' | 'chirp3-hd' | 'wavenet' | 'neural2' | 'studio' | 'standard' {
+  if (/Neural$/.test(voiceName)) return 'edge-neural';
   if (voiceName.includes('Chirp3')) return 'chirp3-hd';
   if (voiceName.includes('Wavenet')) return 'wavenet';
   if (voiceName.includes('Neural2')) return 'neural2';
@@ -95,6 +96,7 @@ export function voiceFamily(voiceName: string): 'chirp3-hd' | 'wavenet' | 'neura
 /** Free-tier allowance per family, chars/month (verified 2026-09, see doc). */
 export function familyFreeAllowance(family: string): number {
   switch (family) {
+    case 'edge-neural': return 999_999_999; // Edge-TTS: free/unlimited
     case 'standard': return 4_000_000;
     case 'wavenet':
     case 'neural2':
@@ -106,6 +108,7 @@ export function familyFreeAllowance(family: string): number {
 /** Pay-per-char label used when the module reports a cap-exhausted family. */
 export function familyPayPerCharNote(family: string): string {
   switch (family) {
+    case 'edge-neural': return 'UNLIMITED FREE (Microsoft Edge-TTS / Azure Neural)';
     case 'chirp3-hd': return 'PAY-PER-CHAR after cap: US$30 per 1M chars';
     case 'studio': return 'PAY-PER-CHAR after cap: US$160 per 1M chars';
     case 'neural2': return 'PAY-PER-CHAR after cap: US$16 per 1M chars';
@@ -125,7 +128,7 @@ export function languageCodeOf(voiceName: string): string {
 // Paid-only families (e.g. studio) are rejected by /voices set.
 // ============================================================================
 
-export type CatalogVoiceFamily = 'chirp3-hd' | 'wavenet' | 'neural2' | 'standard';
+export type CatalogVoiceFamily = 'edge-neural' | 'chirp3-hd' | 'wavenet' | 'neural2' | 'standard';
 
 export interface CatalogVoice {
   name: string;
@@ -136,16 +139,18 @@ export interface CatalogVoice {
 
 /** Families allowed by /voices set (all free-tier). Studio/others rejected. */
 export const FREE_VOICE_FAMILIES: ReadonlySet<string> = new Set<CatalogVoiceFamily>([
-  'chirp3-hd', 'wavenet', 'neural2', 'standard',
+  'edge-neural', 'chirp3-hd', 'wavenet', 'neural2', 'standard',
 ]);
 
-/** Family → sort rank for /voices listing (Chirp3-HD first, most natural). */
+/** Family → sort rank for /voices listing (Edge-Neural first: free/unlimited
+ * and the primary chain; Chirp3-HD next, most natural free-tier Google). */
 export function familyRank(family: string): number {
   switch (family) {
-    case 'chirp3-hd': return 0;
-    case 'wavenet': return 1;
-    case 'neural2': return 2;
-    case 'standard': return 3;
+    case 'edge-neural': return 0;
+    case 'chirp3-hd': return 1;
+    case 'wavenet': return 2;
+    case 'neural2': return 3;
+    case 'standard': return 4;
     default: return 9;
   }
 }
@@ -191,8 +196,19 @@ const EN_WAVENET: Array<[string, CatalogVoiceFamily, 'FEMALE' | 'MALE']> = [
   ['en-US-Standard-F', 'standard', 'MALE'],
 ];
 
-/** Static ONLY-FREE voice catalog per language (Chirp3-HD + Wavenet tiers). */
+/** Edge-Neural voices (primary TTS chain, src/core/EdgeTTS.ts): free/unlimited,
+ * rendered first in /voices via familyRank. Catalog/defaults only here — the
+ * actual synthesis lives in EdgeTTS (kept separate to avoid an import cycle). */
+const EDGE_NEURAL: Array<[string, CatalogVoiceFamily, 'FEMALE' | 'MALE']> = [
+  ['uk-UA-PolinaNeural', 'edge-neural', 'FEMALE'],
+  ['uk-UA-OstapNeural', 'edge-neural', 'MALE'],
+  ['ru-RU-DmitryNeural', 'edge-neural', 'MALE'],
+  ['ru-RU-SvetlanaNeural', 'edge-neural', 'FEMALE'],
+];
+
+/** Static ONLY-FREE voice catalog per language (Edge-Neural + Chirp3-HD + Wavenet tiers). */
 export const VOICE_CATALOG: CatalogVoice[] = [
+  ...EDGE_NEURAL.map(([name, family, gender]) => ({ name, family, gender, free: true })),
   ...catalogVoicesFor(['uk-UA', 'ru-RU', 'en-US']),
   ...UK_WAVENET.map(([name, family, gender]) => ({ name, family, gender, free: true })),
   ...RU_WAVENET.map(([name, family, gender]) => ({ name, family, gender, free: true })),

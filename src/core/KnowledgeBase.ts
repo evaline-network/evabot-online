@@ -110,6 +110,7 @@ export class KnowledgeBase {
       this.desktopPath,
       this.knowledgeBasePath,
       '/var/www/evabot-backend/knowledge-base/evaline-com-ua',
+      '/home/evabot/evaline-online',
     ];
 
     let loadedAny = false;
@@ -161,6 +162,138 @@ export class KnowledgeBase {
       }
 
       if (loadedAny) break;
+    }
+
+    // TASK-350: company site repo /home/evabot/evaline-online (trilingual docs,
+    // KANBAN, MANIFESTO, README). Independent of the site-roots loop above.
+    await this.loadEvalineOnline();
+  }
+
+  private async loadEvalineOnline(): Promise<void> {
+    const repoRoot = '/home/evabot/evaline-online';
+    if (!fs.existsSync(repoRoot)) return;
+
+    const IGNORED_DIRS = new Set([
+      '.git', 'node_modules', 'dist', 'backups', 'archive', 'legacy_archive',
+      'public', 'src', 'tests', 'scripts',
+    ]);
+
+    const collect = (dir: string, depth: number): string[] => {
+      const out: string[] = [];
+      for (const item of fs.readdirSync(dir)) {
+        const itemPath = path.join(dir, item);
+        const stat = fs.statSync(itemPath);
+        if (stat.isDirectory()) {
+          if (depth < 3 && !IGNORED_DIRS.has(item)) out.push(...collect(itemPath, depth + 1));
+        } else if (stat.isFile() && (item.endsWith('.md') || item.endsWith('.txt'))) {
+          out.push(itemPath);
+        }
+      }
+      return out;
+    };
+
+    for (const filePath of collect(repoRoot, 0)) {
+      const relPath = path.relative(repoRoot, filePath);
+      const base = path.basename(relPath);
+      const stem = base.replace(/\.(md|txt)$/i, '');
+
+      // Language: trilingual files use suffixes .en / .uk / .ru before the extension.
+      const langMatch = stem.match(/\.(en|uk|ru)$/);
+      const language: 'en' | 'uk' | 'ru' = langMatch ? (langMatch[1] as 'en' | 'uk' | 'ru') : 'en';
+
+      const id = `evaline-online-${relPath.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+      if (this.documents.has(id)) continue;
+
+      const content = fs.readFileSync(filePath, 'utf8');
+      const titleMatch = content.match(/^#\s+(.+)$/m);
+      const title = titleMatch
+        ? titleMatch[1].trim()
+        : stem.replace(/\.(en|uk|ru)$/, '').replace(/[-_]/g, ' ');
+
+      const doc: KnowledgeDocument = {
+        id,
+        title,
+        content,
+        category: this.inferEvalineOnlineCategory(relPath),
+        language,
+        tags: [language, 'evaline-online', 'company-site', 'eva'],
+        source: `evaline-online/${relPath}`,
+      };
+      this.addDocument(doc);
+      this.indexEvalineOnlineChunks(doc, relPath, language);
+    }
+
+    logger.info(LogCategory.KB, 'EVA_ONLINE', 'Company site repo ingested', {
+      repo: repoRoot,
+      memoryDocs: this.listDocuments({ tag: 'evaline-online' }).length,
+    });
+  }
+
+  private inferEvalineOnlineCategory(relPath: string): string {
+    const lower = relPath.toLowerCase();
+    if (lower.includes('kanban')) return 'kanban';
+    if (lower.includes('manifesto')) return 'manifesto';
+    if (lower.includes('readme')) return 'company-overview';
+    if (lower.includes('architecture')) return 'architecture';
+    if (lower.includes('audit')) return 'audit';
+    if (lower.includes('user_guide')) return 'user-guide';
+    if (lower.startsWith('evabot')) return 'evabot-docs';
+    return 'general';
+  }
+
+  /**
+   * Index a document into the SQLite FTS5 table, reusing the chunker from
+   * knowledge-base/evaline-knowledge-base/build_knowledge_base.py (headers split,
+   * 1200-char soft limit, "Document:/Section:" contextual prefix).
+   * Idempotent: skips files already indexed (dedupe by source file_path).
+   */
+  private indexEvalineOnlineChunks(doc: KnowledgeDocument, relPath: string, language: string): void {
+    if (!this.sqliteDb) return;
+
+    const filePath = `evaline-online/${relPath}`;
+    try {
+      const existing = this.sqliteDb
+        .prepare('SELECT count(*) as count FROM chunks_fts WHERE file_path = ?')
+        .get(filePath);
+      if (existing && Number(existing.count) > 0) return;
+
+      const stem = relPath.replace(/\.(md|txt)$/i, '').replace(/\.(en|uk|ru)$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const lines = doc.content.split('\n');
+
+      type Chunk = { header: string; text: string };
+      let currentHeader = doc.title;
+      let currentLines: string[] = [];
+      let chunkIndex = 0;
+      const flush = () => {
+        const raw = currentLines.join('\n').trim();
+        if (!raw) return;
+        const fullText = `Document: ${doc.title}\nSection: ${currentHeader}\n\n${raw}`;
+        const chunkId = `${language}_${stem}_${chunkIndex}`;
+        try {
+          this.sqliteDb.prepare(
+            'INSERT INTO chunks_fts (chunk_id, title, header, language, category, url, file_path, content) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+          ).run(chunkId, doc.title, currentHeader, language, doc.category, '', filePath, fullText);
+          this.ftsChunkCount += 1;
+          chunkIndex += 1;
+        } catch (err: any) {
+          logger.warn(LogCategory.KB, 'EVA_ONLINE', `Chunk insert skipped (${chunkId}): ${err.message}`);
+        }
+        currentLines = [];
+      };
+
+      for (const line of lines) {
+        if (/^#{1,3}\s+/.test(line)) {
+          flush();
+          currentHeader = line.replace(/^#+/, '').trim();
+          currentLines.push(line);
+        } else {
+          currentLines.push(line);
+          if (currentLines.reduce((sum, l) => sum + l.length, 0) > 1200) flush();
+        }
+      }
+      flush();
+    } catch (err: any) {
+      logger.warn(LogCategory.KB, 'EVA_ONLINE', `FTS indexing skipped for ${filePath}: ${err.message}`);
     }
   }
 

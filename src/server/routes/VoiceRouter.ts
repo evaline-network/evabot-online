@@ -1,5 +1,6 @@
 import { Router, withErrorHandling } from './Router.js';
 import { cloudTts } from '../../core/CloudTTS.js';
+import { edgeTts } from '../../core/EdgeTTS.js';
 import {
   transcribeAudio,
   transcribeVoiceWithFallback,
@@ -84,7 +85,10 @@ function sendSttResult(ctx: { sendJson: (s: number, d: any) => void }, result: S
 export function createVoiceRouter(): Router {
   const router = new Router();
 
-  // POST /api/tts  {text, persona: 'eva'|'adam', lang?} → {ok, audioBase64, voice, cached}
+  // POST /api/tts  {text, persona: 'eva'|'adam', lang?}
+  //   → {ok, audioBase64, voice, cached, provider: 'edge-tts'|'google-tts'}
+  // Chain: Edge-TTS (Azure Neural, free/unlimited) first; Google Chirp3-HD
+  // (1M chars/mo free cap) is the fallback when the edge_tts module fails.
   router.post('/api/tts', withErrorHandling(async (ctx) => {
     const body = await ctx.parseJsonBody();
     const text = typeof body?.text === 'string' ? body.text : '';
@@ -94,12 +98,38 @@ export function createVoiceRouter(): Router {
     }
     const persona = body?.persona === 'adam' ? 'adam' : body?.persona === 'eva' ? 'eva' : undefined;
     const lang = typeof body?.lang === 'string' ? body.lang : undefined;
-    const result = await cloudTts.synthesize(text, { persona, lang });
-    if (result.ok && result.base64Audio) {
-      ctx.sendJson(200, { ok: true, audioBase64: result.base64Audio, mimeType: 'audio/mp3', voice: result.voice, cached: result.cached, overCap: false });
-    } else {
-      ctx.sendJson(200, { ok: false, fallback: 'browser-tts', error: result.error || 'synthesis failed', overCap: result.overCap === true });
+
+    let audioBase64: string | null = null;
+    let voice = '';
+    let cached = false;
+    let provider: 'edge-tts' | 'google-tts' = 'google-tts';
+
+    // 1. Primary: Edge-TTS (throws on failure → fall back below).
+    try {
+      const edge = await edgeTts.synthesize(text, { persona, lang });
+      audioBase64 = edge.audioBuffer.toString('base64');
+      voice = edge.voice;
+      cached = edge.cached;
+      provider = 'edge-tts';
+    } catch (err: any) {
+      logger.warn(LogCategory.HTTP, 'TTS', `edge-tts unavailable → google fallback: ${err.message}`);
     }
+
+    // 2. Fallback: Google Cloud TTS (Chirp3-HD, ONLY-FREE cap enforced there).
+    if (!audioBase64) {
+      const result = await cloudTts.synthesize(text, { persona, lang });
+      if (result.ok && result.base64Audio) {
+        audioBase64 = result.base64Audio;
+        voice = result.voice;
+        cached = result.cached === true;
+        provider = 'google-tts';
+      } else {
+        ctx.sendJson(200, { ok: false, fallback: 'browser-tts', error: result.error || 'synthesis failed', overCap: result.overCap === true });
+        return;
+      }
+    }
+
+    ctx.sendJson(200, { ok: true, audioBase64, mimeType: 'audio/mp3', voice, cached, overCap: false, provider });
   }));
 
   // GET /api/tts/status → voices, usage vs free cap

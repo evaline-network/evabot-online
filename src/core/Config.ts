@@ -82,11 +82,15 @@ export const Config: SystemConfig = {
   opencodeBaseUrl: process.env.OPENCODE_BASE_URL || 'http://100.66.98.4:20128/v1',
   opencodeApiKey: process.env.OPENCODE_API_KEY || '',
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
-  // Cloud TTS (ONLY-FREE rule): Chirp3-HD voices sound far more natural than
-  // Wavenet AND share the 1M chars/month free tier (verified 2026-09,
+  // Cloud TTS (ONLY-FREE rule). PRIMARY = Microsoft Edge-TTS (Azure Neural,
+  // free/unlimited — src/core/EdgeTTS.ts, voices uk-UA-PolinaNeural (Ева) and
+  // ru-RU-DmitryNeural (Адам); NOT configurable here). FALLBACK = Google
+  // Cloud TTS below: Chirp3-HD voices sound far more natural than Wavenet AND
+  // share the 1M chars/month free tier (verified 2026-09,
   // https://cloud.google.com/text-to-speech/pricing). Default cap 900_000
   // leaves a safety margin under the free allowance so we never spend money.
   // Runtime override: data/voice-prefs.json (written by /voices set).
+  // TTS_VOICE_EVA / TTS_VOICE_ADAM apply ONLY to the Google fallback chain.
   ttsVoiceEva: process.env.TTS_VOICE_EVA || 'uk-UA-Chirp3-HD-Aoede',
   ttsVoiceAdam: process.env.TTS_VOICE_ADAM || 'ru-RU-Chirp3-HD-Fenrir',
   ttsMonthlyCharCap: parseInt(process.env.TTS_MONTHLY_CHAR_CAP || '900000', 10),

@@ -286,7 +286,11 @@ export async function transcribeVoiceWithFallback(
   opts: SttOptions = {}
 ): Promise<SttResult> {
   const first = await transcribeAudio(audio, { ...opts, encoding: opts.encoding || 'OGG_OPUS', sampleRate: opts.sampleRate || 48000 });
-  if (first.ok || (first.error || '').includes('MONTHLY_CAP_REACHED')) return first;
+  // Fall back to FLAC when the first attempt errors OR silently yields an
+  // empty transcript (e.g. mp3 bytes mislabeled as OGG_OPUS → Google replies
+  // HTTP 200 with zero results instead of an API error).
+  if (!first.transcript && (!first.ok || (first.error || '').includes('MONTHLY_CAP_REACHED'))) return first;
+  if (first.ok && first.transcript) return first;
 
   const flac = convertToFlac16k(audio);
   if (!flac) return first;

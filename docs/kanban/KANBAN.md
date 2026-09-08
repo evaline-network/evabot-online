@@ -106,7 +106,13 @@
 - [x] **TASK-346**: Roboto SELF-HOSTED (variable woff2 100-900 + italic, public/fonts/, preload + @font-face; Google Fonts links removed) + [CSS:ON/OFF] NOCSS toggle (localStorage 'evabot_css', pre-paint apply); frontend self-hosted too; /fonts/ static route with traversal guard.
 - [x] **TASK-347**: Coverage push — backend 82.7%→85.7% stmts / 77.4% branches (+185 assertions, CoveragePushTests); frontend 10.3%→35.0% (+114 tests: smartinput/ansi-format/api-extra/onboarding-edge); 31 suites + LanguagePolicyTests green.
 
-## 🔄 IN PROGRESS — v0.1.0 (actual)
+## 🔄 IN PROGRESS — v0.1.0 wave 4 (2026-09-08, night)
+
+- [ ] **TASK-350**: Integrate /home/evabot/evaline-online (company site repo) into Eva's Brain — full KnowledgeBase ingestion: products, company docs, processes → bot + agents know EvaLine completely; verify /kb search quality
+- [ ] **TASK-351**: Edge-TTS (Azure Neural, unlimited free, #1 in 2026 reviews) as PRIMARY voice: Eva=uk-UA-PolinaNeural, Adam=ru-RU-DmitryNeural; Google Chirp3-HD fallback; cache + /voices catalog update
+- [ ] **TASK-352**: Voice input (mic → text) E2E — browser getUserMedia/MediaRecorder path, /api/stt (Google STT) with real audio verification, fix all breakages; SmartInput prompt-enhancement quality for RU/UK/EN
+- [ ] **TASK-353**: Fix 'Databases: checking ...' — live DB status line wired to /api/health (Chroma/FTS5/MemoryKB) in telemetry loop; verify Roboto rendering via real browser screenshots
+- [ ] **TASK-354**: Final full-suite verification + deploy + web/terminal chat regression sweep
 
 _Audit 2026-09-08: all code-verified DONE tasks above check out against the source; the following are genuinely still open:_
 
