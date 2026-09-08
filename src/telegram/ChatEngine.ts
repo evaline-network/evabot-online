@@ -2,7 +2,7 @@ import { UniversalLlmClient, LlmProvider, UniversalMessage } from '../core/Unive
 import { Config } from '../core/Config.js';
 import { KnowledgeBaseConnector } from '../core/CorporateRoles.js';
 import { rulesEngine } from '../core/RulesEngine.js';
-import { applyLocalePolicy } from '../core/LocalePolicy.js';
+import { applyLocalePolicy, languageLockInstruction } from '../core/LocalePolicy.js';
 import { ChatHistoryStore } from '../core/ChatHistoryStore.js';
 import { I18nEngine, SupportedLocale } from '../core/I18nEngine.js';
 import { logger } from '../core/Logger.js';
@@ -96,6 +96,9 @@ export class ChatEngine {
     // System-awareness (FEATURE 1) + developer block (FEATURE 2), appended
     // after the existing system prompt building (LocalePolicy/rules/KB).
     effectiveInstruction += `\n${SystemContext.build()}`;
+    // LANGUAGE LOCK: mirror the user's message language (uk/ru/en) — the bot
+    // must never answer in a different language without an explicit request.
+    effectiveInstruction += `\n${languageLockInstruction(message)}`;
     if (DeveloperMode.isUnlocked(sessionId)) {
       effectiveInstruction += `\n${SystemContext.DEVELOPER_BLOCK}`;
     }

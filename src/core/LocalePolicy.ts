@@ -35,10 +35,53 @@ export const LOCALE_POLICY = {
 } as const;
 
 /**
+ * LANGUAGE MIRRORING RULE — the bot must ALWAYS answer in the language the
+ * user addressed it in, and must NEVER switch to another language unless the
+ * user explicitly asks for it (e.g. 'answer in English').
+ */
+export const LANGUAGE_MIRRORING_RULE =
+  'LANGUAGE MIRRORING (STRICT): Always respond in the SAME language the user wrote their message in. ' +
+  'Detect the language of the user\'s last message and reply exclusively in that language. ' +
+  'Never switch languages on your own initiative — switching is allowed ONLY when the user explicitly requests it ' +
+  '(e.g. "answer in English", "відповідай українською"). ' +
+  'Exception: code, identifiers, file paths, API names and quoted technical terms stay in their original form.';
+
+export type MessageLanguage = 'uk' | 'ru' | 'en';
+
+/**
+ * Heuristic language detection for a user message (uk / ru / en).
+ * Ukrainian markers: і ї є ґ + characteristic words; Cyrillic without those → ru; else en.
+ */
+export function detectMessageLanguage(text: string): MessageLanguage {
+  if (!text || !text.trim()) return 'en';
+  const lower = text.toLowerCase();
+
+  if (/[\u0400-\u04FF]/.test(text)) {
+    const ukMarkers = (lower.match(/[іїєґ]/g) || []).length;
+    const ukWords = ['привіт', 'будь ласка', 'дякую', 'скажи', 'як', 'що', 'це', 'виготовлення', 'замовлення', 'київ', 'україні', 'украина'];
+    const ruWords = ['привет', 'пожалуйста', 'спасибо', 'как', 'что', 'это', 'производство', 'заказ', 'киев', 'украине', 'здравствуйте', 'скажите'];
+    const ukScore = ukMarkers * 2 + ukWords.filter((w) => lower.includes(w)).length;
+    const ruScore = ruWords.filter((w) => lower.includes(w)).length;
+    if (ukScore > ruScore) return 'uk';
+    if (ruScore > ukScore) return 'ru';
+    // Ambiguous Cyrillic without markers → default to ru (most common Cyrillic)
+    return 'ru';
+  }
+  return 'en';
+}
+
+/** Builds a per-request language-lock instruction line for the system prompt. */
+export function languageLockInstruction(userText: string): string {
+  const lang = detectMessageLanguage(userText);
+  const name = lang === 'uk' ? 'Ukrainian' : lang === 'ru' ? 'Russian' : 'English';
+  return `LANGUAGE LOCK: The user's current message is in ${name}. Respond ONLY in ${name}. Do not switch languages unless explicitly asked.`;
+}
+
+/**
  * Appends the locale policy to any system prompt / instruction.
  * Ensures every LLM agent (solo/broadcast/dialogue/consilium and all roles)
  * enforces the same Ukraine-based rule set.
  */
 export function applyLocalePolicy(systemPrompt: string): string {
-  return `${systemPrompt}\n${LOCALE_POLICY.systemInstructionSuffix}`.trim();
+  return `${systemPrompt}\n${LOCALE_POLICY.systemInstructionSuffix}\n${LANGUAGE_MIRRORING_RULE}`.trim();
 }

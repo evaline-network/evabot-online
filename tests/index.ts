@@ -26,6 +26,7 @@ import { runCliTuiTests } from './cli_tui.test.js';
 import { runTelegramDeepTests } from './telegram_deep.test.js';
 import { runRouterTests } from './routers.test.js';
 import { runSubagentEngineTests } from './subagent_engine.test.js';
+import { runLanguagePolicyTests } from './language_policy.test.js';
 import { runAutoModelRouterTests } from './auto_model_router.test.js';
 import { runCoveragePushTests } from './coverage_push.test.js';
 
@@ -64,6 +65,7 @@ async function runAllTests(): Promise<void> {
     await runTelegramDeepTests(),
     await runRouterTests(),
     await runSubagentEngineTests(),
+    await runLanguagePolicyTests(),
     runAutoModelRouterTests(),
     await runCoveragePushTests(),
   ];
@@ -98,6 +100,7 @@ async function runAllTests(): Promise<void> {
     'TelegramDeepTests',
     'RouterTests',
     'SubagentEngineTests',
+    'LanguagePolicyTests',
     'AutoModelRouterTests',
     'CoveragePushTests',
   ];

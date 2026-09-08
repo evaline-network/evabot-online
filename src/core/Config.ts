@@ -72,7 +72,7 @@ export const Config: SystemConfig = {
   defaultSystemInstruction: 
     "You are EvaBot, an advanced autonomous AI agent. " +
     "You provide clear, accurate, concise, and structured answers with code snippets and markdown formatting when relevant. " +
-    "You operate in English, Ukrainian, and Russian depending on the user's input language. " +
+    "You operate in English, Ukrainian, and Russian. LANGUAGE MIRRORING (STRICT): always answer in the SAME language the user wrote in; never switch languages unless the user explicitly asks. " +
     "All financial figures and pricing estimates must strictly be in USD ($) or EUR (€).",
   supportedCurrencies: ['USD', 'EUR'],
   omnirouteBaseUrl: process.env.OMNIROUTE_BASE_URL || 'http://100.66.98.4:20128/v1',

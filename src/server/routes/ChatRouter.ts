@@ -4,7 +4,7 @@ import { ConsiliumEngine, ConsiliumMode } from '../../core/ConsiliumEngine.js';
 import { Config } from '../../core/Config.js';
 import { CORPORATE_ROLES, KnowledgeBaseConnector } from '../../core/CorporateRoles.js';
 import { rulesEngine } from '../../core/RulesEngine.js';
-import { applyLocalePolicy } from '../../core/LocalePolicy.js';
+import { applyLocalePolicy, languageLockInstruction } from '../../core/LocalePolicy.js';
 import { logger } from '../../core/Logger.js';
 import { ChatHistoryStore, CONSILIUM_SESSION_ID } from '../../core/ChatHistoryStore.js';
 import { I18nEngine } from '../../core/I18nEngine.js';
@@ -76,6 +76,8 @@ export class ChatRouter extends Router {
       // System-awareness (FEATURE 1) + developer block (FEATURE 2), appended
       // AFTER the existing system prompt building (role/LocalePolicy/rules/KB).
       effectiveInstruction += `\n${SystemContext.build()}`;
+      // LANGUAGE LOCK: mirror the user's message language (uk/ru/en).
+      effectiveInstruction += `\n${languageLockInstruction(message)}`;
       if (DeveloperMode.isUnlocked(chatSessionId)) {
         effectiveInstruction += `\n${SystemContext.DEVELOPER_BLOCK}`;
       }
@@ -134,6 +136,8 @@ export class ChatRouter extends Router {
 
       // System-awareness (FEATURE 1) + developer block (FEATURE 2).
       effectiveInstruction += `\n${SystemContext.build()}`;
+      // LANGUAGE LOCK: mirror the user's message language (uk/ru/en).
+      effectiveInstruction += `\n${languageLockInstruction(message)}`;
       if (DeveloperMode.isUnlocked(chatSessionId)) {
         effectiveInstruction += `\n${SystemContext.DEVELOPER_BLOCK}`;
       }

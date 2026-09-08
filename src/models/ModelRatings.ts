@@ -1786,7 +1786,7 @@ export class ModelCommand {
     );
 
     if (!model) {
-      return `[ERROR] Модель "${query}" не найдена в каталоге 78 моделей. Используйте /models для поиска.`;
+      return `[ERROR] Модель "${query}" не найдена в каталоге (${ModelRegistry.getAllModels().length} моделей). Используйте /models для поиска.`;
     }
 
     const rating = ModelRatings.computeRating(model);

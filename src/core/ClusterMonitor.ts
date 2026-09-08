@@ -278,7 +278,7 @@ export class ClusterMonitor {
         const parts = omniLine.trim().split(/\s+/);
         procs.push({
           name: 'omniroute',
-          role: 'LiteLLM Multi-Model Proxy (78 models)',
+          role: 'LiteLLM Multi-Model Proxy',
           node: 'evabot-agent-vm (EU)',
           pid: parseInt(parts[0], 10),
           cpu: `${parts[1]}%`,

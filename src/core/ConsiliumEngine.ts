@@ -329,7 +329,7 @@ export class ConsiliumEngine {
     } else if (persona === 'adam') {
       interviewer = {
         id: 'adam-interviewer',
-        model: interviewer?.model || 'gemini-2.5-pro',
+        model: interviewer?.model || Config.defaultModel || 'openrouter/free',
         name: 'Adam (Backend & Systems Interviewer)',
         title: 'Chief Backend Architect & Core Systems Lead',
         systemPrompt: applyLocalePolicy(
@@ -345,7 +345,7 @@ export class ConsiliumEngine {
     } else if (persona === 'dual') {
       interviewer = {
         id: 'dual-interviewers',
-        model: interviewer?.model || 'gemini-2.5-pro',
+        model: interviewer?.model || Config.defaultModel || 'openrouter/free',
         name: 'Eva & Adam (Dual Co-Pilot Interview Board)',
         title: 'Full-Stack Technical Interview Board',
         systemPrompt: applyLocalePolicy(
@@ -500,7 +500,7 @@ export class ConsiliumEngine {
   ): Promise<ConsiliumResult> {
     const p1 = participants[0] || {
       id: 'agent-1',
-      model: 'gemini-2.5-pro',
+      model: Config.defaultModel || 'openrouter/free',
       name: 'Lead Proponent',
       title: 'Lead Architect',
       systemPrompt: CORPORATE_ROLES.architect.systemPrompt,
@@ -606,7 +606,9 @@ export class ConsiliumEngine {
     }
 
     // Synthesize final dialogue outcome
-    const synthModel = options.synthesizerModel || 'gemini-2.5-pro';
+    // ONLY-FREE policy: synthesis defaults to the reliable free meta-router.
+    // Gemini is reserved for development — never a silent default.
+    const synthModel = options.synthesizerModel || Config.defaultModel || 'openrouter/free';
     options.onProgress?.({
       type: 'synthesis_start',
       message: `Synthesizing final dialogue conclusion with ${synthModel}...`,
@@ -801,7 +803,9 @@ export class ConsiliumEngine {
     }
 
     // Final Stage: Synthesizer produces authoritative corporate consensus
-    const synthModel = options.synthesizerModel || 'gemini-2.5-pro';
+    // ONLY-FREE policy: synthesis defaults to the reliable free meta-router.
+    // Gemini is reserved for development — never a silent default.
+    const synthModel = options.synthesizerModel || Config.defaultModel || 'openrouter/free';
     logger.info('ConsiliumEngine', `Synthesizing final consensus with ${synthModel}`);
     options.onProgress?.({
       type: 'synthesis_start',

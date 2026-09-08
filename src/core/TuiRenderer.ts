@@ -17,7 +17,7 @@ export const DOMAINS_CONFIG: DomainMeta[] = [
     badge: 'NEURAL CORE',
     role: 'AI Вычислительное Ядро, Оркестрация Агентов & Мульти-LLM Консилиум',
     infra: 'evabot-agent-vm · 8 vCPU Intel Xeon Sapphire Rapids · 32 GB RAM · Франкфурт (ФРГ) · IP: 34.159.202.82',
-    target: 'Координация агентов, консилиум 78 моделей, векторная память и TUI-сервер.',
+    target: 'Координация агентов, консилиум 94 моделей, векторная память и TUI-сервер.',
   },
   {
     domain: 'evaline.network',
@@ -147,7 +147,7 @@ export class TuiRenderer {
     telemetryBlock += `  • EVABRAIN (Compute Core / ФРГ): CPU: ${bLoad} (${bCpuPct}%) ${this.makeBar(bCpuPct)} | RAM: ${bUsedMem}/${bTotMem} GB (${bRamPct}%) | Uptime: ${bUptime} | Статус: [HEALTHY]\n`;
     telemetryBlock += `  • EVAFACE  (Edge Ingress / США): Load: ${micro.loadAvg.split(',')[0]} (${micro.cpuPct}%) ${this.makeBar(micro.cpuPct)} | RAM: ${micro.memUsedMb}/${micro.memTotalMb} MB (${Math.round((micro.memUsedMb / micro.memTotalMb) * 100)}%) | Uptime: ${micro.uptimeStr} | Ingress: [Caddy HTTP/3 OK]\n`;
     telemetryBlock += `  • WIREGUARD MESH BACKBONE:       100.125.200.49 (US)  100.66.98.4 (EU) | Latency: ${latency} ms RTT | Потери: [0.0%]\n`;
-    telemetryBlock += `  • ПУЛ МОДЕЛЕЙ И КЛАСТЕРА:        Активно: 78 моделей онлайн (Gemini, Claude, DeepSeek) | Режим: [ONLINE]`;
+    telemetryBlock += `  • ПУЛ МОДЕЛЕЙ И КЛАСТЕРА:        Активно: 94 модели онлайн (Gemini, Claude, DeepSeek) | Режим: [ONLINE]`;
 
     let procBlock = '[ РЕАЛЬНЫЕ ПРОЦЕССЫ КЛАСТЕРА // LIVE PROCESS WATCHER ]:\n';
     procBlock += '  PID     УЗЕЛ             ПРОЦЕСС / СЛУЖБА             CPU    ОЗУ      СТАТУС\n';
@@ -172,7 +172,7 @@ export class TuiRenderer {
 
     const llmBlock = `[ МАТРИЦА LLM-ПРОВАЙДЕРОВ И МОДЕЛЕЙ // LLM & MULTI-AGENT STATUS ]:
   • GOOGLE GEMINI (ADC):   Gemini 2.5 Flash, 3.8 Flash, Pro (1M ctx)     | [ONLINE] 🟢
-  • OMNIROUTE (Port 20128): 78 моделей · LPU Groq/Cerebras (800 t/s)      | [ONLINE] 🟢
+  • OMNIROUTE (Port 20128): 94 модели · LPU Groq/Cerebras (800 t/s)      | [ONLINE] 🟢
   • OPENROUTER HUB:        56 бесплатных кодинг-моделей (DeepSeek, Qwen)  | [ONLINE] 🟢
   • OPENCODE AGENTS:       21 MCP-инструмент · Автономная разработка     | [ONLINE] 🟢`;
 
