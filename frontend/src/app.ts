@@ -113,7 +113,7 @@ interface TranslationStrings {
   copyBtn: string;
 }
 
-const TRANSLATIONS: Record<Lang, TranslationStrings> = {
+export const TRANSLATIONS: Record<Lang, TranslationStrings> = {
   en: {
     appTitle: 'EVABOT // CYBER-TERMINAL & NEURAL VOICE HUB',
     statusOnline: 'ONLINE',
@@ -267,7 +267,7 @@ interface AutocorrectResult {
   fixes: { from: string; to: string }[];
 }
 
-const SmartInput = {
+export const SmartInput = {
   VOCAB_KEY: 'evabot_vocab',
   LEXICON_KEY: 'evabot_lexicon',
   AC_KEY: 'evabot_autocorrect',
