@@ -13,7 +13,7 @@ export interface KnowledgeDocument {
   language: 'en' | 'uk' | 'ru' | 'pl' | 'ro' | 'de';
   tags: string[];
   source: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   relevanceScore?: number;
 }
 
@@ -36,7 +36,7 @@ export class KnowledgeBase {
   private knowledgeBasePath: string;
   private desktopPath: string;
   private initialized: boolean = false;
-  private sqliteDb: any = null;
+  private sqliteDb: { prepare(sql: string): { get(...params: unknown[]): Record<string, unknown>; all(...params: unknown[]): Record<string, unknown>[]; run(...params: unknown[]): void } } | null = null;
   private ftsChunkCount: number = 0;
 
   private constructor() {
@@ -89,7 +89,7 @@ export class KnowledgeBase {
           const sqliteModule = require('node:sqlite');
           if (sqliteModule && sqliteModule.DatabaseSync) {
             this.sqliteDb = new sqliteModule.DatabaseSync(p);
-            const countRow = this.sqliteDb.prepare('SELECT count(*) as count FROM chunks_fts').get();
+            const countRow = this.sqliteDb!.prepare('SELECT count(*) as count FROM chunks_fts').get();
             this.ftsChunkCount = countRow ? Number(countRow.count) : 0;
             this.activeBackend = 'sqlite';
             logger.info(LogCategory.KB, 'SQLITE', `Connected to SQLite FTS5 index at ${p}`, {
@@ -97,8 +97,8 @@ export class KnowledgeBase {
             });
             return;
           }
-        } catch (err: any) {
-          logger.warn(LogCategory.KB, 'SQLITE', `Could not open SQLite FTS at ${p}: ${err.message}`);
+        } catch (err: unknown) {
+          logger.warn(LogCategory.KB, 'SQLITE', `Could not open SQLite FTS at ${p}: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
     }
@@ -127,7 +127,7 @@ export class KnowledgeBase {
         for (const lang of languages) {
           const langPath = path.join(sitePath, lang);
           if (fs.existsSync(langPath)) {
-            await this.loadLanguageDirectory(langPath, lang as any);
+            await this.loadLanguageDirectory(langPath, lang as 'en' | 'uk' | 'ru' | 'pl' | 'ro' | 'de');
             loadedAny = true;
           }
         }
@@ -260,7 +260,6 @@ export class KnowledgeBase {
       const stem = relPath.replace(/\.(md|txt)$/i, '').replace(/\.(en|uk|ru)$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
       const lines = doc.content.split('\n');
 
-      type Chunk = { header: string; text: string };
       let currentHeader = doc.title;
       let currentLines: string[] = [];
       let chunkIndex = 0;
@@ -270,13 +269,13 @@ export class KnowledgeBase {
         const fullText = `Document: ${doc.title}\nSection: ${currentHeader}\n\n${raw}`;
         const chunkId = `${language}_${stem}_${chunkIndex}`;
         try {
-          this.sqliteDb.prepare(
+          this.sqliteDb!.prepare(
             'INSERT INTO chunks_fts (chunk_id, title, header, language, category, url, file_path, content) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
           ).run(chunkId, doc.title, currentHeader, language, doc.category, '', filePath, fullText);
           this.ftsChunkCount += 1;
           chunkIndex += 1;
-        } catch (err: any) {
-          logger.warn(LogCategory.KB, 'EVA_ONLINE', `Chunk insert skipped (${chunkId}): ${err.message}`);
+        } catch (err: unknown) {
+          logger.warn(LogCategory.KB, 'EVA_ONLINE', `Chunk insert skipped (${chunkId}): ${err instanceof Error ? err.message : String(err)}`);
         }
         currentLines = [];
       };
@@ -292,8 +291,8 @@ export class KnowledgeBase {
         }
       }
       flush();
-    } catch (err: any) {
-      logger.warn(LogCategory.KB, 'EVA_ONLINE', `FTS indexing skipped for ${filePath}: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.KB, 'EVA_ONLINE', `FTS indexing skipped for ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
@@ -344,6 +343,28 @@ export class KnowledgeBase {
     this.documents.set(doc.id, doc);
   }
 
+  /**
+   * Persist a user-added document into the SQLite FTS5 chunks table so it
+   * survives restarts (mirrors the indexEvalineOnlineChunks insert pattern).
+   * Returns true when a row was written; false when FTS5 is unavailable.
+   */
+  public persistDocument(doc: KnowledgeDocument): boolean {
+    if (!this.sqliteDb) return false;
+    const chunkId = `user_${doc.language}_${doc.id}`;
+    const fullText = `Document: ${doc.title}\n\n${doc.content}`;
+    try {
+      this.sqliteDb
+        .prepare('INSERT INTO chunks_fts (chunk_id, title, header, language, category, url, file_path, content) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(chunkId, doc.title, doc.title, doc.language, doc.category, doc.source, `user/${doc.id}`, fullText);
+      this.ftsChunkCount += 1;
+      logger.info(LogCategory.KB, 'USER_ADD', `Persisted document to FTS5 (chunk=${chunkId}, chars=${doc.content.length})`);
+      return true;
+    } catch (err: unknown) {
+      logger.warn(LogCategory.KB, 'USER_ADD', `FTS persist skipped (${chunkId}): ${err instanceof Error ? err.message : String(err)}`);
+      return false;
+    }
+  }
+
   public removeDocument(id: string): boolean {
     return this.documents.delete(id);
   }
@@ -387,7 +408,7 @@ export class KnowledgeBase {
           FROM chunks_fts
           WHERE chunks_fts MATCH ?
         `;
-        const params: any[] = [ftsQuery];
+        const params: (string | number)[] = [ftsQuery];
         if (options?.language) {
           sql += ' AND language = ?';
           params.push(options.language);
@@ -406,7 +427,7 @@ export class KnowledgeBase {
             title: `${row.title} — ${row.header || row.category}`,
             content: String(row.content),
             category: String(row.category),
-            language: (row.language as any) || 'uk',
+            language: (row.language as 'en' | 'uk' | 'ru' | 'pl' | 'ro' | 'de') || 'uk',
             tags: ['fts5', 'evaline-chunk', String(row.language)],
             source: `evaline-knowledge-base/fts_index.db [${row.file_path || 'chunk'}]`,
             relevanceScore: Math.min(0.99, Math.max(0.5, 1.0 - Math.abs(Number(row.rank)) * 0.05)),
@@ -417,8 +438,8 @@ export class KnowledgeBase {
             },
           });
         }
-      } catch (err: any) {
-        logger.warn(LogCategory.KB, 'FTS_SEARCH', `FTS query fallback: ${err.message}`);
+      } catch (err: unknown) {
+        logger.warn(LogCategory.KB, 'FTS_SEARCH', `FTS query fallback: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 

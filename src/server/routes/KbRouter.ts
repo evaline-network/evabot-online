@@ -1,6 +1,7 @@
 import { Router, withErrorHandling } from './Router.js';
 import { knowledgeBase, KnowledgeBackend } from '../../core/KnowledgeBase.js';
 import { KnowledgeBaseCommand } from '../../core/KnowledgeBaseCommand.js';
+import { AddCommand } from '../../core/AddCommand.js';
 
 export function createKbRouter(): Router {
   const router = new Router();
@@ -64,6 +65,35 @@ export function createKbRouter(): Router {
     const command = body.command || '';
     const result = KnowledgeBaseCommand.execute(command);
     ctx.sendJson(200, { result });
+  }));
+
+  // POST /api/kb/documents {title, content, source?, tags?}
+  //   → {ok, id} — adds a user document to KB (memory + SQLite FTS5 persist).
+  router.post('/api/kb/documents', withErrorHandling(async (ctx) => {
+    const body = await ctx.parseJsonBody();
+    const title = typeof body.title === 'string' ? body.title : '';
+    const content = typeof body.content === 'string' ? body.content : '';
+    const source = typeof body.source === 'string' ? body.source : undefined;
+    const tags = Array.isArray(body.tags) ? body.tags.filter((t: unknown): t is string => typeof t === 'string') : undefined;
+    const result = await AddCommand.addDocument(title, content, source, tags);
+    if (!result.ok) {
+      ctx.sendJson(400, result);
+      return;
+    }
+    ctx.sendJson(200, result);
+  }));
+
+  // POST /api/kb/link {url}
+  //   → {ok, id, chars} — fetch URL, strip HTML tags, add extracted text to KB.
+  router.post('/api/kb/link', withErrorHandling(async (ctx) => {
+    const body = await ctx.parseJsonBody();
+    const url = typeof body.url === 'string' ? body.url : '';
+    const result = await AddCommand.addLink(url);
+    if (!result.ok) {
+      ctx.sendJson(400, result);
+      return;
+    }
+    ctx.sendJson(200, result);
   }));
 
   return router;

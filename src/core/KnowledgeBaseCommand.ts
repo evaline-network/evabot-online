@@ -115,7 +115,7 @@ export class KnowledgeBaseCommand {
 
   private static handleList(args: string[]): string {
     const filterArg = args[0]?.toLowerCase();
-    let filter: { language?: string; category?: string } = {};
+    const filter: { language?: string; category?: string } = {};
     
     if (filterArg && ['en', 'uk', 'ru', 'pl', 'ro', 'de'].includes(filterArg)) {
       filter.language = filterArg;

@@ -2,7 +2,7 @@ import os from 'node:os';
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { ModelRegistry, GeminiModelInfo } from './ModelRegistry.js';
-import { AccountingEngine, CapitalExpenses } from '../core/AccountingEngine.js';
+import { AccountingEngine } from '../core/AccountingEngine.js';
 import { AgentBuilder } from '../core/AgentBuilder.js';
 import { I18nEngine } from '../core/I18nEngine.js';
 import { ChatHistoryStore } from '../core/ChatHistoryStore.js';
@@ -24,6 +24,7 @@ import { SystemContext, getLastUsedModel } from '../core/SystemContext.js';
 import { DeveloperMode } from '../core/DeveloperMode.js';
 import { AutoModelRouter } from '../core/AutoModelRouter.js';
 import { SubagentEngine } from '../core/SubagentEngine.js';
+import { AddCommand } from '../core/AddCommand.js';
 import { logger } from '../core/Logger.js';
 
 export type ModelRatingDimension = 'quality' | 'speed' | 'context' | 'cost';
@@ -175,7 +176,7 @@ export class ModelRatings {
   }
 
   public static rankByDimension(dimension: ModelRatingDimension, limit: number = 10, freeOnly: boolean = false): TopModelEntry[] {
-    let models = freeOnly ? ModelRegistry.getFreeModels() : ModelRegistry.getAllModels();
+    const models = freeOnly ? ModelRegistry.getFreeModels() : ModelRegistry.getAllModels();
     const ratings = models.map((m) => ({
       model: m,
       rating: this.computeRating(m),
@@ -503,15 +504,15 @@ export class ModelCommand {
       case '/top':
         return this.handleTop(parts.slice(1));
       case '/free':
-        return this.handleFree(parts.slice(1));
+        return this.handleFree();
       case '/paid':
-        return this.handlePaid(parts.slice(1));
+        return this.handlePaid();
       case '/models':
         return this.handleModels(parts.slice(1));
       case '/mcp':
-        return this.handleMcp(parts.slice(1));
+        return this.handleMcp();
       case '/lsp':
-        return this.handleLsp(parts.slice(1));
+        return this.handleLsp();
       case '/history':
         return this.handleHistory(parts.slice(1));
       case '/memory':
@@ -587,6 +588,14 @@ export class ModelCommand {
         // sync path (used by web /api/models/command and Telegram legacy sync
         // executor) returns the usage hint instead of blocking the request.
         return this.handleSubagentHint(parts.slice(1).join(' '));
+      case '/add':
+      case '/file':
+        // /add does async work (KB persist, URL fetch, uploads). The sync
+        // registry returns bare /add help; the real run lives in executeAsync
+        // (ModelsRouter + Telegram both route through it).
+        return parts.length === 1
+          ? AddCommand.helpText()
+          : `${AddCommand.helpText()}\n[NOTE] Async subcommands run via the async executor (web API / Telegram / CLI async path).`;
       default:
         OpLog.getInstance().log('error', 'command', `unknown command: ${action}`);
         return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /translate, /health, /products, /who, /sephirot, /debug, /log, /monitor, /sys, /developer, /voices, /settings, /agents, /room, /rooms, /free, /paid, /auto, or /help.`;
@@ -687,6 +696,9 @@ export class ModelCommand {
       const raw = command.replace(/^\s*\/[^\s]+\s*/i, '').trim();
       return this.handleSubagent(raw);
     }
+    if (cmd.startsWith('/add') || cmd === '/file' || cmd.startsWith('/file ')) {
+      return AddCommand.execute(command);
+    }
     return this.execute(command);
   }
 
@@ -715,9 +727,10 @@ export class ModelCommand {
       const engine = new SubagentEngine();
       const run = await engine.run(task, agentCount);
       return SubagentEngine.format(run);
-    } catch (err: any) {
-      logger.warn('ModelCommand', `/subagent failed: ${err.message}`);
-      return `[X] Sub-agent batch failed: ${err.message}`;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.warn('ModelCommand', `/subagent failed: ${msg}`);
+      return `[X] Sub-agent batch failed: ${msg}`;
     }
   }
 
@@ -737,8 +750,9 @@ export class ModelCommand {
       const { items, partialErrors } = await NewsEngine.fetchNews(tags);
       const filtered = tags && tags.length > 0 ? items.filter((i) => tags.includes(i.category)) : items;
       return NewsEngine.formatNews(I18nEngine.getLocale(), filtered, partialErrors);
-    } catch (err: any) {
-      return `[ERROR] News engine unavailable: ${err.message}`;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return `[ERROR] News engine unavailable: ${msg}`;
     }
   }
 
@@ -870,8 +884,9 @@ export class ModelCommand {
       lines.push(`    • Документов в памяти   : ${kbStats.documentCount}`);
       lines.push(`    • FTS5 чанков (SQLite)  : ${sqliteBackend ? sqliteBackend.documentCount : 0}`);
       lines.push(`    • Активный бэкенд       : ${kbStats.name}`);
-    } catch (err: any) {
-      lines.push(`  БАЗА ЗНАНИЙ: недоступна (${err.message})`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      lines.push(`  БАЗА ЗНАНИЙ: недоступна (${msg})`);
     }
 
     // Chat history database statistics
@@ -882,8 +897,9 @@ export class ModelCommand {
       lines.push(`    • Всего сообщений       : ${counts.totalMessages}`);
       lines.push(`    • Сессий                : ${counts.sessions}`);
       lines.push(`    • Файл БД               : ${chatDb.getPath()}`);
-    } catch (err: any) {
-      lines.push(`  ИСТОРИЯ ЧАТОВ: недоступна (${err.message})`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      lines.push(`  ИСТОРИЯ ЧАТОВ: недоступна (${msg})`);
     }
 
     // Vector store pointer
@@ -928,8 +944,9 @@ export class ModelCommand {
         const shown = preview.length > 80 ? preview.substring(0, 77) + '...' : preview;
         lines.push(`    • [${hit.sessionId}] ${when} (${hit.role}): ${shown}`);
       }
-    } catch (err: any) {
-      lines.push(`    • Поиск чатов недоступен: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      lines.push(`    • Поиск чатов недоступен: ${msg}`);
     }
 
     // 2. Knowledge Base search (SQLite FTS5 + memory fallback)
@@ -947,8 +964,9 @@ export class ModelCommand {
         lines.push(`    • [${doc.language}] ${doc.title.substring(0, 50)}: ${shown}`);
       }
       lines.push('    • Расширенный поиск по KB: /kb search <запрос> или GET /api/kb/search');
-    } catch (err: any) {
-      lines.push(`    • Поиск по KB недоступен: ${err.message}. Альтернатива: GET /api/kb/search`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      lines.push(`    • Поиск по KB недоступен: ${msg}. Альтернатива: GET /api/kb/search`);
     }
 
     lines.push('─'.repeat(78));
@@ -965,8 +983,10 @@ export class ModelCommand {
         stdio: ['ignore', 'pipe', 'ignore'],
       }).trim();
       return out || 'unknown';
-    } catch (err: any) {
-      const stdout = typeof err.stdout === 'string' ? err.stdout.trim() : '';
+    } catch (err: unknown) {
+      const stdout = typeof err === 'object' && err !== null && 'stdout' in err && typeof (err as { stdout: unknown }).stdout === 'string'
+        ? ((err as { stdout: string }).stdout).trim()
+        : '';
       if (stdout) return stdout;
       return 'unknown';
     }
@@ -980,7 +1000,7 @@ export class ModelCommand {
         stdio: ['ignore', 'pipe', 'ignore'],
       });
       return out.split('\n').some((n) => n.includes(nameFragment)) ? 'running' : 'stopped';
-    } catch (err: any) {
+    } catch {
       return 'unknown';
     }
   }
@@ -1094,7 +1114,7 @@ export class ModelCommand {
     }
   }
 
-  private static handleFree(args: string[]): string {
+  private static handleFree(): string {
     const models = ModelRegistry.getFreeModels();
     const lines: string[] = [];
     lines.push('');
@@ -1117,7 +1137,7 @@ export class ModelCommand {
     return lines.join('\n');
   }
 
-  private static handlePaid(args: string[]): string {
+  private static handlePaid(): string {
     const models = ModelRegistry.getPaidOnlyModels();
     const lines: string[] = [];
     lines.push('');
@@ -1170,7 +1190,7 @@ export class ModelCommand {
     return lines.join('\n');
   }
 
-  private static handleMcp(args: string[]): string {
+  private static handleMcp(): string {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
@@ -1209,7 +1229,7 @@ export class ModelCommand {
     return lines.join('\n');
   }
 
-  private static handleLsp(args: string[]): string {
+  private static handleLsp(): string {
     const lines: string[] = [];
     lines.push('');
     lines.push('═'.repeat(78));
@@ -1399,8 +1419,9 @@ export class ModelCommand {
     // Provider breaker health (reuses the /health renderer)
     try {
       lines.push(ProviderFallbackChain.getHealthReport());
-    } catch (err: any) {
-      lines.push(`  [WRN] Breaker health недоступна: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      lines.push(`  [WRN] Breaker health недоступна: ${msg}`);
     }
 
     // OpLog stats
@@ -1414,8 +1435,9 @@ export class ModelCommand {
         lines.push(`    • Остання помилка : ${new Date(st.lastError.ts).toISOString().replace('T', ' ').substring(0, 19)} [${st.lastError.kind}] ${st.lastError.text.substring(0, 60)}`);
       }
       lines.push(`    • Файл            : ${st.filePath}${st.fileBytes !== undefined ? ` (${(st.fileBytes / 1024).toFixed(1)} KB)` : ' (ще не створено)'}`);
-    } catch (err: any) {
-      lines.push(`  [WRN] OpLog stats недоступні: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      lines.push(`  [WRN] OpLog stats недоступні: ${msg}`);
     }
     lines.push('─'.repeat(78));
 
@@ -1474,9 +1496,9 @@ export class ModelCommand {
       if (/^\d+$/.test(a)) {
         limit = Math.max(1, Math.min(200, parseInt(a, 10)));
       } else if (LEVELS.has(a)) {
-        level = a as any;
+        level = a as 'info' | 'warn' | 'error' | 'debug';
       } else if (KINDS.has(a)) {
-        kind = a as any;
+        kind = a as 'command' | 'llm' | 'breaker' | 'system' | 'chat';
       } else {
         textLike = a;
       }

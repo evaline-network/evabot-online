@@ -13,8 +13,8 @@ export class PluginManager {
   private static instance: PluginManager;
   private plugins: Map<string, LoadedPlugin> = new Map();
   private eventBus: PluginEventBus = new PluginEventBus();
-  private routes: Array<{ method: string; path: string; handler: Function; pluginId: string }> = [];
-  private commands: Map<string, { handler: Function; help?: string; pluginId: string }> = new Map();
+  private routes: Array<{ method: string; path: string; handler: (...args: unknown[]) => unknown; pluginId: string }> = [];
+  private commands: Map<string, { handler: (...args: unknown[]) => unknown; help?: string; pluginId: string }> = new Map();
   
   private constructor() {}
   
@@ -26,7 +26,7 @@ export class PluginManager {
   }
   
   public static resetInstance(): void {
-    PluginManager.instance = null as any;
+    PluginManager.instance = null!;
   }
   
   public async register(plugin: Plugin): Promise<void> {
@@ -57,12 +57,12 @@ export class PluginManager {
         logger: this.createPluginLogger(id),
         eventBus: this.eventBus,
         registerRoute: (method, path, handler) => {
-          this.routes.push({ method, path, handler, pluginId: id });
+          this.routes.push({ method, path, handler: handler as (...args: unknown[]) => unknown, pluginId: id });
         },
         registerCommand: (command, handler, help) => {
-          this.commands.set(command, { handler, help, pluginId: id });
+          this.commands.set(command, { handler: handler as (...args: unknown[]) => unknown, help, pluginId: id });
         },
-        getStorage: (name) => null,
+        getStorage: () => null,
       };
       
       await plugin.initialize(context);
@@ -71,11 +71,12 @@ export class PluginManager {
       loaded.status = plugin.manifest.enabled ? 'active' : 'disabled';
       
       logger.info(LogCategory.SYSTEM, 'PluginManager', `Plugin registered: ${id} v${plugin.manifest.version}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const loaded = this.plugins.get(id)!;
       loaded.status = 'failed';
-      loaded.error = err.message;
-      throw new PluginError(id, `Failed to initialize: ${err.message}`, err);
+      const message = err instanceof Error ? err.message : String(err);
+      loaded.error = message;
+      throw new PluginError(id, `Failed to initialize: ${message}`, err instanceof Error ? err : undefined);
     }
   }
   
@@ -107,8 +108,9 @@ export class PluginManager {
       await loaded.plugin.shutdown();
       loaded.status = 'shutdown';
       logger.info(LogCategory.SYSTEM, 'PluginManager', `Plugin shut down: ${pluginId}`);
-    } catch (err: any) {
-      logger.error(LogCategory.SYSTEM, 'PluginManager', `Shutdown error for ${pluginId}: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(LogCategory.SYSTEM, 'PluginManager', `Shutdown error for ${pluginId}: ${message}`);
     }
   }
   
@@ -133,18 +135,18 @@ export class PluginManager {
     return this.plugins.get(pluginId)?.status;
   }
   
-  public getRoutes(): Array<{ method: string; path: string; handler: Function; pluginId: string }> {
+  public getRoutes(): Array<{ method: string; path: string; handler: (...args: unknown[]) => unknown; pluginId: string }> {
     return this.routes.filter(r => {
       const loaded = this.plugins.get(r.pluginId);
       return loaded && loaded.status === 'active';
     });
   }
   
-  public getAllPluginRoutes(): Array<{ method: string; path: string; handler: (body: any, query: any) => Promise<any> | any; pluginId: string }> {
-    const result: Array<{ method: string; path: string; handler: (body: any, query: any) => Promise<any> | any; pluginId: string }> = [];
+  public getAllPluginRoutes(): Array<{ method: string; path: string; handler: (body: unknown, query: unknown) => Promise<unknown> | unknown; pluginId: string }> {
+    const result: Array<{ method: string; path: string; handler: (body: unknown, query: unknown) => Promise<unknown> | unknown; pluginId: string }> = [];
     for (const [id, loaded] of this.plugins) {
       if (loaded.status === 'active') {
-        const plugin = loaded.plugin as any;
+        const plugin = loaded.plugin as Plugin & { routes?: Array<{ method: string; path: string; handler: (...args: unknown[]) => unknown }> };
         if (plugin.routes && Array.isArray(plugin.routes)) {
           for (const r of plugin.routes) {
             result.push({ method: r.method, path: r.path, handler: r.handler, pluginId: id });
@@ -155,7 +157,7 @@ export class PluginManager {
     return result;
   }
   
-  public getCommands(): Map<string, { handler: Function; help?: string; pluginId: string }> {
+  public getCommands(): Map<string, { handler: (...args: unknown[]) => unknown; help?: string; pluginId: string }> {
     return this.commands;
   }
   
@@ -170,8 +172,9 @@ export class PluginManager {
       if (loaded.status === 'active' && loaded.plugin.healthCheck) {
         try {
           results[id] = await loaded.plugin.healthCheck();
-        } catch (err: any) {
-          results[id] = { status: 'down', message: err.message };
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          results[id] = { status: 'down', message };
         }
       } else {
         results[id] = { status: loaded.status };
@@ -181,16 +184,17 @@ export class PluginManager {
     return results;
   }
   
-  private getPluginConfig(pluginId: string): Record<string, any> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private getPluginConfig(_pluginId: string): Record<string, unknown> {
     return {};
   }
   
   private createPluginLogger(pluginId: string) {
     return {
-      info: (msg: string, meta?: any) => logger.info(LogCategory.SYSTEM, pluginId, msg, meta),
-      warn: (msg: string, meta?: any) => logger.warn(LogCategory.SYSTEM, pluginId, msg, meta),
-      error: (msg: string, meta?: any) => logger.error(LogCategory.SYSTEM, pluginId, msg, meta),
-      debug: (msg: string, meta?: any) => logger.debug(LogCategory.SYSTEM, pluginId, msg, meta),
+      info: (msg: string, meta?: unknown) => logger.info(LogCategory.SYSTEM, pluginId, msg, meta),
+      warn: (msg: string, meta?: unknown) => logger.warn(LogCategory.SYSTEM, pluginId, msg, meta),
+      error: (msg: string, meta?: unknown) => logger.error(LogCategory.SYSTEM, pluginId, msg, meta),
+      debug: (msg: string, meta?: unknown) => logger.debug(LogCategory.SYSTEM, pluginId, msg, meta),
     };
   }
 }

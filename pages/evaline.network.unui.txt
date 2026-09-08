@@ -1,34 +1,37 @@
-┌── EVALINE CONSOLE // evaline.network [EDGE MESH] ── ● LIVE ── [◐ ТЕМА] ──┐
-│                                                                          │
-> УЗЕЛ         : evaline.network [EDGE MESH]
-> РОЛЬ         : Edge Mesh, Транс-региональная Сетевая Маршрутизация & WireGuard Магистраль
-> ИНФРА        : evaline-micro-vm · 2 vCPU e2-micro · 1 GB RAM · Айова (США) · IP: 136.114.26.252
-> НАЗНАЧЕНИЕ   : Глобальный Ingress-шлюз, HTTP/3 QUIC терминация, WireGuard туннель Франкфурт ↔ Айова.
-────────────────────────────────────────────────────────────────────────────
+┌── EVALINE CONSOLE // evaline.network [EDGE MESH & ARCHITECTURE] ── ● LIVE ── [◐ ТЕМА] ──┐
+│                                                                                          │
+> УЗЕЛ         : evaline.network [EDGE MESH, DUAL-NODE ARCHITECTURE & AGENT CONSILIUM]
+> РОЛЬ         : Визуализатор Архитектуры Кластера, Нод, Консилиума Агентов & Метрик Серверов
+> ИНФРА        : evaline-micro-vm (США / Айова) ⟷ evabot-agent-vm (ФРГ / Франкфурт) · Mesh: 122ms
+> НАЗНАЧЕНИЕ   : Интерактивный дэшборд узлов, мониторинг ОЗУ, SWAP, CPU, бэкенда и процессов.
+────────────────────────────────────────────────────────────────────────────────────────────
 [ СЕТЬ EVALINE MESH // КЛАСТЕРНЫЕ УЗЛЫ ]:
-  [->] https://evabot.online   :: AI Вычислительное Ядро
-  [*] evaline.network  :: Edge Mesh & WireGuard Магистраль [ТЕКУЩИЙ УЗЕЛ]
-  [->] https://evaline.online  :: Контур Безопасности & OOM-Щит
-  [->] https://evaline.website :: Мастер-Хроника Релизов & Worklog
-────────────────────────────────────────────────────────────────────────────
+  [->] https://evabot.online   :: AI Вычислительное Ядро & Чат-терминал
+  [*] evaline.network          :: Визуализатор Архитектуры, Нод & Процессов [ТЕКУЩИЙ УЗЕЛ]
+  [->] https://evaline.online  :: Манифест Компании, Периметр Безопасности & Консилиум
+  [->] https://evaline.website :: Единый Центр Входа, Репозитории & Инженерный Ворклог
+────────────────────────────────────────────────────────────────────────────────────────────
 [ РЕАЛЬНАЯ ТЕЛЕМЕТРИЯ ДВУХ СЕРВЕРОВ // REALTIME DUAL-NODE TELEMETRY ]:
-  • EVABRAIN (Compute Core / ФРГ): CPU: 5.60 (70%) [■■■■■■■□□□] | RAM: 9.7/31 GB (31%) | Uptime: 1d 12:00:00 | Статус: [HEALTHY]
-  • EVAFACE  (Edge Ingress / США): Load: 0.03 (2%) [□□□□□□□□□□] | RAM: 473/964 MB (49%) | Uptime: 1 day | Ingress: [Caddy HTTP/3 OK]
-  • WIREGUARD MESH BACKBONE:       100.125.200.49 (US) ⟷ 100.66.98.4 (EU) | Latency: 135 ms RTT | Потери: [0.0%]
-  • ПУЛ МОДЕЛЕЙ И КЛАСТЕРА:        Активно: 78 моделей онлайн (Gemini, Claude, DeepSeek) | Режим: [ONLINE]
-────────────────────────────────────────────────────────────────────────────
+  • EVABRAIN (Compute Core / ФРГ): CPU: 8.5 (100%) [■■■■■■■■■■] | RAM: 21.4/32 GB (67%) | SWAP: 3.1/8.0 GB (39%) | Uptime: 2d 19h | [HEALTHY] 🟢
+  • EVAFACE  (Edge Ingress / США): Load: 0.25 (13%) [■□□□□□□□□□] | RAM: 440/964 MB (46%) | SWAP: 353 MB/2 GB | Uptime: 2 days | [Caddy HTTP/3 OK] 🟢
+  • WIREGUARD MESH BACKBONE:       100.125.200.49 (US) ⟷ 100.66.98.4 (EU) | Latency: 122 ms RTT | Потери: [0.0%] 🟢
+  • КОНСИЛИУМ И ПУЛ МОДЕЛЕЙ:       5 Агентов (Antigravity, OpenCode, Serena, KiloCode, Eva) | 94 модели онлайн | 21 MCP инструмент [ONLINE] 🟢
+────────────────────────────────────────────────────────────────────────────────────────────
 [ РЕАЛЬНЫЕ ПРОЦЕССЫ КЛАСТЕРА // LIVE PROCESS WATCHER ]:
-  PID     УЗЕЛ             ПРОЦЕСС / СЛУЖБА             CPU    ОЗУ      СТАТУС
-  230770  evabot-agent-vm  evabot-brain (Node.js)       0.1%   83 MB    [HEALTHY]
-  224914  evabot-agent-vm  omniroute (LiteLLM)          0.4%   287 MB   [HEALTHY]
-  169534  cluster-mesh     tailscaled (WireGuard)       0.2%   79 MB    [OPERATIONAL]
-  32403   evaline-micro-vm caddy (Edge)                 0.4%   42 MB    [HEALTHY]
-────────────────────────────────────────────────────────────────────────────
+  PID     УЗЕЛ             КАТЕГОРИЯ   ПРОЦЕСС / СЛУЖБА             CPU    ОЗУ      СТАТУС
+  32403   evaline-micro-vm [WEB]       caddy (Edge Ingress HTTP/3)  0.3%   54 MB    [HEALTHY] 🟢
+  1850746 evabot-agent-vm  [WEB]       evabot-brain (Node.js :3000) 0.1%   128 MB   [HEALTHY] 🟢
+  1095108 evabot-agent-vm  [WEB]       omniroute (LiteLLM 94 models)0.1%   967 MB   [HEALTHY] 🟢
+  389265  evabot-agent-vm  [WEB]       evabot-voice (FastAPI :8000) 0.2%   42 MB    [HEALTHY] 🟢
+  427660  evabot-agent-vm  [WEB]       evabot-face (3D Matrix :8093)0.1%   35 MB    [HEALTHY] 🟢
+  169534  cluster-mesh     [SYSTEM]    tailscaled (WireGuard Mesh)  0.2%   82 MB    [OPERATIONAL] 🟢
+  1871428 evabot-agent-vm  [AGENT]     agy (Antigravity CLI Agent)  1.2%   302 MB   [ACTIVE] 🟢
+  1733732 evabot-agent-vm  [AGENT]     opencode (Parallel Dev Agent)4.5%   1280 MB  [ACTIVE] 🟢
+  1870462 evabot-agent-vm  [AGENT]     serena-mcp (Codebase Agent)  0.2%   85 MB    [ACTIVE] 🟢
+────────────────────────────────────────────────────────────────────────────────────────────
 [ РЕАЛЬНЫЙ ЖУРНАЛ ЗАПРОСОВ И ЛОГИ СЕТИ // LIVE ACCESS & SYSTEM LOGS ]:
-  [12:00:00] [OK] 200 GET  evaline.network  /api/health (HTTP/3.0 165ms) ip:100.66.98.4
-  [11:59:58] [OK] 200 GET  evaline.network  /api/logs (HTTP/3.0 162ms) ip:100.66.98.4
-  [11:59:55] [OK] 200 GET  evabot.online    / (HTTP/2.0 160ms) ip:100.125.200.49
-  [11:59:52] [OK] 200 GET  evaline.online   / (HTTP/3.0 161ms) ip:34.159.202.82
-  [11:59:50] [OK] 200 GET  evaline.website  / (HTTP/3.0 159ms) ip:34.159.202.82
-────────────────────────────────────────────────────────────────────────────
+  [17:48:21] [OK] 200 GET  evaline.network  /api/logs (HTTP/3.0 122ms) ip:100.66.98.4
+  [17:48:18] [OK] 200 GET  evabot.online    /api/health (HTTP/2.0 123ms) ip:100.125.200.49
+  [17:48:15] [OK] 200 GET  evaline.online   /manifesto (HTTP/3.0 122ms) ip:34.159.202.82
+────────────────────────────────────────────────────────────────────────────────────────────
 evabot@evaline-mesh:~$ █

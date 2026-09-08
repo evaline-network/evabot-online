@@ -1038,6 +1038,23 @@ export class EvaBotWebApp {
     return false;
   }
 
+  /** Detect language of text: Cyrillic with uk markers → uk, other Cyrillic → ru, else en. */
+  private detectTextLanguage(text: string): string {
+    if (!text) return 'en';
+    if (/[\u0400-\u04FF]/.test(text)) {
+      const lower = text.toLowerCase();
+      const ukMarkers = (lower.match(/[іїєґ]/g) || []).length;
+      const ukWords = ['привіт', 'будь ласка', 'дякую', 'скажи', 'як', 'що', 'це'];
+      const ruWords = ['привет', 'пожалуйста', 'спасибо', 'как', 'что', 'это'];
+      const ukScore = ukMarkers * 2 + ukWords.filter((w) => lower.includes(w)).length;
+      const ruScore = ruWords.filter((w) => lower.includes(w)).length;
+      if (ukScore > ruScore) return 'uk';
+      if (ruScore > ukScore) return 'ru';
+      return 'ru';
+    }
+    return 'en';
+  }
+
   private speakVoiceResponse(text: string, persona: PersonaId): void {
     if (!window.speechSynthesis) return;
     if (localStorage.getItem('evabot_tts') === 'off') return;
@@ -1057,7 +1074,9 @@ export class EvaBotWebApp {
     const spokenSlice = cleanText.length > 350 ? `${cleanText.slice(0, 350)}...` : cleanText;
     const utterance = new SpeechSynthesisUtterance(spokenSlice);
 
-    const langCode = this.currentLang === 'uk' ? 'uk-UA' : this.currentLang === 'ru' ? 'ru-RU' : 'en-US';
+    // Detect language from the text itself (LANGUAGE-FIRST)
+    const detectedLang = this.detectTextLanguage(spokenSlice);
+    const langCode = detectedLang === 'uk' ? 'uk-UA' : detectedLang === 'ru' ? 'ru-RU' : 'en-US';
     utterance.lang = langCode;
 
     if (persona === 'eva') {

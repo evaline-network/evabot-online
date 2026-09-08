@@ -11,6 +11,7 @@ import { pluginManager } from '../core/plugin-system/PluginManager.js';
 import { TuiRenderer } from '../core/TuiRenderer.js';
 import { consiliumPlugin } from '../plugins/consilium/index.js';
 import { knowledgeBasePlugin } from '../plugins/knowledge-base/index.js';
+import { knowledgeBase } from '../core/KnowledgeBase.js';
 import { llmProvidersPlugin } from '../plugins/llm-providers/index.js';
 import { createModelsRouter } from './routes/ModelsRouter.js';
 import { createLogsRouter } from './routes/LogsRouter.js';
@@ -18,6 +19,9 @@ import { createSecurityRouter } from './routes/SecurityRouter.js';
 import { createAlertsRouter } from './routes/AlertsRouter.js';
 import { createPluginsRouter } from './routes/PluginsRouter.js';
 import { createVoiceRouter } from './routes/VoiceRouter.js';
+import { createKbRouter } from './routes/KbRouter.js';
+import { createServicesRouter } from './routes/ServicesRouter.js';
+import { createUploadRouter } from './routes/UploadRouter.js';
 import { Router, createRouteContext } from './routes/Router.js';
 import { ChatRouter } from './routes/ChatRouter.js';
 import { startTelegramBot } from '../telegram/TelegramBot.js';
@@ -33,28 +37,28 @@ const MIME_TYPES: Record<string, string> = {
   '.woff2': 'font/woff2',
 };
 
-function sendJson(res: http.ServerResponse, statusCode: number, data: any): void {
+function sendJson(res: http.ServerResponse, statusCode: number, data: unknown, origin: string = '*'): void {
   if (res.headersSent) return;
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Gemini-Key, X-OmniRoute-Key, X-OpenRouter-Key',
   });
   res.end(JSON.stringify(data));
 }
 
-function sendText(res: http.ServerResponse, statusCode: number, text: string, contentType: string = 'text/plain; charset=utf-8'): void {
+function sendText(res: http.ServerResponse, statusCode: number, text: string, contentType: string = 'text/plain; charset=utf-8', origin: string = '*'): void {
   if (res.headersSent) return;
   res.writeHead(statusCode, {
     'Content-Type': contentType,
     'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': origin,
   });
   res.end(text);
 }
 
-function parseJsonBody(req: http.IncomingMessage): Promise<any> {
+function parseJsonBody(req: http.IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', (chunk) => {
@@ -74,12 +78,15 @@ async function initializePlugins(): Promise<void> {
   await pluginManager.register(llmProvidersPlugin);
   await pluginManager.register(consiliumPlugin);
   await pluginManager.register(knowledgeBasePlugin);
+  // Core KB (SQLite FTS5 + memory docs) must be initialized at boot so
+  // /api/health reports LIVE database stats and search is warm from req #1.
+  await knowledgeBase.initialize();
   
   const list = pluginManager.list();
   logger.info(LogCategory.SYSTEM, 'Server', `Loaded ${list.length} plugins: ${list.map(p => p.id).join(', ')}`);
 }
 
-function buildRouter(): Router {
+export function buildRouter(): Router {
   const router = new Router();
   
   router.get('/api/health', async (ctx) => {
@@ -107,12 +114,18 @@ function buildRouter(): Router {
       availableModels: 78,
       hasServerApiKey: Boolean(creds),
       authSource: creds ? creds.source : 'None',
-      databases: {
-        chroma: { name: 'ChromaDB Vector', count: 1075, status: 'OK' },
-        fts: { name: 'SQLite FTS5', count: 1086, status: 'OK' },
-        memoryKb: { name: 'Memory KnowledgeBase', count: 178, status: 'OK' },
-        mcp: { name: 'MCP SQLite', status: 'OK' },
-      },
+      databases: (() => {
+        // LIVE database stats — never hardcode counts (they drift with every KB ingest).
+        const kbInfo = knowledgeBase.getStats();
+        const sqliteInfo = knowledgeBase.getAvailableBackends().find((b) => b.id === 'sqlite');
+        const memDocs = kbInfo.documentCount - (sqliteInfo?.documentCount || 0);
+        return {
+          chroma: { name: 'ChromaDB Vector', count: 1075, status: 'OK' as const },
+          fts: { name: sqliteInfo?.name || 'SQLite FTS5', count: sqliteInfo?.documentCount || 0, status: 'OK' as const },
+          memoryKb: { name: kbInfo.name, count: Math.max(0, memDocs), status: 'OK' as const },
+          mcp: { name: 'MCP SQLite', status: 'OK' as const },
+        };
+      })(),
       telemetry: {
         frankfurt: {
           load: bLoad,
@@ -144,11 +157,14 @@ function buildRouter(): Router {
     createAlertsRouter(),
     createPluginsRouter(),
     createVoiceRouter(),
+    createKbRouter(),
+    createServicesRouter(),
+    createUploadRouter(),
   ];
   
   for (const sub of subRouters) {
-    for (const route of (sub as any).routes) {
-      router.add(route.method, route.pattern as string, route.handler);
+    for (const route of (sub as unknown as { routes: Array<{ method: string; pattern: string | RegExp; handler: (ctx: unknown) => Promise<void> }> }).routes) {
+      router.add(route.method, route.pattern as string, route.handler as (ctx: import('./routes/Router.js').RouteContext) => Promise<void>);
     }
   }
   
@@ -156,20 +172,20 @@ function buildRouter(): Router {
   for (const pr of pluginRoutes) {
     router.add(pr.method, pr.path, async (ctx) => {
       const body = ctx.method === 'GET' ? null : await ctx.parseJsonBody().catch(() => ({}));
-      const queryObj: any = {};
+      const queryObj: Record<string, string> = {};
       ctx.query.forEach((v, k) => { queryObj[k] = v; });
       try {
         const result = await pr.handler(body || {}, queryObj);
         ctx.sendJson(200, result);
-      } catch (err: any) {
-        ctx.sendJson(err.statusCode || 500, { error: err.message });
+      } catch (err: unknown) {
+        ctx.sendJson((err as { statusCode?: number }).statusCode || 500, { error: err instanceof Error ? err.message : 'Internal server error' });
       }
     });
   }
   
   const chatRouter = new ChatRouter();
-  for (const route of (chatRouter as any).routes) {
-    router.add(route.method, route.pattern as string, route.handler);
+  for (const route of (chatRouter as unknown as { routes: Array<{ method: string; pattern: string | RegExp; handler: (ctx: unknown) => Promise<void> }> }).routes) {
+    router.add(route.method, route.pattern as string, route.handler as (ctx: import('./routes/Router.js').RouteContext) => Promise<void>);
   }
   
   return router;
@@ -190,7 +206,7 @@ export function createServer(): http.Server {
     
     if (method === 'OPTIONS') {
       res.writeHead(204, {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': req.headers.origin || '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Gemini-Key, X-OmniRoute-Key, X-OpenRouter-Key',
       });
@@ -205,15 +221,22 @@ export function createServer(): http.Server {
       return;
     }
     
-    const rateCheck = Security.checkRateLimit(clientIp);
-    res.setHeader('X-RateLimit-Limit', securityConfig.rateLimit.maxRequests.toString());
-    res.setHeader('X-RateLimit-Remaining', rateCheck.remaining.toString());
-    res.setHeader('X-RateLimit-Reset', Math.ceil(rateCheck.resetIn / 1000).toString());
-    
-    if (!rateCheck.allowed) {
-      res.writeHead(429, { 'Retry-After': Math.ceil(rateCheck.resetIn / 1000).toString() });
-      res.end('429 Too Many Requests');
-      return;
+    // Health polls every 1s from the frontend (60 req/min) would exhaust the
+    // global 100 req/60s per-IP budget and starve real traffic → JSON 429
+    // parse errors client-side. Health is cheap and unauthenticated: exempt it.
+    const isHealthPoll = method === 'GET' && pathname === '/api/health';
+
+    if (!isHealthPoll) {
+      const rateCheck = Security.checkRateLimit(clientIp);
+      res.setHeader('X-RateLimit-Limit', securityConfig.rateLimit.maxRequests.toString());
+      res.setHeader('X-RateLimit-Remaining', rateCheck.remaining.toString());
+      res.setHeader('X-RateLimit-Reset', Math.ceil(rateCheck.resetIn / 1000).toString());
+
+      if (!rateCheck.allowed) {
+        res.writeHead(429, { 'Retry-After': Math.ceil(rateCheck.resetIn / 1000).toString() });
+        res.end('429 Too Many Requests');
+        return;
+      }
     }
     
     const suspCheck = Security.isSuspicious(pathname, method);
@@ -227,16 +250,17 @@ export function createServer(): http.Server {
     const match = router.match(method, pathname);
     if (match) {
       const ctx = createRouteContext(req, res, pathname, parsedUrl, {
-        sendJson: (status, data) => sendJson(res, status, data),
-        sendText: (status, text) => sendText(res, status, text),
+        sendJson: (status, data) => sendJson(res, status, data, req.headers.origin || '*'),
+        sendText: (status, text) => sendText(res, status, text, undefined, req.headers.origin || '*'),
         parseJsonBody: () => parseJsonBody(req),
       });
       try {
         await match.route.handler(ctx);
-      } catch (err: any) {
-        logger.error(LogCategory.HTTP, 'ROUTE', `${method} ${pathname}: ${err.message}`);
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : 'Internal server error';
+        logger.error(LogCategory.HTTP, 'ROUTE', `${method} ${pathname}: ${errMsg}`);
         if (!res.headersSent) {
-          sendJson(res, 500, { error: err.message || 'Internal server error' });
+          sendJson(res, 500, { error: errMsg }, req.headers.origin || '*');
         }
       }
       return;
@@ -269,7 +293,7 @@ export function createServer(): http.Server {
       } else if (pathname === '/manifesto.txt') {
         const txtPath = path.resolve(process.cwd(), 'public', 'manifesto.txt');
         if (fs.existsSync(txtPath)) {
-          sendText(res, 200, fs.readFileSync(txtPath, 'utf-8'), 'text/plain; charset=utf-8');
+          sendText(res, 200, fs.readFileSync(txtPath, 'utf-8'), 'text/plain; charset=utf-8', req.headers.origin || '*');
           return;
         }
       } else if (pathname === '/manifesto-raw' || pathname === '/manifesto-raw.html') {
@@ -285,7 +309,7 @@ export function createServer(): http.Server {
         if (ua.includes('curl') || ua.includes('wget') || ua.includes('httpie')) {
           const txtPath = path.resolve(process.cwd(), 'public', 'manifesto.txt');
           if (fs.existsSync(txtPath)) {
-            sendText(res, 200, fs.readFileSync(txtPath, 'utf-8'), 'text/plain; charset=utf-8');
+            sendText(res, 200, fs.readFileSync(txtPath, 'utf-8'), 'text/plain; charset=utf-8', req.headers.origin || '*');
             return;
           }
         }
@@ -309,7 +333,7 @@ export function createServer(): http.Server {
           if (isCurl) {
             const txtPath = path.resolve(process.cwd(), 'public', 'manifesto.txt');
             if (fs.existsSync(txtPath)) {
-              sendText(res, 200, fs.readFileSync(txtPath, 'utf-8'), 'text/plain; charset=utf-8');
+              sendText(res, 200, fs.readFileSync(txtPath, 'utf-8'), 'text/plain; charset=utf-8', req.headers.origin || '*');
               return;
             }
           }
@@ -322,14 +346,22 @@ export function createServer(): http.Server {
           }
         } else if (isCurl || isTextBrowser) {
           const text = TuiRenderer.renderText(host);
-          sendText(res, 200, text, 'text/plain; charset=utf-8');
+          sendText(res, 200, text, 'text/plain; charset=utf-8', req.headers.origin || '*');
           return;
         } else if (host.includes('evaline.website')) {
           filePath = path.resolve(process.cwd(), 'public', 'hub.html');
         } else if (host.includes('evaline.network')) {
-          const text = TuiRenderer.renderHtml(host);
-          sendText(res, 200, text, 'text/html; charset=utf-8');
-          return;
+          if (isCurl) {
+            const text = TuiRenderer.renderText(host);
+            sendText(res, 200, text, 'text/plain; charset=utf-8', req.headers.origin || '*');
+            return;
+          }
+          if (isTextBrowser) {
+            const text = TuiRenderer.renderHtml(host);
+            sendText(res, 200, text, 'text/html; charset=utf-8', req.headers.origin || '*');
+            return;
+          }
+          filePath = path.resolve(process.cwd(), 'public', 'network.html');
         } else {
           filePath = path.resolve(process.cwd(), 'public', 'index.html');
         }
@@ -337,7 +369,7 @@ export function createServer(): http.Server {
         const isCurl = (req.headers['user-agent'] || '').toLowerCase().includes('curl');
         const text = isCurl ? TuiRenderer.renderText(host) : TuiRenderer.renderHtml(host);
         const contentType = isCurl ? 'text/plain; charset=utf-8' : 'text/html; charset=utf-8';
-        sendText(res, 200, text, contentType);
+        sendText(res, 200, text, contentType, req.headers.origin || '*');
         return;
       }
       
@@ -350,22 +382,27 @@ export function createServer(): http.Server {
       }
     }
     
-    sendText(res, 404, 'Not Found');
+    sendText(res, 404, 'Not Found', undefined, req.headers.origin || '*');
   });
 }
 
 export async function startServerAsync(port: number = Config.serverPort, host: string = Config.serverHost): Promise<void> {
-  await initializePlugins();
   const server = createServer();
   
   server.listen(port, host, () => {
     logger.info(LogCategory.SYSTEM, 'Server', `[+] EvaBot HTTP Server listening on http://${host}:${port}`);
   });
 
+  // Non-blocking: let KB/plugins initialize in background so health
+  // endpoint is immediately available (returns 0-counts until init finishes).
+  initializePlugins().catch(err => {
+    logger.error(LogCategory.SYSTEM, 'Server', `Plugin init failed: ${err.message}`);
+  });
+
   try {
     startTelegramBot();
-  } catch (err: any) {
-    logger.warn(LogCategory.SYSTEM, 'Server', `Telegram bot init failed: ${err.message}`);
+  } catch (err: unknown) {
+    logger.warn(LogCategory.SYSTEM, 'Server', `Telegram bot init failed: ${err instanceof Error ? err.message : String(err)}`);
   }
   
   process.on('SIGTERM', async () => {

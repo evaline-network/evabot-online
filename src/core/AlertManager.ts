@@ -6,6 +6,15 @@ import { logger, LogCategory } from './Logger.js';
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type AlertChannel = 'console' | 'file' | 'webhook' | 'email' | 'syslog' | 'desktop';
 
+interface ConsoleConfig { colors?: boolean }
+interface FileConfig { path: string }
+interface WebhookConfig { url: string; method?: string }
+interface SyslogConfig { facility?: number; host?: string; port?: number }
+interface EmailConfig { smtp?: unknown; to?: string[]; from?: string }
+interface DesktopConfig { sound?: boolean }
+
+type ChannelConfig = ConsoleConfig | FileConfig | WebhookConfig | SyslogConfig | EmailConfig | DesktopConfig;
+
 export interface AlertEvent {
   id: string;
   timestamp: string;
@@ -13,14 +22,14 @@ export interface AlertEvent {
   title: string;
   message: string;
   source: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   channels: AlertChannel[];
 }
 
 export interface AlertChannelConfig {
   type: AlertChannel;
   enabled: boolean;
-  config: Record<string, any>;
+  config: ChannelConfig;
 }
 
 export interface AlertConfig {
@@ -40,7 +49,7 @@ const DEFAULT_ALERT_CONFIG: AlertConfig = {
   channels: [
     { type: 'console', enabled: true, config: { colors: true } },
     { type: 'file', enabled: true, config: { path: 'logs/alerts.log' } },
-    { type: 'syslog', enabled: false, config: { facility: 'local0', tag: 'evabot' } },
+    { type: 'syslog', enabled: false, config: { facility: 16 } },
     { type: 'webhook', enabled: false, config: { url: '', method: 'POST' } },
     { type: 'email', enabled: false, config: { smtp: {}, to: [], from: '' } },
     { type: 'desktop', enabled: false, config: { sound: true } },
@@ -93,25 +102,25 @@ export class AlertManager {
         const ch = this.config.channels.find((c) => c.type === 'webhook');
         if (ch) {
           ch.enabled = true;
-          ch.config.url = env.ALERT_WEBHOOK_URL;
+          (ch.config as WebhookConfig).url = env.ALERT_WEBHOOK_URL;
         }
       }
       if (env.ALERT_EMAIL_TO) {
         const ch = this.config.channels.find((c) => c.type === 'email');
         if (ch) {
           ch.enabled = true;
-          ch.config.to = env.ALERT_EMAIL_TO.split(',');
+          (ch.config as EmailConfig).to = env.ALERT_EMAIL_TO.split(',');
         }
       }
       if (env.SYSLOG_HOST) {
         const ch = this.config.channels.find((c) => c.type === 'syslog');
         if (ch) {
           ch.enabled = true;
-          ch.config.host = env.SYSLOG_HOST;
-          ch.config.port = parseInt(env.SYSLOG_PORT || '514', 10);
+          (ch.config as SyslogConfig).host = env.SYSLOG_HOST;
+          (ch.config as SyslogConfig).port = parseInt(env.SYSLOG_PORT || '514', 10);
         }
       }
-    } catch (e) {
+    } catch {
       // Use defaults
     }
   }
@@ -121,7 +130,7 @@ export class AlertManager {
     title: string,
     message: string,
     source: string = 'system',
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
   ): Promise<AlertEvent> {
     if (this.isRateLimited(title)) {
       logger.debug(LogCategory.SYSTEM, 'ALERT', `Rate limited: ${title}`);
@@ -147,16 +156,16 @@ export class AlertManager {
     return event;
   }
 
-  public async low(title: string, message: string, source?: string, metadata?: any) {
+  public async low(title: string, message: string, source?: string, metadata?: Record<string, unknown>) {
     return this.alert('low', title, message, source, metadata);
   }
-  public async medium(title: string, message: string, source?: string, metadata?: any) {
+  public async medium(title: string, message: string, source?: string, metadata?: Record<string, unknown>) {
     return this.alert('medium', title, message, source, metadata);
   }
-  public async high(title: string, message: string, source?: string, metadata?: any) {
+  public async high(title: string, message: string, source?: string, metadata?: Record<string, unknown>) {
     return this.alert('high', title, message, source, metadata);
   }
-  public async critical(title: string, message: string, source?: string, metadata?: any) {
+  public async critical(title: string, message: string, source?: string, metadata?: Record<string, unknown>) {
     return this.alert('critical', title, message, source, metadata);
   }
 
@@ -164,20 +173,21 @@ export class AlertManager {
     for (const channel of this.config.channels.filter((c) => c.enabled)) {
       try {
         switch (channel.type) {
-          case 'console': this.deliverConsole(event, channel.config); break;
-          case 'file': this.deliverFile(event, channel.config); break;
-          case 'webhook': await this.deliverWebhook(event, channel.config); break;
-          case 'email': await this.deliverEmail(event, channel.config); break;
-          case 'syslog': await this.deliverSyslog(event, channel.config); break;
-          case 'desktop': this.deliverDesktop(event, channel.config); break;
+          case 'console': this.deliverConsole(event, channel.config as ConsoleConfig); break;
+          case 'file': this.deliverFile(event, channel.config as FileConfig); break;
+          case 'webhook': await this.deliverWebhook(event, channel.config as WebhookConfig); break;
+          case 'email': await this.deliverEmail(event, channel.config as EmailConfig); break;
+          case 'syslog': await this.deliverSyslog(event, channel.config as SyslogConfig); break;
+          case 'desktop': this.deliverDesktop(event, channel.config as DesktopConfig); break;
         }
-      } catch (err: any) {
-        logger.error(LogCategory.SYSTEM, 'ALERT_DELIVERY', `Failed to deliver to ${channel.type}: ${err.message}`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error(LogCategory.SYSTEM, 'ALERT_DELIVERY', `Failed to deliver to ${channel.type}: ${msg}`);
       }
     }
   }
 
-  private deliverConsole(event: AlertEvent, config: any): void {
+  private deliverConsole(event: AlertEvent, config: ConsoleConfig): void {
     const color = SEVERITY_COLORS[event.severity];
     const emoji = SEVERITY_EMOJI[event.severity];
     const line = `${emoji} ${color}[${event.severity.toUpperCase()}]${'\x1b[0m'} ${event.title}\n   ${event.message}`;
@@ -187,7 +197,7 @@ export class AlertManager {
     }
   }
 
-  private deliverFile(event: AlertEvent, config: any): void {
+  private deliverFile(event: AlertEvent, config: FileConfig): void {
     try {
       const logPath = path.resolve(process.cwd(), config.path);
       const dir = path.dirname(logPath);
@@ -197,7 +207,7 @@ export class AlertManager {
     } catch {}
   }
 
-  private async deliverWebhook(event: AlertEvent, config: any): Promise<void> {
+  private async deliverWebhook(event: AlertEvent, config: WebhookConfig): Promise<void> {
     if (!config.url) return;
     const payload = {
       event_type: 'evabot_alert',
@@ -218,12 +228,12 @@ export class AlertManager {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
   }
 
-  private async deliverEmail(event: AlertEvent, config: any): Promise<void> {
+  private async deliverEmail(event: AlertEvent, config: EmailConfig): Promise<void> {
     // Реализация через SMTP (nodemailer в production)
     logger.info(LogCategory.SYSTEM, 'ALERT_EMAIL', `Email would be sent to ${config.to}: ${event.title}`);
   }
 
-  private async deliverSyslog(event: AlertEvent, config: any): Promise<void> {
+  private async deliverSyslog(event: AlertEvent, config: SyslogConfig): Promise<void> {
     const net = await import('node:dgram');
     const client = net.createSocket('udp4');
     const severity = { low: 6, medium: 4, high: 3, critical: 2 }[event.severity];
@@ -233,7 +243,7 @@ export class AlertManager {
     client.close();
   }
 
-  private deliverDesktop(event: AlertEvent, config: any): void {
+  private deliverDesktop(event: AlertEvent, config: DesktopConfig): void {
     if (config.sound) {
       try { process.stdout.write('\x07\x07\x07'); } catch {}
     }

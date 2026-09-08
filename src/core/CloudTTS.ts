@@ -20,9 +20,11 @@
  * over the cap are rejected with an overCap result so callers can fall back
  * to browser TTS.
  *
- * Persona voice mapping (verified from live GET /v1/voices, 2066 voices):
- *   Ева (female) → uk-UA-Chirp3-HD-Aoede  (FEMALE, Chirp3-HD 1M chars/mo free)
- *   Адам (male)  → ru-RU-Chirp3-HD-Fenrir (MALE,   Chirp3-HD 1M chars/mo free)
+ * Persona voice mapping (LANGUAGE-FIRST, verified from live GET /v1/voices, 2066 voices):
+ *   Language determines locale; persona determines gender.
+ *   uk-UA: Eva (female) → uk-UA-Chirp3-HD-Aoede, Adam (male) → uk-UA-Chirp3-HD-Fenrir
+ *   ru-RU: Eva (female) → ru-RU-Chirp3-HD-Aoede, Adam (male) → ru-RU-Chirp3-HD-Fenrir
+ *   en-US: Eva (female) → en-US-Chirp3-HD-Aoede, Adam (male) → en-US-Chirp3-HD-Fenrir
  * Chirp3-HD voices sound far more natural than Wavenet AND have the same
  * 1M chars/month free allowance (verified 2026-09, official pricing page).
  * Runtime overrides: data/voice-prefs.json (written by /voices set) wins over
@@ -204,6 +206,8 @@ const EDGE_NEURAL: Array<[string, CatalogVoiceFamily, 'FEMALE' | 'MALE']> = [
   ['uk-UA-OstapNeural', 'edge-neural', 'MALE'],
   ['ru-RU-DmitryNeural', 'edge-neural', 'MALE'],
   ['ru-RU-SvetlanaNeural', 'edge-neural', 'FEMALE'],
+  ['en-US-AriaNeural', 'edge-neural', 'FEMALE'],
+  ['en-US-GuyNeural', 'edge-neural', 'MALE'],
 ];
 
 /** Static ONLY-FREE voice catalog per language (Edge-Neural + Chirp3-HD + Wavenet tiers). */
@@ -329,15 +333,21 @@ export class CloudTTS {
     if (prefs.adamVoice) this.adamVoice = prefs.adamVoice;
   }
 
-  /** Explicit voice name (env override) wins, then persona, then lang guess. */
+  /** Language-first voice resolution: language determines locale, persona determines gender. */
   public resolveVoice(opts: TtsSynthesisOptions = {}): string {
     if (opts.voiceName) return opts.voiceName;
-    if (opts.persona === 'adam') return this.adamVoice;
-    if (opts.persona === 'eva') return this.evaVoice;
+
     const lang = (opts.lang || '').toLowerCase();
-    if (lang.startsWith('ru')) return this.adamVoice;
-    if (lang.startsWith('uk') || lang.startsWith('ua')) return this.evaVoice;
-    return this.evaVoice;
+    const isRussian = lang.startsWith('ru');
+    const isUkrainian = lang.startsWith('uk') || lang.startsWith('ua');
+
+    // Persona determines GENDER: eva (default) = female, adam = male
+    const isFemale = opts.persona !== 'adam';
+
+    if (isRussian) return isFemale ? 'ru-RU-Chirp3-HD-Aoede' : 'ru-RU-Chirp3-HD-Fenrir';
+    if (isUkrainian) return isFemale ? 'uk-UA-Chirp3-HD-Aoede' : 'uk-UA-Chirp3-HD-Fenrir';
+    // English (default fallback)
+    return isFemale ? 'en-US-Chirp3-HD-Aoede' : 'en-US-Chirp3-HD-Fenrir';
   }
 
   public getCap(): number {

@@ -205,15 +205,22 @@ export class GoogleAuthProvider {
               grant_type: 'refresh_token',
             });
 
-            const res = await fetch('https://oauth2.googleapis.com/token', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: params.toString(),
-            });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            try {
+              const res = await fetch('https://oauth2.googleapis.com/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString(),
+                signal: controller.signal,
+              });
 
-            if (res.ok) {
-              const data: any = await res.json();
-              return data.access_token || null;
+              if (res.ok) {
+                const data: any = await res.json();
+                return data.access_token || null;
+              }
+            } finally {
+              clearTimeout(timeoutId);
             }
           }
         }

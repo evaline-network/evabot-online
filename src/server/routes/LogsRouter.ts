@@ -10,13 +10,17 @@ export function createLogsRouter(): Router {
     const systemLogs = ClusterMonitor.getSystemLogs();
     const processes = ClusterMonitor.getProcesses();
     const microMetrics = ClusterMonitor.getMicroMetrics();
+    const computeMetrics = ClusterMonitor.getComputeMetrics();
     const meshLatencyMs = ClusterMonitor.getMeshLatency();
+    const consilium = ClusterMonitor.getConsiliumInfo();
     ctx.sendJson(200, {
       domainLogs,
       systemLogs,
       processes,
       microMetrics,
+      computeMetrics,
       meshLatencyMs,
+      consilium,
     });
   }));
 

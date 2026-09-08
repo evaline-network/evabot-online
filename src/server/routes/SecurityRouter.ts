@@ -4,6 +4,14 @@ import { Security } from '../../core/Security.js';
 export function createSecurityRouter(): Router {
   const router = new Router();
 
+  router.get('/api/security', withErrorHandling(async (ctx) => {
+    const stats = Security.getStats();
+    ctx.sendJson(200, {
+      status: stats,
+      report: Security.getSecurityReport(),
+    });
+  }));
+
   router.get('/api/security/status', withErrorHandling(async (ctx) => {
     ctx.sendJson(200, Security.getStats());
   }));

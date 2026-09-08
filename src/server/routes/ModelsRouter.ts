@@ -70,7 +70,7 @@ export function createModelsRouter(): Router {
     // Bind /developer unlock to the chat session that sent the command
     // (ChatRouter uses the same sessionId for the developer prompt block).
     DeveloperMode.setActiveSession(typeof body.sessionId === 'string' ? body.sessionId : undefined);
-    const result = ModelCommand.execute(command);
+    const result = await ModelCommand.executeAsync(command);
     DeveloperMode.clearActiveSession();
     // The raw password never reaches the operation log either.
     logger.info(LogCategory.USER, 'MODEL_COMMAND', DeveloperMode.maskPasswordIn(command), { ip: ctx.clientIp });

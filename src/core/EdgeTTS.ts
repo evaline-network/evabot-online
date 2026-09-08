@@ -11,9 +11,11 @@
  *   python3 -m edge_tts --voice <V> --text <T> --write-media <tmp.mp3>
  * (verified 2026-09: uk-UA-PolinaNeural ~3.6 s, ru-RU-DmitryNeural ~9.9 s).
  *
- * Persona voice mapping:
- *   Ева (female) → uk-UA-PolinaNeural
- *   Адам (male)  → ru-RU-DmitryNeural
+ * Persona voice mapping (LANGUAGE-FIRST):
+ *   Language determines locale; persona determines gender.
+ *   uk-UA: Eva (female) → uk-UA-PolinaNeural, Adam (male) → uk-UA-OstapNeural
+ *   ru-RU: Eva (female) → ru-RU-SvetlanaNeural, Adam (male) → ru-RU-DmitryNeural
+ *   en-US: Eva (female) → en-US-AriaNeural, Adam (male) → en-US-GuyNeural
  * Runtime override: data/voice-prefs.json (same file /voices set writes).
  * Only Edge-Neural voice names (ending in "Neural") are honored there so a
  * Google catalog voice never leaks into this chain.
@@ -66,8 +68,16 @@ export interface EdgeTTSOptions {
   adamVoice?: string;
 }
 
-export const EDGE_TTS_DEFAULT_EVA_VOICE = 'uk-UA-PolinaNeural';  // FEMALE
-export const EDGE_TTS_DEFAULT_ADAM_VOICE = 'ru-RU-DmitryNeural'; // MALE
+export const EDGE_TTS_DEFAULT_UK_VOICE = 'uk-UA-PolinaNeural';  // FEMALE
+export const EDGE_TTS_DEFAULT_UK_ADAM = 'uk-UA-OstapNeural';     // MALE
+export const EDGE_TTS_DEFAULT_RU_VOICE = 'ru-RU-SvetlanaNeural'; // FEMALE
+export const EDGE_TTS_DEFAULT_RU_ADAM = 'ru-RU-DmitryNeural';    // MALE
+export const EDGE_TTS_DEFAULT_EN_VOICE = 'en-US-AriaNeural';     // FEMALE
+export const EDGE_TTS_DEFAULT_EN_ADAM = 'en-US-GuyNeural';       // MALE
+
+// Legacy aliases (used by prefs and constructor)
+export const EDGE_TTS_DEFAULT_EVA_VOICE = EDGE_TTS_DEFAULT_UK_VOICE;
+export const EDGE_TTS_DEFAULT_ADAM_VOICE = EDGE_TTS_DEFAULT_RU_ADAM;
 
 /** Static catalog of Edge-Neural voices for the ONLY-FREE /voices surface. */
 export const EDGE_VOICE_CATALOG: Array<{
@@ -80,6 +90,8 @@ export const EDGE_VOICE_CATALOG: Array<{
   { name: 'uk-UA-OstapNeural', family: 'edge-neural', gender: 'MALE', free: true },
   { name: 'ru-RU-DmitryNeural', family: 'edge-neural', gender: 'MALE', free: true },
   { name: 'ru-RU-SvetlanaNeural', family: 'edge-neural', gender: 'FEMALE', free: true },
+  { name: 'en-US-AriaNeural', family: 'edge-neural', gender: 'FEMALE', free: true },
+  { name: 'en-US-GuyNeural', family: 'edge-neural', gender: 'MALE', free: true },
 ];
 
 const EDGE_VOICE_NAMES: ReadonlySet<string> = new Set(EDGE_VOICE_CATALOG.map((v) => v.name));
@@ -125,14 +137,21 @@ export class EdgeTTS {
     if (prefs.adamVoice && isEdgeVoice(prefs.adamVoice)) this.adamVoice = prefs.adamVoice;
   }
 
-  /** Explicit voice name wins, then persona, then lang guess. */
+  /** Language-first voice resolution: language determines locale, persona determines gender. */
   public resolveVoice(opts: EdgeSynthesisOptions = {}): string {
     if (opts.voiceName) return opts.voiceName;
-    if (opts.persona === 'adam') return this.adamVoice;
-    if (opts.persona === 'eva') return this.evaVoice;
+
     const lang = (opts.lang || '').toLowerCase();
-    if (lang.startsWith('ru')) return this.adamVoice;
-    return this.evaVoice;
+    const isRussian = lang.startsWith('ru');
+    const isUkrainian = lang.startsWith('uk') || lang.startsWith('ua');
+
+    // Persona determines GENDER: eva (default) = female, adam = male
+    const isFemale = opts.persona !== 'adam';
+
+    if (isRussian) return isFemale ? 'ru-RU-SvetlanaNeural' : 'ru-RU-DmitryNeural';
+    if (isUkrainian) return isFemale ? 'uk-UA-PolinaNeural' : 'uk-UA-OstapNeural';
+    // English (default fallback)
+    return isFemale ? 'en-US-AriaNeural' : 'en-US-GuyNeural';
   }
 
   public getEvaVoice(): string {

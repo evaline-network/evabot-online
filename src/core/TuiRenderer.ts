@@ -22,16 +22,16 @@ export const DOMAINS_CONFIG: DomainMeta[] = [
   {
     domain: 'evaline.network',
     badge: 'EDGE MESH',
-    role: 'Edge Mesh, Транс-региональная Сетевая Маршрутизация & WireGuard Магистраль',
+    role: 'Edge Mesh, Визуализатор Архитектуры Нод, Консилиума Агентов & Метрик Кластера',
     infra: 'evaline-micro-vm · 2 vCPU e2-micro · 1 GB RAM · Айова (США) · IP: 136.114.26.252',
-    target: 'Глобальный Ingress-шлюз, HTTP/3 QUIC терминация, WireGuard туннель Франкфурт <-> Айова.',
+    target: 'Глобальный Ingress-шлюз, HTTP/3 QUIC терминация, WireGuard туннель Франкфурт <-> Айова, мониторинг всех процессов.',
   },
   {
     domain: 'evaline.online',
     badge: 'SECURITY & IAM',
-    role: 'Контур Периметровой Безопасности, IAM-Авторизация, OOM-Щит & Сервис-Меш',
+    role: 'Контур Периметровой Безопасности, IAM-Авторизация, OOM-Щит & Манифест',
     infra: 'evaline-micro-vm · 2 vCPU e2-micro · 1 GB RAM · Айова (США) · IP: 136.114.26.252',
-    target: 'OOM Shield защита e2-micro, фильтрация ботнетов, TLS-политики и взаимная аутентификация.',
+    target: 'OOM Shield защита e2-micro, фильтрация ботнетов, TLS-политики и манифест компании.',
   },
   {
     domain: 'evaline.website',
@@ -129,35 +129,39 @@ export class TuiRenderer {
   public static renderText(targetDomain: string): string {
     const cleanHost = (targetDomain || '').split(':')[0].toLowerCase().replace(/^www\./, '');
     const { meta: d, body } = this.loadPageTemplate(cleanHost);
-    const nowUtc = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
 
-    const bLoad = os.loadavg()[0].toFixed(2);
-    const bCpuPct = Math.min(100, Math.round((parseFloat(bLoad) / 8) * 100));
-    const bTotMem = Math.round(os.totalmem() / (1024 * 1024 * 1024));
-    const bUsedMem = ((os.totalmem() - os.freemem()) / (1024 * 1024 * 1024)).toFixed(1);
-    const bRamPct = Math.round(((os.totalmem() - os.freemem()) / os.totalmem()) * 100);
-    const bUptime = this.formatSecs(Math.floor(os.uptime()));
-
+    const compute = ClusterMonitor.getComputeMetrics();
     const micro = ClusterMonitor.getMicroMetrics();
     const latency = ClusterMonitor.getMeshLatency();
     const procs = ClusterMonitor.getProcesses();
     const logs = ClusterMonitor.getDomainLogs().slice(0, 10);
 
+    const bLoad = compute.loadAvg[0].toFixed(2);
+    const bCpuPct = compute.cpuPct;
+    const bTotMem = (compute.memTotalMb / 1024).toFixed(1);
+    const bUsedMem = (compute.memUsedMb / 1024).toFixed(1);
+    const bRamPct = Math.round((compute.memUsedMb / compute.memTotalMb) * 100);
+    const bTotSwap = (compute.swapTotalMb / 1024).toFixed(1);
+    const bUsedSwap = (compute.swapUsedMb / 1024).toFixed(1);
+    const bSwapPct = Math.round((compute.swapUsedMb / compute.swapTotalMb) * 100);
+    const bUptime = compute.uptimeStr;
+
     let telemetryBlock = '[ РЕАЛЬНАЯ ТЕЛЕМЕТРИЯ ДВУХ СЕРВЕРОВ // REALTIME DUAL-NODE TELEMETRY ]:\n';
-    telemetryBlock += `  • EVABRAIN (Compute Core / ФРГ): CPU: ${bLoad} (${bCpuPct}%) ${this.makeBar(bCpuPct)} | RAM: ${bUsedMem}/${bTotMem} GB (${bRamPct}%) | Uptime: ${bUptime} | Статус: [HEALTHY]\n`;
+    telemetryBlock += `  • EVABRAIN (Compute Core / ФРГ): CPU: ${bLoad} (${bCpuPct}%) ${this.makeBar(bCpuPct)} | RAM: ${bUsedMem}/${bTotMem} GB (${bRamPct}%) | SWAP: ${bUsedSwap}/${bTotSwap} GB (${bSwapPct}%) | Uptime: ${bUptime} | Статус: [HEALTHY]\n`;
     telemetryBlock += `  • EVAFACE  (Edge Ingress / США): Load: ${micro.loadAvg.split(',')[0]} (${micro.cpuPct}%) ${this.makeBar(micro.cpuPct)} | RAM: ${micro.memUsedMb}/${micro.memTotalMb} MB (${Math.round((micro.memUsedMb / micro.memTotalMb) * 100)}%) | Uptime: ${micro.uptimeStr} | Ingress: [Caddy HTTP/3 OK]\n`;
-    telemetryBlock += `  • WIREGUARD MESH BACKBONE:       100.125.200.49 (US)  100.66.98.4 (EU) | Latency: ${latency} ms RTT | Потери: [0.0%]\n`;
-    telemetryBlock += `  • ПУЛ МОДЕЛЕЙ И КЛАСТЕРА:        Активно: 94 модели онлайн (Gemini, Claude, DeepSeek) | Режим: [ONLINE]`;
+    telemetryBlock += `  • WIREGUARD MESH BACKBONE:       100.125.200.49 (US) ⟷ 100.66.98.4 (EU) | Latency: ${latency} ms RTT | Потери: [0.0%]\n`;
+    telemetryBlock += `  • КОНСИЛИУМ И ПУЛ МОДЕЛЕЙ:       5 Агентов (Antigravity, OpenCode, Serena, KiloCode, Eva) | 94 модели онлайн | 21 MCP инструмент`;
 
     let procBlock = '[ РЕАЛЬНЫЕ ПРОЦЕССЫ КЛАСТЕРА // LIVE PROCESS WATCHER ]:\n';
-    procBlock += '  PID     УЗЕЛ             ПРОЦЕСС / СЛУЖБА             CPU    ОЗУ      СТАТУС\n';
-    procs.forEach((p, idx) => {
+    procBlock += '  PID     УЗЕЛ             КАТЕГОРИЯ   ПРОЦЕСС / СЛУЖБА             CPU    ОЗУ      СТАТУС\n';
+    procs.slice(0, 30).forEach((p, idx) => {
       const pidStr = String(p.pid).padEnd(7);
       const nodeStr = p.node.split(' ')[0].padEnd(16);
+      const catStr = `[${p.category.toUpperCase()}]`.padEnd(11);
       const nameStr = `${p.name} (${p.role.split(' ')[0]})`.padEnd(28);
       const cpuStr = p.cpu.padEnd(6);
       const memStr = p.mem.padEnd(8);
-      procBlock += `  ${pidStr} ${nodeStr} ${nameStr} ${cpuStr} ${memStr} [${p.status}]${idx < procs.length - 1 ? '\n' : ''}`;
+      procBlock += `  ${pidStr} ${nodeStr} ${catStr} ${nameStr} ${cpuStr} ${memStr} [${p.status}]${idx < Math.min(procs.length, 30) - 1 ? '\n' : ''}`;
     });
 
     let logBlock = '[ РЕАЛЬНЫЙ ЖУРНАЛ ЗАПРОСОВ И ЛОГИ СЕТИ // LIVE ACCESS & SYSTEM LOGS ]:\n';
@@ -174,7 +178,7 @@ export class TuiRenderer {
   • GOOGLE GEMINI (ADC):   Gemini 2.5 Flash, 3.8 Flash, Pro (1M ctx)     | [ONLINE] 🟢
   • OMNIROUTE (Port 20128): 94 модели · LPU Groq/Cerebras (800 t/s)      | [ONLINE] 🟢
   • OPENROUTER HUB:        56 бесплатных кодинг-моделей (DeepSeek, Qwen)  | [ONLINE] 🟢
-  • OPENCODE AGENTS:       21 MCP-инструмент · Автономная разработка     | [ONLINE] 🟢`;
+  • CONSILIUM AGENTS:      Antigravity agy, OpenCode, Serena, KiloCode   | [ONLINE] 🟢`;
 
     const secBlock = `[ КОНТУР БЕЗОПАСНОСТИ И ЗАЩИТЫ // SECURITY & AUTO-REAP SHIELD ]:
   • EARLYOOM DAEMON:       Active (Пороги: <10% RAM, >80% Swap)          | [ARMED] 🟢
@@ -226,7 +230,6 @@ export class TuiRenderer {
         hydrated = hydrated.replace('{{SLOT_LOG_STREAM}}', logBlock);
       }
 
-      // Strip slot comment tags from terminal stream
       hydrated = hydrated
         .replace(/<!--\s*SLOT:[A-Z_]+\s*-->\r?\n?/g, '')
         .replace(/<!--\s*\/SLOT:[A-Z_]+\s*-->\r?\n?/g, '');
@@ -250,6 +253,7 @@ export class TuiRenderer {
         out += `  [->] https://${item.domain.padEnd(14)} :: ${item.role}\n`;
       }
     });
+    out += '  [->] https://github.com/evaline-network :: Официальная Организация GitHub (14 Репозиториев)\n';
     out += '────────────────────────────────────────────────────────────────────────────\n';
     out += telemetryBlock + '\n';
     out += '────────────────────────────────────────────────────────────────────────────\n';
@@ -265,52 +269,74 @@ export class TuiRenderer {
     const d = this.resolveDomain(targetDomain);
     const nowUtc = new Date().toISOString().replace('T', ' ').substring(11, 19) + ' UTC';
 
-    const bLoad = os.loadavg()[0].toFixed(2);
-    const bCpuPct = Math.min(100, Math.round((parseFloat(bLoad) / 8) * 100));
-    const bTotMem = Math.round(os.totalmem() / (1024 * 1024 * 1024));
-    const bUsedMem = ((os.totalmem() - os.freemem()) / (1024 * 1024 * 1024)).toFixed(1);
-    const bRamPct = Math.round(((os.totalmem() - os.freemem()) / os.totalmem()) * 100);
-    const bUptime = this.formatSecs(Math.floor(os.uptime()));
-
+    const compute = ClusterMonitor.getComputeMetrics();
     const micro = ClusterMonitor.getMicroMetrics();
     const latency = ClusterMonitor.getMeshLatency();
     const procs = ClusterMonitor.getProcesses();
     const logs = ClusterMonitor.getDomainLogs();
+    const consilium = ClusterMonitor.getConsiliumInfo();
+
+    const bLoad = compute.loadAvg[0].toFixed(2);
+    const bCpuPct = compute.cpuPct;
+    const bTotMem = (compute.memTotalMb / 1024).toFixed(1);
+    const bUsedMem = (compute.memUsedMb / 1024).toFixed(1);
+    const bRamPct = Math.round((compute.memUsedMb / compute.memTotalMb) * 100);
+    const bTotSwap = (compute.swapTotalMb / 1024).toFixed(1);
+    const bUsedSwap = (compute.swapUsedMb / 1024).toFixed(1);
+    const bSwapPct = Math.round((compute.swapUsedMb / compute.swapTotalMb) * 100);
+    const bUptime = compute.uptimeStr;
+
+    // Categorized process counts
+    const procCounts = {
+      all: procs.length,
+      agent: procs.filter((p) => p.category === 'agent').length,
+      web: procs.filter((p) => p.category === 'web').length,
+      mcp: procs.filter((p) => p.category === 'mcp').length,
+      lsp: procs.filter((p) => p.category === 'lsp').length,
+      system: procs.filter((p) => p.category === 'system').length,
+    };
 
     const crossLinksListHtml = DOMAINS_CONFIG.map((item) => {
-      if (item.domain === d.domain) {
-        return `      <div class="tui-line">  <span class="c-ok bold">[*] ${item.domain.padEnd(16)}</span> <span class="c-dim">::</span> <span class="c-fg">${item.role}</span> <span class="badge badge-ok">[ТЕКУЩИЙ УЗЕЛ]</span></div>`;
-      } else {
-        return `      <div class="tui-line">  <a href="https://${item.domain}" class="tui-link bold">[->] https://${item.domain.padEnd(14)}</a> <span class="c-dim">::</span> <span class="c-fg">${item.role}</span></div>`;
-      }
-    }).join('\n');
+      const isCurrent = item.domain === d.domain;
+      return `        <a href="https://${item.domain}" class="gateway-chip ${isCurrent ? 'active' : ''}">
+          <span class="status-indicator">●</span>
+          <span class="chip-domain">${item.domain}</span>
+          <span class="chip-badge">${item.badge}</span>
+        </a>`;
+    }).join('\n') + `\n        <a href="https://github.com/evaline-network" target="_blank" rel="noopener" class="gateway-chip" style="border-color: rgba(255, 214, 0, 0.4);">
+          <span class="status-indicator" style="color: #ffd600;">●</span>
+          <span class="chip-domain" style="color: #ffd600; font-weight: bold;">github.com/evaline-network</span>
+          <span class="chip-badge" style="background: rgba(255, 214, 0, 0.15); color: #ffd600;">OPEN SOURCE</span>
+        </a>`;
 
     const procRowsHtml = procs
       .map((p) => {
-        const nodeClean = p.node.split(' ')[0];
-        const nameClean = `${p.name} (${p.role.split(' ')[0]})`;
-        return `        <tr>
-          <td>${p.pid}</td>
-          <td>${nodeClean}</td>
-          <td class="bold c-fg">${nameClean}</td>
-          <td class="c-ok">${p.cpu}</td>
-          <td>${p.mem}</td>
-          <td><span class="badge badge-ok">[${p.status}]</span></td>
+        const catBadge = p.category.toUpperCase();
+        return `        <tr data-cat="${p.category}">
+          <td class="td-pid">${p.pid}</td>
+          <td class="td-node">${p.node.split(' ')[0]}</td>
+          <td class="td-cat"><span class="badge badge-${p.category}">${catBadge}</span></td>
+          <td class="td-name bold c-fg">${p.name}</td>
+          <td class="td-role c-dim">${p.role}</td>
+          <td class="td-cpu c-ok">${p.cpu}</td>
+          <td class="td-mem">${p.mem}</td>
+          <td class="td-swap c-dim">${p.swap || '-'}</td>
+          <td class="td-status"><span class="badge badge-ok">[${p.status}]</span></td>
         </tr>`;
       })
       .join('\n');
 
     const logRowsHtml = logs
-      .slice(0, 30)
+      .slice(0, 35)
       .map((l) => {
         const badgeClass = l.statusLevel === 'err' ? 'badge-err' : l.statusLevel === 'warn' ? 'badge-warn' : 'badge-ok';
         const icon = l.statusLevel === 'err' ? '[ERR]' : l.statusLevel === 'warn' ? '[WRN]' : '[OK]';
         return `        <div class="log-row">
           <span class="c-dim">[${l.timeStr}]</span>
           <span class="badge ${badgeClass}">${icon}</span>
-          <span class="c-fg">${l.status}</span>
+          <span class="c-fg bold">${l.status}</span>
           <span class="bold c-fg">${l.method.padEnd(4)}</span>
-          <strong class="c-fg">${l.host.padEnd(16)}</strong>
+          <strong class="c-cyan">${l.host.padEnd(16)}</strong>
           <span class="c-dim">${l.uri.padEnd(28)}</span>
           <span class="c-dim">(${l.proto} ${l.durationMs}ms)</span>
           <span class="c-faint">ip:${l.ip}</span>
@@ -318,8 +344,10 @@ export class TuiRenderer {
       })
       .join('\n');
 
+    const rawTuiText = this.renderText(targetDomain);
+
     return `<!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -327,359 +355,889 @@ export class TuiRenderer {
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>${d.domain.toUpperCase()} // EVALINE CONSOLE</title>
+<title>${d.domain.toUpperCase()} // ДЭШБОРД АРХИТЕКТУРЫ & МЕТРИК КЛАСТЕРА</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #090a0f;
-    --surface: #10121a;
-    --border: #272a36;
-    --border-dim: #191b24;
-    --fg: #ffffff;
-    --fg-muted: #8e94a0;
-    --fg-dim: #5a606d;
-    --log-bg: #06070a;
-    --btn-bg: #141720;
-    --btn-border: #2c3242;
+    --bg: #06090e;
+    --surface: #0c121d;
+    --surface-card: #101928;
+    --surface-card-hover: #142135;
+    --border: rgba(0, 230, 118, 0.22);
+    --border-subtle: #1c2738;
+    --border-dim: #151e2d;
+    --fg: #e2e8f0;
+    --fg-muted: #8b9bb4;
+    --fg-dim: #50617a;
+    --log-bg: #04070a;
+    --btn-bg: #141f30;
+    --btn-border: #233550;
 
-    /* STRICT TRAFFIC LIGHT COLORS ONLY */
+    /* Traffic lights & Accents */
     --c-ok: #00e676;
     --c-ok-dim: rgba(0, 230, 118, 0.12);
     --c-warn: #ffd600;
     --c-warn-dim: rgba(255, 214, 0, 0.12);
     --c-err: #ff1744;
     --c-err-dim: rgba(255, 23, 68, 0.12);
+    --c-cyan: #00d8ff;
+    --c-cyan-dim: rgba(0, 216, 255, 0.12);
+    --c-purple: #b388ff;
+    --c-purple-dim: rgba(179, 136, 255, 0.12);
+
+    --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Roboto Mono', monospace;
   }
 
-  :root.theme-light, html.theme-light, body.theme-light {
-    --bg: #f4f5f7;
+  html.theme-light, body.theme-light {
+    --bg: #f4f6fa;
     --surface: #ffffff;
-    --border: #d2d6dc;
-    --border-dim: #e5e7eb;
-    --fg: #111827;
-    --fg-muted: #4b5563;
-    --fg-dim: #9ca3af;
+    --surface-card: #ffffff;
+    --surface-card-hover: #f8fafc;
+    --border: #cbd5e1;
+    --border-subtle: #e2e8f0;
+    --border-dim: #edf2f7;
+    --fg: #0f172a;
+    --fg-muted: #475569;
+    --fg-dim: #94a3b8;
     --log-bg: #ffffff;
-    --btn-bg: #f3f4f6;
-    --btn-border: #d1d5db;
+    --btn-bg: #f1f5f9;
+    --btn-border: #cbd5e1;
 
-    /* LIGHT MODE TRAFFIC LIGHTS */
     --c-ok: #059669;
     --c-ok-dim: rgba(5, 150, 105, 0.1);
     --c-warn: #d97706;
     --c-warn-dim: rgba(217, 119, 6, 0.1);
     --c-err: #dc2626;
     --c-err-dim: rgba(220, 38, 38, 0.1);
+    --c-cyan: #0284c7;
+    --c-cyan-dim: rgba(2, 132, 199, 0.1);
+    --c-purple: #7c3aed;
+    --c-purple-dim: rgba(124, 58, 237, 0.1);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html, body {
+  body {
     width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
-    overflow: hidden;
-    font-size: 16px;
-    font-family: 'Roboto Mono', 'Roboto', monospace;
-    line-height: 1.45;
+    min-height: 100vh;
+    overflow-x: hidden;
     background-color: var(--bg);
     color: var(--fg);
-    transition: background-color 0.15s ease, color 0.15s ease;
-  }
-
-  .tui-fullscreen {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    line-height: 1.5;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    background-image:
+      radial-gradient(circle at 10% 10%, rgba(0, 230, 118, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 90% 15%, rgba(0, 216, 255, 0.04) 0%, transparent 45%),
+      linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
   }
 
   /* TOP STATUS BAR */
-  .tui-topbar {
+  .cluster-topbar {
     width: 100%;
     background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 10px 24px;
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    font-size: 15.5px;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
   }
 
-  .topbar-left {
+  .topbar-brand {
     display: flex;
     align-items: center;
     gap: 12px;
-    white-space: nowrap;
   }
 
-  .topbar-right {
+  .brand-logo {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--c-ok), var(--c-cyan));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-family: var(--font-mono);
+    font-weight: 900;
+    font-size: 14px;
+  }
+
+  .brand-title {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+  }
+
+  .live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--c-ok-dim);
+    color: var(--c-ok);
+    border: 1px solid var(--c-ok);
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+  }
+
+  .live-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c-ok);
+    animation: liveGlow 1.8s infinite ease-in-out;
+  }
+
+  @keyframes liveGlow {
+    0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 5px var(--c-ok)); }
+    50% { opacity: 0.4; transform: scale(0.85); filter: none; }
+  }
+
+  .topbar-actions {
     display: flex;
     align-items: center;
     gap: 8px;
-    white-space: nowrap;
+    flex-wrap: wrap;
   }
 
   .tui-btn {
     background: var(--btn-bg);
     border: 1px solid var(--btn-border);
     color: var(--fg);
-    font-family: inherit;
-    font-size: 14px;
-    padding: 3px 9px;
-    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 4px;
     cursor: pointer;
     user-select: none;
     transition: all 0.15s ease;
-  }
-  .tui-btn:hover {
-    border-color: var(--fg);
-  }
-  .tui-btn.active {
-    background: var(--fg);
-    color: var(--bg);
-    border-color: var(--fg);
-    font-weight: bold;
-  }
-
-  /* MAIN FLEX CONTENT */
-  .tui-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 8px 16px;
-    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
   }
 
-  .tui-block {
+  .tui-btn:hover {
+    border-color: var(--c-ok);
+    color: var(--c-ok);
+  }
+
+  .tui-btn.active {
+    background: var(--c-ok-dim);
+    border-color: var(--c-ok);
+    color: var(--c-ok);
+    font-weight: 700;
+  }
+
+  /* GATEWAY CHIPS */
+  .gateway-bar {
+    max-width: 1560px;
+    margin: 14px auto 0;
+    padding: 0 20px;
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-    font-size: 15px;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
-  .tui-title {
-    font-weight: bold;
+  .gateway-chip {
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    padding: 5px 14px;
+    border-radius: 6px;
+    text-decoration: none;
     color: var(--fg);
-    letter-spacing: 0.5px;
-    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    transition: all 0.2s ease;
   }
 
-  .tui-line {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .gateway-chip:hover {
+    border-color: var(--c-cyan);
+    transform: translateY(-1px);
   }
 
-  .tui-divider {
-    height: 1px;
-    background: var(--border-dim);
-    margin: 1px 0;
-  }
-
-  /* MONOCHROME LABELS & TEXT */
-  .c-fg { color: var(--fg); }
-  .c-dim { color: var(--fg-muted); }
-  .c-faint { color: var(--fg-dim); }
-  .bold { font-weight: bold; }
-
-  /* TRAFFIC LIGHT COLORS */
-  .c-ok { color: var(--c-ok); }
-  .c-warn { color: var(--c-warn); }
-  .c-err { color: var(--c-err); }
-
-  .badge {
-    display: inline-block;
-    padding: 1px 6px;
-    border-radius: 2px;
-    font-size: 12px;
-    font-weight: bold;
-  }
-  .badge-ok {
+  .gateway-chip.active {
+    border-color: var(--c-ok);
     background: var(--c-ok-dim);
     color: var(--c-ok);
-    border: 1px solid var(--c-ok);
-  }
-  .badge-warn {
-    background: var(--c-warn-dim);
-    color: var(--c-warn);
-    border: 1px solid var(--c-warn);
-  }
-  .badge-err {
-    background: var(--c-err-dim);
-    color: var(--c-err);
-    border: 1px solid var(--c-err);
-  }
-  .badge-mono {
-    background: var(--btn-bg);
-    color: var(--fg);
-    border: 1px solid var(--btn-border);
   }
 
-  .tui-link {
-    color: var(--fg);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-  .tui-link:hover {
+  .gateway-chip .status-indicator {
     color: var(--c-ok);
+    font-size: 10px;
   }
 
-  .led-live {
-    display: inline-block;
-    color: var(--c-ok);
-    animation: pulse 1.8s infinite ease-in-out;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; filter: drop-shadow(0 0 4px var(--c-ok)); }
-    50% { opacity: 0.35; filter: none; }
-  }
-
-  .cursor-blink {
-    display: inline-block;
-    color: var(--fg);
-    animation: blink 1s steps(2, start) infinite;
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-
-  .spinner { display: inline-block; color: var(--fg); font-weight: bold; }
-
-  /* PROCESS TABLE */
-  .proc-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14.5px;
-    margin-top: 1px;
-  }
-  .proc-table th {
-    text-align: left;
+  .gateway-chip .chip-badge {
+    font-size: 10.5px;
     color: var(--fg-muted);
-    border-bottom: 1px solid var(--border);
-    padding: 3px 8px;
-    font-weight: normal;
-  }
-  .proc-table td {
-    padding: 3px 8px;
-    border-bottom: 1px solid var(--border-dim);
-    white-space: nowrap;
-  }
-  .proc-table tr:hover td {
-    background: var(--btn-bg);
+    border: 1px solid var(--border-dim);
+    padding: 1px 5px;
+    border-radius: 3px;
   }
 
-  /* LOG CONSOLE (FILLS ALL REMAINING SCREEN) */
-  .tui-log-block {
-    flex: 1;
+  /* MAIN CONTAINER */
+  .dashboard-container {
+    max-width: 1560px;
+    margin: 16px auto 40px;
+    padding: 0 20px;
     display: flex;
     flex-direction: column;
-    min-height: 80px;
-    overflow: hidden;
+    gap: 20px;
   }
-  .log-header-bar {
+
+  /* SECTION HEADER */
+  .section-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 3px;
+    margin-bottom: 8px;
   }
-  .log-tabs {
+
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .section-title::before {
+    content: '//';
+    color: var(--c-ok);
+    font-weight: 900;
+  }
+
+  /* ARCHITECTURE DIAGRAM CARD */
+  .arch-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+  }
+
+  .svg-topology {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-height: 480px;
+  }
+
+  /* METRICS GRID */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .metric-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.2s ease;
+  }
+
+  .metric-card:hover {
+    border-color: var(--border);
+    transform: translateY(-2px);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-dim);
+    padding-bottom: 8px;
+  }
+
+  .card-title {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .metric-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13.5px;
+    padding: 3px 0;
+  }
+
+  .metric-label {
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
     display: flex;
     align-items: center;
     gap: 6px;
   }
-  .log-stream {
-    flex: 1;
-    overflow-y: auto;
-    background: var(--log-bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 6px 10px;
+
+  .metric-val {
+    font-family: var(--font-mono);
+    font-weight: 700;
+  }
+
+  .gauge-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border-dim);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 2px;
+  }
+
+  .gauge-fill {
+    height: 100%;
+    background: var(--c-ok);
+    transition: width 0.4s ease;
+  }
+
+  .gauge-fill.warn { background: var(--c-warn); }
+  .gauge-fill.err { background: var(--c-err); }
+
+  /* PROCESS INSPECTOR */
+  .proc-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 12px;
   }
+
+  .proc-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .proc-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .proc-search-box {
+    background: var(--bg);
+    border: 1px solid var(--btn-border);
+    color: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    min-width: 240px;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  .proc-search-box:focus {
+    border-color: var(--c-ok);
+  }
+
+  .proc-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    max-height: 440px;
+    overflow-y: auto;
+    border: 1px solid var(--border-dim);
+    border-radius: 6px;
+  }
+
+  .proc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+  }
+
+  .proc-table th {
+    text-align: left;
+    background: var(--surface);
+    color: var(--fg-muted);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .proc-table td {
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .proc-table tr:hover td {
+    background: var(--surface-card-hover);
+  }
+
+  /* LOG CONSOLE */
+  .log-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .log-stream {
+    background: var(--log-bg);
+    border: 1px solid var(--border-dim);
+    border-radius: 6px;
+    padding: 10px 14px;
+    min-height: 180px;
+    max-height: 320px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
   .log-row {
-    flex-shrink: 0;
-    min-height: 22px;
-    line-height: 22px;
-    font-size: 14.5px;
+    line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .log-row:hover {
-    background: var(--btn-bg);
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11.5px;
+    font-weight: 700;
+    font-family: var(--font-mono);
   }
 
-  .tui-footer-prompt {
-    display: flex;
-    align-items: center;
-    font-size: 15px;
-    padding-top: 2px;
+  .badge-ok { background: var(--c-ok-dim); color: var(--c-ok); border: 1px solid var(--c-ok); }
+  .badge-warn { background: var(--c-warn-dim); color: var(--c-warn); border: 1px solid var(--c-warn); }
+  .badge-err { background: var(--c-err-dim); color: var(--c-err); border: 1px solid var(--c-err); }
+  .badge-cyan { background: var(--c-cyan-dim); color: var(--c-cyan); border: 1px solid var(--c-cyan); }
+  .badge-purple { background: var(--c-purple-dim); color: var(--c-purple); border: 1px solid var(--c-purple); }
+
+  .badge-agent { background: var(--c-purple-dim); color: var(--c-purple); border: 1px solid var(--c-purple); }
+  .badge-web { background: var(--c-cyan-dim); color: var(--c-cyan); border: 1px solid var(--c-cyan); }
+  .badge-mcp { background: var(--c-ok-dim); color: var(--c-ok); border: 1px solid var(--c-ok); }
+  .badge-lsp { background: var(--c-warn-dim); color: var(--c-warn); border: 1px solid var(--c-warn); }
+  .badge-system { background: rgba(148, 163, 184, 0.15); color: var(--fg-muted); border: 1px solid var(--border-subtle); }
+
+  .c-fg { color: var(--fg); }
+  .c-dim { color: var(--fg-muted); }
+  .c-faint { color: var(--fg-dim); }
+  .c-ok { color: var(--c-ok); }
+  .c-warn { color: var(--c-warn); }
+  .c-err { color: var(--c-err); }
+  .c-cyan { color: var(--c-cyan); }
+  .c-purple { color: var(--c-purple); }
+  .bold { font-weight: 700; }
+
+  /* CYBER TUI CONTAINER */
+  #tui-raw-container {
+    display: none;
+    width: 100%;
+    min-height: 85vh;
+    background: #040609;
+    color: #e2e8f0;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 20px;
+    white-space: pre;
+    overflow: auto;
+    line-height: 1.35;
   }
 </style>
 </head>
 <body>
 
-<div class="tui-fullscreen">
-  <!-- TOP STATUS BAR -->
-  <div class="tui-topbar">
-    <div class="topbar-left">
-      <span class="bold">EVALINE CONSOLE // ${d.domain} [${d.badge}]</span>
-      <span class="led-live">●</span> <span class="c-ok bold">LIVE</span>
-      <span class="c-dim">UTC: <span id="clock-utc">${nowUtc}</span></span>
-      <span class="spinner" id="spin"></span>
+<!-- CLUSTER HEADER -->
+<header class="cluster-topbar">
+  <div class="topbar-brand">
+    <div class="brand-logo">E</div>
+    <div class="brand-title">${d.domain.toUpperCase()}</div>
+    <div class="live-pill">
+      <span class="live-pulse">●</span>
+      <span>CLUSTER LIVE</span>
     </div>
-    <div class="topbar-right">
-      <button class="tui-btn" id="theme-btn" onclick="toggleTheme()" title="Горячая клавиша: T">[ ТЕМА: DARK]</button>
-      <button class="tui-btn" onclick="manualRefresh()">[ СИНХР]</button>
-    </div>
+    <span class="c-dim" style="font-family:var(--font-mono);font-size:12.5px;">UTC: <span id="clock-utc">${nowUtc}</span></span>
   </div>
 
-  <div class="tui-content">
-    <!-- SECTION 1: IDENTITY -->
-    <div class="tui-block">
-      <div class="tui-line"><span class="c-dim">> УЗЕЛ         :</span> <strong class="c-fg">${d.domain}</strong> <span class="badge badge-mono">[${d.badge}]</span></div>
-      <div class="tui-line"><span class="c-dim">> РОЛЬ         :</span> <span class="c-fg">${d.role}</span></div>
-      <div class="tui-line"><span class="c-dim">> ИНФРА        :</span> <span class="c-dim">${d.infra}</span></div>
-      <div class="tui-line"><span class="c-dim">> НАЗНАЧЕНИЕ   :</span> <span class="c-fg">${d.target || ''}</span></div>
-    </div>
+  <div class="topbar-actions">
+    <button class="tui-btn" id="mode-btn" onclick="toggleViewMode()" title="Горячая клавиша: V">[ ◧ ВИД: ДЭШБОРД ]</button>
+    <button class="tui-btn" id="theme-btn" onclick="toggleTheme()" title="Горячая клавиша: T">[ ◐ ТЕМА: DARK ]</button>
+    <button class="tui-btn" onclick="manualRefresh()" title="Горячая клавиша: R">[ ↻ СИНХР ]</button>
+  </div>
+</header>
 
-    <div class="tui-divider"></div>
-
-    <!-- SECTION 2: EVALINE MESH NODES -->
-    <div class="tui-block">
-      <div class="tui-title">[ СЕТЬ EVALINE MESH // КЛАСТЕРНЫЕ УЗЛЫ ]:</div>
+<!-- GATEWAY BAR -->
+<div class="gateway-bar">
 ${crossLinksListHtml}
+</div>
+
+<!-- DASHBOARD VISUAL VIEW -->
+<main class="dashboard-container" id="dashboard-view">
+
+  <!-- SECTION 1: INTERACTIVE SVG TOPOLOGY -->
+  <section>
+    <div class="section-head">
+      <div class="section-title">ИНТЕРАКТИВНАЯ АРХИТЕКТУРА НОД, КОНСИЛИУМА АГЕНТОВ & СЕТИ КЛАСТЕРА</div>
+      <div class="c-dim" style="font-family:var(--font-mono);font-size:12.5px;">
+        WireGuard RTT: <strong class="c-cyan" id="svg-rtt-badge">${latency} ms</strong> · Шифрование: ChaCha20-Poly1305
+      </div>
+    </div>
+    <div class="arch-card">
+      <svg class="svg-topology" viewBox="0 0 1180 430" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="edgeGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0284c7" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#0c121d" stop-opacity="0.85"/>
+          </linearGradient>
+          <linearGradient id="computeGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#00e676" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#0c121d" stop-opacity="0.85"/>
+          </linearGradient>
+          <linearGradient id="agentGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#b388ff" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#0c121d" stop-opacity="0.85"/>
+          </linearGradient>
+          <linearGradient id="meshGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#0284c7"/>
+            <stop offset="50%" stop-color="#00d8ff"/>
+            <stop offset="100%" stop-color="#00e676"/>
+          </linearGradient>
+        </defs>
+
+        <!-- ZONE 1: EDGE INGRESS (IOWA, USA) -->
+        <rect x="30" y="30" width="310" height="230" rx="10" fill="url(#edgeGrad)" stroke="#0284c7" stroke-width="1.8"/>
+        <text x="50" y="60" fill="#00d8ff" font-family="Roboto Mono" font-weight="700" font-size="14.5">УЗЕЛ 1: EVALINE-MICRO-VM</text>
+        <text x="50" y="80" fill="#8b9bb4" font-family="Roboto Mono" font-size="11.5">GCP us-central1-a (Айова, США) · e2-micro</text>
+        <text x="50" y="98" fill="#8b9bb4" font-family="Roboto Mono" font-size="11.5">Внешний IP: 136.114.26.252 · Mesh: 100.125.200.49</text>
+
+        <!-- Edge inner boxes -->
+        <rect x="48" y="115" width="274" height="42" rx="5" fill="#08101a" stroke="#1c2f4a"/>
+        <text x="60" y="134" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="12">Caddy Edge Gateway (Zero-Cache Ingress)</text>
+        <text x="60" y="148" fill="#00e676" font-family="Roboto Mono" font-size="11">● HTTP/3 QUIC & TLS 1.3 · Proxying 4 Domains</text>
+
+        <rect x="48" y="165" width="274" height="42" rx="5" fill="#08101a" stroke="#1c2f4a"/>
+        <text x="60" y="184" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="12">Security Perimeter Shield</text>
+        <text x="60" y="198" fill="#ffd600" font-family="Roboto Mono" font-size="11">● EarlyOOM (<10% RAM) · Fail2ban SSH Active</text>
+
+        <rect x="48" y="215" width="274" height="30" rx="5" fill="#08101a" stroke="#1c2f4a"/>
+        <text x="60" y="235" fill="#8b9bb4" font-family="Roboto Mono" font-size="11">Specs: 2 vCPU · 1 GB RAM · 2 GB SWAP</text>
+
+        <!-- WIREGUARD BACKBONE (TUNNEL) -->
+        <path d="M 340 145 L 480 145" stroke="url(#meshGrad)" stroke-width="3" stroke-dasharray="6,6">
+          <animate attributeName="stroke-dashoffset" values="24;0" dur="1.2s" repeatCount="indefinite" />
+        </path>
+        <circle cx="410" cy="145" r="18" fill="#0c1828" stroke="#00d8ff" stroke-width="1.5"/>
+        <text x="410" y="149" text-anchor="middle" fill="#00d8ff" font-family="Roboto Mono" font-weight="700" font-size="10.5">MESH</text>
+        <text x="410" y="180" text-anchor="middle" fill="#00e676" font-family="Roboto Mono" font-weight="700" font-size="11">${latency} ms RTT</text>
+
+        <!-- ZONE 2: COMPUTE CORE (FRANKFURT, GERMANY) -->
+        <rect x="480" y="30" width="670" height="230" rx="10" fill="url(#computeGrad)" stroke="#00e676" stroke-width="1.8"/>
+        <text x="505" y="60" fill="#00e676" font-family="Roboto Mono" font-weight="700" font-size="14.5">УЗЕЛ 2: EVABOT-AGENT-VM (COMPUTE CORE)</text>
+        <text x="505" y="80" fill="#8b9bb4" font-family="Roboto Mono" font-size="11.5">GCP europe-west3-a (Франкфурт, ФРГ) · c3-standard-8 · 8 vCPU Intel Xeon · 32 GB RAM · 8 GB SWAP</text>
+        <text x="505" y="98" fill="#8b9bb4" font-family="Roboto Mono" font-size="11.5">Внешний IP: 34.159.202.82 · Mesh: 100.66.98.4 · Внутренний IP: 10.156.0.2</text>
+
+        <!-- Compute microservices grid -->
+        <rect x="505" y="115" width="190" height="60" rx="6" fill="#081410" stroke="#163824"/>
+        <text x="518" y="136" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="12">evabot-brain (:3000)</text>
+        <text x="518" y="152" fill="#8b9bb4" font-family="Roboto Mono" font-size="10.5">Node.js Core Backend</text>
+        <text x="518" y="166" fill="#00e676" font-family="Roboto Mono" font-size="10">● TUI & Telemetry</text>
+
+        <rect x="710" y="115" width="200" height="60" rx="6" fill="#081410" stroke="#163824"/>
+        <text x="723" y="136" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="12">omniroute (:20128)</text>
+        <text x="723" y="152" fill="#8b9bb4" font-family="Roboto Mono" font-size="10.5">LiteLLM 94-Model Proxy</text>
+        <text x="723" y="166" fill="#00e676" font-family="Roboto Mono" font-size="10">● LPU Groq/Cerebras (800t/s)</text>
+
+        <rect x="925" y="115" width="205" height="60" rx="6" fill="#081410" stroke="#163824"/>
+        <text x="938" y="136" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="12">evabot-voice (:8000)</text>
+        <text x="938" y="152" fill="#8b9bb4" font-family="Roboto Mono" font-size="10.5">FastAPI Edge Voice</text>
+        <text x="938" y="166" fill="#00e676" font-family="Roboto Mono" font-size="10">● Edge-TTS / Audio Stream</text>
+
+        <rect x="505" y="185" width="190" height="60" rx="6" fill="#081410" stroke="#163824"/>
+        <text x="518" y="206" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="12">evabot-face (:8093)</text>
+        <text x="518" y="222" fill="#8b9bb4" font-family="Roboto Mono" font-size="10.5">3D Matrix Face Server</text>
+        <text x="518" y="236" fill="#00e676" font-family="Roboto Mono" font-size="10">● Three.js Glyph Matrix</text>
+
+        <rect x="710" y="185" width="200" height="60" rx="6" fill="#081410" stroke="#163824"/>
+        <text x="723" y="206" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="12">n8n Automation (:5678)</text>
+        <text x="723" y="222" fill="#8b9bb4" font-family="Roboto Mono" font-size="10.5">Docker Container Engine</text>
+        <text x="723" y="236" fill="#00e676" font-family="Roboto Mono" font-size="10">● Task Orchestration</text>
+
+        <rect x="925" y="185" width="205" height="60" rx="6" fill="#081410" stroke="#163824"/>
+        <text x="938" y="206" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="12">Nginx Gateway (:80)</text>
+        <text x="938" y="222" fill="#8b9bb4" font-family="Roboto Mono" font-size="10.5">Docs & Voice Proxy</text>
+        <text x="938" y="236" fill="#00e676" font-family="Roboto Mono" font-size="10">● Upstream Router</text>
+
+        <!-- CONNECTOR TO AGENTS -->
+        <path d="M 815 260 L 815 295" stroke="#b388ff" stroke-width="2.5" stroke-dasharray="4,4">
+          <animate attributeName="stroke-dashoffset" values="16;0" dur="1s" repeatCount="indefinite" />
+        </path>
+
+        <!-- ZONE 3: CONSILIUM AI AGENTS & MCP HUB -->
+        <rect x="30" y="295" width="1120" height="115" rx="10" fill="url(#agentGrad)" stroke="#b388ff" stroke-width="1.8"/>
+        <text x="55" y="325" fill="#b388ff" font-family="Roboto Mono" font-weight="700" font-size="14.5">КОНСИЛИУМ ИИ-АГЕНТОВ & 21-SERVER MCP HUB</text>
+        <text x="55" y="342" fill="#8b9bb4" font-family="Roboto Mono" font-size="11.5">5 Сред Разработки · Матрица 94 LLM-Моделей (Gemini 2.5/3.8/Pro ADC, Claude 3.7, DeepSeek R1/V3, Cerebras LPU)</text>
+
+        <!-- Agent chips row -->
+        <g transform="translate(55, 355)">
+          <!-- Ag 1 -->
+          <rect x="0" y="0" width="200" height="42" rx="5" fill="#140f24" stroke="#3b2464"/>
+          <text x="12" y="18" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="11.5">Antigravity CLI (agy)</text>
+          <text x="12" y="32" fill="#00e676" font-family="Roboto Mono" font-size="10">● Ведущий Архитектор</text>
+
+          <!-- Ag 2 -->
+          <rect x="215" y="0" width="200" height="42" rx="5" fill="#140f24" stroke="#3b2464"/>
+          <text x="227" y="18" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="11.5">OpenCode Multi-Agent</text>
+          <text x="227" y="32" fill="#00e676" font-family="Roboto Mono" font-size="10">● Автономный Кодинг</text>
+
+          <!-- Ag 3 -->
+          <rect x="430" y="0" width="200" height="42" rx="5" fill="#140f24" stroke="#3b2464"/>
+          <text x="442" y="18" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="11.5">Serena Codebase MCP</text>
+          <text x="442" y="32" fill="#00e676" font-family="Roboto Mono" font-size="10">● Семантическая Память</text>
+
+          <!-- Ag 4 -->
+          <rect x="645" y="0" width="200" height="42" rx="5" fill="#140f24" stroke="#3b2464"/>
+          <text x="657" y="18" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="11.5">21-Server MCP Hub</text>
+          <text x="657" y="32" fill="#ffd600" font-family="Roboto Mono" font-size="10">● Git/DB/DevTools/Files</text>
+
+          <!-- Ag 5 -->
+          <rect x="860" y="0" width="200" height="42" rx="5" fill="#140f24" stroke="#3b2464"/>
+          <text x="872" y="18" fill="#ffffff" font-family="Roboto" font-weight="600" font-size="11.5">Eva Face & Voice Diplomat</text>
+          <text x="872" y="32" fill="#00d8ff" font-family="Roboto Mono" font-size="10">● 6-Языковая Дипломатия</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SECTION 2: LIVE METRIC GAUGES -->
+  <section>
+    <div class="section-head">
+      <div class="section-title">МЕТРИКИ СЕРВЕРОВ, ПАМЯТИ & СЕТЕВОГО ОКРУЖЕНИЯ В РЕАЛЬНОМ ВРЕМЕНИ</div>
+      <div class="c-dim" style="font-family:var(--font-mono);font-size:12.5px;">Автообновление: 3.0 сек</div>
+    </div>
+    <div class="metrics-grid">
+      <!-- CARD 1: COMPUTE VM -->
+      <div class="metric-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="c-ok">●</span> EVABRAIN COMPUTE (ФРГ)
+          </div>
+          <span class="badge badge-ok">[HEALTHY]</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">CPU Load (8 Cores):</span>
+          <span class="metric-val c-ok" id="b-cpu-val">${bLoad} (${bCpuPct}%)</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill" id="b-cpu-fill" style="width: ${bCpuPct}%;"></div></div>
+
+        <div class="metric-row" style="margin-top:6px;">
+          <span class="metric-label">RAM ОЗУ (32 GB):</span>
+          <span class="metric-val" id="b-ram-val">${bUsedMem} / ${bTotMem} GB (${bRamPct}%)</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill ${bRamPct > 80 ? 'warn' : ''}" id="b-ram-fill" style="width: ${bRamPct}%;"></div></div>
+
+        <div class="metric-row" style="margin-top:6px;">
+          <span class="metric-label">SWAP Подкачка (8 GB):</span>
+          <span class="metric-val ${bSwapPct > 65 ? 'c-warn' : 'c-ok'}" id="b-swap-val">${bUsedSwap} / ${bTotSwap} GB (${bSwapPct}%)</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill ${bSwapPct > 65 ? 'warn' : ''}" id="b-swap-fill" style="width: ${bSwapPct}%;"></div></div>
+
+        <div class="metric-row" style="margin-top:4px;">
+          <span class="metric-label">Диск NVMe (/):</span>
+          <span class="metric-val c-dim" id="b-disk-root">${compute.diskRoot.usedGb}/${compute.diskRoot.totalGb} GB (${compute.diskRoot.pct}%)</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">tmpfs Буфер (/tmp):</span>
+          <span class="metric-val c-dim" id="b-disk-tmp">${compute.diskTmp.usedGb}/${compute.diskTmp.totalGb} GB (${compute.diskTmp.pct}%)</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Аптайм Системы:</span>
+          <span class="metric-val c-ok" id="b-uptime-val">${bUptime}</span>
+        </div>
+      </div>
+
+      <!-- CARD 2: MICRO VM -->
+      <div class="metric-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="c-cyan">●</span> EVAFACE INGRESS (США)
+          </div>
+          <span class="badge badge-ok">[CADDY HTTP/3]</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">CPU Load (2 Cores):</span>
+          <span class="metric-val c-ok" id="f-load-val">${micro.loadAvg.split(',')[0]} (${micro.cpuPct}%)</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill" id="f-cpu-fill" style="width: ${micro.cpuPct}%;"></div></div>
+
+        <div class="metric-row" style="margin-top:6px;">
+          <span class="metric-label">RAM ОЗУ (964 MB):</span>
+          <span class="metric-val" id="f-ram-val">${micro.memUsedMb} / ${micro.memTotalMb} MB (${Math.round((micro.memUsedMb / micro.memTotalMb) * 100)}%)</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill" id="f-ram-fill" style="width: ${Math.round((micro.memUsedMb / micro.memTotalMb) * 100)}%;"></div></div>
+
+        <div class="metric-row" style="margin-top:6px;">
+          <span class="metric-label">EarlyOOM Защита:</span>
+          <span class="metric-val c-ok">[ARMED <10% RAM]</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Fail2ban SSH Jail:</span>
+          <span class="metric-val c-ok">[ACTIVE MONITORED]</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Caddy Ingress Процесс:</span>
+          <span class="metric-val c-dim" id="f-caddy-val">PID ${micro.caddyPid} · ${micro.caddyCpu} · ${micro.caddyMem}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Аптайм Ingress:</span>
+          <span class="metric-val c-ok" id="f-uptime-val">${micro.uptimeStr}</span>
+        </div>
+      </div>
+
+      <!-- CARD 3: NETWORK MESH -->
+      <div class="metric-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="c-cyan">●</span> WIREGUARD MESH
+          </div>
+          <span class="badge badge-cyan">[SECURE 0% LOSS]</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Задержка Франкфурт ↔ Айова:</span>
+          <span class="metric-val c-cyan bold" id="m-latency-val">${latency} ms RTT</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Потери пакетов:</span>
+          <span class="metric-val c-ok">0.0% (Tunnel Stable)</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Шифрование туннеля:</span>
+          <span class="metric-val c-dim">ChaCha20-Poly1305</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Mesh IP США:</span>
+          <span class="metric-val c-dim">100.125.200.49</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Mesh IP ФРГ:</span>
+          <span class="metric-val c-dim">100.66.98.4</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Трафик Доменов:</span>
+          <span class="metric-val c-ok">Zero-Cache Dynamic Proxy</span>
+        </div>
+      </div>
+
+      <!-- CARD 4: CONSILIUM & MODELS -->
+      <div class="metric-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="c-purple">●</span> КОНСИЛИУМ И ПУЛ LLM
+          </div>
+          <span class="badge badge-purple">[94 МОДЕЛИ ONLINE]</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Среды ИИ-Агентов:</span>
+          <span class="metric-val c-purple">5 Активных Среды</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Google Gemini (ADC):</span>
+          <span class="metric-val c-ok">2.5 Flash, 3.8 Flash, Pro</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">OmniRoute (Port 20128):</span>
+          <span class="metric-val c-ok">94 Модели · LPU 800 t/s</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">21 Unified MCP Suite:</span>
+          <span class="metric-val c-ok">Filesystem, Git, DB, DevTools</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Базы Данных Памяти:</span>
+          <span class="metric-val c-dim">ChromaDB + SQLite FTS5</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Синхронизация MCP:</span>
+          <span class="metric-val c-ok">Единый стандарт sync-mcp</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: COMPLETE PROCESS INSPECTOR -->
+  <section class="proc-card">
+    <div class="section-head" style="margin-bottom:0;">
+      <div class="section-title">ПОЛНЫЙ ИНСПЕКТОР ВСЕХ ПРОЦЕССОВ БЭКЭНДА, ФРОНТЕНДА & АГЕНТОВ КОНСИЛИУМА</div>
+      <div class="c-dim" style="font-family:var(--font-mono);font-size:12.5px;">
+        Всего процессов: <strong class="c-fg" id="total-proc-count">${procs.length}</strong>
+      </div>
     </div>
 
-    <div class="tui-divider"></div>
+    <div class="proc-toolbar">
+      <div class="proc-tabs">
+        <button class="tui-btn active" id="tab-all" onclick="filterProcCategory('all')">[ ВСЕ (${procCounts.all}) ]</button>
+        <button class="tui-btn" id="tab-agent" onclick="filterProcCategory('agent')">[ АГЕНТЫ КОНСИЛИУМА (${procCounts.agent}) ]</button>
+        <button class="tui-btn" id="tab-web" onclick="filterProcCategory('web')">[ WEB & BACKEND (${procCounts.web}) ]</button>
+        <button class="tui-btn" id="tab-mcp" onclick="filterProcCategory('mcp')">[ MCP ИНСТРУМЕНТЫ (${procCounts.mcp}) ]</button>
+        <button class="tui-btn" id="tab-lsp" onclick="filterProcCategory('lsp')">[ LSP ЯЗЫКОВЫЕ (${procCounts.lsp}) ]</button>
+        <button class="tui-btn" id="tab-system" onclick="filterProcCategory('system')">[ СИСТЕМА & СЕТЬ (${procCounts.system}) ]</button>
+      </div>
 
-    <!-- SECTION 3: REAL DUAL-NODE TELEMETRY -->
-    <div class="tui-block">
-      <div class="tui-title">[ РЕАЛЬНАЯ ТЕЛЕМЕТРИЯ ДВУХ СЕРВЕРОВ // REALTIME DUAL-NODE TELEMETRY ]:</div>
-      <div class="tui-line">  <strong class="c-fg">• EVABRAIN (Compute Core / ФРГ):</strong> CPU: <span id="b-cpu" class="c-ok">${bLoad} (${bCpuPct}%)</span> <span id="b-cpu-bar">${this.makeBar(bCpuPct)}</span> | RAM: <span id="b-ram" class="c-fg">${bUsedMem}/${bTotMem} GB (${bRamPct}%)</span> | Uptime: <span id="b-uptime" class="c-ok">${bUptime}</span> | Статус: <span class="badge badge-ok">[HEALTHY]</span></div>
-      <div class="tui-line">  <strong class="c-fg">• EVAFACE  (Edge Ingress / США):</strong> Load: <span id="f-load" class="c-ok">${micro.loadAvg.split(',')[0]} (${micro.cpuPct}%)</span> <span id="f-load-bar">${this.makeBar(micro.cpuPct)}</span> | RAM: <span id="f-ram" class="c-fg">${micro.memUsedMb}/${micro.memTotalMb} MB (${Math.round((micro.memUsedMb / micro.memTotalMb) * 100)}%)</span> | Uptime: <span id="f-uptime" class="c-ok">${micro.uptimeStr}</span> | Ingress: <span class="badge badge-ok">[Caddy HTTP/3 OK]</span></div>
-      <div class="tui-line">  <strong class="c-fg">• WIREGUARD MESH BACKBONE:</strong>       100.125.200.49 (US)  100.66.98.4 (EU) | Latency: <span id="m-rtt" class="c-ok bold">${latency} ms RTT</span> | Потери: <span class="badge badge-ok">[0.0%]</span></div>
-      <div class="tui-line">  <strong class="c-fg">• ПУЛ МОДЕЛЕЙ И КЛАСТЕРА:</strong>        Активно: <span id="b-models" class="c-ok bold">78 моделей онлайн</span> (Gemini, Claude, DeepSeek) | Режим: <span class="badge badge-ok">[ONLINE]</span></div>
+      <input type="text" class="proc-search-box" id="proc-search" placeholder="Быстрый поиск (PID, имя, роль)..." oninput="onSearchProcess(this.value)">
     </div>
 
-    <div class="tui-divider"></div>
-
-    <!-- SECTION 4: REAL PROCESS WATCHER TABLE -->
-    <div class="tui-block">
-      <div class="tui-title">[ РЕАЛЬНЫЕ ПРОЦЕССЫ КЛАСТЕРА // LIVE PROCESS WATCHER ]:</div>
+    <div class="proc-table-wrap">
       <table class="proc-table">
         <thead>
           <tr>
             <th>PID</th>
             <th>УЗЕЛ</th>
+            <th>КАТЕГОРИЯ</th>
             <th>ПРОЦЕСС / СЛУЖБА</th>
+            <th>РОЛЬ В КЛАСТЕРЕ</th>
             <th>CPU</th>
-            <th>ОЗУ</th>
+            <th>ОЗУ (RSS)</th>
+            <th>SWAP</th>
             <th>СТАТУС</th>
           </tr>
         </thead>
@@ -688,33 +1246,39 @@ ${procRowsHtml}
         </tbody>
       </table>
     </div>
+  </section>
 
-    <div class="tui-divider"></div>
-
-    <!-- SECTION 5: REAL LOG STREAM -->
-    <div class="tui-block tui-log-block">
-      <div class="log-header-bar">
-        <div class="log-tabs">
-          <span class="tui-title">[ РЕАЛЬНЫЙ ЖУРНАЛ ЗАПРОСОВ И ЛОГИ СЕТИ // LIVE ACCESS & SYSTEM LOGS ]:</span>
-          <button class="tui-btn active" id="filter-all" onclick="setLogFilter('all')">[ВСЕ СОБЫТИЯ]</button>
-          <button class="tui-btn" id="filter-domains" onclick="setLogFilter('domains')">[ЗАПРОСЫ ДОМЕНОВ (CADDY)]</button>
-          <button class="tui-btn" id="filter-system" onclick="setLogFilter('system')">[СИСТЕМА & ЯДРО]</button>
-        </div>
-        <div class="c-dim" style="font-size: 13.5px;">
-          Записей: <strong id="log-count" class="c-fg">${logs.length}</strong>
-        </div>
-      </div>
-      <div class="log-stream" id="log-stream">
-${logRowsHtml || '<div class="c-dim">[Сбор телеметрии активен...]</div>'}
+  <!-- SECTION 4: REAL-TIME EVENT LOGS -->
+  <section class="log-card">
+    <div class="section-head" style="margin-bottom:0;">
+      <div class="section-title">ЖУРНАЛ ЗАПРОСОВ И СОБЫТИЙ СЕТИ В РЕАЛЬНОМ ВРЕМЕНИ</div>
+      <div class="c-dim" style="font-family:var(--font-mono);font-size:12.5px;">
+        Событий в буфере: <strong class="c-fg" id="log-count">${logs.length}</strong>
       </div>
     </div>
 
-    <!-- BOTTOM TERMINAL PROMPT -->
-    <div class="tui-footer-prompt">
-      <span class="c-dim">evabot@evaline-mesh:~$</span>&nbsp;<span class="cursor-blink">█</span>
+    <div class="log-stream" id="log-stream">
+${logRowsHtml || '<div class="c-dim">[Ожидание входящих сетевых запросов...]</div>'}
     </div>
-  </div>
-</div>
+  </section>
+
+  <!-- CLUSTER FOOTER CROSS-LINKS -->
+  <footer style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted);">
+    <div>EVALINE NETWORK // CLUSTER TOPOLOGY · 2 Nodes · WireGuard Mesh Backbone</div>
+    <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+      <a href="https://evabot.online" target="_blank" style="color: var(--fg-muted); text-decoration: none;">evabot.online ↗</a>
+      <a href="https://evaline.network" style="color: var(--c-ok); font-weight: 700; text-decoration: none;">evaline.network ●</a>
+      <a href="https://evaline.online" target="_blank" style="color: var(--fg-muted); text-decoration: none;">evaline.online ↗</a>
+      <a href="https://evaline.website" target="_blank" style="color: var(--fg-muted); text-decoration: none;">evaline.website ↗</a>
+      <span style="color: var(--border-dim);">│</span>
+      <a href="https://github.com/evaline-network" target="_blank" rel="noopener" style="color: #ffd600; font-weight: 700; text-decoration: none;">GitHub @evaline-network ↗</a>
+    </div>
+  </footer>
+
+</main>
+
+<!-- CYBER-TUI RAW TEXT VIEW (TOGGLEABLE) -->
+<pre id="tui-raw-container">${rawTuiText}</pre>
 
 <script>
   // Clean old SW cache & CacheStorage
@@ -725,45 +1289,60 @@ ${logRowsHtml || '<div class="c-dim">[Сбор телеметрии активе
     caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
   }
 
+  // View Mode Management (Dashboard vs Cyber-TUI)
+  let currentView = localStorage.getItem('eva_network_view') || 'dashboard';
+  function applyView(v) {
+    currentView = v;
+    localStorage.setItem('eva_network_view', v);
+    const dView = document.getElementById('dashboard-view');
+    const tView = document.getElementById('tui-raw-container');
+    const btn = document.getElementById('mode-btn');
+
+    if (v === 'tui') {
+      if (dView) dView.style.display = 'none';
+      if (tView) tView.style.display = 'block';
+      if (btn) btn.textContent = '[ █ ВИД: CYBER-TUI ]';
+    } else {
+      if (dView) dView.style.display = 'flex';
+      if (tView) tView.style.display = 'none';
+      if (btn) btn.textContent = '[ ◧ ВИД: ДЭШБОРД ]';
+    }
+  }
+  function toggleViewMode() {
+    applyView(currentView === 'dashboard' ? 'tui' : 'dashboard');
+  }
+  applyView(currentView);
+
   // Theme Management
-  const urlTheme = new URLSearchParams(window.location.search).get('theme');
-  let currentTheme = urlTheme || localStorage.getItem('eva_tui_theme') || 'dark';
+  let currentTheme = localStorage.getItem('eva_tui_theme') || 'dark';
   function applyTheme(theme) {
     currentTheme = theme;
     localStorage.setItem('eva_tui_theme', theme);
+    const btn = document.getElementById('theme-btn');
     if (theme === 'light') {
       document.documentElement.classList.add('theme-light');
       document.body.classList.add('theme-light');
-      const btn = document.getElementById('theme-btn');
-      if (btn) btn.textContent = '[ ТЕМА: LIGHT]';
+      if (btn) btn.textContent = '[ ◐ ТЕМА: LIGHT ]';
     } else {
       document.documentElement.classList.remove('theme-light');
       document.body.classList.remove('theme-light');
-      const btn = document.getElementById('theme-btn');
-      if (btn) btn.textContent = '[ ТЕМА: DARK]';
+      if (btn) btn.textContent = '[ ◐ ТЕМА: DARK ]';
     }
   }
-  applyTheme(currentTheme);
   function toggleTheme() {
     applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
   }
-  window.addEventListener('keydown', (e) => {
-    if ((e.key === 't' || e.key === 'T') && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
-      toggleTheme();
-    }
-  });
   applyTheme(currentTheme);
 
-  // Spinner
-  const spinChars = ['', '', '', '', '', '', '', '', '', ''];
-  let spinIdx = 0;
-  setInterval(() => {
-    spinIdx = (spinIdx + 1) % spinChars.length;
-    const el = document.getElementById('spin');
-    if (el) el.textContent = spinChars[spinIdx];
-  }, 100);
+  // Keyboard Shortcuts
+  window.addEventListener('keydown', (e) => {
+    if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (e.key === 't' || e.key === 'T') toggleTheme();
+    if (e.key === 'v' || e.key === 'V') toggleViewMode();
+    if (e.key === 'r' || e.key === 'R') manualRefresh();
+  });
 
-  // UTC clock
+  // UTC Clock
   function updateClock() {
     const d = new Date().toISOString().replace('T', ' ').substring(11, 19) + ' UTC';
     const el = document.getElementById('clock-utc');
@@ -771,94 +1350,42 @@ ${logRowsHtml || '<div class="c-dim">[Сбор телеметрии активе
   }
   setInterval(updateClock, 1000);
 
-  function makeBar(pct, total = 10) {
-    pct = Math.max(0, Math.min(100, pct));
-    const filled = Math.round((pct / 100) * total);
-    return '[' + '■'.repeat(filled) + '□'.repeat(total - filled) + ']';
-  }
+  // Process Category Filter & Search
+  let activeProcCat = 'all';
+  let currentSearchQuery = '';
 
-  function formatSecs(sec) {
-    const d = Math.floor(sec / 86400);
-    const h = String(Math.floor((sec % 86400) / 3600)).padStart(2, '0');
-    const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
-    const s = String(sec % 60).padStart(2, '0');
-    return (d > 0 ? d + 'd ' : '') + h + ':' + m + ':' + s;
-  }
-
-  // Logs & Filters
-  let activeFilter = 'all';
-  let cachedDomainLogs = [];
-  let cachedSystemLogs = [];
-
-  function setLogFilter(f) {
-    activeFilter = f;
-    ['all', 'domains', 'system'].forEach(id => {
-      const btn = document.getElementById('filter-' + id);
-      if (btn) {
-        if (id === f) btn.classList.add('active');
-        else btn.classList.remove('active');
+  function filterProcCategory(cat) {
+    activeProcCat = cat;
+    ['all', 'agent', 'web', 'mcp', 'lsp', 'system'].forEach(id => {
+      const b = document.getElementById('tab-' + id);
+      if (b) {
+        if (id === cat) b.classList.add('active');
+        else b.classList.remove('active');
       }
     });
-    renderLogs();
+    applyProcessFilters();
   }
 
-  function renderLogs() {
-    const container = document.getElementById('log-stream');
-    if (!container) return;
+  function onSearchProcess(val) {
+    currentSearchQuery = (val || '').toLowerCase().trim();
+    applyProcessFilters();
+  }
 
-    let items = [];
-    if (activeFilter === 'all' || activeFilter === 'domains') {
-      cachedDomainLogs.forEach(l => items.push({ type: 'domain', ...l }));
-    }
-    if (activeFilter === 'all' || activeFilter === 'system') {
-      cachedSystemLogs.forEach(l => items.push({ type: 'system', ...l }));
-    }
+  function applyProcessFilters() {
+    const rows = document.querySelectorAll('#proc-tbody tr');
+    rows.forEach(tr => {
+      const rowCat = tr.getAttribute('data-cat') || '';
+      const text = tr.textContent.toLowerCase();
 
-    const countEl = document.getElementById('log-count');
-    if (countEl && items.length > 0) countEl.textContent = items.length;
+      const catMatch = (activeProcCat === 'all') || (rowCat === activeProcCat);
+      const searchMatch = !currentSearchQuery || text.includes(currentSearchQuery);
 
-    if (items.length === 0) return;
-
-    container.innerHTML = items.map(item => {
-      if (item.type === 'domain') {
-        let badgeClass = 'badge-ok';
-        let icon = '[OK]';
-        if (item.statusLevel === 'warn') {
-          badgeClass = 'badge-warn';
-          icon = '[WRN]';
-        } else if (item.statusLevel === 'err') {
-          badgeClass = 'badge-err';
-          icon = '[ERR]';
-        }
-
-        return '<div class="log-row">' +
-          '<span class="c-dim">[' + item.timeStr + ']</span> ' +
-          '<span class="badge ' + badgeClass + '">' + icon + ' ' + item.status + '</span> ' +
-          '<span class="bold c-fg">' + item.method + '</span> ' +
-          '<strong class="c-fg">' + item.host + '</strong> ' +
-          '<span class="c-dim">' + escapeHtml(item.uri) + '</span> ' +
-          '<span class="c-dim">(' + item.proto + ' ' + item.durationMs + 'ms)</span> ' +
-          '<span class="c-faint">ip:' + item.ip + '</span>' +
-        '</div>';
+      if (catMatch && searchMatch) {
+        tr.style.display = '';
       } else {
-        let badgeClass = 'badge-ok';
-        let icon = '[OK]';
-        if (item.levelClass === 'warn') {
-          badgeClass = 'badge-warn';
-          icon = '[WRN]';
-        } else if (item.levelClass === 'err') {
-          badgeClass = 'badge-err';
-          icon = '[ERR]';
-        }
-
-        return '<div class="log-row">' +
-          '<span class="c-dim">[' + item.timeStr + ']</span> ' +
-          '<span class="badge ' + badgeClass + '">' + icon + ' ' + item.level + '</span> ' +
-          '<span class="bold c-fg">[' + item.subsystem + ']</span> ' +
-          '<span class="c-fg">' + escapeHtml(item.message) + '</span>' +
-        '</div>';
+        tr.style.display = 'none';
       }
-    }).join('');
+    });
   }
 
   function escapeHtml(str) {
@@ -866,90 +1393,136 @@ ${logRowsHtml || '<div class="c-dim">[Сбор телеметрии активе
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  function renderProcesses(procs) {
-    const tbody = document.getElementById('proc-tbody');
-    if (!tbody || !Array.isArray(procs) || procs.length === 0) return;
-
-    tbody.innerHTML = procs.map(p => {
-      let badgeClass = 'badge-ok';
-      if (p.statusClass === 'warn') {
-        badgeClass = 'badge-warn';
-      } else if (p.statusClass === 'err') {
-        badgeClass = 'badge-err';
-      }
-
-      const nodeClean = p.node ? p.node.split(' ')[0] : 'node';
-      const nameClean = p.role ? (p.name + ' (' + p.role.split(' ')[0] + ')') : p.name;
-
-      return '<tr>' +
-        '<td>' + p.pid + '</td>' +
-        '<td>' + nodeClean + '</td>' +
-        '<td class="bold c-fg">' + nameClean + '</td>' +
-        '<td class="c-ok">' + p.cpu + '</td>' +
-        '<td>' + p.mem + '</td>' +
-        '<td><span class="badge ' + badgeClass + '">[' + p.status + ']</span></td>' +
-      '</tr>';
-    }).join('');
-  }
-
+  // Real-time Cluster Polling
   async function pollCluster() {
-    const t0 = performance.now();
     try {
       const res = await fetch('/api/logs?_t=' + Date.now(), { cache: 'no-store' });
-      const clientLatency = Math.round(performance.now() - t0);
-      if (res.ok) {
-        const d = await res.json();
-        if (d.domainLogs) cachedDomainLogs = d.domainLogs;
-        if (d.systemLogs) cachedSystemLogs = d.systemLogs;
-        if (d.processes) renderProcesses(d.processes);
-        renderLogs();
+      if (!res.ok) return;
+      const data = await res.json();
 
-        // RTT
-        const rtt = d.meshLatencyMs || clientLatency || 122;
-        const mr = document.getElementById('m-rtt');
-        if (mr) mr.textContent = rtt + ' ms RTT';
+      // Latency
+      if (data.meshLatencyMs) {
+        const rtt = data.meshLatencyMs + ' ms RTT';
+        const el1 = document.getElementById('svg-rtt-badge');
+        const el2 = document.getElementById('m-latency-val');
+        if (el1) el1.textContent = rtt;
+        if (el2) el2.textContent = rtt;
+      }
 
-        // Micro metrics
-        if (d.microMetrics) {
-          const m = d.microMetrics;
-          const fl = document.getElementById('f-load');
-          if (fl) fl.textContent = (m.loadAvg.indexOf(',') !== -1 ? m.loadAvg.split(',')[0] : m.loadAvg) + ' (' + m.cpuPct + '%)';
-          const flb = document.getElementById('f-load-bar');
-          if (flb) flb.textContent = makeBar(m.cpuPct);
-          const fr = document.getElementById('f-ram');
-          if (fr) fr.textContent = m.memUsedMb + '/' + m.memTotalMb + ' MB (' + Math.round((m.memUsedMb/m.memTotalMb)*100) + '%)';
-          const fu = document.getElementById('f-uptime');
-          if (fu) fu.textContent = m.uptimeStr;
+      // Compute VM Metrics
+      if (data.computeMetrics) {
+        const c = data.computeMetrics;
+        const bCpuVal = document.getElementById('b-cpu-val');
+        if (bCpuVal) bCpuVal.textContent = c.loadAvg[0].toFixed(2) + ' (' + c.cpuPct + '%)';
+        const bCpuFill = document.getElementById('b-cpu-fill');
+        if (bCpuFill) bCpuFill.style.width = c.cpuPct + '%';
+
+        const usedGb = (c.memUsedMb / 1024).toFixed(1);
+        const totGb = (c.memTotalMb / 1024).toFixed(1);
+        const ramPct = Math.round((c.memUsedMb / c.memTotalMb) * 100);
+        const bRamVal = document.getElementById('b-ram-val');
+        if (bRamVal) bRamVal.textContent = usedGb + ' / ' + totGb + ' GB (' + ramPct + '%)';
+        const bRamFill = document.getElementById('b-ram-fill');
+        if (bRamFill) {
+          bRamFill.style.width = ramPct + '%';
+          bRamFill.className = 'gauge-fill' + (ramPct > 80 ? ' warn' : '');
+        }
+
+        const usedSwapGb = (c.swapUsedMb / 1024).toFixed(1);
+        const totSwapGb = (c.swapTotalMb / 1024).toFixed(1);
+        const swapPct = Math.round((c.swapUsedMb / c.swapTotalMb) * 100);
+        const bSwapVal = document.getElementById('b-swap-val');
+        if (bSwapVal) {
+          bSwapVal.textContent = usedSwapGb + ' / ' + totSwapGb + ' GB (' + swapPct + '%)';
+          bSwapVal.className = 'metric-val ' + (swapPct > 65 ? 'c-warn' : 'c-ok');
+        }
+        const bSwapFill = document.getElementById('b-swap-fill');
+        if (bSwapFill) {
+          bSwapFill.style.width = swapPct + '%';
+          bSwapFill.className = 'gauge-fill' + (swapPct > 65 ? ' warn' : '');
+        }
+
+        const bUptime = document.getElementById('b-uptime-val');
+        if (bUptime) bUptime.textContent = c.uptimeStr;
+
+        if (c.diskRoot) {
+          const dRoot = document.getElementById('b-disk-root');
+          if (dRoot) dRoot.textContent = c.diskRoot.usedGb + '/' + c.diskRoot.totalGb + ' GB (' + c.diskRoot.pct + '%)';
+        }
+        if (c.diskTmp) {
+          const dTmp = document.getElementById('b-disk-tmp');
+          if (dTmp) dTmp.textContent = c.diskTmp.usedGb + '/' + c.diskTmp.totalGb + ' GB (' + c.diskTmp.pct + '%)';
         }
       }
-    } catch (e) {}
 
-    // Fetch Health for brain core
-    try {
-      const res = await fetch('/api/health?_t=' + Date.now(), { cache: 'no-store' });
-      if (res.ok) {
-        const d = await res.json();
-        const loadVal = parseFloat(d.systemLoad || '0.9');
-        const cpuPct = Math.min(100, Math.round((loadVal / (d.cpuCores || 8)) * 100));
-        const bc = document.getElementById('b-cpu');
-        if (bc) bc.textContent = loadVal.toFixed(2) + ' (' + cpuPct + '%)';
-        const bcb = document.getElementById('b-cpu-bar');
-        if (bcb) bcb.textContent = makeBar(cpuPct);
+      // Micro VM Metrics
+      if (data.microMetrics) {
+        const m = data.microMetrics;
+        const fLoad = document.getElementById('f-load-val');
+        if (fLoad) fLoad.textContent = (m.loadAvg.indexOf(',') !== -1 ? m.loadAvg.split(',')[0] : m.loadAvg) + ' (' + m.cpuPct + '%)';
+        const fCpuFill = document.getElementById('f-cpu-fill');
+        if (fCpuFill) fCpuFill.style.width = m.cpuPct + '%';
 
-        const totMem = d.totalMemoryMb || 32099;
-        const freeMem = d.freeMemoryMb || 25000;
-        const usedMem = totMem - freeMem;
-        const ramPct = Math.round((usedMem / totMem) * 100);
-        const br = document.getElementById('b-ram');
-        if (br) br.textContent = (usedMem / 1024).toFixed(1) + '/' + Math.round(totMem / 1024) + ' GB (' + ramPct + '%)';
+        const fRamPct = Math.round((m.memUsedMb / m.memTotalMb) * 100);
+        const fRamVal = document.getElementById('f-ram-val');
+        if (fRamVal) fRamVal.textContent = m.memUsedMb + ' / ' + m.memTotalMb + ' MB (' + fRamPct + '%)';
+        const fRamFill = document.getElementById('f-ram-fill');
+        if (fRamFill) fRamFill.style.width = fRamPct + '%';
 
-        const bu = document.getElementById('b-uptime');
-        if (bu) bu.textContent = formatSecs(d.uptimeSeconds || 0);
-
-        const bm = document.getElementById('b-models');
-        if (bm && d.availableModels) bm.textContent = d.availableModels + ' моделей онлайн';
+        const fUptime = document.getElementById('f-uptime-val');
+        if (fUptime) fUptime.textContent = m.uptimeStr;
       }
-    } catch (e) {}
+
+      // Processes Update
+      if (data.processes && Array.isArray(data.processes)) {
+        const tbody = document.getElementById('proc-tbody');
+        if (tbody) {
+          tbody.innerHTML = data.processes.map(p => {
+            const catBadge = (p.category || 'system').toUpperCase();
+            const nodeClean = p.node ? p.node.split(' ')[0] : 'node';
+            return '<tr data-cat="' + (p.category || 'system') + '">' +
+              '<td class="td-pid">' + p.pid + '</td>' +
+              '<td class="td-node">' + nodeClean + '</td>' +
+              '<td class="td-cat"><span class="badge badge-' + (p.category || 'system') + '">' + catBadge + '</span></td>' +
+              '<td class="td-name bold c-fg">' + escapeHtml(p.name) + '</td>' +
+              '<td class="td-role c-dim">' + escapeHtml(p.role) + '</td>' +
+              '<td class="td-cpu c-ok">' + p.cpu + '</td>' +
+              '<td class="td-mem">' + p.mem + '</td>' +
+              '<td class="td-swap c-dim">' + (p.swap || '-') + '</td>' +
+              '<td class="td-status"><span class="badge badge-ok">[' + p.status + ']</span></td>' +
+            '</tr>';
+          }).join('');
+          applyProcessFilters();
+        }
+
+        // Update counts
+        const totCount = document.getElementById('total-proc-count');
+        if (totCount) totCount.textContent = data.processes.length;
+      }
+
+      // Domain Logs Update
+      if (data.domainLogs && Array.isArray(data.domainLogs) && data.domainLogs.length > 0) {
+        const logStream = document.getElementById('log-stream');
+        if (logStream) {
+          logStream.innerHTML = data.domainLogs.slice(0, 35).map(l => {
+            let badgeClass = 'badge-ok';
+            let icon = '[OK]';
+            if (l.statusLevel === 'warn') { badgeClass = 'badge-warn'; icon = '[WRN]'; }
+            else if (l.statusLevel === 'err') { badgeClass = 'badge-err'; icon = '[ERR]'; }
+
+            return '<div class="log-row">' +
+              '<span class="c-dim">[' + l.timeStr + ']</span> ' +
+              '<span class="badge ' + badgeClass + '">' + icon + ' ' + l.status + '</span> ' +
+              '<span class="bold c-fg">' + l.method + '</span> ' +
+              '<strong class="c-cyan">' + l.host + '</strong> ' +
+              '<span class="c-dim">' + escapeHtml(l.uri) + '</span> ' +
+              '<span class="c-dim">(' + l.proto + ' ' + l.durationMs + 'ms)</span> ' +
+              '<span class="c-faint">ip:' + l.ip + '</span>' +
+            '</div>';
+          }).join('');
+        }
+      }
+    } catch (err) {}
   }
 
   function manualRefresh() {
@@ -959,7 +1532,6 @@ ${logRowsHtml || '<div class="c-dim">[Сбор телеметрии активе
   setInterval(pollCluster, 3000);
 </script>
 </body>
-</html>
-`;
+</html>`;
   }
 }

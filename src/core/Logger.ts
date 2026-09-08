@@ -37,21 +37,6 @@ const LEVEL_COLORS: Record<LogLevel, string> = {
   [LogLevel.ERROR]: '\x1b[31m\x1b[1m',
 };
 
-const CATEGORY_COLORS: Record<LogCategory, string> = {
-  [LogCategory.SYSTEM]: '\x1b[35m',
-  [LogCategory.HTTP]: '\x1b[34m',
-  [LogCategory.USER]: '\x1b[32m',
-  [LogCategory.LLM]: '\x1b[33m',
-  [LogCategory.MODEL]: '\x1b[36m',
-  [LogCategory.KB]: '\x1b[95m',
-  [LogCategory.STORAGE]: '\x1b[93m',
-  [LogCategory.AUTH]: '\x1b[91m',
-  [LogCategory.PROCESS]: '\x1b[96m',
-  [LogCategory.DIAG]: '\x1b[37m',
-  [LogCategory.CLI]: '\x1b[32m',
-  [LogCategory.BROWSER]: '\x1b[94m',
-};
-
 const RESET_COLOR = '\x1b[0m';
 
 export interface LogEntry {
@@ -60,7 +45,7 @@ export interface LogEntry {
   category: string;
   tag: string;
   message: string;
-  meta?: any;
+  meta?: unknown;
   sessionId?: string;
   userId?: string;
   ip?: string;
@@ -141,8 +126,8 @@ export class Logger {
       const content = fs.readFileSync(filePath, 'utf8');
       const allLines = content.split('\n');
       return allLines.slice(-lines).join('\n');
-    } catch (e: any) {
-      return `[ERROR] Cannot read log: ${e.message}`;
+    } catch (e: unknown) {
+      return `[ERROR] Cannot read log: ${e instanceof Error ? e.message : String(e)}`;
     }
   }
 
@@ -155,7 +140,7 @@ export class Logger {
     }
   }
 
-  private formatMessage(level: LogLevel, category: string, tag: string, message: string, meta?: any): LogEntry {
+  private formatMessage(level: LogLevel, category: string, tag: string, message: string, meta?: unknown): LogEntry {
     return {
       timestamp: new Date().toISOString(),
       level: LEVEL_NAMES[level],
@@ -167,7 +152,7 @@ export class Logger {
     };
   }
 
-  private write(level: LogLevel, category: string, tag: string, message: string, meta?: any): void {
+  private write(level: LogLevel, category: string, tag: string, message: string, meta?: unknown): void {
     if (level < this.minLevel) return;
 
     const entry = this.formatMessage(level, category, tag, message, meta);
@@ -202,47 +187,47 @@ export class Logger {
     }
   }
 
-  public debug(tag: string, message: string, meta?: any): void;
-  public debug(category: LogCategory, tag: string, message: string, meta?: any): void;
-  public debug(arg1: any, arg2: any, arg3?: any, arg4?: any): void {
+  public debug(tag: string, message: string, meta?: unknown): void;
+  public debug(category: LogCategory, tag: string, message: string, meta?: unknown): void;
+  public debug(arg1: string | LogCategory, arg2: string, arg3?: string | unknown, arg4?: unknown): void {
     if (typeof arg1 === 'string') {
       this.write(LogLevel.DEBUG, LogCategory.SYSTEM, arg1, arg2, arg3);
     } else {
-      this.write(LogLevel.DEBUG, arg1, arg2, arg3, arg4);
+      this.write(LogLevel.DEBUG, arg1, arg2, arg3 as string, arg4);
     }
   }
 
-  public info(tag: string, message: string, meta?: any): void;
-  public info(category: LogCategory, tag: string, message: string, meta?: any): void;
-  public info(arg1: any, arg2: any, arg3?: any, arg4?: any): void {
+  public info(tag: string, message: string, meta?: unknown): void;
+  public info(category: LogCategory, tag: string, message: string, meta?: unknown): void;
+  public info(arg1: string | LogCategory, arg2: string, arg3?: string | unknown, arg4?: unknown): void {
     if (typeof arg1 === 'string') {
       this.write(LogLevel.INFO, LogCategory.SYSTEM, arg1, arg2, arg3);
     } else {
-      this.write(LogLevel.INFO, arg1, arg2, arg3, arg4);
+      this.write(LogLevel.INFO, arg1, arg2, arg3 as string, arg4);
     }
   }
 
-  public warn(tag: string, message: string, meta?: any): void;
-  public warn(category: LogCategory, tag: string, message: string, meta?: any): void;
-  public warn(arg1: any, arg2: any, arg3?: any, arg4?: any): void {
+  public warn(tag: string, message: string, meta?: unknown): void;
+  public warn(category: LogCategory, tag: string, message: string, meta?: unknown): void;
+  public warn(arg1: string | LogCategory, arg2: string, arg3?: string | unknown, arg4?: unknown): void {
     if (typeof arg1 === 'string') {
       this.write(LogLevel.WARN, LogCategory.SYSTEM, arg1, arg2, arg3);
     } else {
-      this.write(LogLevel.WARN, arg1, arg2, arg3, arg4);
+      this.write(LogLevel.WARN, arg1, arg2, arg3 as string, arg4);
     }
   }
 
-  public error(tag: string, message: string, meta?: any): void;
-  public error(category: LogCategory, tag: string, message: string, meta?: any): void;
-  public error(arg1: any, arg2: any, arg3?: any, arg4?: any): void {
+  public error(tag: string, message: string, meta?: unknown): void;
+  public error(category: LogCategory, tag: string, message: string, meta?: unknown): void;
+  public error(arg1: string | LogCategory, arg2: string, arg3?: string | unknown, arg4?: unknown): void {
     if (typeof arg1 === 'string') {
       this.write(LogLevel.ERROR, LogCategory.SYSTEM, arg1, arg2, arg3);
     } else {
-      this.write(LogLevel.ERROR, arg1, arg2, arg3, arg4);
+      this.write(LogLevel.ERROR, arg1, arg2, arg3 as string, arg4);
     }
   }
 
-  public logUserAction(action: string, details: any, ip?: string, userAgent?: string): void {
+  public logUserAction(action: string, details: Record<string, unknown>, ip?: string, userAgent?: string): void {
     this.write(LogLevel.INFO, LogCategory.USER, 'USER_ACTION', action, {
       ...details,
       ip,

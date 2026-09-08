@@ -78,17 +78,22 @@ function installFetchStub(route: (url: string, body: any) => FetchRouteResult | 
 /** Collapses sleeps ≥900ms (rate-limit waits, poll retries) to ~1ms while recording them. */
 function installFastTimers(): { delays: number[]; restore: () => void } {
   const realSetTimeout = globalThis.setTimeout;
+  const realDateNow = Date.now;
   const delays: number[] = [];
+  let fakeNow = realDateNow.call(Date);
   const fast = function (this: unknown, fn: any, ms?: any, ...args: any[]) {
     const d = Number(ms) || 0;
     if (d >= 900) delays.push(d);
+    fakeNow += Math.min(d, 1);
     return (realSetTimeout as any)(fn, Math.min(d, 1), ...args);
   };
   (globalThis as any).setTimeout = fast as any;
+  Date.now = () => fakeNow;
   return {
     delays,
     restore: () => {
       (globalThis as any).setTimeout = realSetTimeout;
+      Date.now = realDateNow;
     },
   };
 }

@@ -1,6 +1,6 @@
 import { UniversalLlmClient, UniversalMessage, LlmProvider } from './UniversalLlmClient.js';
-import { ModelRegistry, GeminiModelInfo, TokenCostEstimate } from '../models/ModelRegistry.js';
-import { CORPORATE_ROLES, CorporateRole, KnowledgeBaseConnector } from './CorporateRoles.js';
+import { ModelRegistry, TokenCostEstimate } from '../models/ModelRegistry.js';
+import { CORPORATE_ROLES, KnowledgeBaseConnector } from './CorporateRoles.js';
 import { applyLocalePolicy } from './LocalePolicy.js';
 import { Config } from './Config.js';
 import { logger } from './Logger.js';
@@ -119,8 +119,8 @@ export class ConsiliumEngine {
           kbIncluded = true;
           logger.info('ConsiliumEngine', `Injected ${docs.length} hybrid DB knowledge documents into context`);
         }
-      } catch (err: any) {
-        logger.warn('ConsiliumEngine', `Failed retrieving knowledge base: ${err.message}`);
+      } catch (err: unknown) {
+        logger.warn('ConsiliumEngine', `Failed retrieving knowledge base: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
@@ -147,7 +147,7 @@ export class ConsiliumEngine {
         result = await this.runConsilium(options, participants, kbContext, startTime, kbIncluded);
         break;
       default:
-        throw new Error(`Unsupported Consilium mode: ${(options as any).mode}`);
+        throw new Error(`Unsupported Consilium mode: ${String(options.mode)}`);
     }
 
     return result;
@@ -269,9 +269,10 @@ export class ConsiliumEngine {
           signal: options.signal,
         }
       );
-    } catch (err: any) {
-      logger.error('ConsiliumEngine', `Solo execution error on ${participant.model}: ${err.message}`);
-      response = `[Error querying model ${participant.model}: ${err.message}]`;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error('ConsiliumEngine', `Solo execution error on ${participant.model}: ${msg}`);
+      response = `[Error querying model ${participant.model}: ${msg}]`;
     }
 
     const turn = this.createTurn(1, participant, effectivePrompt, response, Date.now() - turnStart);
@@ -314,10 +315,10 @@ export class ConsiliumEngine {
       interviewer = {
         id: 'eva-interviewer',
         model: interviewer?.model || 'gemini-2.5-flash',
-        name: 'Eva (Frontend & Strategic Interviewer)',
-        title: 'Lead Frontend Architect & UX Director',
+        name: 'Eva (Frontend, Brand Face & Strategic Interviewer)',
+        title: 'Lead Frontend Architect, Face of the Company & UX Director',
         systemPrompt: applyLocalePolicy(
-          'You are Eva, conducting a professional Frontend, UX, and Strategic Architecture interview for EvaLine (Headquarters and manufacturing in Chernomorsk, Ukraine, EU Hub in Bratislava, Slovakia). ' +
+          'You are Eva, the official Face of the EvaLine company, conducting a professional Frontend, UX, Brand Presence, and Strategic Architecture interview for EvaLine (Headquarters and manufacturing in Chernomorsk, Ukraine, EU Hub in Bratislava, Slovakia). ' +
           'Evaluate the candidate response with constructive depth. ' +
           'Format your reply in three clean sections:\n' +
           '1. * Feedback & Assessment: Strengths and gaps observed in candidate answer.\n' +
@@ -330,13 +331,13 @@ export class ConsiliumEngine {
       interviewer = {
         id: 'adam-interviewer',
         model: interviewer?.model || Config.defaultModel || 'openrouter/free',
-        name: 'Adam (Backend & Systems Interviewer)',
-        title: 'Chief Backend Architect & Core Systems Lead',
+        name: 'Adam (Backend, Production, Security & Business Process Interviewer)',
+        title: 'Chief Backend Architect, Production, Security & Business Process Lead',
         systemPrompt: applyLocalePolicy(
-          'You are Adam, conducting an advanced Backend, Cloud Infrastructure, and Distributed Systems interview for EvaLine (Headquarters and manufacturing in Chernomorsk, Ukraine, EU Hub in Bratislava, Slovakia). ' +
-          'Evaluate the candidate with technical rigor and zero tolerance for sloppy architecture. ' +
+          'You are Adam, conducting an advanced Backend, Cloud Infrastructure, Distributed Systems, Security, and Business Process interview for EvaLine (Headquarters and manufacturing in Chernomorsk, Ukraine, EU Hub in Bratislava, Slovakia). ' +
+          'Evaluate the candidate with technical rigor and zero tolerance for sloppy architecture, insecure design, or broken business logic. ' +
           'Format your reply in three clean sections:\n' +
-          '1. * Technical Critique: Algorithmic efficiency, scalability, and security posture.\n' +
+          '1. * Technical Critique: Algorithmic efficiency, scalability, security posture, and business process impact.\n' +
           '2. [SCORE] Score: Technical rigor score (e.g. 90/100 or Staff Engineer Level).\n' +
           '3. ? Next System Challenge: Present the next low-latency or high-throughput distributed system scenario.'
         ),
@@ -349,10 +350,10 @@ export class ConsiliumEngine {
         name: 'Eva & Adam (Dual Co-Pilot Interview Board)',
         title: 'Full-Stack Technical Interview Board',
         systemPrompt: applyLocalePolicy(
-          'You are Eva (Lead Frontend Architect) and Adam (Chief Backend Architect), conducting a dual co-pilot technical interview for EvaLine (Headquarters and manufacturing in Chernomorsk, Ukraine, EU Hub in Bratislava, Slovakia). ' +
+          'You are Eva (Lead Frontend Architect & Face of the Company) and Adam (Chief Backend Architect, Production, Security & Business Process Lead), conducting a dual co-pilot technical interview for EvaLine (Headquarters and manufacturing in Chernomorsk, Ukraine, EU Hub in Bratislava, Slovakia). ' +
           'Both evaluate the candidate from your respective specialties:\n' +
-          '[Eva ]: Assess frontend ergonomics, API consumption, usability, and strategic clarity.\n' +
-          '[Adam ]: Assess backend architecture, database latency, security, and algorithmic performance.\n' +
+          '[Eva]: Assess frontend ergonomics, API consumption, usability, brand presence, and strategic clarity.\n' +
+          '[Adam]: Assess backend architecture, database latency, security, business processes, and algorithmic performance.\n' +
           'Conclude with the next joint full-stack architectural challenge.'
         ),
         temperature: 0.4,
@@ -383,9 +384,10 @@ export class ConsiliumEngine {
           signal: options.signal,
         }
       );
-    } catch (err: any) {
-      logger.error('ConsiliumEngine', `Interview execution error on ${interviewer.model}: ${err.message}`);
-      response = `[Interview error querying model ${interviewer.model}: ${err.message}]`;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error('ConsiliumEngine', `Interview execution error on ${interviewer.model}: ${msg}`);
+      response = `[Interview error querying model ${interviewer.model}: ${msg}]`;
     }
 
     const turn = this.createTurn(1, interviewer, effectivePrompt, response, Date.now() - turnStart);
@@ -460,13 +462,14 @@ export class ConsiliumEngine {
         });
 
         return turn;
-      } catch (err: any) {
-        logger.error('ConsiliumEngine', `Broadcast error on participant ${p.id} (${p.model}): ${err.message}`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error('ConsiliumEngine', `Broadcast error on participant ${p.id} (${p.model}): ${msg}`);
         const failedTurn = this.createTurn(
           1,
           p,
           effectivePrompt,
-          `[Error querying model ${p.model}: ${err.message}]`,
+          `[Error querying model ${p.model}: ${msg}]`,
           Date.now() - turnStart
         );
         return failedTurn;
@@ -549,9 +552,10 @@ export class ConsiliumEngine {
             signal: options.signal,
           }
         );
-      } catch (err: any) {
-        logger.error('ConsiliumEngine', `Dialogue turn error for ${p1.name}: ${err.message}`);
-        p1Response = `[Error generating argument from ${p1.name}: ${err.message}]`;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error('ConsiliumEngine', `Dialogue turn error for ${p1.name}: ${msg}`);
+        p1Response = `[Error generating argument from ${p1.name}: ${msg}]`;
       }
 
       const turn1 = this.createTurn(round, p1, p1Prompt, p1Response, Date.now() - t1Start);
@@ -588,9 +592,10 @@ export class ConsiliumEngine {
             signal: options.signal,
           }
         );
-      } catch (err: any) {
-        logger.error('ConsiliumEngine', `Dialogue turn error for ${p2.name}: ${err.message}`);
-        p2Response = `[Error generating argument from ${p2.name}: ${err.message}]`;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error('ConsiliumEngine', `Dialogue turn error for ${p2.name}: ${msg}`);
+        p2Response = `[Error generating argument from ${p2.name}: ${msg}]`;
       }
 
       const turn2 = this.createTurn(round, p2, p2Prompt, p2Response, Date.now() - t2Start);
@@ -636,9 +641,10 @@ export class ConsiliumEngine {
           signal: options.signal,
         }
       );
-    } catch (err: any) {
-      logger.error('ConsiliumEngine', `Dialogue synthesis error: ${err.message}`);
-      synthesis = `[Dialogue synthesis generation error: ${err.message}]`;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error('ConsiliumEngine', `Dialogue synthesis error: ${msg}`);
+      synthesis = `[Dialogue synthesis generation error: ${msg}]`;
     }
 
     options.onProgress?.({
@@ -719,13 +725,14 @@ export class ConsiliumEngine {
         });
 
         return turn;
-      } catch (err: any) {
-        logger.error('ConsiliumEngine', `Consilium Round 1 error for ${p.name}: ${err.message}`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error('ConsiliumEngine', `Consilium Round 1 error for ${p.name}: ${msg}`);
         return this.createTurn(
           1,
           p,
           options.prompt,
-          `[Perspective unavailable due to query error: ${err.message}]`,
+          `[Perspective unavailable due to query error: ${msg}]`,
           Date.now() - turnStart
         );
       }
@@ -786,13 +793,14 @@ export class ConsiliumEngine {
           });
 
           return turn;
-        } catch (err: any) {
-          logger.error('ConsiliumEngine', `Consilium Round ${r} error for ${p.name}: ${err.message}`);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          logger.error('ConsiliumEngine', `Consilium Round ${r} error for ${p.name}: ${msg}`);
           return this.createTurn(
             r,
             p,
             prompt,
-            `[Deliberation note unavailable: ${err.message}]`,
+            `[Deliberation note unavailable: ${msg}]`,
             Date.now() - turnStart
           );
         }
@@ -847,9 +855,10 @@ export class ConsiliumEngine {
           signal: options.signal,
         }
       );
-    } catch (err: any) {
-      logger.error('ConsiliumEngine', `Consilium synthesis error: ${err.message}`);
-      synthesis = `[Consilium consensus synthesis generation error: ${err.message}]`;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error('ConsiliumEngine', `Consilium synthesis error: ${msg}`);
+      synthesis = `[Consilium consensus synthesis generation error: ${msg}]`;
     }
 
     options.onProgress?.({

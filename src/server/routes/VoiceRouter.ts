@@ -1,6 +1,7 @@
 import { Router, withErrorHandling } from './Router.js';
 import { cloudTts } from '../../core/CloudTTS.js';
 import { edgeTts } from '../../core/EdgeTTS.js';
+import { detectMessageLanguage } from '../../core/LocalePolicy.js';
 import {
   transcribeAudio,
   transcribeVoiceWithFallback,
@@ -12,7 +13,7 @@ import { logger, LogCategory } from '../../core/Logger.js';
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
-function readRawBody(req: import('node:http').IncomingMessage): Promise<Buffer> {
+export function readRawBody(req: import('node:http').IncomingMessage): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
@@ -97,7 +98,9 @@ export function createVoiceRouter(): Router {
       return;
     }
     const persona = body?.persona === 'adam' ? 'adam' : body?.persona === 'eva' ? 'eva' : undefined;
-    const lang = typeof body?.lang === 'string' ? body.lang : undefined;
+    // Detect language from text (LANGUAGE-FIRST); explicit lang body param is a fallback
+    const detectedLang = detectMessageLanguage(text);
+    const lang = typeof body?.lang === 'string' ? body.lang : detectedLang;
 
     let audioBase64: string | null = null;
     let voice = '';

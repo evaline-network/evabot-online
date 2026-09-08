@@ -22,12 +22,30 @@ export interface ChatSearchHit extends ChatHistoryRecord {
   rank: number;
 }
 
+interface SqlRow {
+  id: number;
+  session_id: string;
+  ts: number;
+  role: string;
+  content: string;
+  model: string;
+  lang: string;
+  rank?: number;
+}
+
+interface SqlSessionRow {
+  session_id: string;
+  messages: number;
+  firstTs: number;
+  lastTs: number;
+}
+
 export const DEFAULT_CHAT_HISTORY_DB_PATH = '/var/www/evabot-backend/data/chat-history.db';
 export const CONSILIUM_SESSION_ID = 'consilium';
 
 export class ChatHistoryStore {
   private static instances: Map<string, ChatHistoryStore> = new Map();
-  private db: DatabaseSync;
+  private db: DatabaseSync | null;
   private dbPath: string;
   private ready: boolean = false;
 
@@ -39,9 +57,9 @@ export class ChatHistoryStore {
       this.migrate();
       this.ready = true;
       logger.info(LogCategory.STORAGE, 'CHAT_DB', `Chat history SQLite store ready at ${dbPath}`);
-    } catch (err: any) {
-      this.db = null as any;
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `Chat history store unavailable: ${err.message}`);
+    } catch (err: unknown) {
+      this.db = null;
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `Chat history store unavailable: ${String(err)}`);
     }
   }
 
@@ -62,7 +80,7 @@ export class ChatHistoryStore {
   }
 
   private ensureSchema(): void {
-    this.db.exec(`
+    this.db!.exec(`
       CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_id TEXT,
@@ -116,8 +134,8 @@ export class ChatHistoryStore {
         msg.lang || ''
       );
       return Number(result.lastInsertRowid);
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `appendMessage failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `appendMessage failed: ${String(err)}`);
       return null;
     }
   }
@@ -131,12 +149,12 @@ export class ChatHistoryStore {
            FROM messages WHERE session_id = ?
            ORDER BY id DESC LIMIT ?`
         )
-        .all(sessionId, limit) as any[];
+        .all(sessionId, limit) as unknown as SqlRow[];
       return rows
         .reverse()
         .map(this.mapRow);
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `getSessionHistory failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `getSessionHistory failed: ${String(err)}`);
       return [];
     }
   }
@@ -152,10 +170,10 @@ export class ChatHistoryStore {
           `SELECT id, session_id, ts, role, content, model, lang
            FROM messages ORDER BY id DESC LIMIT ?`
         )
-        .all(limit) as any[];
+        .all(limit) as unknown as SqlRow[];
       return rows.reverse().map(this.mapRow);
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `getRecentMessages failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `getRecentMessages failed: ${String(err)}`);
       return [];
     }
   }
@@ -181,13 +199,13 @@ export class ChatHistoryStore {
            ORDER BY rank
            LIMIT ?`
         )
-        .all(ftsQuery, limit) as any[];
+        .all(ftsQuery, limit) as unknown as SqlRow[];
       return rows.map((row) => ({
         ...this.mapRow(row),
         rank: Number(row.rank) || 0,
       }));
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `searchMessages failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `searchMessages failed: ${String(err)}`);
       return [];
     }
   }
@@ -206,15 +224,15 @@ export class ChatHistoryStore {
            ORDER BY MAX(ts) DESC
            LIMIT ?`
         )
-        .all(limit) as any[];
+        .all(limit) as unknown as SqlSessionRow[];
       return rows.map((r) => ({
         sessionId: String(r.session_id),
         messages: Number(r.messages),
         firstTs: Number(r.firstTs),
         lastTs: Number(r.lastTs),
       }));
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `listSessions failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `listSessions failed: ${String(err)}`);
       return [];
     }
   }
@@ -222,16 +240,16 @@ export class ChatHistoryStore {
   public countAll(): { totalMessages: number; sessions: number } {
     if (!this.ready || !this.db) return { totalMessages: 0, sessions: 0 };
     try {
-      const msgRow = this.db.prepare('SELECT COUNT(*) as count FROM messages').get() as any;
+      const msgRow = this.db.prepare('SELECT COUNT(*) as count FROM messages').get() as { count: number } | undefined;
       const sessRow = this.db
         .prepare('SELECT COUNT(DISTINCT session_id) as count FROM messages')
-        .get() as any;
+        .get() as { count: number } | undefined;
       return {
         totalMessages: Number(msgRow?.count) || 0,
         sessions: Number(sessRow?.count) || 0,
       };
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `countAll failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `countAll failed: ${String(err)}`);
       return { totalMessages: 0, sessions: 0 };
     }
   }
@@ -246,14 +264,14 @@ export class ChatHistoryStore {
     try {
       const row = this.db
         .prepare('SELECT auto_enabled, last_model FROM session_state WHERE session_id = ?')
-        .get(sessionId) as any;
+        .get(sessionId) as { auto_enabled: number; last_model: string | null } | undefined;
       if (!row) return fallback;
       return {
         autoEnabled: Number(row.auto_enabled) === 1,
         lastModel: row.last_model != null ? String(row.last_model) : null,
       };
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `getSessionState failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `getSessionState failed: ${String(err)}`);
       return fallback;
     }
   }
@@ -268,8 +286,8 @@ export class ChatHistoryStore {
            ON CONFLICT(session_id) DO UPDATE SET auto_enabled = excluded.auto_enabled, updated_ts = excluded.updated_ts`
         )
         .run(sessionId, enabled ? 1 : 0, Date.now());
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `setSessionAuto failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `setSessionAuto failed: ${String(err)}`);
     }
   }
 
@@ -283,8 +301,8 @@ export class ChatHistoryStore {
            ON CONFLICT(session_id) DO UPDATE SET last_model = excluded.last_model, updated_ts = excluded.updated_ts`
         )
         .run(sessionId, model, Date.now());
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `setSessionLastModel failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `setSessionLastModel failed: ${String(err)}`);
     }
   }
 
@@ -293,12 +311,12 @@ export class ChatHistoryStore {
     if (!this.ready || !this.db) return;
     try {
       this.db.prepare('DELETE FROM session_state WHERE session_id = ?').run(sessionId);
-    } catch (err: any) {
-      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `deleteSessionState failed: ${err.message}`);
+    } catch (err: unknown) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `deleteSessionState failed: ${String(err)}`);
     }
   }
 
-  private mapRow(row: any): ChatHistoryRecord {
+  private mapRow(row: SqlRow): ChatHistoryRecord {
     return {
       id: Number(row.id),
       sessionId: String(row.session_id ?? ''),
@@ -314,8 +332,8 @@ export class ChatHistoryStore {
     if (this.db) {
       try {
         this.db.close();
-      } catch (err: any) {
-        logger.warn(LogCategory.STORAGE, 'CHAT_DB', `close failed: ${err.message}`);
+      } catch (err: unknown) {
+        logger.warn(LogCategory.STORAGE, 'CHAT_DB', `close failed: ${String(err)}`);
       }
       this.ready = false;
     }

@@ -58,10 +58,19 @@ export class ChatEngine {
 
     const store = ChatHistoryStore.getInstance();
     let history: Array<{ role: string; content: string }> = [];
+    // Role 'system' records are context injections (e.g. via /add context) —
+    // they must never be sent as user turns; they are merged into the system
+    // instruction instead.
+    let systemNotes: string[] = [];
     if (request.useHistory !== false) {
       try {
-        history = store
-          .getSessionHistory(sessionId, this.historyLimit)
+        const rawHistory = store.getSessionHistory(sessionId, this.historyLimit);
+        systemNotes = rawHistory
+          .filter((rec) => rec.role === 'system')
+          .map((rec) => rec.content)
+          .filter((c) => c.trim().length > 0);
+        history = rawHistory
+          .filter((rec) => rec.role !== 'system')
           .map((rec) => ({ role: rec.role === 'assistant' ? 'assistant' : 'user', content: rec.content }));
       } catch (err: any) {
         logger.warn('ChatEngine', `History load skipped for ${sessionId}: ${err.message}`);
@@ -101,6 +110,9 @@ export class ChatEngine {
     effectiveInstruction += `\n${languageLockInstruction(message)}`;
     if (DeveloperMode.isUnlocked(sessionId)) {
       effectiveInstruction += `\n${SystemContext.DEVELOPER_BLOCK}`;
+    }
+    if (systemNotes.length > 0) {
+      effectiveInstruction += `\n\n[SESSION CONTEXT INJECTED BY USER]\n${systemNotes.join('\n')}`;
     }
 
     const messages: UniversalMessage[] = [

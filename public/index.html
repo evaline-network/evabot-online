@@ -445,6 +445,84 @@
     }
     html:not([data-nocss])[data-locale-pending] body { visibility: hidden; }
   </style>
+  <style id="web-layer">
+    /* Web-enhancement layer — active only in display mode 'web' (data-mode="web").
+       Terminal styles stay fully on; this adds readability cards & smooth UI. */
+    html[data-mode='web'] body {
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    html[data-mode='web'] .header-block,
+    html[data-mode='web'] .chat-container,
+    html[data-mode='web'] .input-line {
+      max-width: 90ch;
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    html[data-mode='web'] .chat-container {
+      padding: 12px 10px 24px 10px;
+    }
+
+    html[data-mode='web'] .msg {
+      background: #0a0a0a;
+      border: 1px solid #1e1e1e;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin: 2px 0;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    html[data-mode='web'] .msg:hover {
+      border-color: #2b2b2b;
+    }
+
+    html[data-mode='web'] .msg-body {
+      display: block;
+      max-width: 90ch;
+    }
+
+    html[data-mode='web'] .code-block {
+      background: #101010;
+      border-radius: 8px;
+      border-left: 2px solid var(--green);
+      overflow-x: auto;
+    }
+
+    html[data-mode='web'] .code-block pre {
+      overflow-x: auto;
+    }
+
+    html[data-mode='web'] .interactive-link {
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    html[data-mode='web'] .interactive-link:hover {
+      text-decoration: underline;
+    }
+
+    html[data-mode='web'] .web-fold {
+      max-height: 150px;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+
+    html[data-mode='web'] .web-fold.open {
+      max-height: none;
+    }
+
+    html[data-mode='web'] .web-fold-toggle {
+      color: var(--green);
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.75rem;
+      display: inline-block;
+      margin-top: 4px;
+    }
+  </style>
   <script>
     (function () {
       try {
@@ -457,15 +535,24 @@
         } else {
           document.documentElement.lang = 'en';
         }
-        // NOCSS pre-paint state: all <style>/<link rel=stylesheet> already
-        // exist in <head> at this point — disable them before first paint.
-        if (localStorage.getItem('evabot_css') === 'off') {
+        // Display-mode pre-paint state: all <style>/<link rel=stylesheet>
+        // already exist in <head> at this point — disable them before first
+        // paint when mode is 'off'. Modes: 'off' | 'term' | 'web'
+        // (legacy value 'on' migrates to 'term'; default 'term').
+        var cssMode = localStorage.getItem('evabot_css');
+        if (cssMode === 'on') {
+          cssMode = 'term';
+          try { localStorage.setItem('evabot_css', 'term'); } catch (e2) { /* private mode */ }
+        }
+        if (cssMode === 'off') {
           document.documentElement.setAttribute('data-nocss', '1');
           var els = document.querySelectorAll('style, link[rel="stylesheet"]');
           for (var i = 0; i < els.length; i++) {
             els[i].setAttribute('data-css-media', els[i].getAttribute('media') || 'all');
             els[i].setAttribute('media', 'not all');
           }
+        } else {
+          document.documentElement.setAttribute('data-mode', cssMode === 'web' ? 'web' : 'term');
         }
       } catch (e) { document.documentElement.lang = 'en'; }
     })();
@@ -476,10 +563,11 @@
   <!-- Header Rows -->
   <div class="header-block">
     <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> <span id="lbl-ping">Ping:</span> <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator"></span></div>
-    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">... <span class="c-ok"></span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">... (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span><span class="cmd-link" id="css-toggle" onclick="toggleCss()" title="Toggle all CSS styling on/off (terminal mode)">[CSS:ON]</span></div>
-    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="handleCommand('/products')">/products</span><span class="cmd-link" onclick="handleCommand('/who')">/who</span><span class="cmd-link" onclick="setLanguage(state.lang)">/lang</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/sephirot')">/sephirot</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/history')">/history</span><span class="cmd-link" onclick="handleCommand('/memory')">/memory</span><span class="cmd-link" onclick="handleCommand('/search')">/search</span><span class="cmd-link" onclick="handleCommand('/services')">/services</span><span class="cmd-link" onclick="handleCommand('/servers')">/servers</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">... <span class="c-ok"></span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">... (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span><span class="cmd-link" id="css-toggle" onclick="toggleCss()" title="Display mode: off / term / web (click to cycle)">[CSS:TERM]</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="handleCommand('/products')">/products</span><span class="cmd-link" onclick="handleCommand('/who')">/who</span><span class="cmd-link" onclick="setLanguage(state.lang)">/lang</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/sephirot')">/sephirot</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/history')">/history</span><span class="cmd-link" onclick="handleCommand('/memory')">/memory</span><span class="cmd-link" onclick="handleCommand('/add')">/add</span><span class="cmd-link" onclick="handleCommand('/file')">/file</span><span class="cmd-link" onclick="handleCommand('/search')">/search</span><span class="cmd-link" onclick="handleCommand('/services')">/services</span><span class="cmd-link" onclick="handleCommand('/servers')">/servers</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
     <div class="tui-line" id="db-line"><span class="c-dim" id="lbl-databases">Databases:</span> <span class="c-ok" id="db-values">checking ...</span></div>
-    <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">[■■░░░░░░]</span> 25% RAM <span class="c-ok">[■░░░░░░░]</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">[░░░░░░]</span> 2% RAM <span class="c-ok">[■■■░░░]</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">*</span> 72bpm</span></div>
+    <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">25%</span> · RAM <span class="c-ok">15%</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">2%</span> · RAM <span class="c-ok">46%</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">*</span> 72bpm</span></div>
+    <div class="tui-line" id="network-strip"><span class="c-dim">Cluster:</span> <span class="cmd-link bold c-ok">[evabot.online]</span><a href="https://evaline.network" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.network ↗</a><a href="https://evaline.online" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.online ↗</a><a href="https://evaline.website" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.website ↗</a><span class="c-dim">│</span> <a href="https://github.com/evaline-network" class="cmd-link" target="_blank" style="color:var(--yellow); font-weight:700; text-decoration:underline;">GitHub @evaline-network ↗</a></div>
   </div>
 
   <!-- Messages stream -->
@@ -518,6 +606,9 @@
 
   <div class="toast-wrap" id="toast-wrap"></div>
 
+  <!-- Hidden file picker for /add file, /add media, /file (multipart → /api/upload) -->
+  <input type="file" id="file-input" multiple hidden>
+
   <script>
     const state = {
       lang: localStorage.getItem('evabot_lang') || 'en',
@@ -555,7 +646,7 @@
       VOCAB_CAP: 500,
 
       // All slash commands recognized locally or proxied via /api/models/command
-      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'search', 'find', 'services', 'servers', 'health', 'debug', 'log', 'monitor', 'translate', 'news', 'autocorrect', 'voice', 'tts', 'voices', 'settings', 'agents', 'emoji'],
+      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'add', 'file', 'search', 'find', 'services', 'servers', 'health', 'debug', 'log', 'monitor', 'translate', 'news', 'autocorrect', 'voice', 'tts', 'voices', 'settings', 'agents', 'emoji'],
 
       // Short localized descriptions (condensed from the I18N help blocks)
       CMD_DESC: {
@@ -577,6 +668,8 @@
         clear: { en: 'Clear terminal screen', uk: 'Очистити екран', ru: 'Очистить экран' },
         history: { en: 'Recent conversation history', uk: 'Історія діалогу', ru: 'История диалога' },
         memory: { en: 'Memory stats (KB, FTS, chat DB)', uk: 'Статистика памʼяті (KB, FTS, БД)', ru: 'Статистика памяти (KB, FTS, БД)' },
+        add: { en: 'Ingest: db | link | context | bot | human | agent | file', uk: 'Додавання: db | link | context | bot | human | agent | file', ru: 'Добавление: db | link | context | bot | human | agent | file' },
+        file: { en: 'Upload files to knowledge base', uk: 'Завантажити файли в базу знань', ru: 'Загрузить файлы в базу знаний' },
         search: { en: 'Full-text search <query>', uk: 'Пошук по базі знань <запит>', ru: 'Поиск по базе знаний <запрос>' },
         find: { en: 'Alias of /search', uk: 'Синонім /search', ru: 'Синоним /search' },
         services: { en: 'Services & DB backends status', uk: 'Статус сервісів і бекендів БД', ru: 'Статус сервисов и бекендов БД' },
@@ -935,6 +1028,7 @@
         databasesValue: 'checking ...',
         load: 'Load:',
         greeting: 'Connecting to evabot.online ...',
+        connected: 'Connected to evabot.online',
         placeholder: 'Type a message or command (/help)...',
         modalTitle: 'MODEL CATALOG',
         modalClose: '[CLOSE]',
@@ -972,7 +1066,26 @@
   /settings               - Current settings table (locale, model, TTS/STT/translate usage)
   /agents                 - Roster: 18 corporate roles + 10 Sephirot nodes
   /emoji [on|off]         - Emoji rendering in replies (off = strip, default)
+  /add db <title> | <content> - Add knowledge base document
+  /add link <url>         - Add URL to the knowledge base
+  /add context <text>     - Add raw context note
+  /add bot <name>         - Register bot persona
+  /add human <name>       - Register human contact
+  /add agent <name> [prompt] - Register agent persona (optional prompt)
+  /add file, /add media, /file - Upload files to the knowledge base
   /help , /?              - Display this guide`,
+        addHelp: `ADD COMMAND — ingest into the knowledge base:
+  /add db <title> | <content>    - Add knowledge base document
+  /add link <url>                - Fetch & index a web page
+  /add context <text>            - Append free-form context to memory
+  /add bot <name>                - Register bot persona
+  /add human <name>              - Register human contact
+  /add agent <name> [prompt]     - Register agent (optional system prompt)
+  /add file, /add media, /file   - Upload files via picker (multipart)
+Examples:
+  /add db Mats spec | Cellular rubber 3mm, EPDM, -40..+90C
+  /add link https://evaline.eu/products
+  /file`,
         switched: 'Language switched to English (EN). Interface updated instantly.',
         cleared: 'Screen cleared.',
         unknownCmd: 'Unknown command: {cmd}. Type /help for assistance.',
@@ -1014,6 +1127,7 @@
         databasesValue: 'перевірка ...',
         load: 'Навантаження:',
         greeting: 'Підключено до evabot.online. Введіть повідомлення або команду (/help).',
+        connected: 'Підключено до evabot.online',
         placeholder: 'Введіть повідомлення або команду (/help)...',
         modalTitle: 'КАТАЛОГ МОДЕЛЕЙ',
         modalClose: '[ЗАКРИТИ]',
@@ -1050,7 +1164,26 @@
   /settings               - Таблиця поточних налаштувань (мова, модель, ліміти TTS/STT/перекладу)
   /agents                 - Ростер: 18 корпоративних ролей + 10 вузлів Сефірот
   /emoji [on|off]         - Емодзі у відповідях (off = вирізати, за замовчуванням)
+  /add db <назва> | <вміст>   - Додати документ у базу знань
+  /add link <url>         - Додати посилання до бази знань
+  /add context <текст>    - Додати довільний контекст у пам'ять
+  /add bot <ім'я>         - Зареєструвати персону бота
+  /add human <ім'я>       - Зареєструвати контакт людини
+  /add agent <ім'я> [промпт] - Зареєструвати агента (опціональний промпт)
+  /add file, /add media, /file - Завантажити файли у базу знань
   /help , /?              - Ця довідка`,
+        addHelp: `КОМАНДА ADD — додавання у базу знань:
+  /add db <назва> | <вміст>      - Додати документ у базу знань
+  /add link <url>                - Завантажити та індексувати сторінку
+  /add context <текст>           - Додати довільний контекст у пам'ять
+  /add bot <ім'я>                - Зареєструвати персону бота
+  /add human <ім'я>              - Зареєструвати контакт людини
+  /add agent <ім'я> [промпт]     - Зареєструвати агента (системний промпт опціонально)
+  /add file, /add media, /file   - Завантажити файли через вибір файлів
+Приклади:
+  /add db Специфікація килимків | Комірчаста гума 3мм, EPDM, -40..+90C
+  /add link https://evaline.eu/products
+  /file`,
         switched: 'Мову перемкнено на українську (UK). Інтерфейс оновлено миттєво.',
         cleared: 'Екран очищено.',
         unknownCmd: 'Невідома команда: {cmd}. Введіть /help для довідки.',
@@ -1092,6 +1225,7 @@
         databasesValue: 'проверка ...',
         load: 'Нагрузка:',
         greeting: 'Подключено к evabot.online. Введите сообщение или команду (/help).',
+        connected: 'Подключено к evabot.online',
         placeholder: 'Введите сообщение или команду (/help)...',
         modalTitle: 'КАТАЛОГ МОДЕЛЕЙ',
         modalClose: '[ЗАКРЫТЬ]',
@@ -1128,7 +1262,26 @@
   /settings               - Таблица текущих настроек (язык, модель, лимиты TTS/STT/перевода)
   /agents                 - Ростер: 18 корпоративных ролей + 10 узлов Сфирот
   /emoji [on|off]         - Эмодзи в ответах (off = вырезать, по умолчанию)
+  /add db <название> | <содержимое> - Добавить документ в базу знаний
+  /add link <url>         - Добавить ссылку в базу знаний
+  /add context <текст>    - Добавить произвольный контекст в память
+  /add bot <имя>          - Зарегистрировать персону бота
+  /add human <имя>        - Зарегистрировать контакт человека
+  /add agent <имя> [промпт] - Зарегистрировать агента (опциональный промпт)
+  /add file, /add media, /file - Загрузить файлы в базу знаний
   /help , /?              - Эта справка`,
+        addHelp: `КОМАНДА ADD — добавление в базу знаний:
+  /add db <название> | <содержимое> - Добавить документ в базу знаний
+  /add link <url>                - Загрузить и проиндексировать страницу
+  /add context <текст>           - Добавить произвольный контекст в память
+  /add bot <имя>                 - Зарегистрировать персону бота
+  /add human <имя>               - Зарегистрировать контакт человека
+  /add agent <имя> [промпт]      - Зарегистрировать агента (системный промпт опционально)
+  /add file, /add media, /file   - Загрузить файлы через выбор файлов
+Примеры:
+  /add db Спецификация ковриков | Сотовая резина 3мм, EPDM, -40..+90C
+  /add link https://evaline.eu/products
+  /file`,
         switched: 'Язык переключен на русский (RU). Интерфейс обновлен мгновенно.',
         cleared: 'Экран очищен.',
         unknownCmd: 'Неизвестная команда: {cmd}. Введите /help для справки.',
@@ -1233,7 +1386,8 @@
 
       const bootMsg = document.getElementById('boot-msg');
       if (bootMsg && chatContainer && chatContainer.children.length === 1) {
-        bootMsg.textContent = d.greeting;
+        const alreadyConnected = bootMsg.textContent && !bootMsg.textContent.includes('Connecting');
+        bootMsg.textContent = alreadyConnected ? (d.connected || d.greeting) : d.greeting;
       }
 
       setStatus(true, state.isGenerating);
@@ -1251,17 +1405,27 @@
     window.setLanguage = setLanguage;
 
     // =======================================================================
-    // NOCSS toggle — terminal-mode styling kill switch.
-    // Disables EVERY <style>/<link rel=stylesheet> by swapping its `media`
-    // attribute to 'not all' (previous value stashed in data-css-media).
-    // Content always stays visible: default browser styling = plain text flow.
-    // State persisted in localStorage 'evabot_css' ('on'|'off', default 'on').
+    // Display modes — three-state styling switch (was: binary NOCSS toggle).
+    // 'off'  — no styles: every <style>/<link rel=stylesheet> gets media
+    //          swapped to 'not all' (prev value stashed in data-css-media);
+    //          data-nocss attr set. Plain text flow, content always visible.
+    // 'term' — default: terminal styling exactly as before, data-mode='term'.
+    // 'web'  — terminal styling PLUS the #web-layer enhancement block
+    //          (scoped under html[data-mode='web']): message cards, rounded
+    //          code blocks, centered readability column, web folds.
+    // State persisted in localStorage 'evabot_css' ('off'|'term'|'web',
+    // legacy 'on' migrates to 'term'; default 'term').
     // =======================================================================
-    function isCssOn() {
-      return localStorage.getItem('evabot_css') !== 'off';
+    const CSS_MODES = ['off', 'term', 'web'];
+
+    function getDisplayMode() {
+      let v = null;
+      try { v = localStorage.getItem('evabot_css'); } catch (e) { /* private mode */ }
+      if (v === 'on') v = 'term'; // legacy migration
+      return CSS_MODES.includes(v) ? v : 'term';
     }
 
-    function applyCssState(on) {
+    function setStyleSheetsEnabled(on) {
       const els = document.querySelectorAll('style, link[rel="stylesheet"]');
       for (const el of els) {
         if (on) {
@@ -1278,19 +1442,76 @@
           el.setAttribute('media', 'not all');
         }
       }
-      if (on) document.documentElement.removeAttribute('data-nocss');
-      else document.documentElement.setAttribute('data-nocss', '1');
-      const btn = document.getElementById('css-toggle');
-      if (btn) {
-        btn.textContent = on ? '[CSS:ON]' : '[CSS:OFF]';
-        btn.className = on ? 'cmd-link' : 'cmd-link c-wrn';
+    }
+
+    // Web-mode message folds: bodies longer than WEB_FOLD_CHARS are wrapped in
+    // a collapsible .web-fold (first ~8 lines visible) with a [▼ more] toggle.
+    const WEB_FOLD_CHARS = 600;
+
+    function applyWebFolds(root) {
+      if (document.documentElement.getAttribute('data-mode') !== 'web') return;
+      const bodies = (root || document).querySelectorAll('.msg-body:not([data-folded])');
+      for (const body of bodies) {
+        if ((body.textContent || '').length <= WEB_FOLD_CHARS) continue;
+        body.setAttribute('data-folded', '1');
+        const fold = document.createElement('div');
+        fold.className = 'web-fold';
+        while (body.firstChild) fold.appendChild(body.firstChild);
+        const toggle = document.createElement('span');
+        toggle.className = 'web-fold-toggle';
+        toggle.textContent = '[▼ more]';
+        toggle.addEventListener('click', () => {
+          const open = fold.classList.toggle('open');
+          toggle.textContent = open ? '[▲ less]' : '[▼ more]';
+        });
+        body.appendChild(fold);
+        body.appendChild(toggle);
       }
     }
 
+    // Switching away from web mode → unfold everything and drop the folds.
+    function unfoldWebFolds() {
+      document.querySelectorAll('.web-fold').forEach((fold) => {
+        const body = fold.parentNode;
+        if (!body) return;
+        while (fold.firstChild) body.insertBefore(fold.firstChild, fold);
+        fold.remove();
+        const t = body.querySelector('.web-fold-toggle');
+        if (t) t.remove();
+        body.removeAttribute('data-folded');
+      });
+    }
+
+    function applyWebMode() {
+      if (document.documentElement.getAttribute('data-mode') === 'web') {
+        applyWebFolds(document);
+      } else {
+        unfoldWebFolds();
+      }
+    }
+
+    function applyDisplayMode(mode) {
+      const on = mode !== 'off';
+      setStyleSheetsEnabled(on);
+      if (on) document.documentElement.removeAttribute('data-nocss');
+      else document.documentElement.setAttribute('data-nocss', '1');
+      if (on) document.documentElement.setAttribute('data-mode', mode);
+      else document.documentElement.removeAttribute('data-mode');
+      const btn = document.getElementById('css-toggle');
+      if (btn) {
+        btn.textContent = mode === 'off' ? '[CSS:OFF]' : mode === 'web' ? '[CSS:WEB]' : '[CSS:TERM]';
+        btn.className = mode === 'off' ? 'cmd-link c-wrn' : 'cmd-link';
+        btn.title = 'Display mode: off / term / web (click to cycle)';
+      }
+      applyWebMode();
+    }
+
+    // Cycle: off → term → web → off (HTML onclick stays toggleCss).
     function toggleCss() {
-      const next = !isCssOn();
-      try { localStorage.setItem('evabot_css', next ? 'on' : 'off'); } catch (e) { /* private mode */ }
-      applyCssState(next);
+      const cur = getDisplayMode();
+      const next = cur === 'off' ? 'term' : cur === 'term' ? 'web' : 'off';
+      try { localStorage.setItem('evabot_css', next); } catch (e) { /* private mode */ }
+      applyDisplayMode(next);
     }
     window.toggleCss = toggleCss;
 
@@ -1410,6 +1631,8 @@
       msgDiv.appendChild(bodySpan);
 
       chatContainer.appendChild(msgDiv);
+      // Web display mode: fold long message bodies into a [▼ more] accordion.
+      applyWebFolds(msgDiv);
       chatContainer.scrollTop = chatContainer.scrollHeight;
       window.scrollTo(0, document.body.scrollHeight);
       return bodySpan;
@@ -1439,10 +1662,10 @@
     let pulseIdx = 0;
     let heartRate = 72;
 
+    // ASCII load bars removed from the web version — plain percentages only.
+    // Kept as a no-op stub for call-site compatibility.
     function makeBar(pct, length = 8) {
-      const p = Math.max(0, Math.min(100, Math.round(pct)));
-      const filled = Math.min(length, Math.max(0, Math.round((p / 100) * length)));
-      return '■'.repeat(filled) + '░'.repeat(length - filled);
+      return '';
     }
 
     async function checkPing() {
@@ -1461,6 +1684,14 @@
           const data = await res.json();
           const lat = Math.round(performance.now() - t0);
           pingText.textContent = lat + 'ms';
+
+          // Transition boot message from "Connecting..." to "Connected"
+          const bootMsg = document.getElementById('boot-msg');
+          if (bootMsg && bootMsg.textContent && bootMsg.textContent.includes('Connecting')) {
+            const d = I18N[state.lang] || I18N.en;
+            bootMsg.textContent = d.connected || d.greeting;
+            bootMsg.style.color = 'var(--green)';
+          }
           if (lat < 100) pingText.className = 'c-ok bold';
           else if (lat < 250) pingText.className = 'c-wrn bold';
           else pingText.className = 'c-err bold';
@@ -1497,20 +1728,16 @@
             }
 
             if (frankfurtEl && f) {
-              const cpuBar = makeBar(f.cpuPct || 25, 8);
               const memUsed = parseFloat(f.memUsedGb) || 4.7;
               const memTotal = parseFloat(f.memTotalGb) || 31;
               const ramPct = Math.round((memUsed / memTotal) * 100);
-              const ramBar = makeBar(ramPct, 8);
-              frankfurtEl.innerHTML = `Brain(Frankfurt) CPU <span class="c-ok">[${cpuBar}]</span> ${f.cpuPct}% RAM <span class="c-ok">[${ramBar}]</span> ${memUsed}/${memTotal}GB (${ramPct}%)`;
+              frankfurtEl.innerHTML = `Brain(Frankfurt) CPU <span class="c-ok">${f.cpuPct || 25}%</span> · RAM <span class="c-ok">${ramPct}%</span> ${memUsed}/${memTotal}GB`;
             }
 
             if (iowaEl && i) {
               const iowaCpu = i.cpuPct || 2;
-              const cpuBar = makeBar(iowaCpu, 6);
               const ramPct = Math.round((i.memUsedMb / (i.memTotalMb || 964)) * 100);
-              const ramBar = makeBar(ramPct, 6);
-              iowaEl.innerHTML = `Face(Iowa) CPU <span class="c-ok">[${cpuBar}]</span> ${iowaCpu}% RAM <span class="c-ok">[${ramBar}]</span> ${i.memUsedMb}MB`;
+              iowaEl.innerHTML = `Face(Iowa) CPU <span class="c-ok">${iowaCpu}%</span> · RAM <span class="c-ok">${ramPct}%</span> ${i.memUsedMb}MB`;
             }
           }
         }
@@ -1520,7 +1747,8 @@
       }
     }
 
-    setInterval(checkPing, 1000);
+    // 10s poll: /api/health 60 req/min was wasteful — 6 req/min is enough.
+    setInterval(checkPing, 10000);
     checkPing();
 
     function setModel(model) {
@@ -1825,6 +2053,20 @@
         return;
       }
 
+      // /add — knowledge ingestion. Local handling: help text and the file
+      // picker (/add file|media, /file). Everything else (/add db|link|
+      // context|bot|human|agent) falls through to the server delegate below.
+      if (lower === '/add' || lower === '/add help' || lower === '/file') {
+        const d = I18N[state.lang] || I18N.en;
+        addMessage('system', d.addHelp);
+        return;
+      }
+
+      if (lower === '/add file' || lower === '/add media') {
+        triggerFileUpload();
+        return;
+      }
+
       // Delegate every remaining /command to the server command registry
       // (ModelCommand.execute handles aliases, unknown commands and errors itself).
       if (lower.startsWith('/')) {
@@ -1834,6 +2076,12 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command: cmd })
           });
+          if (!res.ok) {
+            addMessage('error', res.status === 429
+              ? '[WAIT] Rate limit — повторите через 10-15 сек.'
+              : '[ERROR] HTTP ' + res.status);
+            return;
+          }
           const data = await res.json();
           addMessage('system', data.result || 'OK');
         } catch (e) {
@@ -1845,6 +2093,45 @@
 
       const d = I18N[state.lang] || I18N.en;
       addMessage('error', d.unknownCmd.replace('{cmd}', escapeHtml(cmd)));
+    }
+
+    // =======================================================================
+    // /add file, /add media, /file — multipart uploads to POST /api/upload.
+    // The hidden #file-input picker is opened on demand; each selected file
+    // is sent as FormData (field name 'file') and its result echoed in-chat.
+    // =======================================================================
+    function triggerFileUpload() {
+      const inp = document.getElementById('file-input');
+      if (!inp) return;
+      inp.value = '';
+      inp.click();
+    }
+
+    async function uploadFiles(files) {
+      for (const file of Array.from(files)) {
+        const waitMsg = addMessage('system', '[WAIT] Uploading ' + file.name + '...');
+        try {
+          const fd = new FormData();
+          fd.append('file', file);
+          const res = await fetch('/api/upload', { method: 'POST', body: fd });
+          if (!res.ok) {
+            waitMsg.textContent = '[ERROR] Upload ' + file.name + ': HTTP ' + res.status;
+            continue;
+          }
+          const data = await res.json().catch(() => null);
+          const result = data && (data.result || data.message) ? String(data.result || data.message) : 'uploaded';
+          waitMsg.textContent = '[OK] ' + file.name + ': ' + result;
+        } catch (e) {
+          waitMsg.textContent = '[ERROR] Upload ' + file.name + ': ' + (e && e.message ? e.message : 'network');
+        }
+      }
+    }
+
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) {
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files && fileInput.files.length) uploadFiles(fileInput.files);
+      });
     }
 
     // =======================================================================
@@ -2383,7 +2670,7 @@
     });
 
     // Start
-    applyCssState(isCssOn());
+    applyDisplayMode(getDisplayMode());
     setLanguage(state.lang, true);
     loadModels();
     setStatus(true);
