@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { DEFAULT_GEMINI_API_KEY } from './GoogleAuthProvider.js';
+import { resolveGeminiApiKey } from './GoogleAuthProvider.js';
 
 export interface SystemConfig {
   geminiApiKey: string;
@@ -61,11 +61,12 @@ function loadDotEnv(): void {
 loadDotEnv();
 
 export const Config: SystemConfig = {
-  // Gemini free-tier key: explicit GEMINI_API_KEY env wins; otherwise fall
-  // back to the built-in default key (generativelanguage free tier, $0).
-  geminiApiKey: process.env.GEMINI_API_KEY?.trim() || DEFAULT_GEMINI_API_KEY,
+  // Gemini free-tier key: explicit GEMINI_API_KEY env wins; otherwise lazily
+  // fall back to Secret Manager secret 'evabot-gemini-api-key' (free tier, $0).
+  // Resolved once here (after loadDotEnv); '' on total failure → callers degrade.
+  geminiApiKey: resolveGeminiApiKey(),
   vertexEnabled: process.env.EVA_VERTEX_ENABLED === '1',
-  defaultModel: process.env.DEFAULT_MODEL || 'gemini-2.5-flash',
+  defaultModel: process.env.DEFAULT_MODEL || 'openrouter/free',
   serverPort: parseInt(process.env.PORT || '3000', 10),
   serverHost: process.env.HOST || '0.0.0.0',
   defaultSystemInstruction: 

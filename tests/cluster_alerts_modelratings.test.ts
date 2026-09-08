@@ -494,7 +494,7 @@ export async function runClusterAlertsModelRatingsTests(): Promise<boolean> {
     assert(chainUnknown.length > 0 && chainUnknown[0] === 'gemini-3.1-pro', 'unknown model id → treated as free, fleet chain returned');
 
     // C4. getSmartestFreeModel (+ registry-empty fallback).
-    assert(ModelRatings.getSmartestFreeModel().id === 'gemini-3.8-flash', 'smartest free model = Gemini 3.8 Flash');
+    assert(ModelRatings.getSmartestFreeModel().id === 'nvidia/nemotron-3-ultra-550b-a55b:free', 'smartest free model = Nemotron 3 Ultra (free, non-Gemini — Gemini reserved for development)');
     const realGetModelById = (ModelRegistry as any).getModelById;
     const realGetFreeModels = (ModelRegistry as any).getFreeModels;
     try {

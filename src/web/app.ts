@@ -126,8 +126,8 @@ const TRANSLATIONS: Record<Lang, TranslationStrings> = {
     statusOnline: '[ONLINE] // IDLE',
     statusBusy: '[ACTIVE] // STREAMING',
     statusError: '[ERROR] // OFFLINE',
-    controlPanelBtn: '[ ↓ CONTROL PANEL // SYSTEM DECK ]',
-    returnTerminalBtn: '[ ↑ RETURN TO TERMINAL ]',
+    controlPanelBtn: '[ CONTROL PANEL // SYSTEM DECK ]',
+    returnTerminalBtn: '[ RETURN TO TERMINAL ]',
     clearChatBtn: '[ CLR ]',
     transmitBtn: '[ TRANSMIT  ]',
     stopBtn: '[ STOP ]',
@@ -211,8 +211,8 @@ const TRANSLATIONS: Record<Lang, TranslationStrings> = {
     statusOnline: '[ONLINE] В МЕРЕЖІ // ОЧІКУВАННЯ',
     statusBusy: '[ACTIVE] ГЕНЕРАЦІЯ // АКТИВНО',
     statusError: '[ERROR] ПОМИЛКА // ОФЛАЙН',
-    controlPanelBtn: '[ ↓ ПАНЕЛЬ КЕРУВАННЯ // СИСТЕМНИЙ ДЕК ]',
-    returnTerminalBtn: '[ ↑ ПОВЕРНУТИСЯ ДО ТЕРМІНАЛУ ]',
+    controlPanelBtn: '[ ПАНЕЛЬ КЕРУВАННЯ // СИСТЕМНИЙ ДЕК ]',
+    returnTerminalBtn: '[ ПОВЕРНУТИСЯ ДО ТЕРМІНАЛУ ]',
     clearChatBtn: '[ ОЧИСТИТИ ]',
     transmitBtn: '[ ВІДПРАВИТИ  ]',
     stopBtn: '[ ЗУПИНИТИ ]',
@@ -296,8 +296,8 @@ const TRANSLATIONS: Record<Lang, TranslationStrings> = {
     statusOnline: '[ONLINE] В СЕТИ // ОЖИДАНИЕ',
     statusBusy: '[ACTIVE] ГЕНЕРАЦИЯ // АКТИВНО',
     statusError: '[ERROR] ОШИБКА // ОФЛАЙН',
-    controlPanelBtn: '[ ↓ КОНТРОЛЬНАЯ ПАНЕЛЬ // СИСТЕМНЫЙ ДЕК ]',
-    returnTerminalBtn: '[ ↑ ВЕРНУТЬСЯ В ТЕРМИНАЛ ]',
+    controlPanelBtn: '[ КОНТРОЛЬНАЯ ПАНЕЛЬ // СИСТЕМНЫЙ ДЕК ]',
+    returnTerminalBtn: '[ ВЕРНУТЬСЯ В ТЕРМИНАЛ ]',
     clearChatBtn: '[ ОЧИСТИТЬ ]',
     transmitBtn: '[ ОТПРАВИТЬ  ]',
     stopBtn: '[ ОСТАНОВИТЬ ]',
@@ -381,7 +381,7 @@ export class EvaBotWebApp {
   private messages: WebMessage[] = [];
   private currentLang: Lang = 'en';
   private currentProvider: ProviderId = 'google';
-  private currentModel: string = 'gemini-2.5-flash';
+  private currentModel: string = 'openrouter/free';
   private currentMode: ModeId = 'solo';
   private currentRole: RoleId = 'ceo';
   private isGenerating: boolean = false;
@@ -408,6 +408,11 @@ export class EvaBotWebApp {
     await this.checkHealth();
     this.populateModelSelector();
     this.applyLanguage();
+    // Locale applied pre-paint by the inline head script (data-locale-pending);
+    // reveal the body only after the saved language has actually been applied
+    // so the user never sees a wrong-language flash.
+    document.documentElement.lang = this.currentLang;
+    document.documentElement.removeAttribute('data-locale-pending');
     this.updateProviderUI();
     this.updateModeUI();
     this.updateRoleUI();
@@ -887,7 +892,7 @@ ${t.welcomeNotice}
 • CORPORATE PERSONA: [${this.currentRole.toUpperCase()}]
 • CURRENCY ACCOUNTING: Strictly USD ($) and EUR (€) Compliance
 
-Execute commands or submit analytical inquiries below. Click '[ ↓ CONTROL PANEL ]' to toggle neural deck parameters.`;
+Execute commands or submit analytical inquiries below. Click '[ CONTROL PANEL ]' to toggle neural deck parameters.`;
 
     this.appendMessage({
       role: 'model',
@@ -1004,35 +1009,55 @@ Execute commands or submit analytical inquiries below. Click '[ ↓ CONTROL PANE
       let accumulatedText = '';
       let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // Watchdog: a silent provider stream must never wedge the chat in the
+      // '...' state. Abort when no chunk arrives for 60s (or 120s total).
+      let lastActivity = Date.now();
+      const watchdog = setInterval(() => {
+        if (Date.now() - lastActivity > 60_000) {
+          this.abortController?.abort();
+        }
+      }, 5_000);
+      const totalTimer = setTimeout(() => this.abortController?.abort(), 120_000);
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          lastActivity = Date.now();
 
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('data: ')) {
-            const dataStr = trimmed.slice(6).trim();
-            if (!dataStr) continue;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
 
-            try {
-              const data = JSON.parse(dataStr);
-              if (data.chunk) {
-                accumulatedText += data.chunk;
-                textSpan.innerHTML = this.renderMarkdown(accumulatedText);
-                this.scrollToBottom();
-              } else if (data.error) {
-                accumulatedText += `\n\n[Error: ${data.error}]`;
-                textSpan.innerHTML = this.renderMarkdown(accumulatedText);
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('data: ')) {
+              const dataStr = trimmed.slice(6).trim();
+              if (!dataStr) continue;
+
+              try {
+                const data = JSON.parse(dataStr);
+                if (data.chunk) {
+                  accumulatedText += data.chunk;
+                  textSpan.innerHTML = this.renderMarkdown(accumulatedText);
+                  this.scrollToBottom();
+                } else if (data.error) {
+                  accumulatedText += `\n\n[Error: ${data.error}]`;
+                  textSpan.innerHTML = this.renderMarkdown(accumulatedText);
+                }
+              } catch {
+                // Ignore partial JSON
               }
-            } catch {
-              // Ignore partial JSON
             }
           }
         }
+      } finally {
+        clearInterval(watchdog);
+        clearTimeout(totalTimer);
+      }
+
+      if (!accumulatedText.trim()) {
+        throw new Error('Model returned empty response (fallback exhausted)');
       }
 
       this.messages.push({

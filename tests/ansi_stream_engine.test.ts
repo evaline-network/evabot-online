@@ -33,34 +33,34 @@ export async function runAnsiStreamEngineTests(): Promise<boolean> {
   }
 
   // 1. ANSI stripping and visible width
-  const styled = `${AnsiColors.green}${AnsiColors.bold}ONLINE 🟢${AnsiColors.reset}`;
+  const styled = `${AnsiColors.green}${AnsiColors.bold}[OK] ONLINE${AnsiColors.reset}`;
   const clean = stripAnsi(styled);
-  assert(clean === 'ONLINE 🟢', 'stripAnsi correctly strips ANSI escape codes');
-  assert(toPlainText(styled) === 'ONLINE 🟢', 'toPlainText strips ANSI codes identically');
+  assert(clean === '[OK] ONLINE', 'stripAnsi correctly strips ANSI escape codes');
+  assert(toPlainText(styled) === '[OK] ONLINE', 'toPlainText strips ANSI codes identically');
 
   const widthClean = visibleWidth('ONLINE');
   assert(widthClean === 6, 'visibleWidth handles ASCII standard characters');
-  const widthEmoji = visibleWidth('🟢');
-  assert(widthEmoji === 2, 'visibleWidth recognizes 2-width emoji traffic lights');
+  const widthWide = visibleWidth('中');
+  assert(widthWide === 2, 'visibleWidth recognizes 2-width wide characters');
 
   const padded = padEndVisible('STATUS', 10);
   assert(visibleWidth(padded) === 10, 'padEndVisible correctly pads visible width');
   const paddedStart = padStartVisible('100', 6);
   assert(visibleWidth(paddedStart) === 6, 'padStartVisible correctly pads start width');
 
-  // 2. Traffic light icons & badges
-  assert(trafficLightIcon('green') === '🟢', 'trafficLightIcon returns 🟢 for green');
-  assert(trafficLightIcon('yellow') === '🟡', 'trafficLightIcon returns 🟡 for yellow');
-  assert(trafficLightIcon('red') === '🔴', 'trafficLightIcon returns 🔴 for red');
+  // 2. Traffic light icons & badges (emoji-free: [OK] / [MED] / [HIGH])
+  assert(trafficLightIcon('green') === '[OK]', 'trafficLightIcon returns [OK] for green');
+  assert(trafficLightIcon('yellow') === '[MED]', 'trafficLightIcon returns [MED] for yellow');
+  assert(trafficLightIcon('red') === '[HIGH]', 'trafficLightIcon returns [HIGH] for red');
 
   const greenBadge = statusBadge('online');
-  assert(greenBadge.includes('🟢') && greenBadge.includes('ONLINE'), 'statusBadge formats online badge with traffic light');
+  assert(greenBadge.includes('[OK]') && greenBadge.includes('[ONLINE]'), 'statusBadge formats online badge with traffic light');
 
   const freeBadge = statusBadge('free');
-  assert(freeBadge.includes('🟢') && freeBadge.includes('100% FREE QUOTA'), 'statusBadge formats 100% free quota badge');
+  assert(freeBadge.includes('[OK]') && freeBadge.includes('[100% FREE QUOTA]'), 'statusBadge formats 100% free quota badge');
 
   const paidBadge = statusBadge('paid');
-  assert(paidBadge.includes('🟡') && paidBadge.includes('PAID / METERED'), 'statusBadge formats paid/metered badge');
+  assert(paidBadge.includes('[MED]') && paidBadge.includes('[PAID / METERED]'), 'statusBadge formats paid/metered badge');
 
   // 3. Web HTML 1:1 mapping
   const htmlOut = toHtml(`${AnsiColors.green}Active${AnsiColors.reset}`);
@@ -73,8 +73,8 @@ export async function runAnsiStreamEngineTests(): Promise<boolean> {
     price: string;
   }
   const testRows: TestRow[] = [
-    { name: 'Gemini 3.8 Flash', status: '🟢 Free', price: '$0.00 / €0.00' },
-    { name: 'Claude 3.7 Sonnet', status: '🟡 Paid', price: '$3.00 / €2.80' },
+    { name: 'Gemini 3.8 Flash', status: '[OK] Free', price: '$0.00 / €0.00' },
+    { name: 'Claude 3.7 Sonnet', status: '[MED] Paid', price: '$3.00 / €2.80' },
   ];
 
   const tableStr = TableFormatter.render<TestRow>(testRows, {

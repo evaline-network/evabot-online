@@ -1,4 +1,13 @@
+/**
+ * server.test.ts — Server HTTP API tests.
+ *
+ * Hermetic: the /api/chat LLM call is mocked by stubbing
+ * UniversalLlmClient.prototype.generateContent (same pattern as
+ * tests/routers.test.ts) so the suite never hits the live Google API.
+ */
+
 import { createServer } from '../src/server/server.js';
+import { UniversalLlmClient } from '../src/core/UniversalLlmClient.js';
 
 export async function runServerTests(): Promise<boolean> {
   console.log('\n--- Running Server HTTP API Tests ---');
@@ -12,6 +21,27 @@ export async function runServerTests(): Promise<boolean> {
       passed = false;
     }
   }
+
+  // Mock the LLM layer (no live network) — mirrors tests/routers.test.ts.
+  const proto: any = UniversalLlmClient.prototype;
+  const origGenerate = proto.generateContent;
+  const origStream = proto.streamContent;
+  proto.generateContent = async function (
+    _model: string,
+    _messages: any[],
+    _options: any = {}
+  ): Promise<string> {
+    return 'MOCK-LLM-REPLY';
+  };
+  proto.streamContent = async function (
+    _model: string,
+    _messages: any[],
+    onChunk: (c: string) => void,
+    _options: any = {}
+  ): Promise<string> {
+    onChunk('MOCK-LLM-REPLY');
+    return 'MOCK-LLM-REPLY';
+  };
 
   const server = createServer();
   await new Promise<void>((resolve) => {
@@ -40,13 +70,15 @@ export async function runServerTests(): Promise<boolean> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: 'Hello' }),
     });
-    // Should be 401 if no server key
+    // Should be 401 if no server key, 200 with the mocked LLM reply otherwise
     assert(chatRes.status === 401 || chatRes.status === 200, `/api/chat handles key check gracefully (status ${chatRes.status})`);
 
   } catch (err: any) {
     console.error(`  ✗ Server test error: ${err.message}`);
     passed = false;
   } finally {
+    proto.generateContent = origGenerate;
+    proto.streamContent = origStream;
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
     });

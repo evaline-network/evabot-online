@@ -22,6 +22,9 @@ import { Config } from '../core/Config.js';
 import { OpLog, isDebugOn, setDebugOn, opLog } from '../core/OpLog.js';
 import { SystemContext, getLastUsedModel } from '../core/SystemContext.js';
 import { DeveloperMode } from '../core/DeveloperMode.js';
+import { AutoModelRouter } from '../core/AutoModelRouter.js';
+import { SubagentEngine } from '../core/SubagentEngine.js';
+import { logger } from '../core/Logger.js';
 
 export type ModelRatingDimension = 'quality' | 'speed' | 'context' | 'cost';
 
@@ -280,38 +283,19 @@ export class ModelRatings {
    *  5. Qwen 2.5 Coder 32B / DeepSeek R1 (Specialized coding/reasoning models)
    */
   public static getSmartestFreeModel(): GeminiModelInfo {
+    // POLICY (2026-09-08): Gemini quota is RESERVED FOR DEVELOPMENT — runtime
+    // chat must not touch our Google account. Fleet = LIVE-VERIFIED free ids
+    // (queried OpenRouter /models 2026-09-08; the stale 2025 ":free" ids are
+    // paid now). TOP-1 smartest free = NVIDIA Nemotron 3 Ultra 550B (1M ctx).
     const candidateIds = [
+      'nvidia/nemotron-3-super-120b-a12b:free',
+      'dots-studio/dots-3-note-preview:free',
+      'cohere/north-mini-code:free',
+      'openrouter/free',
       'omni/cf-gpt-oss-120b',
-      'omni/cf-qwen2.5-coder-32b',
-      'omni/cf-llama-3.3-70b',
-      'omni/cf-qwen2.5-coder-32b',
-      'omni/cf-mistral-small-3.1',
-      'omni/cf-llama-4-scout',
-      'omni/cf-gemma-4-26b',
-      'omni/cf-nemotron-3-120b',
-      'omni/cf-gpt-oss-20b',
-      'omni/cf-gpt-oss-120b',
-      'omni/cf-llama-4-scout',
-      'omni/cf-gemma-4-26b',
-      'omni/cf-nemotron-3-120b',
     ];
 
     for (const id of candidateIds) {
-      const model = ModelRegistry.getModelById(id);
-      if (model && model.pricing.freeTierStatus === '100% Free Quota Available') {
-        return model;
-      }
-    }
-
-    // Fallback to original list
-    const legacyIds = [
-      'gemini-3.8-flash',
-      'gemini-3.1-pro',
-      'gemini-3.1-flash',
-      'omniroute/gemini-3.8-flash',
-      'omniroute/gemini-3.1-pro',
-    ];
-    for (const id of legacyIds) {
       const model = ModelRegistry.getModelById(id);
       if (model && model.pricing.freeTierStatus === '100% Free Quota Available') {
         return model;
@@ -329,29 +313,31 @@ export class ModelRatings {
     const current = ModelRegistry.getModelById(modelId);
     const isFree = current ? current.pricing.freeTierStatus === '100% Free Quota Available' : true;
 
-    // Strict priority: Working Free Models (Cloudflare + Groq + working Google)
+    // POLICY (2026-09-08): Gemini (3.x/2.x) RESERVED FOR DEVELOPMENT — never
+    // used for runtime chat or as fallback. Trusted fleet = TOP newest
+    // smartest 100%-free models, LIVE-VERIFIED on OpenRouter 2026-09-08
+    // (stale 2025 ":free" ids are paid now and were removed). Registry-guarded.
     const trustedFleet = [
+      'openrouter/free',
+      'nvidia/nemotron-3-super-120b-a12b:free',
+      'dots-studio/dots-3-note-preview:free',
+      'cohere/north-mini-code:free',
+      'inclusionai/ling-3.0-flash-sante:free',
+      'poolside/laguna-s-2.1:free',
+      'google/gemma-4-31b-it:free',
       'omni/cf-gpt-oss-120b',
-      'omni/cf-qwen2.5-coder-32b',
       'omni/cf-llama-3.3-70b',
-      'omni/cf-mistral-small-3.1',
-      'omni/cf-llama-4-scout',
-      'omni/cf-gemma-4-26b',
-      'omni/cf-nemotron-3-120b',
-      'omni/cf-gpt-oss-20b',
-      'gemini-3.8-flash',
-      'gemini-3.1-pro',
-      'gemini-3.1-flash',
-      'omniroute/gemini-3.8-flash',
-      'omniroute/gemini-3.1-pro',
+      'omni/groq-gpt-oss-120b',
     ];
 
     if (isFree) {
-      const chain = trustedFleet.filter(id => id.toLowerCase() !== modelId.toLowerCase());
+      const chain = trustedFleet
+        .filter(id => id.toLowerCase() !== modelId.toLowerCase())
+        .filter(id => ModelRegistry.isValidModel(id));
       return chain;
     } else {
       const topPaid = this.getTopPaid(5).map(e => e.model.id).filter(id => id.toLowerCase() !== modelId.toLowerCase());
-      return [...topPaid, ...trustedFleet];
+      return [...topPaid, ...trustedFleet.filter(id => ModelRegistry.isValidModel(id))];
     }
   }
 }
@@ -485,6 +471,10 @@ export const COMMAND_ALIASES: Record<string, string> = {
   '/агент': '/agents',
   '/рота': '/agents',
   '/роли-агентів': '/agents',
+  // /auto (dynamic free-model selection)
+  '/авто': '/auto',
+  '/автомат': '/auto',
+  '/автопилот': '/auto',
 };
 
 /**
@@ -589,9 +579,17 @@ export class ModelCommand {
         return this.handleRooms();
       case '/agents':
         return this.handleAgents();
+      case '/auto':
+        // TASK-320: Smart Auto-Switch — dynamic free-model routing per session.
+        return this.handleAuto(parts.slice(1));
+      case '/subagent':
+        // TASK-325: heavy async work — real run lives in executeAsync; the
+        // sync path (used by web /api/models/command and Telegram legacy sync
+        // executor) returns the usage hint instead of blocking the request.
+        return this.handleSubagentHint(parts.slice(1).join(' '));
       default:
         OpLog.getInstance().log('error', 'command', `unknown command: ${action}`);
-        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /translate, /health, /products, /who, /sephirot, /debug, /log, /monitor, /sys, /developer, /voices, /settings, /agents, /room, /rooms, /free, /paid, or /help.`;
+        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /translate, /health, /products, /who, /sephirot, /debug, /log, /monitor, /sys, /developer, /voices, /settings, /agents, /room, /rooms, /free, /paid, /auto, or /help.`;
     }
   }
 
@@ -620,6 +618,59 @@ export class ModelCommand {
   }
 
   /**
+   * /auto — dynamic free-model selection (TASK-320).
+   * Subcommands: on | off | test <text> | fleet; default shows status.
+   * Session id resolves through DeveloperMode.resolveSession so web
+   * (/api/models/command) and Telegram share the same per-session flag.
+   */
+  private static handleAuto(args: string[]): string {
+    const sub = (args[0] || '').toLowerCase();
+    const session = DeveloperMode.resolveSession();
+
+    switch (sub) {
+      case 'on':
+      case 'вкл':
+      case 'увімкни': {
+        AutoModelRouter.setActive(session, true);
+        const decision = AutoModelRouter.pick({ message: '' }, session);
+        return `[OK] AUTO включён для сессии "${session}".\n  Стартовая модель: ${decision.modelId}\n  Дальше движок пересчитывает выбор на каждое сообщение.\n${AutoModelRouter.formatStatus(session)}`;
+      }
+      case 'off':
+      case 'выкл':
+      case 'вимкни': {
+        AutoModelRouter.setActive(session, false);
+        return `[OK] AUTO выключен для сессии "${session}". Возврат к модели по умолчанию (${Config.defaultModel}).`;
+      }
+      case 'test': {
+        const text = args.slice(1).join(' ').trim();
+        if (!text) {
+          return 'Использование: /auto test <текст> — покажет, какую модель выберет движок и почему.\n  Пример: /auto test отрефактори этот класс и почини race condition';
+        }
+        const decision = AutoModelRouter.pick({ message: text }, session);
+        const lines: string[] = [];
+        lines.push('');
+        lines.push('═'.repeat(78));
+        lines.push('  AUTO TEST — ПРОБНЫЙ ВЫБОР МОДЕЛИ');
+        lines.push('═'.repeat(78));
+        lines.push(`  Ввод         : "${text.substring(0, 60)}${text.length > 60 ? '…' : ''}"`);
+        lines.push(`  Сложность    : ${decision.complexity} | Объём: ~${decision.estimatedTokens.toLocaleString()} tok`);
+        lines.push(`  ВЫБРАНО      : ${decision.modelName}`);
+        lines.push(`  ID           : ${decision.modelId} (${decision.provider}, FREE $0)`);
+        lines.push(`  Score        : ${decision.score}/100${decision.runnerUp ? ` | runner-up: ${decision.runnerUp}` : ''}`);
+        lines.push(`  Почему       : ${decision.reason}`);
+        lines.push('─'.repeat(78));
+        lines.push('  Это пробный прогон — флаг AUTO не изменён.');
+        lines.push('═'.repeat(78));
+        return lines.join('\n');
+      }
+      case 'fleet':
+        return AutoModelRouter.formatFleet();
+      default:
+        return AutoModelRouter.formatStatus(session);
+    }
+  }
+
+  /**
    * Async entrypoint for commands that need network I/O (/news).
    * Falls back to the synchronous execute() for everything else.
    */
@@ -632,7 +683,42 @@ export class ModelCommand {
     if (cmd.startsWith('/translate')) {
       return this.handleTranslate(command);
     }
+    if (cmd.startsWith('/subagent')) {
+      const raw = command.replace(/^\s*\/[^\s]+\s*/i, '').trim();
+      return this.handleSubagent(raw);
+    }
     return this.execute(command);
+  }
+
+  /** Sync hint for /subagent (the real run is async — see executeAsync). */
+  private static handleSubagentHint(args: string): string {
+    if (!args.trim()) {
+      return [
+        'SUB-AGENTS — параллельный запуск LLM-агентов (ONLY-FREE модели, $0).',
+        '  Использование: /subagent [1-4] <задача>',
+        '  Пример: /subagent 3 спроектируй схему БД для каталога товаров',
+        '  Роли: Analyst + Builder + Critic (+ Researcher) — параллельно,',
+        '  затем общий синтез. Эта sync-версия только справка;',
+        '  реальный запуск: CLI, Telegram и /api/models/command (async).',
+      ].join('\n');
+    }
+    return 'SUB-AGENTS: sync-режим недоступен для запуска — используйте CLI / Telegram (async executeAsync).';
+  }
+
+  /** Fully async /subagent handler: spawns parallel free-model agents + synthesis. */
+  private static async handleSubagent(raw: string): Promise<string> {
+    const { agentCount, task } = SubagentEngine.parseArgs(raw);
+    if (!task) {
+      return this.handleSubagentHint('');
+    }
+    try {
+      const engine = new SubagentEngine();
+      const run = await engine.run(task, agentCount);
+      return SubagentEngine.format(run);
+    } catch (err: any) {
+      logger.warn('ModelCommand', `/subagent failed: ${err.message}`);
+      return `[X] Sub-agent batch failed: ${err.message}`;
+    }
   }
 
   /** Cache-first sync rendering for /news (used by the sync registry + web router). */

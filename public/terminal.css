@@ -18,6 +18,7 @@
   --clr-yellow: #eab308;
   --clr-red: #ef4444;
   --clr-cyan: #06b6d4;
+  --font-sans: 'Roboto', sans-serif;
   --font-mono: 'Roboto Mono', 'Roboto', monospace;
 }
 
@@ -25,15 +26,13 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Roboto Mono', 'Roboto', monospace !important;
-  font-size: 16px !important;
 }
 
 html {
   scroll-behavior: smooth;
   background-color: var(--bg-black);
   color: var(--fg-primary);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
@@ -44,6 +43,11 @@ body {
   color: var(--fg-primary);
   min-height: 100vh;
   overflow-x: hidden;
+  font-family: var(--font-sans);
+}
+
+/* Roboto Mono strictly for terminal / code surfaces */
+pre, code, kbd, samp {
   font-family: var(--font-mono);
 }
 
@@ -185,7 +189,7 @@ body {
 
 .logo-badge {
   font-weight: 800;
-  font-size: 13px;
+  font-size: 0.8125rem;
   letter-spacing: 0.1em;
   color: #ffffff;
   display: flex;
@@ -197,7 +201,7 @@ body {
   padding: 2px 8px;
   border: 1px solid var(--border-bright);
   background: var(--bg-panel);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   color: #ffffff;
   cursor: pointer;
@@ -215,7 +219,7 @@ body {
 
 .lang-btn {
   padding: 2px 6px;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   background: transparent;
   color: var(--fg-muted);
@@ -233,7 +237,7 @@ body {
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-dim);
   padding: 3px 16px;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--fg-muted);
   display: flex;
   justify-content: space-between;
@@ -270,7 +274,7 @@ body {
   background: var(--bg-panel);
   color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
@@ -296,7 +300,7 @@ body {
 }
 
 .voice-linear-feedback {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--fg-muted);
 }
 
@@ -317,7 +321,7 @@ body {
   border: 1px solid var(--border-dim);
   padding: 8px 12px;
   background: var(--bg-black);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
   font-family: var(--font-mono);
 }
@@ -332,7 +336,7 @@ body {
 }
 
 .bubble-meta {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--fg-muted);
   margin-bottom: 4px;
   font-weight: 700;
@@ -342,7 +346,7 @@ body {
   white-space: pre-wrap;
   word-break: break-word;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
   color: var(--fg-primary);
 }
@@ -370,7 +374,7 @@ body {
   border: 1px solid var(--border-bright);
   color: var(--fg-primary);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   cursor: pointer;
   display: flex;
@@ -412,7 +416,7 @@ body {
   outline: none;
   color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 0.75rem;
   resize: none;
   line-height: 1.4;
   height: 24px;
@@ -424,7 +428,7 @@ body {
   color: #000000;
   border: 1px solid #ffffff;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.2s;
@@ -439,7 +443,7 @@ body {
   margin: 4px auto 0;
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--fg-dim);
 }
 
@@ -480,7 +484,7 @@ body {
   border: 1px solid var(--border-bright);
   color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   cursor: pointer;
   display: inline-flex;
@@ -510,7 +514,7 @@ body {
 }
 
 .deck-row-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: #ffffff;
@@ -528,7 +532,7 @@ body {
   border: 1px solid var(--border-dim);
   background: var(--bg-black);
   color: var(--fg-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-family: var(--font-mono);
   font-weight: 600;
   cursor: pointer;
@@ -552,7 +556,7 @@ body {
   border: 1px solid var(--border-bright);
   color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.6875rem;
   outline: none;
 }
 .deck-select:focus {
@@ -566,7 +570,7 @@ body {
   border: 1px solid var(--border-bright);
   color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.6875rem;
   outline: none;
 }
 .deck-input:focus {
@@ -577,7 +581,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .telem-cell {
@@ -633,7 +637,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   color: #00f0ff;
@@ -654,7 +658,7 @@ body {
 }
 
 .voice-dock-badge {
-  font-size: 9px;
+  font-size: 0.5625rem;
   padding: 2px 6px;
   background: rgba(0, 240, 255, 0.2);
   border: 1px solid #00f0ff;
@@ -672,7 +676,7 @@ body {
   border: 1px solid var(--border-bright);
   color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.6875rem;
   padding: 3px 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -715,12 +719,12 @@ body {
 }
 
 .persona-tab-btn strong {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #ffffff;
 }
 
 .persona-tab-btn .persona-sub {
-  font-size: 9px;
+  font-size: 0.5625rem;
   color: var(--fg-dim);
 }
 
@@ -768,7 +772,7 @@ body {
   position: absolute;
   top: 6px;
   right: 8px;
-  font-size: 9px;
+  font-size: 0.5625rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   color: #00f0ff;
@@ -791,7 +795,7 @@ body {
   border: none;
   font-family: var(--font-mono);
   font-weight: 800;
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 10px 14px;
   cursor: pointer;
   display: flex;
@@ -826,7 +830,7 @@ body {
 }
 
 .mic-shortcut {
-  font-size: 9px;
+  font-size: 0.5625rem;
   opacity: 0.7;
 }
 
@@ -834,7 +838,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  font-size: 9px;
+  font-size: 0.5625rem;
   margin-bottom: 10px;
   align-items: center;
   color: var(--fg-dim);
@@ -861,7 +865,7 @@ body {
 }
 
 .voice-transcript-title {
-  font-size: 9px;
+  font-size: 0.5625rem;
   font-weight: 800;
   color: var(--fg-dim);
   margin-bottom: 6px;
@@ -874,7 +878,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .transcript-line {
@@ -892,7 +896,7 @@ body {
 }
 
 .transcript-time {
-  font-size: 9px;
+  font-size: 0.5625rem;
   color: var(--fg-dim);
   margin-right: 4px;
 }
@@ -900,6 +904,6 @@ body {
 .transcript-placeholder {
   color: var(--fg-dim);
   font-style: italic;
-  font-size: 10px;
+  font-size: 0.625rem;
 }
 

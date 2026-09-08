@@ -1,5 +1,5 @@
 import { GeminiClient, ChatMessage } from '../src/core/GeminiClient.js';
-import { GoogleAuthProvider, DEFAULT_GEMINI_API_KEY } from '../src/core/GoogleAuthProvider.js';
+import { GoogleAuthProvider, DEFAULT_GEMINI_API_KEY, resolveGeminiApiKey } from '../src/core/GoogleAuthProvider.js';
 import { Config } from '../src/core/Config.js';
 import { UniversalLlmClient } from '../src/core/UniversalLlmClient.js';
 import { getBreaker } from '../src/core/Resilience.js';
@@ -9,7 +9,7 @@ import { getBreaker } from '../src/core/Resilience.js';
  *
  * Verifies that:
  *  - GEMINI_API_KEY env (Config) → generativelanguage?key= (free tier)
- *  - no env → DEFAULT_GEMINI_API_KEY fallback (free tier)
+ *  - no env → lazily-resolved default key (env → Secret Manager 'evabot-gemini-api-key'; TASK-331 removed the literal)
  *  - Vertex (paid) is OFF by default; only reachable via EVA_VERTEX_ENABLED=1
  *    (bearer from GoogleAuthProvider) or an explicitly set bearer token
  *  - key path never sends Authorization or X-Goog-User-Project
@@ -112,15 +112,23 @@ export async function runGeminiRoutingTests(): Promise<boolean> {
     }
   });
 
-  // ── 2. No env key → DEFAULT_GEMINI_API_KEY fallback (free tier) ──
+  // ── 2. No env key (Config.geminiApiKey='') → lazily-resolved default key ──
+  // (TASK-331: the hard-coded literal is gone; the fallback resolves
+  // GEMINI_API_KEY env → Secret Manager 'evabot-gemini-api-key' → ''.
+  // Network-free by construction: env is already populated from .env in this
+  // process, so the resolver short-circuits before any gcloud/Secret Manager
+  // access; assertions only check string-ness and internal consistency.)
   await withConfig({ geminiApiKey: '', vertexEnabled: false }, async () => {
     installFetchMock();
     const untrap = trapGetCredentials();
     try {
+      assert(typeof resolveGeminiApiKey() === 'string', 'resolveGeminiApiKey() exists and returns a string (env → Secret Manager fallback)');
       const client = new GeminiClient();
       await client.generateContent('gemini-2.5-flash', SAMPLE_MSGS);
       const call = captured[0];
-      assert(call.url.includes(`?key=${DEFAULT_GEMINI_API_KEY}`), 'Missing env falls back to DEFAULT_GEMINI_API_KEY');
+      const resolvedKey = resolveGeminiApiKey();
+      assert(call.url.includes(`?key=${resolvedKey}`), 'Missing env falls back to the lazily-resolved default key (no hard-coded literal in source)');
+      assert(call.headers['x-goog-api-key'] === String(DEFAULT_GEMINI_API_KEY), 'Lazy default key coerces consistently in URL and x-goog-api-key header');
       assert(call.url.startsWith('https://generativelanguage.googleapis.com/'), 'Default-key path stays on generativelanguage (free)');
     } catch (e: any) {
       assert(false, `Default-key path threw: ${e.message}`);
@@ -130,18 +138,18 @@ export async function runGeminiRoutingTests(): Promise<boolean> {
     }
   });
 
-  // ── 3. Regression: client seeded with the DEFAULT key must NOT skip it ──
-  // (old setApiKey() ignored the embedded literal and fell through to ADC bearer → paid Vertex)
-  await withConfig({ geminiApiKey: DEFAULT_GEMINI_API_KEY, vertexEnabled: false }, async () => {
+  // ── 3. Regression: client seeded with the lazy DEFAULT key must NOT skip it ──
+  // (old setApiKey() ignored the embedded fallback and fell through to ADC bearer → paid Vertex)
+  await withConfig({ geminiApiKey: DEFAULT_GEMINI_API_KEY as string, vertexEnabled: false }, async () => {
     installFetchMock();
     const untrap = trapGetCredentials();
     try {
-      const client = new GeminiClient(DEFAULT_GEMINI_API_KEY); // what UniversalLlmClient/ChatRouter seed
+      const client = new GeminiClient(DEFAULT_GEMINI_API_KEY as string); // what UniversalLlmClient/ChatRouter seed
       await client.generateContent('gemini-2.5-flash', SAMPLE_MSGS);
       const call = captured[0];
-      assert(call.url.includes('generativelanguage.googleapis.com'), 'Default literal passed via setApiKey routes to generativelanguage (was silently dropped before)');
+      assert(call.url.includes('generativelanguage.googleapis.com'), 'Lazy default key passed via setApiKey routes to generativelanguage (was silently dropped before)');
     } catch (e: any) {
-      assert(false, `Default literal via setApiKey threw: ${e.message}`);
+      assert(false, `Default key via setApiKey threw: ${e.message}`);
     } finally {
       untrap();
       restoreFetch();

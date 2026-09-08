@@ -1,7 +1,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { logger } from './Logger.js';
 
 export interface AuthCredentials {
@@ -12,17 +12,64 @@ export interface AuthCredentials {
 }
 
 /**
- * Built-in fallback Gemini API key (generativelanguage.googleapis.com).
+ * Gemini free-tier key resolution (TASK-331).
  * ONLY-FREE rule: keys on the Gemini API free tier cost $0.
- * !! This legacy literal is REVOKED (verified 2026-09-07: API_KEY_INVALID) —
- * kept only as a last-resort constant per the ONLY-FREE resolution chain.
- * The live free-tier key is provisioned via GEMINI_API_KEY (backend .env) and
- * Secret Manager secret `evabot-gemini-api-key` (project gen-lang-client-0091776451,
- * Gemini API free tier, $0).
- * TODO: rotate — load the live key from Secret Manager at boot and remove the
- * literal from source control.
+ * The legacy hard-coded literal was REVOKED (verified 2026-09-07:
+ * API_KEY_INVALID) and has been REMOVED from source control.
+ *
+ * Resolution order for the live free-tier key:
+ * 1. `GEMINI_API_KEY` env (loaded from backend .env by Config).
+ * 2. GCP Secret Manager secret `evabot-gemini-api-key`
+ *    (project evabot-agent-server, Gemini API free tier, $0), read lazily
+ *    on first use via `gcloud secrets versions access` (ADC is available on
+ *    the VM), cached in memory for the process lifetime, 10s timeout.
+ *
+ * On failure the resolver returns '' so callers degrade gracefully; the key
+ * value is NEVER logged — only the resolution source.
  */
-export const DEFAULT_GEMINI_API_KEY = 'AIzaSyBmgELFPYjax4lWcFIZd183EpqQwVqAVlA';
+const GEMINI_SECRET_NAME = 'evabot-gemini-api-key';
+let cachedSecretManagerKey: string | null = null;
+
+/** Reads the Gemini free-tier key from Secret Manager (cached in memory, '' on failure). */
+export function getGeminiApiKeyFromSecretManager(): string {
+  if (cachedSecretManagerKey !== null) {
+    return cachedSecretManagerKey;
+  }
+  try {
+    const out = execFileSync(
+      'gcloud',
+      ['secrets', 'versions', 'access', 'latest', `--secret=${GEMINI_SECRET_NAME}`],
+      { encoding: 'utf8', timeout: 10_000 },
+    );
+    cachedSecretManagerKey = out.trim();
+    logger.info('GoogleAuthProvider', `Resolved Gemini free-tier key from Secret Manager secret '${GEMINI_SECRET_NAME}'`);
+  } catch {
+    cachedSecretManagerKey = '';
+    logger.warn('GoogleAuthProvider', `Secret Manager secret '${GEMINI_SECRET_NAME}' unavailable — Gemini key fallback degraded (key value not logged)`);
+  }
+  return cachedSecretManagerKey;
+}
+
+/** Env-first resolution: GEMINI_API_KEY env → Secret Manager fallback → ''. */
+export function resolveGeminiApiKey(): string {
+  return process.env.GEMINI_API_KEY?.trim() || getGeminiApiKeyFromSecretManager();
+}
+
+/**
+ * @deprecated TASK-331 compatibility shim — keeps existing importers working
+ * without the hard-coded literal. String-coerces lazily to
+ * resolveGeminiApiKey() (env → Secret Manager, '' on failure). New code must
+ * use resolveGeminiApiKey() or Config.geminiApiKey instead.
+ */
+class LazyDefaultGeminiKey {
+  valueOf(): string { return resolveGeminiApiKey(); }
+  toString(): string { return resolveGeminiApiKey(); }
+  trim(): string { return resolveGeminiApiKey(); }
+  toJSON(): string { return resolveGeminiApiKey(); }
+  [Symbol.toPrimitive](): string { return resolveGeminiApiKey(); }
+}
+
+export const DEFAULT_GEMINI_API_KEY = new LazyDefaultGeminiKey() as unknown as string;
 
 export class GoogleAuthProvider {
   private static cachedCredentials: AuthCredentials | null = null;
@@ -34,7 +81,7 @@ export class GoogleAuthProvider {
    * (Translator, CloudTTS, CloudSTT) which require OAuth tokens.
    * Gemini (generativelanguage.googleapis.com) must NOT use these bearer
    * tokens (scope-insufficient on that endpoint) — GeminiClient resolves its
-   * free-tier API key separately (GEMINI_API_KEY env → DEFAULT_GEMINI_API_KEY).
+    * free-tier API key separately (GEMINI_API_KEY env → Secret Manager fallback).
    *
    * IMPORTANT: this method must NEVER return the Gemini API key (GEMINI_API_KEY
    * env is an AIza/AQ **API key**, not a bearer token — cloud consumers send it

@@ -8,6 +8,7 @@ import { I18nEngine, SupportedLocale } from '../core/I18nEngine.js';
 import { logger } from '../core/Logger.js';
 import { SystemContext, recordLastUsedModel } from '../core/SystemContext.js';
 import { DeveloperMode } from '../core/DeveloperMode.js';
+import { AutoModelRouter } from '../core/AutoModelRouter.js';
 
 /**
  * Thin chat-engine facade shared by the Telegram transport.
@@ -54,16 +55,10 @@ export class ChatEngine {
 
   public async respond(request: ChatEngineRequest): Promise<ChatEngineResponse> {
     const { message, sessionId, locale } = request;
-    const targetModel = request.model || Config.defaultModel;
-    const useKnowledgeBase = request.useKnowledgeBase !== false;
-    const useHistory = request.useHistory !== false;
-
-    // Track the actually-used model for SystemContext (FEATURE 1).
-    recordLastUsedModel(targetModel, this.client.resolveProvider(targetModel, request.provider));
 
     const store = ChatHistoryStore.getInstance();
     let history: Array<{ role: string; content: string }> = [];
-    if (useHistory) {
+    if (request.useHistory !== false) {
       try {
         history = store
           .getSessionHistory(sessionId, this.historyLimit)
@@ -72,6 +67,18 @@ export class ChatEngine {
         logger.warn('ChatEngine', `History load skipped for ${sessionId}: ${err.message}`);
       }
     }
+
+    // TASK-320: /auto mode — when the session opted in and no explicit model
+    // was requested, pick the best FREE model for this message + history.
+    let targetModel = request.model || Config.defaultModel;
+    if (!request.model && AutoModelRouter.isActive(sessionId)) {
+      targetModel = AutoModelRouter.pick({ message, history, historyLimit: this.historyLimit }, sessionId).modelId;
+    }
+    const useKnowledgeBase = request.useKnowledgeBase !== false;
+    const useHistory = request.useHistory !== false;
+
+    // Track the actually-used model for SystemContext (FEATURE 1).
+    recordLastUsedModel(targetModel, this.client.resolveProvider(targetModel, request.provider));
 
     let effectiveInstruction = this.resolveSystemInstruction();
 

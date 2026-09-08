@@ -199,10 +199,10 @@ export class TerminalMarkdownStreamer {
 async function runAndPrintBootSequence(activeModel: string): Promise<void> {
   console.clear();
   console.log(`
-${C.bold}${C.white}┌────────────────────────────────────────────────────────────────────────────┐
-│  EVABOT ONLINE v0.0.1 MVP // CYBER-TERMINAL BOOT SEQUENCE              │
-│  Hybrid Architecture: Web Server (Face) ── Agent Server (Brain)          │
-└────────────────────────────────────────────────────────────────────────────┘${C.reset}
+${C.bold}${C.white}EVABOT ONLINE v0.0.1 // TERMINAL${C.reset}
+${C.gray}Model: ${activeModel}${C.reset}
+${C.gray}Architecture: Web Server (Face) + Agent Server (Brain)${C.reset}
+${C.gray}Hint: /help for commands, /exit to quit${C.reset}
 `);
 
   process.stdout.write(`${C.gray}Initialising dual-server diagnostic probe...${C.reset}\n`);
@@ -310,7 +310,7 @@ ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/monitor${C.reset}               Модельний монітор: ТОП-10 free/paid моделей для кодингу
   ${C.cyan}/dialogue <тема>${C.reset}      Запустить автономный диалог-дебаты двух моделей
   ${C.cyan}/role <id>${C.reset}             Выбрать роль: architect, devops, security_auditor
-  ${C.cyan}/say <текст>${C.reset}           Озвучить текст через Google Cloud TTS → /tmp/evabot-say.mp3 (/скажи, /сказать)
+  ${C.cyan}/say <текст>${C.reset}           Озвучить текст через Google Cloud TTS -> /tmp/evabot-say.mp3 (/скажи, /сказать)
   ${C.cyan}/listen <файл>${C.reset}         Распознать аудиофайл через Google Cloud STT (/розпізнай, /распознать)
   ${C.cyan}/translate <текст>${C.reset}     Переклад тексту через Google Cloud Translation v3 (/переклад, /перевод)
   ${C.cyan}/clear${C.reset}                 Очистить историю сообщений
@@ -546,6 +546,7 @@ async function main(): Promise<void> {
         case '/log':
         case '/monitor':
         case '/sys':
+        case '/auto':
           console.log(ModelCommand.execute(input));
           break;
 
@@ -576,10 +577,8 @@ async function main(): Promise<void> {
         }
 
         case '/news':
-          console.log(await ModelCommand.executeAsync(input));
-          break;
-
         case '/translate':
+        case '/subagent':
           console.log(await ModelCommand.executeAsync(input));
           break;
 
@@ -657,11 +656,17 @@ async function main(): Promise<void> {
           console.log(`${C.green}[OK] История сообщений очищена.${C.reset}`);
           break;
 
+        case '/health':
+        case '/room':
+        case '/rooms':
+          console.log(await ModelCommand.executeAsync(input));
+          break;
+
         default: {
           // Multilingual aliases (UK/RU) of server commands → route through the
           // alias-normalizing registry (e.g. /історія → /history, /пошук → /search).
           const canonical = COMMAND_ALIASES[cmd];
-          if (canonical && ['/history', '/memory', '/search', '/find', '/services', '/servers', '/health', '/news', '/translate', '/products', '/who', '/debug', '/log', '/monitor', '/say', '/listen', '/sys', '/developer', '/voices', '/settings', '/agents'].includes(canonical)) {
+          if (canonical && ['/history', '/memory', '/search', '/find', '/services', '/servers', '/health', '/news', '/translate', '/products', '/who', '/debug', '/log', '/monitor', '/say', '/listen', '/sys', '/developer', '/voices', '/settings', '/agents', '/models', '/help', '/lang', '/cost', '/sephirot', '/auto', '/subagent', '/room', '/rooms', '/free', '/paid', '/top', '/info', '/mcp', '/lsp', '/company', '/evaline', '/inspect', '/monitor'].includes(canonical)) {
             if (canonical === '/say') {
               await handleSay(arg);
             } else if (canonical === '/listen') {

@@ -35,6 +35,8 @@ export async function runDeveloperModeTests(): Promise<boolean> {
   DeveloperMode.setClock(() => fakeNow);
   DeveloperMode.resetAll();
   // Test password: set through env (DeveloperMode reads live env over Config).
+  // Remember the real value (from .env) so it can be restored afterwards.
+  const originalEnvPassword = process.env.EVADEV_PASSWORD;
   process.env.EVADEV_PASSWORD = 'test-dev-pass-9137';
 
   try {
@@ -99,10 +101,20 @@ export async function runDeveloperModeTests(): Promise<boolean> {
     // 6. Missing env → mode unavailable
     {
       DeveloperMode.resetAll();
+      // Hermetic: getPassword() falls back to Config.developerPassword (loaded
+      // from .env at import time), so stub both sources to force the empty
+      // state — never touching the real .env file.
+      const savedEnvPwd = process.env.EVADEV_PASSWORD;
+      const savedConfigPwd = (Config as any).developerPassword;
       delete process.env.EVADEV_PASSWORD;
-      const out = ModelCommand.execute('/developer unlock whatever');
-      assert(out.includes('режим недоступний: встанови EVADEV_PASSWORD'), 'missing EVADEV_PASSWORD → unavailable notice');
-      process.env.EVADEV_PASSWORD = 'test-dev-pass-9137';
+      (Config as any).developerPassword = '';
+      try {
+        const out = ModelCommand.execute('/developer unlock whatever');
+        assert(out.includes('режим недоступний: встанови EVADEV_PASSWORD'), 'missing EVADEV_PASSWORD → unavailable notice');
+      } finally {
+        process.env.EVADEV_PASSWORD = savedEnvPwd;
+        (Config as any).developerPassword = savedConfigPwd;
+      }
     }
 
     // 7. Password masking in the persistence helper
@@ -185,7 +197,11 @@ export async function runDeveloperModeTests(): Promise<boolean> {
     // Restore real clock + env for subsequent suites.
     DeveloperMode.setClock(realNow);
     DeveloperMode.resetAll();
-    delete process.env.EVADEV_PASSWORD;
+    if (originalEnvPassword !== undefined) {
+      process.env.EVADEV_PASSWORD = originalEnvPassword;
+    } else {
+      delete process.env.EVADEV_PASSWORD;
+    }
     SystemContext.invalidate();
   }
 

@@ -1,6 +1,6 @@
 # EvaBot Online — Kanban Board
 
-**Last Updated:** 2026-09-07  
+**Last Updated:** 2026-09-08  
 **Current Sprint:** v0.0.2 → v0.1.0
 
 ---
@@ -9,11 +9,25 @@
 
 | Column | Count | Total Items |
 |--------|-------|-------------|
-| **Backlog** | 15 | v0.1.0 - v1.0.0 features |
-| **In Progress** | 0 | Ready for v0.1.0 |
+| **Backlog** | 59 | v0.1.0 - v1.0.0 features (unchecked) |
+| **In Progress** | 4 | v0.1.0 — actual audit 2026-09-08 |
 | **Review & Testing** | 0 | - |
-| **Done (v0.0.2)** | 12 | ✅ Completed |
+| **Done (v0.1.0)** | 12 | ✅ TASK-320..325, 330..333, QA-001 |
+| **Done (v0.0.2)** | 23 | ✅ Completed |
 | **Done (v0.0.1)** | 10 | ✅ MVP |
+
+---
+
+## ✅ DONE — v0.1.0 (2026-09-08)
+
+### LLM Routing
+- [x] **TASK-320**: `/auto` command — dynamic FREE-model selection per message: context volume + complexity (light/code/reasoning/longform) + provider limits (RPM) + CircuitBreaker health. Subcommands: `on | off | test <text> | fleet`. Aliases: `/авто`, `/автомат`, `/автопилот`. Wired into ChatEngine (Telegram) + ChatRouter (`/api/chat`, `/api/chat/stream`).
+- [x] **TASK-321**: FIX fallback chain — removed dead `omni/cf-*` model ids (not in registry, 78 models) from `getSmartestFreeModel()`/`getFallbackChain()`; rebuilt trusted fleet from verified free ids with `isValidModel` guard.
+- [x] **TASK-325**: `/subagent` command (2026-09-08) — SubagentEngine: N=1..4 параллельных LLM-субагентов (Analyst/Builder/Critic/Researcher) на ONLY-FREE моделях (nemotron-ultra/inkling/gemma-4/cohere/ling + omni/cf-* edge), Promise.allSettled, отказоустойчиво, затем синтез через `openrouter/free`. Команда: `/subagent [N] <task>`; CLI + Telegram (async) + web sync-hint. Реестр дополнен живыми omni/* моделями (§9c, LiteLLM демон починен: prisma client). Тесты: tests/subagent_engine.test.ts (hermetic, mocked client). Финальная живая верификация (2026-09-08, 10 субагентов): fix cleanModelId omni/ (демон отдаёт id С префиксом), OMNIROUTE_API_KEY=master key в .env, флот очищен от мёртвых моделей (inkling* 403, nemotron-ultra 45s+ timeout), /health + 15 мёртвых алиасов починены в CLI, /voices hijack на web устранён, /auto + /subagent добавлены в help (EN/UK/RU), Roboto (variable 100..900 + italic, base 16px) внедрён во все поверхности; 30/30 suites green; chат OK через openrouter/free и omni/* (both providers).
+- [x] **TASK-322**: MODEL POLICY — Gemini (наш Google-аккаунт) ЗАРЕЗЕРВИРОВАН для разработки: модель входа `openrouter/free` (Free Models Router), фолбэк-флот = ТОП-10 новейших умнейших 100%-free моделей, LIVE-верифицировано через OpenRouter API 2026-09-08 (`nvidia/nemotron-3-ultra-550b-a55b:free` 550B/1M ctx, `thinkingmachines/inkling:free` 1M, `dots-3-note-preview:free` 512k, Gemma 4 31B, Cohere North Mini Code, Ling 3.0 Flash, Poolside Laguna S 2.1, …). Прогрев: OPENROUTER_API_KEY из GCP Secret Manager. Старые 2025 `:free` id (deepseek-r1, gpt-4o-mini, …) на OpenRouter уже ПЛАТНЫЕ — убраны из флота. 10 новых моделей добавлены в ModelRegistry (§9b). Лимиты gemini-3.8-flash: free tier 15 RPM / 1M TPM / 1500 RPD.
+
+### QA / Coverage (2026-09-08, c8 V8-coverage поверх тест-сюита)
+- [x] **QA-001**: Backend `src/` — statements **82.7%**, branches **75.4%**, functions **83.9%**, lines **82.7%** (29 suites, c8 report: `coverage/coverage-summary.json`). Фронтенд `frontend/` — 0% (test-runner отсутствует, только `tsc --noEmit` + vite build gate). Цель v0.1.0: backend ≥ 85%, внедрить vitest для frontend.
 
 ---
 
@@ -69,13 +83,26 @@
 
 ---
 
-## 🔄 IN PROGRESS
+## 🔄 IN PROGRESS — v0.1.0 (actual)
 
-_(empty - ready to start v0.1.0)_
+_Audit 2026-09-08: all code-verified DONE tasks above check out against the source; the following are genuinely still open:_
+
+- [ ] **INFRA-001** (2026-09-08): systemd timer `evabot-registry-sync` not yet enabled (`config/evabot-registry-sync.{service,timer}` staged; enable needs root — sudo is tty-gated on this host).
+- [ ] **QA-002** (2026-09-08): frontend vitest coverage baseline 10.3% statements — goal ≥ 60% by v0.1.1 (DOM-heavy `app.ts` / `voice/*` deferred).
+- [ ] **INFRA-002** (2026-09-08): OmniRoute (:20128) restart churn investigation — root cause of repeated litellm daemon restarts not yet identified.
+- [ ] **INFRA-003** (2026-09-08): port 8092 firewall exposure review — confirm expected ingress scope or close.
 
 ---
 
 ## 📋 BACKLOG — v0.1.0 (Sept 2026)
+
+### Known Issues (found 2026-09-08 audit)
+- [x] **TASK-330**: DONE 2026-09-08 — all 5 suites green (tests aligned with intentional de-emoji output; DeveloperMode test hermetic via env+Config stub; ServerTests LLM mocked — no live 503 flakes)
+- [x] **TASK-331**: DONE 2026-09-08 — literal removed; lazy Secret Manager resolution (env → `gcloud secrets versions access evabot-gemini-api-key` → ''), in-memory cache, never logged; see docs/ops/SECRETS_MANAGER.md
+- [x] **TASK-332**: DONE 2026-09-08 — superseded by TASK-322: Config.defaultModel='openrouter/free' (env), /api/models advertises smartest free = nvidia/nemotron-3-ultra-550b-a55b:free; single source of truth
+- [x] **TASK-333**: DONE 2026-09-08 — `session_state` table in chat-history.db (auto_enabled, last_model); AutoModelRouter write-through with in-memory cache; 3 new assertions in tests
+- [x] **TASK-323**: Auto-sync ModelRegistry with OpenRouter `/api/v1/models` (pricing $0 filter) on the model-monitor 12h timer — registry goes stale within a day (proven 2026-09-08: legacy `:free` ids became paid); update §9b fleet + free-model counts, alert on drift via AlertManager — DONE 2026-09-08: `scripts/sync-openrouter-registry.ts` (daily drift probe, exit 0, snapshot `data/model-monitor/openrouter-free-snapshot.json`) + `config/evabot-registry-sync.{service,timer}` (not yet enabled, root needed) + `docs/ops/MODEL_REGISTRY_SYNC.md`; first run: 7 added / 1 removed / 8 unchanged vs §9b
+- [x] **TASK-324**: DONE 2026-09-08 (scaffold) — vitest + @vitest/coverage-v8 + jsdom wired in frontend/; 31 tests green (ansi/api/onboarding); baseline 10.3% stmts (DOM-тяжёлые app.ts/voice/* осознанно отложены); goal ≥ 60% by v0.1.1
 
 ### High Priority
 - [ ] **TASK-300**: Vector embeddings (Gemini embedding-004)

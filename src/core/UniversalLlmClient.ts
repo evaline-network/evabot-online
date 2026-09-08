@@ -42,7 +42,7 @@ export class UniversalLlmClient {
     }
 
     const m = model.toLowerCase();
-    if (m.startsWith('omniroute/')) {
+    if (m.startsWith('omniroute/') || m.startsWith('omni/')) {
       return 'omniroute';
     }
     if (m.startsWith('opencode/')) {
@@ -146,13 +146,18 @@ export class UniversalLlmClient {
    * Strips provider prefixes like 'omniroute/' or 'opencode/' or 'openrouter/' for upstream payload if needed
    */
   private cleanModelId(model: string, provider: LlmProvider): string {
+    // NOTE: the LiteLLM daemon serves ids WITH the omni/ prefix (verified
+    // live 2026-09-08: /v1/models → 'omni/cf-gpt-oss-120b', …) — never strip
+    // 'omni/'. Only the legacy 'omniroute/' alias prefix is stripped.
     if (provider === 'omniroute' && model.startsWith('omniroute/')) {
       return model.replace('omniroute/', '');
     }
     if (provider === 'opencode' && model.startsWith('opencode/')) {
       return model.replace('opencode/', '');
     }
-    if (provider === 'openrouter' && model.startsWith('openrouter/')) {
+    // Exception: 'openrouter/free' is the REAL upstream model id of the
+    // OpenRouter free-models meta-router — the prefix must NOT be stripped.
+    if (provider === 'openrouter' && model.startsWith('openrouter/') && model !== 'openrouter/free') {
       return model.replace('openrouter/', '');
     }
     return model;
@@ -301,7 +306,16 @@ export class UniversalLlmClient {
     };
 
     try {
-      return await this.attempt(model, universalMsgs, options, trackedOnChunk);
+      const result = await this.attempt(model, universalMsgs, options, trackedOnChunk);
+      // Reasoning models (e.g. nemotron-super) sometimes stream NOTHING into
+      // `content` — all output lands in the reasoning field. Treat an empty
+      // stream as failure: rethrow so the ranked fallback chain engages
+      // instead of silently returning ''.
+      if (!result.trim() && chunksEmitted === 0) {
+        getBreaker(this.resolveProvider(model)).recordFailure(new Error('[EMPTY_STREAM] no content'));
+        throw new Error(`[EMPTY_STREAM] ${model} returned no content (reasoning-only response)`);
+      }
+      return result;
     } catch (err: any) {
       if (!enableFallback || chunksEmitted > 0) {
         throw err;

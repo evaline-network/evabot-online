@@ -277,7 +277,9 @@ export function createServer(): http.Server {
         } else if (host.includes('evaline.website')) {
           filePath = path.resolve(process.cwd(), 'public', 'hub.html');
         } else if (host.includes('evaline.network')) {
-          filePath = path.resolve(process.cwd(), 'public', 'network.html');
+          const text = TuiRenderer.renderHtml(host);
+          sendText(res, 200, text, 'text/html; charset=utf-8');
+          return;
         } else {
           filePath = path.resolve(process.cwd(), 'public', 'index.html');
         }

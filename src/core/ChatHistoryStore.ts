@@ -85,6 +85,12 @@ export class ChatHistoryStore {
         INSERT INTO messages_fts(messages_fts, rowid, content) VALUES ('delete', old.id, old.content);
         INSERT INTO messages_fts(rowid, content) VALUES (new.id, new.content);
       END;
+      CREATE TABLE IF NOT EXISTS session_state (
+        session_id TEXT PRIMARY KEY,
+        auto_enabled INTEGER NOT NULL DEFAULT 0,
+        last_model TEXT,
+        updated_ts INTEGER
+      );
     `);
   }
 
@@ -227,6 +233,68 @@ export class ChatHistoryStore {
     } catch (err: any) {
       logger.warn(LogCategory.STORAGE, 'CHAT_DB', `countAll failed: ${err.message}`);
       return { totalMessages: 0, sessions: 0 };
+    }
+  }
+
+  /**
+   * Per-session UI state (TASK-333): /auto flag + last used model.
+   * Survives restarts. Never throws to callers.
+   */
+  public getSessionState(sessionId: string): { autoEnabled: boolean; lastModel: string | null } {
+    const fallback = { autoEnabled: false, lastModel: null };
+    if (!this.ready || !this.db) return fallback;
+    try {
+      const row = this.db
+        .prepare('SELECT auto_enabled, last_model FROM session_state WHERE session_id = ?')
+        .get(sessionId) as any;
+      if (!row) return fallback;
+      return {
+        autoEnabled: Number(row.auto_enabled) === 1,
+        lastModel: row.last_model != null ? String(row.last_model) : null,
+      };
+    } catch (err: any) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `getSessionState failed: ${err.message}`);
+      return fallback;
+    }
+  }
+
+  public setSessionAuto(sessionId: string, enabled: boolean): void {
+    if (!this.ready || !this.db) return;
+    try {
+      this.db
+        .prepare(
+          `INSERT INTO session_state (session_id, auto_enabled, last_model, updated_ts)
+           VALUES (?, ?, NULL, ?)
+           ON CONFLICT(session_id) DO UPDATE SET auto_enabled = excluded.auto_enabled, updated_ts = excluded.updated_ts`
+        )
+        .run(sessionId, enabled ? 1 : 0, Date.now());
+    } catch (err: any) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `setSessionAuto failed: ${err.message}`);
+    }
+  }
+
+  public setSessionLastModel(sessionId: string, model: string): void {
+    if (!this.ready || !this.db) return;
+    try {
+      this.db
+        .prepare(
+          `INSERT INTO session_state (session_id, auto_enabled, last_model, updated_ts)
+           VALUES (?, 0, ?, ?)
+           ON CONFLICT(session_id) DO UPDATE SET last_model = excluded.last_model, updated_ts = excluded.updated_ts`
+        )
+        .run(sessionId, model, Date.now());
+    } catch (err: any) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `setSessionLastModel failed: ${err.message}`);
+    }
+  }
+
+  /** Test/maintenance helper: removes a session_state row. Never throws. */
+  public deleteSessionState(sessionId: string): void {
+    if (!this.ready || !this.db) return;
+    try {
+      this.db.prepare('DELETE FROM session_state WHERE session_id = ?').run(sessionId);
+    } catch (err: any) {
+      logger.warn(LogCategory.STORAGE, 'CHAT_DB', `deleteSessionState failed: ${err.message}`);
     }
   }
 

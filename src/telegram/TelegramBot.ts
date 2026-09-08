@@ -244,6 +244,13 @@ export class TelegramBot {
       return;
     }
 
+    // /subagent needs the async executor (parallel LLM batch, up to ~2 min).
+    if (canonicalHead === '/subagent') {
+      const output = await ModelCommand.executeAsync(normalizeCommand(raw));
+      await this.sendMessage(chatId, output);
+      return;
+    }
+
     // /developer keeps the RAW command: normalizeCommand lowercases the whole
     // line, which would corrupt mixed-case passwords (DeveloperMode.parseCommand
     // does its own head-alias resolution).

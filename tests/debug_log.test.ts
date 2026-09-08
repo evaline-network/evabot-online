@@ -111,7 +111,7 @@ export async function runDebugLogTests(): Promise<boolean> {
     span.end('no');
     assert(span.ended && typeof span.latencyMs === 'number' && span.latencyMs! >= 0, 'span.end() records latency');
     const footer = renderDebugFooter(span);
-    assert(footer.startsWith('⚙ debug: model=gemini-2.5-flash provider=google latency='), 'footer format matches ⚙ debug spec');
+    assert(footer.startsWith('* debug: model=gemini-2.5-flash provider=google latency='), 'footer format matches * debug spec');
     span.end(); // second end() is a no-op
     assert(renderDebugFooter(span) === footer, 'span.end() is idempotent');
     setDebugOn(false);

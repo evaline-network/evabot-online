@@ -21,7 +21,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export type OpLogLevel = 'info' | 'warn' | 'error' | 'debug';
-export type OpLogKind = 'command' | 'llm' | 'breaker' | 'system' | 'chat';
+export type OpLogKind = 'command' | 'llm' | 'breaker' | 'system' | 'chat' | 'auto';
 
 export interface OpLogEntry {
   ts: number;
@@ -169,7 +169,7 @@ export class OpLog {
   /** Aggregates: counts by kind/level, last error entry, buffer size, file size. */
   public stats(): OpLogStats {
     const byLevel: Record<OpLogLevel, number> = { info: 0, warn: 0, error: 0, debug: 0 };
-    const byKind: Record<OpLogKind, number> = { command: 0, llm: 0, breaker: 0, system: 0, chat: 0 };
+    const byKind: Record<OpLogKind, number> = { command: 0, llm: 0, breaker: 0, system: 0, chat: 0, auto: 0 };
     let lastError: OpLogEntry | undefined;
     for (const e of this.ring) {
       byLevel[e.level] += 1;

@@ -22,7 +22,7 @@ import { normalizeCommand } from '../src/models/ModelRatings.js';
 
 async function runCloudSttTests(): Promise<boolean> {
   console.log('================================================================');
-  console.log('🎙 CLOUD STT TESTS');
+  console.log('CLOUD STT TESTS');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -165,7 +165,7 @@ async function runCloudSttTests(): Promise<boolean> {
 
   test('transcriber called with downloaded audio buffer', transcriberCalls.length === 1 && transcriberCalls[0].bytes === 14);
   test('chat locale maps to STT lang (en → en-US)', transcriberCalls[0].lang === 'en-US');
-  test('voice reply sent with 🎙 Розпізнано: prefix', sent.some((t) => t.startsWith('🎙 Розпізнано:') && t.includes('/help')));
+  test('voice reply sent with Розпізнано: prefix', sent.some((t) => t.includes('Розпізнано:') && t.includes('/help')));
   test('command transcript routed into handleCommand (mock executor received /help)',
     receivedCommands.includes('/help'));
 

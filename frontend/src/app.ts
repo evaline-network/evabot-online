@@ -1853,7 +1853,7 @@ if (cmd === '/help') {
       } else {
         const t0 = performance.now();
         textSpan.innerHTML =
-          '<span style="color:var(--clr-yellow); font-family:var(--font-mono);">[>>] Multi-Agent Engine Deliberating... Synchronizing participants & models...</span>';
+          '<span style="color:var(--clr-yellow); font-family:var(--font-sans);">[>>] Multi-Agent Engine Deliberating... Synchronizing participants & models...</span>';
 
         const result = await runConsilium(
           {
@@ -1939,9 +1939,9 @@ if (cmd === '/help') {
       this.updateStatusLight('error');
       if (err.name === 'AbortError') {
         textSpan.innerHTML +=
-          '\n<span style="color:var(--clr-yellow); font-family:var(--font-mono); font-size:11px;"> [TRANSMISSION_HALTED_BY_OPERATOR 🟡]</span>';
+          '\n<span style="color:var(--clr-yellow); font-family:var(--font-sans); font-size:11px;"> [TRANSMISSION_HALTED_BY_OPERATOR 🟡]</span>';
       } else {
-        textSpan.innerHTML = `<span style="color:var(--clr-red); font-family:var(--font-mono); font-size:11px;">[ERR] TRANSMISSION_ERROR: ${this.escapeHtml(err.message)}</span>`;
+        textSpan.innerHTML = `<span style="color:var(--clr-red); font-family:var(--font-sans); font-size:11px;">[ERR] TRANSMISSION_ERROR: ${this.escapeHtml(err.message)}</span>`;
       }
     } finally {
       this.isGenerating = false;

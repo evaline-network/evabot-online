@@ -41,10 +41,11 @@ export class Theme {
     }
     const accent = this.cfg.accent || '#3fb950';
     css.textContent = `
-      html,body{background:#0d1117;color:#c9d1d9;font-family:'Courier New',monospace;
+      html{font-size:16px;}
+      html,body{background:#0d1117;color:#c9d1d9;font-family:'Roboto',sans-serif;
         margin:0;padding:12px 20px;line-height:1.45;width:100%;max-width:100%;overflow-x:hidden;}
       a{color:#58a6ff;text-decoration:none;} a:hover{text-decoration:underline;color:#79c0ff;}
-      button{font-family:inherit;font-size:12px;background:#21262d;color:#c9d1d9;border:1px solid #30363d;
+      button{font-family:inherit;font-size:0.75rem;background:#21262d;color:#c9d1d9;border:1px solid #30363d;
         padding:5px 10px;cursor:pointer;border-radius:4px;}
       button:hover{background:#30363d;color:#fff;}
       button.active{background:#238636;border-color:#2ea043;color:#fff;}
@@ -52,11 +53,12 @@ export class Theme {
       .live-dot{color:${accent};animation:pulse-dot 2s infinite ease-in-out;}
       @keyframes pulse-dot{0%,100%{opacity:1;text-shadow:0 0 4px ${accent};}50%{opacity:.3;text-shadow:none;}}
       .spinner{color:#58a6ff;}
-      pre{white-space:pre-wrap;word-break:break-word;background:transparent;margin:0 0 10px 0;font-size:13px;width:100%;}
+      pre,code{font-family:'Roboto Mono','Roboto',monospace;}
+      pre{white-space:pre-wrap;word-break:break-word;background:transparent;margin:0 0 10px 0;font-size:0.8125rem;width:100%;}
       hr{border:none;border-top:1px solid #30363d;margin:12px 0;}
       .ok{color:${accent};font-weight:bold;}
       .dim{color:#8b949e;}
-      @media(max-width:768px){.grid-2{grid-template-columns:1fr;}body{padding:8px 10px;font-size:12px;}}
+      @media(max-width:768px){.grid-2{grid-template-columns:1fr;}body{padding:8px 10px;font-size:0.75rem;}}
     `;
   }
 

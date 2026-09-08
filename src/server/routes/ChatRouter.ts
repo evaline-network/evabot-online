@@ -11,6 +11,7 @@ import { I18nEngine } from '../../core/I18nEngine.js';
 import { isDebugOn, startSpan, renderDebugFooter } from '../../core/OpLog.js';
 import { SystemContext, recordLastUsedModel } from '../../core/SystemContext.js';
 import { DeveloperMode } from '../../core/DeveloperMode.js';
+import { AutoModelRouter } from '../../core/AutoModelRouter.js';
 
 /**
  * Fire-and-forget chat persistence: a DB failure must never break the chat flow.
@@ -50,10 +51,14 @@ export class ChatRouter extends Router {
         ctx.sendJson(400, { error: 'Missing or invalid "message" parameter' });
         return;
       }
-      const targetModel = model || Config.defaultModel;
-      const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
-      const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
       const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
+      const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
+      // TASK-320: /auto mode — dynamic FREE model per message when opted in.
+      let targetModel = model || Config.defaultModel;
+      if (!model && AutoModelRouter.isActive(chatSessionId)) {
+        targetModel = AutoModelRouter.pick({ message, history }, chatSessionId).modelId;
+      }
+      const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
 
       let effectiveInstruction = this.resolveSystemInstruction(roleId, systemInstruction);
 
@@ -105,10 +110,14 @@ export class ChatRouter extends Router {
         ctx.sendJson(400, { error: 'Missing or invalid "message" parameter' });
         return;
       }
-      const targetModel = model || Config.defaultModel;
-      const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
-      const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
       const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
+      const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
+      // TASK-320: /auto mode — dynamic FREE model per message when opted in.
+      let targetModel = model || Config.defaultModel;
+      if (!model && AutoModelRouter.isActive(chatSessionId)) {
+        targetModel = AutoModelRouter.pick({ message, history }, chatSessionId).modelId;
+      }
+      const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
 
       let effectiveInstruction = this.resolveSystemInstruction(roleId, systemInstruction);
 

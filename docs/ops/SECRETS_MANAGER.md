@@ -143,3 +143,19 @@ Recommended remediations (not executed here):
 1. The hardcoded `AIzaSy…AVlA` key in the 3 src files is committed history — rotate the Gemini key in Google AI Studio, then refactor the 3 comparisons to reject by *prefix/pattern* instead of matching a key literal.
 2. `ghp_` PAT sits in the origin remote URL (`https://ghp_…@github.com/…`). Switch to `gh auth setup-git` (credential helper) or SSH remote — **intentionally not changed in this task**.
 3. Omniroute env file: keep mode 600; after migration remove plaintext values entirely.
+
+## TASK-331 — Gemini key literal removed, Secret Manager wired in (2026-09-08)
+
+The revoked hard-coded Gemini literal (`AIzaSy…AVlA`, see audit finding #1 above) has been **removed from `src/`**. Resolution order for the Gemini free-tier key is now implemented in `src/core/GoogleAuthProvider.ts`:
+
+1. `GEMINI_API_KEY` env (backend `.env`) — active path on the VM today.
+2. GCP Secret Manager secret `evabot-gemini-api-key` (project `evabot-agent-server`, Gemini API free tier, $0) — read lazily on first use via `gcloud secrets versions access latest --secret=evabot-gemini-api-key` (execFileSync, 10s timeout, ADC on the VM), **cached in memory for the process lifetime** (one access per boot ⇒ 6 accesses/month quota impact ≈ 0).
+3. On failure the resolver returns `''` so callers degrade gracefully. The key value is never logged — only the resolution source.
+
+Public API of `GoogleAuthProvider.ts`:
+
+- `resolveGeminiApiKey(): string` — env → Secret Manager → `''`. Preferred entry point.
+- `getGeminiApiKeyFromSecretManager(): string` — Secret Manager read, cached.
+- `DEFAULT_GEMINI_API_KEY` — deprecated lazy compat shim (string-coerces to `resolveGeminiApiKey()`) kept only so out-of-scope importers (`src/core/GeminiClient.ts:130,135`) keep working without the literal. Follow-up: refactor `GeminiClient.ts` to call `resolveGeminiApiKey()` directly and label the source `Secret Manager: evabot-gemini-api-key (free tier)`.
+
+Operational note: the Secret Manager access path uses **user ADC** (see IAM note above) — fine on this VM where ADC is present; if the service is later moved to a dedicated service-account identity, grant it `roles/secretmanager.secretAccessor` on `evabot-gemini-api-key`. Rotation: add a new version with `secrets.sh set gemini-api-key …`, then disable the previous version (free-tier accounting rule above); the running process picks the new value on next restart (in-memory cache).

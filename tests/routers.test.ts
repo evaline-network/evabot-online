@@ -278,7 +278,7 @@ export async function runRouterTests(): Promise<boolean> {
 
       const ok = await api('POST', '/api/chat', { message: 'Привіт Ева', sessionId: 'sess-a', history: [{ role: 'user', content: 'old' }] });
       assert(ok.status === 200 && ok.json?.response === 'MOCK-LLM-REPLY', 'POST /api/chat: 200 with mocked LLM reply (no debug footer when debug off)');
-      assert(ok.json?.model === Config.defaultModel && ok.json?.provider === 'google', 'POST /api/chat: default model + resolved provider');
+      assert(ok.json?.model === Config.defaultModel && ok.json?.provider === new UniversalLlmClient().resolveProvider(Config.defaultModel), 'POST /api/chat: default model + resolved provider');
       assert(captured.generate?.model === Config.defaultModel, 'POST /api/chat: generateContent called with default model');
       assert(captured.generate?.messages?.length === 2 && captured.generate?.messages?.[1]?.content === 'Привіт Ева', 'POST /api/chat: request history preserved + user message appended');
       assert(captured.generate?.options?.systemInstruction?.includes('[SYSTEM CONTEXT') === true, 'POST /api/chat: system-awareness block appended to instruction');

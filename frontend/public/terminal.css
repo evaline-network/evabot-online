@@ -29,7 +29,8 @@
   --clr-yellow: #eab308;
   --clr-red: #ef4444;
   --clr-cyan: #06b6d4;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: 'Roboto', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 *, *::before, *::after {
@@ -42,7 +43,7 @@ html {
   scroll-behavior: smooth;
   background-color: var(--bg-black);
   color: var(--fg-primary);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 16px; /* user font size (8..24) is applied to <html> at runtime */
   line-height: 1.5;
   text-rendering: optimizeLegibility;
@@ -53,7 +54,7 @@ body {
   color: var(--fg-primary);
   min-height: 100vh;
   overflow-x: hidden;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
 }
 
 /* Scrollbars */
@@ -231,7 +232,7 @@ body {
   color: var(--fg-muted);
   border: none;
   cursor: pointer;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
 }
 .lang-btn.active {
   background: #ffffff;
@@ -279,7 +280,7 @@ body {
   border: 1px solid var(--border-bright);
   background: var(--bg-panel);
   color: #ffffff;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-md);
   font-weight: 700;
   cursor: pointer;
@@ -329,7 +330,7 @@ body {
   background: var(--bg-black);
   font-size: var(--fs-md);
   line-height: 1.5;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
 }
 
 .terminal-bubble.user {
@@ -351,7 +352,7 @@ body {
 .message-body {
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--fg-primary);
@@ -379,7 +380,7 @@ body {
   background: var(--bg-panel);
   border: 1px solid var(--border-bright);
   color: var(--fg-primary);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-lg);
   font-weight: 800;
   cursor: pointer;
@@ -421,7 +422,7 @@ body {
   border: none;
   outline: none;
   color: #ffffff;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-lg);
   resize: none;
   line-height: 1.4;
@@ -433,7 +434,7 @@ body {
   background: #ffffff;
   color: #000000;
   border: 1px solid #ffffff;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-lg);
   font-weight: 800;
   cursor: pointer;
@@ -490,7 +491,7 @@ body {
   background: var(--bg-panel);
   border: 1px solid var(--border-bright);
   color: #ffffff;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-md);
   font-weight: 800;
   cursor: pointer;
@@ -540,7 +541,7 @@ body {
   background: var(--bg-black);
   color: var(--fg-muted);
   font-size: var(--fs-md);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -562,7 +563,7 @@ body {
   background: var(--bg-black);
   border: 1px solid var(--border-bright);
   color: #ffffff;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-md);
   outline: none;
 }
@@ -576,7 +577,7 @@ body {
   background: var(--bg-black);
   border: 1px solid var(--border-bright);
   color: #ffffff;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-md);
   outline: none;
 }
@@ -619,7 +620,7 @@ body {
   border: 1px solid #00f0ff;
   box-shadow: 0 0 25px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.1);
   backdrop-filter: blur(12px);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   z-index: 99999;
   border-radius: 4px;
   overflow: hidden;
@@ -682,7 +683,7 @@ body {
   background: transparent;
   border: 1px solid var(--border-bright);
   color: #ffffff;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-md);
   padding: 3px 8px;
   cursor: pointer;
@@ -722,7 +723,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
 }
 
 .persona-tab-btn strong {
@@ -800,7 +801,7 @@ body {
   background: #ffffff;
   color: #000000;
   border: none;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-weight: 800;
   font-size: var(--fs-lg);
   padding: 10px 14px;
@@ -927,7 +928,7 @@ body {
 }
 
 .ansi-stream {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-md);
   white-space: pre-wrap;
   word-break: break-word;
@@ -954,7 +955,7 @@ body {
   padding: 3px 8px;
   border: 1px solid var(--clr-yellow);
   color: var(--clr-yellow);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-sm);
   letter-spacing: 0.08em;
 }
@@ -1012,7 +1013,7 @@ body.dev-mode .terminal-footer {
   align-items: center;
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-dim);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-md);
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1033,7 +1034,7 @@ body.dev-mode .terminal-footer {
   color: var(--clr-cyan);
   border: 1px solid var(--border-dim);
   padding: 8px 10px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-md);
   text-align: left;
   cursor: pointer;

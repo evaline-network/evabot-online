@@ -25,6 +25,8 @@ import { runGeminiRoutingTests } from './gemini_routing.test.js';
 import { runCliTuiTests } from './cli_tui.test.js';
 import { runTelegramDeepTests } from './telegram_deep.test.js';
 import { runRouterTests } from './routers.test.js';
+import { runSubagentEngineTests } from './subagent_engine.test.js';
+import { runAutoModelRouterTests } from './auto_model_router.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
@@ -60,6 +62,8 @@ async function runAllTests(): Promise<void> {
     await runCliTuiTests(),
     await runTelegramDeepTests(),
     await runRouterTests(),
+    await runSubagentEngineTests(),
+    runAutoModelRouterTests(),
   ];
 
   const testNames = [
@@ -91,6 +95,8 @@ async function runAllTests(): Promise<void> {
     'CliTuiTests',
     'TelegramDeepTests',
     'RouterTests',
+    'SubagentEngineTests',
+    'AutoModelRouterTests',
   ];
 
   let allPassed = true;

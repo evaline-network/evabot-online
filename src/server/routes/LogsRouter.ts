@@ -1,8 +1,24 @@
 import { Router, withErrorHandling } from './Router.js';
 import { logger, LogLevel } from '../../core/Logger.js';
+import { ClusterMonitor } from '../../core/ClusterMonitor.js';
 
 export function createLogsRouter(): Router {
   const router = new Router();
+
+  router.get('/api/logs', withErrorHandling(async (ctx) => {
+    const domainLogs = ClusterMonitor.getDomainLogs();
+    const systemLogs = ClusterMonitor.getSystemLogs();
+    const processes = ClusterMonitor.getProcesses();
+    const microMetrics = ClusterMonitor.getMicroMetrics();
+    const meshLatencyMs = ClusterMonitor.getMeshLatency();
+    ctx.sendJson(200, {
+      domainLogs,
+      systemLogs,
+      processes,
+      microMetrics,
+      meshLatencyMs,
+    });
+  }));
 
   router.get('/api/logs/files', withErrorHandling(async (ctx) => {
     const files = logger.listLogFiles();

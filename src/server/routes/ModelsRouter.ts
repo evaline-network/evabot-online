@@ -1,6 +1,7 @@
 import { Router, withErrorHandling } from './Router.js';
 import { ModelRegistry } from '../../models/ModelRegistry.js';
 import { ModelRatings, ModelCommand } from '../../models/ModelRatings.js';
+import { Config } from '../../core/Config.js';
 import { logger, LogCategory } from '../../core/Logger.js';
 import { DeveloperMode } from '../../core/DeveloperMode.js';
 
@@ -25,7 +26,10 @@ export function createModelsRouter(): Router {
     ctx.sendJson(200, {
       models: allModels,
       categories: ModelRegistry.getCategories(),
-      defaultModel: smartestFree.id,
+      // Reliable interactive default = Config.defaultModel (openrouter/free
+      // meta-router). The "smartest" free model (nemotron-super) sometimes
+      // returns reasoning-only empty content and hangs interactive chat.
+      defaultModel: Config.defaultModel,
       smartestFreeModel: smartestFree,
       fallbackChain: ModelRatings.getFallbackChain(smartestFree.id),
       stats: {

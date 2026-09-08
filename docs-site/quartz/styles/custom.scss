@@ -1,3 +1,24 @@
 @use "./variables.scss" as *;
 
 // put your custom CSS here!
+
+// Roboto everywhere: body = Roboto, code blocks = Roboto Mono (fonts loaded via
+// quartz.config.yaml theme.fontOrigin: googleFonts + theme.typography).
+:root {
+  --bodyFont: "Roboto", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --headerFont: "Roboto", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --codeFont: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--bodyFont);
+}
+
+code,
+pre {
+  font-family: var(--codeFont);
+}

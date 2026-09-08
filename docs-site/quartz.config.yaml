@@ -16,9 +16,9 @@ configuration:
     fontOrigin: googleFonts
     cdnCaching: true
     typography:
-      header: JetBrains Mono
-      body: Inter
-      code: JetBrains Mono
+      header: Roboto
+      body: Roboto
+      code: Roboto Mono
     colors:
       lightMode:
         light: "#0d1117"

@@ -24,7 +24,7 @@ export const DOMAINS_CONFIG: DomainMeta[] = [
     badge: 'EDGE MESH',
     role: 'Edge Mesh, Транс-региональная Сетевая Маршрутизация & WireGuard Магистраль',
     infra: 'evaline-micro-vm · 2 vCPU e2-micro · 1 GB RAM · Айова (США) · IP: 136.114.26.252',
-    target: 'Глобальный Ingress-шлюз, HTTP/3 QUIC терминация, WireGuard туннель Франкфурт ↔ Айова.',
+    target: 'Глобальный Ingress-шлюз, HTTP/3 QUIC терминация, WireGuard туннель Франкфурт <-> Айова.',
   },
   {
     domain: 'evaline.online',
@@ -170,8 +170,34 @@ export class TuiRenderer {
       logBlock += '  [Сбор телеметрии активен...]';
     }
 
+    const llmBlock = `[ МАТРИЦА LLM-ПРОВАЙДЕРОВ И МОДЕЛЕЙ // LLM & MULTI-AGENT STATUS ]:
+  • GOOGLE GEMINI (ADC):   Gemini 2.5 Flash, 3.8 Flash, Pro (1M ctx)     | [ONLINE] 🟢
+  • OMNIROUTE (Port 20128): 78 моделей · LPU Groq/Cerebras (800 t/s)      | [ONLINE] 🟢
+  • OPENROUTER HUB:        56 бесплатных кодинг-моделей (DeepSeek, Qwen)  | [ONLINE] 🟢
+  • OPENCODE AGENTS:       21 MCP-инструмент · Автономная разработка     | [ONLINE] 🟢`;
+
+    const secBlock = `[ КОНТУР БЕЗОПАСНОСТИ И ЗАЩИТЫ // SECURITY & AUTO-REAP SHIELD ]:
+  • EARLYOOM DAEMON:       Active (Пороги: <10% RAM, >80% Swap)          | [ARMED] 🟢
+  • EVA-WATCHDOG TIMER:    Каждые 3 мин (Сброс Tl-пауз > 20 мин)         | [ACTIVE] 🟢
+  • FAIL2BAN SSH JAIL:     Активен · Мониторинг брутфорса и ботнетов     | [ARMED] 🟢
+  • WIREGUARD ENCRYPTION:  ChaCha20-Poly1305 · Закрытый контур           | [SECURE] 🟢`;
+
     if (body) {
       let hydrated = body;
+
+      if (hydrated.includes('<!-- SLOT:LLM_MATRIX -->')) {
+        hydrated = hydrated.replace(
+          /<!-- SLOT:LLM_MATRIX -->[\s\S]*?<!-- \/SLOT:LLM_MATRIX -->/g,
+          `<!-- SLOT:LLM_MATRIX -->\n${llmBlock}\n<!-- /SLOT:LLM_MATRIX -->`
+        );
+      }
+
+      if (hydrated.includes('<!-- SLOT:SECURITY_SHIELD -->')) {
+        hydrated = hydrated.replace(
+          /<!-- SLOT:SECURITY_SHIELD -->[\s\S]*?<!-- \/SLOT:SECURITY_SHIELD -->/g,
+          `<!-- SLOT:SECURITY_SHIELD -->\n${secBlock}\n<!-- /SLOT:SECURITY_SHIELD -->`
+        );
+      }
 
       if (hydrated.includes('<!-- SLOT:TELEMETRY -->')) {
         hydrated = hydrated.replace(

@@ -179,7 +179,7 @@ export const BREAKERS: Record<string, CircuitBreaker> = Object.fromEntries(
 /** Maps a model id to its logical provider/breaker key. */
 export function providerOfModel(model: string): string {
   const m = model.toLowerCase();
-  if (m.startsWith('omniroute/')) return 'omniroute';
+  if (m.startsWith('omniroute/') || m.startsWith('omni/')) return 'omniroute';
   if (m.startsWith('opencode/')) return 'opencode';
   if (m.startsWith('hf/')) return 'hf';
   if (m.startsWith('zai/')) return 'zai';
