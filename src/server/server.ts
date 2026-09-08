@@ -241,25 +241,48 @@ export function createServer(): http.Server {
       return;
     }
     
-    if (pathname.startsWith('/dist/') || pathname === '/' || pathname === '/visualize' || pathname === '/visualize.html' || pathname === '/index.html' || pathname === '/terminal' || pathname === '/terminal.txt' || pathname === '/plain') {
+    const staticRoutes = [
+      '/', '/index.html',
+      '/manifesto', '/manifesto.html',
+      '/hub', '/hub.html',
+      '/network', '/network.html',
+      '/visualize', '/visualize.html',
+      '/terminal', '/terminal.txt', '/plain',
+    ];
+
+    if (pathname.startsWith('/dist/') || staticRoutes.includes(pathname)) {
       let filePath = '';
+      const host = (req.headers.host || 'localhost').toLowerCase().replace(/^www\./, '');
+
       if (pathname.startsWith('/dist/')) {
         filePath = path.resolve(process.cwd(), pathname.slice(1));
+      } else if (pathname === '/manifesto' || pathname === '/manifesto.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'manifesto.html');
+      } else if (pathname === '/hub' || pathname === '/hub.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'hub.html');
+      } else if (pathname === '/network' || pathname === '/network.html' || pathname === '/visualize' || pathname === '/visualize.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'network.html');
       } else if (pathname === '/' || pathname === '/index.html') {
         const ua = (req.headers['user-agent'] || '').toLowerCase();
         const isCliBrowser = ua.includes('curl') || ua.includes('wget') || ua.includes('lynx') || ua.includes('w3m') || ua.includes('elinks') || ua.includes('httpie');
         if (isCliBrowser) {
-          const host = (req.headers.host || 'localhost').toString();
           const text = TuiRenderer.renderText(host);
           sendText(res, 200, text, 'text/plain; charset=utf-8');
           return;
         }
-        filePath = path.resolve(process.cwd(), 'public', 'index.html');
-      } else if (pathname === '/visualize' || pathname === '/visualize.html') {
-        filePath = path.resolve(process.cwd(), 'public', 'visualize.html');
+
+        // Domain-specific home page routing:
+        if (host.includes('evaline.online')) {
+          filePath = path.resolve(process.cwd(), 'public', 'manifesto.html');
+        } else if (host.includes('evaline.website')) {
+          filePath = path.resolve(process.cwd(), 'public', 'hub.html');
+        } else if (host.includes('evaline.network')) {
+          filePath = path.resolve(process.cwd(), 'public', 'network.html');
+        } else {
+          filePath = path.resolve(process.cwd(), 'public', 'index.html');
+        }
       } else if (pathname === '/terminal' || pathname === '/terminal.txt' || pathname === '/plain') {
         const isCurl = (req.headers['user-agent'] || '').toLowerCase().includes('curl');
-        const host = (req.headers.host || 'localhost').toString();
         const text = isCurl ? TuiRenderer.renderText(host) : TuiRenderer.renderHtml(host);
         const contentType = isCurl ? 'text/plain; charset=utf-8' : 'text/html; charset=utf-8';
         sendText(res, 200, text, contentType);

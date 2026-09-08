@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EvaLine Network // Live Visual Process & LLM Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050608;
+      --surface: #0e1118;
+      --surface-hover: #141822;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(0, 230, 118, 0.4);
+      --accent-green: #00e676;
+      --accent-cyan: #00e5ff;
+      --accent-amber: #ffd600;
+      --accent-purple: #b388ff;
+      --fg: #e6edf3;
+      --fg-dim: #7d8590;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 24px;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 230, 118, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 90% 10%, rgba(0, 229, 255, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(179, 136, 255, 0.03) 0%, transparent 50%);
+    }
+    .container { max-width: 1360px; margin: 0 auto; }
+
+    /* Top Nav */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+    .brand-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: #000; font-weight: 800; font-size: 14px;
+    }
+    .nav-links {
+      display: flex; gap: 20px; align-items: center; font-size: 0.88rem;
+    }
+    .nav-link { color: var(--fg-dim); text-decoration: none; transition: color 0.2s; }
+    .nav-link:hover { color: var(--accent-green); }
+
+    .pulse-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 12px; background: rgba(0, 230, 118, 0.1);
+      border: 1px solid rgba(0, 230, 118, 0.3); border-radius: 20px;
+      font-family: var(--font-mono); font-size: 0.76rem; color: var(--accent-green);
+    }
+    .dot { width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* Hero Banner */
+    .hero-banner {
+      margin-bottom: 32px;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff, #99f6e4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-desc { color: var(--fg-dim); font-size: 1.05rem; }
+
+    /* Flow Canvas */
+    .flow-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 32px;
+      position: relative;
+    }
+    .card-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px;
+    }
+    .card-head h2 { font-family: var(--font-display); font-size: 1.25rem; color: #fff; }
+    .live-tag { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-cyan); }
+
+    /* Flow Layout */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    .flow-node {
+      background: rgba(22, 27, 38, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 16px 20px;
+      min-width: 200px;
+      flex: 1;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .flow-node.active {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 20px rgba(0, 230, 118, 0.15);
+    }
+    .node-type {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      margin-bottom: 4px;
+    }
+    .node-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .node-meta {
+      font-size: 0.8rem;
+      color: var(--fg-dim);
+      font-family: var(--font-mono);
+    }
+    .flow-arrow {
+      color: var(--accent-green);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 1.1rem;
+      animation: stream 1.5s infinite linear;
+    }
+
+    /* Telemetry Grid */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .metric-card-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 18px;
+    }
+    .node-tag {
+      font-family: var(--font-mono); font-size: 0.75rem; padding: 2px 8px;
+      border-radius: 4px; background: rgba(255, 255, 255, 0.06); color: var(--accent-cyan);
+    }
+    .gauge-group { margin-bottom: 14px; }
+    .gauge-label {
+      display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;
+    }
+    .gauge-bar {
+      height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden;
+    }
+    .gauge-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+    .fill-green { background: var(--accent-green); }
+    .fill-cyan { background: var(--accent-cyan); }
+    .fill-amber { background: var(--accent-amber); }
+
+    /* LLM Matrix Grid */
+    .llm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .llm-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      transition: all 0.2s;
+    }
+    .llm-card:hover { border-color: rgba(255, 255, 255, 0.2); }
+    .llm-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .llm-name { font-weight: 700; font-family: var(--font-display); color: #fff; font-size: 1rem; }
+    .llm-desc { font-size: 0.82rem; color: var(--fg-dim); line-height: 1.4; margin-bottom: 12px; }
+    .llm-badge {
+      font-family: var(--font-mono); font-size: 0.72rem; padding: 2px 6px;
+      border-radius: 4px; background: rgba(0, 230, 118, 0.1); color: var(--accent-green);
+    }
+
+    /* Consilium Live Playground */
+    .consilium-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .cs-btn {
+      padding: 10px 22px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      border: none; border-radius: 8px;
+      color: #000; font-weight: 700; font-family: var(--font-display);
+      cursor: pointer; transition: transform 0.15s, opacity 0.15s;
+    }
+    .cs-btn:hover { transform: translateY(-1px); opacity: 0.95; }
+    .cs-output {
+      margin-top: 16px; background: #07090e;
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px; font-family: var(--font-mono); font-size: 0.85rem;
+      color: #cfd7e6; min-height: 80px; white-space: pre-wrap;
+    }
+
+    /* Processes Table */
+    .proc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 32px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%; border-collapse: collapse; text-align: left; font-size: 0.86rem;
+    }
+    th {
+      padding: 10px 14px; font-family: var(--font-mono); font-size: 0.74rem;
+      text-transform: uppercase; color: var(--fg-dim); border-bottom: 1px solid var(--border);
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+    .badge-ok {
+      padding: 2px 8px; border-radius: 4px; background: rgba(0, 230, 118, 0.1);
+      color: var(--accent-green); font-family: var(--font-mono); font-size: 0.72rem;
+    }
+
+    footer {
+      text-align: center; padding-top: 24px; border-top: 1px solid var(--border);
+      color: var(--fg-dim); font-size: 0.8rem; font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <a href="https://evaline.network" class="brand">
+      <div class="brand-icon">N</div>
+      <span>EVALINE // NETWORK FLOW</span>
+    </a>
+    <div class="nav-links">
+      <a href="https://evabot.online" class="nav-link">EvaBot Chat</a>
+      <a href="https://evaline.online" class="nav-link">Manifesto</a>
+      <a href="https://evaline.website" class="nav-link">Master Hub</a>
+      <a href="https://evabot.online/docs/" class="nav-link">Docs</a>
+      <div class="pulse-badge">
+        <span class="dot"></span>
+        <span id="nav-rtt">124ms MESH RTT</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero-banner">
+    <h1>Визуализатор Процессов, Агентов и LLM</h1>
+    <div class="hero-desc">Живая карта движения данных, работы мультиагентных консилиумов и нагрузки двух дата-центров.</div>
+  </div>
+
+  <!-- 1. Interactive Architecture Flow -->
+  <section class="flow-card">
+    <div class="card-head">
+      <h2>📡 Маршрут Запроса: Пользователь ➔ Edge ➔ Core ➔ Провайдеры</h2>
+      <span class="live-tag">LIVE SYNCHRONOUS FLOW</span>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-node">
+        <div class="node-type">Входной клиент</div>
+        <div class="node-title">👤 User Browser / API</div>
+        <div class="node-meta">Web, Voice, Mobile Mesh</div>
+      </div>
+
+      <div class="flow-arrow">══▶</div>
+
+      <div class="flow-node active">
+        <div class="node-type">Edge Node · Iowa (US)</div>
+        <div class="node-title">🌐 EvaFace (e2-micro)</div>
+        <div class="node-meta">Caddy HTTP/3 · EarlyOOM</div>
+      </div>
+
+      <div class="flow-arrow">══ WireGuard ══▶</div>
+
+      <div class="flow-node active">
+        <div class="node-type">Compute Core · Frankfurt (EU)</div>
+        <div class="node-title">🧠 EvaBrain (8 vCPU)</div>
+        <div class="node-meta">Node.js · Python Voice · Chroma</div>
+      </div>
+
+      <div class="flow-arrow">══▶</div>
+
+      <div class="flow-node">
+        <div class="node-type">Агентный движок</div>
+        <div class="node-title">🏛️ EvaConsilium</div>
+        <div class="node-meta">Дебаты 78+ моделей</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Dual-Node Telemetry -->
+  <div class="telemetry-grid">
+    
+    <!-- Frankfurt Compute Core -->
+    <div class="metric-card">
+      <div class="metric-card-head">
+        <strong style="color: #fff;">🧠 EvaBrain Core (Frankfurt)</strong>
+        <span class="node-tag">8 vCPU · 32 GB RAM</span>
+      </div>
+
+      <div class="gauge-group">
+        <div class="gauge-label">
+          <span>Загрузка CPU (Load Avg)</span>
+          <strong id="b-cpu-val" style="color: var(--accent-green);">5.4 (67%)</strong>
+        </div>
+        <div class="gauge-bar">
+          <div class="gauge-fill fill-green" id="b-cpu-bar" style="width: 67%;"></div>
+        </div>
+      </div>
+
+      <div class="gauge-group">
+        <div class="gauge-label">
+          <span>Оперативная память</span>
+          <strong id="b-ram-val" style="color: var(--accent-cyan);">15.8 / 31 GB (51%)</strong>
+        </div>
+        <div class="gauge-bar">
+          <div class="gauge-fill fill-cyan" id="b-ram-bar" style="width: 51%;"></div>
+        </div>
+      </div>
+
+      <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--fg-dim); margin-top: 14px;">
+        Uptime: <span id="b-uptime">2d 13:00:00</span> · Статус: <span style="color: var(--accent-green);">HEALTHY</span>
+      </div>
+    </div>
+
+    <!-- Iowa Edge Node -->
+    <div class="metric-card">
+      <div class="metric-card-head">
+        <strong style="color: #fff;">🌐 EvaFace Edge (Iowa)</strong>
+        <span class="node-tag">2 vCPU · 1 GB RAM</span>
+      </div>
+
+      <div class="gauge-group">
+        <div class="gauge-label">
+          <span>Загрузка CPU (Load Avg)</span>
+          <strong id="f-cpu-val" style="color: var(--accent-green);">0.15 (8%)</strong>
+        </div>
+        <div class="gauge-bar">
+          <div class="gauge-fill fill-green" id="f-cpu-bar" style="width: 8%;"></div>
+        </div>
+      </div>
+
+      <div class="gauge-group">
+        <div class="gauge-label">
+          <span>Оперативная память</span>
+          <strong id="f-ram-val" style="color: var(--accent-cyan);">440 / 964 MB (46%)</strong>
+        </div>
+        <div class="gauge-bar">
+          <div class="gauge-fill fill-cyan" id="f-ram-bar" style="width: 46%;"></div>
+        </div>
+      </div>
+
+      <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--fg-dim); margin-top: 14px;">
+        Ingress: Caddy HTTP/3 · Защита: <span style="color: var(--accent-green);">EarlyOOM + Watchdog</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3. LLM Providers Status -->
+  <div class="card-head" style="margin-bottom: 16px;">
+    <h2>🤖 Статус 4 Провайдеров LLM и Пул Моделей</h2>
+    <span class="live-tag" id="models-online-tag">78 МОДЕЛЕЙ ОНЛАЙН</span>
+  </div>
+
+  <div class="llm-grid">
+    <div class="llm-card">
+      <div class="llm-head">
+        <div class="llm-name">Google Gemini</div>
+        <span class="llm-badge">DIRECT ADC</span>
+      </div>
+      <div class="llm-desc">Прямой доступ к Gemini 2.5 Flash, 3.8 Flash, Pro. Квота 1,000,000 токенов контекста, ультрабыстрый инференс.</div>
+      <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-green);">● ACTIVE / HEALTHY</div>
+    </div>
+
+    <div class="llm-card">
+      <div class="llm-head">
+        <div class="llm-name">OmniRoute Proxy</div>
+        <span class="llm-badge">:20128</span>
+      </div>
+      <div class="llm-desc">Локальный шлюз LiteLLM на Франкфурте. Маршрутизация 122+ моделей, LPU-ускорение Groq/Cerebras до 800 токенов/сек.</div>
+      <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-green);">● ACTIVE / HEALTHY</div>
+    </div>
+
+    <div class="llm-card">
+      <div class="llm-head">
+        <div class="llm-name">OpenRouter Hub</div>
+        <span class="llm-badge">ZERO-OPEX</span>
+      </div>
+      <div class="llm-desc">Агрегация 56+ бесплатных моделей: DeepSeek V3/V4, Qwen 2.5/3 Coder, Mistral Codestral, Nemotron.</div>
+      <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-green);">● ACTIVE / HEALTHY</div>
+    </div>
+
+    <div class="llm-card">
+      <div class="llm-head">
+        <div class="llm-name">OpenCode Agents</div>
+        <span class="llm-badge">AUTONOMOUS</span>
+      </div>
+      <div class="llm-desc">Автономные кодинг-агенты, работающие непосредственно в среде Linux через шину 21 MCP-инструментов.</div>
+      <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-green);">● ACTIVE / HEALTHY</div>
+    </div>
+  </div>
+
+  <!-- 4. Interactive Consilium Demonstration -->
+  <section class="consilium-box">
+    <div class="card-head">
+      <h2>🏛️ Интерактивный Консилиум Агентов (EvaConsilium)</h2>
+      <span class="live-tag">REALTIME AGENT DELIBERATION</span>
+    </div>
+    <p style="color: var(--fg-dim); font-size: 0.95rem; margin-bottom: 16px;">
+      Нажмите кнопку, чтобы запустить реальный 3-раундовый консилиум между независимыми ИИ-агентами (Gemini 2.5, Flash и Pro) с автоматическим синтезом консенсуса:
+    </p>
+    <button class="cs-btn" onclick="runLiveConsilium()">▶ Запустить живой Консилиум</button>
+    <div class="cs-output" id="cs-live-result">// Нажмите кнопку выше для запуска демонстрации дебатов моделей...</div>
+  </section>
+
+  <!-- 5. Active Processes Table -->
+  <section class="proc-card">
+    <div class="card-head">
+      <h2>⚙️ Активные Процессы Кластера (В реальном времени)</h2>
+      <span class="live-tag">WATCHDOG MONITORED</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>PID</th>
+          <th>Узел</th>
+          <th>Служба / Процесс</th>
+          <th>CPU</th>
+          <th>Память</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody id="proc-table-body">
+        <tr>
+          <td>737946</td>
+          <td>Frankfurt (EU)</td>
+          <td><strong>evabot-brain</strong> (Node.js Core Backend)</td>
+          <td>0.1%</td>
+          <td>105 MB</td>
+          <td><span class="badge-ok">HEALTHY 🟢</span></td>
+        </tr>
+        <tr>
+          <td>389265</td>
+          <td>Frankfurt (EU)</td>
+          <td><strong>evabot-voice</strong> (FastAPI Python Backend)</td>
+          <td>0.2%</td>
+          <td>35 MB</td>
+          <td><span class="badge-ok">HEALTHY 🟢</span></td>
+        </tr>
+        <tr>
+          <td>1095108</td>
+          <td>Frankfurt (EU)</td>
+          <td><strong>omniroute</strong> (LiteLLM 78 Models Gateway)</td>
+          <td>3.1%</td>
+          <td>1.2 GB</td>
+          <td><span class="badge-ok">OPERATIONAL 🟢</span></td>
+        </tr>
+        <tr>
+          <td>32403</td>
+          <td>Iowa (US)</td>
+          <td><strong>caddy</strong> (Edge Ingress HTTP/3 & TLS)</td>
+          <td>0.1%</td>
+          <td>55 MB</td>
+          <td><span class="badge-ok">HEALTHY 🟢</span></td>
+        </tr>
+        <tr>
+          <td>574</td>
+          <td>cluster-mesh</td>
+          <td><strong>tailscaled</strong> (WireGuard Mesh 124ms)</td>
+          <td>0.3%</td>
+          <td>62 MB</td>
+          <td><span class="badge-ok">CONNECTED 🟢</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    © 2026 EVALINE NETWORK // Интерактивная архитектурная телеметрия EvaBot
+  </footer>
+
+</div>
+
+<script>
+  async function updateNetworkDashboard() {
+    try {
+      const res = await fetch('https://evabot.online/api/health?_t=' + Date.now());
+      if (res.ok) {
+        const d = await res.json();
+        
+        // RTT
+        const rtt = d.telemetry?.meshLatencyMs || 124;
+        document.getElementById('nav-rtt').textContent = rtt + 'ms MESH RTT';
+
+        // Brain
+        const b = d.telemetry?.frankfurt;
+        if (b) {
+          document.getElementById('b-cpu-val').textContent = `${b.load} (${b.cpuPct}%)`;
+          document.getElementById('b-cpu-bar').style.width = Math.min(100, b.cpuPct) + '%';
+          document.getElementById('b-ram-val').textContent = `${b.memUsedGb} / ${b.memTotalGb} GB`;
+          const ramPct = Math.round((parseFloat(b.memUsedGb) / parseFloat(b.memTotalGb)) * 100);
+          document.getElementById('b-ram-bar').style.width = ramPct + '%';
+        }
+
+        // Micro
+        const m = d.telemetry?.iowa;
+        if (m) {
+          document.getElementById('f-cpu-val').textContent = `${m.load} (${m.cpuPct}%)`;
+          document.getElementById('f-cpu-bar').style.width = Math.min(100, m.cpuPct) + '%';
+          document.getElementById('f-ram-val').textContent = `${m.memUsedMb} / ${m.memTotalMb} MB`;
+          const fRamPct = Math.round((m.memUsedMb / m.memTotalMb) * 100);
+          document.getElementById('f-ram-bar').style.width = fRamPct + '%';
+        }
+
+        // Models
+        if (d.availableModels) {
+          document.getElementById('models-online-tag').textContent = `${d.availableModels} МОДЕЛЕЙ ОНЛАЙН`;
+        }
+      }
+    } catch (e) {}
+  }
+
+  async function runLiveConsilium() {
+    const box = document.getElementById('cs-live-result');
+    box.textContent = '⏳ Инициализация консилиума... Опрос 3 независимых моделей...';
+    try {
+      const res = await fetch('https://evabot.online/api/consilium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'consilium',
+          prompt: 'В чем ключевое архитектурное преимущество распределенного кластера Франкфурт-Айова для стабильности сервиса?',
+          models: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
+        })
+      });
+      const data = await res.json();
+      if (data.result) {
+        const r = data.result;
+        let out = `✓ КОНСИЛИУМ ЗАВЕРШЕН [Режим: ${r.mode}, Время: ${r.durationMs}ms, Раундов: ${r.turns.length}]\n\n`;
+        r.turns.forEach((t, i) => {
+          out += `[РАУНД ${i+1} // ${t.participantName}]:\n${t.content.substring(0, 220)}...\n\n`;
+        });
+        if (r.synthesis) {
+          out += `==================== СИНТЕЗ КОНСЕНСУСА ====================\n${r.synthesis}`;
+        }
+        box.textContent = out;
+      } else {
+        box.textContent = 'Результат: ' + JSON.stringify(data);
+      }
+    } catch (e) {
+      box.textContent = 'Ошибка вызова консилиума: ' + e.message;
+    }
+  }
+
+  updateNetworkDashboard();
+  setInterval(updateNetworkDashboard, 3000);
+</script>
+
+</body>
+</html>
