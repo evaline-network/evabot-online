@@ -126,7 +126,7 @@ npm run build
 
 ```bash
 # Клонирование
-git clone https://github.com/evaline-network/evabot-online.git
+git clone https://github.com/evaline-online/evabot-online.git
 
 # Создание ветки
 git checkout -b feature/new-feature

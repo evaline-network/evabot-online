@@ -46,7 +46,7 @@
 - [x] **DNS Привязка:** Направление A-записей доменов `evabot.online`, `evaline.network`, `evaline.online`, `evaline.website` на IP `136.114.26.252`.
 
 ### 2026-08-06 — 2026-08-10 (Дни 6–10) — Стандарты разработки и Git
-- [x] **Репозитории:** Создана организация [evaline-network](https://github.com/evaline-network) и репозиторий `evabot-online`.
+- [x] **Репозитории:** Создана организация [evaline-network](https://github.com/evaline-online) и репозиторий `evabot-online`.
 - [x] **Стандарты кода:** Выбор TypeScript 5.7, Node.js 22 LTS, строгая типизация без внешних перегруженных фреймворков.
 - [x] **Финансовая политика:** Принятие жесткого стандарта: все цены и расчеты токенов ведутся строго в USD ($) и EUR (€) без использования рублей (RUB / ₽).
 - [x] **Трилингвальность:** Внедрение стандарта паритета трех языков в системе: английский (EN), украинский (UK), русский (RU).
@@ -197,7 +197,7 @@
 - **Documentation:** 9 .md files (README, CHANGELOG, ROADMAP, KANBAN, WORKLOG, ARCHITECTURE, SECURITY_AUDIT, MODELS_CATALOG, MONOREPO_README)
 - **Endpoints:** 30+ API endpoints across 6 routers
 - **Security:** 8 IPs blocked, 0 successful attacks
-- **Push to GitHub:** ✅ https://github.com/evaline-network/evabot-online
+- **Push to GitHub:** ✅ https://github.com/evaline-online/evabot-online
 
 ---
 

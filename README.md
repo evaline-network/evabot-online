@@ -187,7 +187,7 @@ npm test                # Run tests
 ./deploy-sync.sh "msg"  # Build + commit + push + deploy
 ```
 
-**GitHub:** https://github.com/evaline-network/evabot-online
+**GitHub:** https://github.com/evaline-online/evabot-online
 
 ---
 
