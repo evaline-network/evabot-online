@@ -19,6 +19,7 @@ theme: dark
   [->] https://evaline.network :: Edge Mesh & WireGuard Магистраль
   [->] https://evaline.online  :: Контур Безопасности & OOM-Щит
   [*] evaline.website  :: Мастер-Хроника Релизов & Worklog [ТЕКУЩИЙ УЗЕЛ]
+  [->] https://github.com/evaline-network :: Официальная Организация GitHub (14 Репозиториев)
 ────────────────────────────────────────────────────────────────────────────
 <!-- SLOT:TELEMETRY -->
 [ РЕАЛЬНАЯ ТЕЛЕМЕТРИЯ ДВУХ СЕРВЕРОВ // REALTIME DUAL-NODE TELEMETRY ]:

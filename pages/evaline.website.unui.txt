@@ -10,6 +10,7 @@
   [->] https://evaline.network :: Edge Mesh & WireGuard Магистраль
   [->] https://evaline.online  :: Контур Безопасности & OOM-Щит
   [*] evaline.website  :: Мастер-Хроника Релизов & Worklog [ТЕКУЩИЙ УЗЕЛ]
+  [->] https://github.com/evaline-network :: Официальная Организация GitHub (14 Репозиториев)
 ────────────────────────────────────────────────────────────────────────────
 [ РЕАЛЬНАЯ ТЕЛЕМЕТРИЯ ДВУХ СЕРВЕРОВ // REALTIME DUAL-NODE TELEMETRY ]:
   • EVABRAIN (Compute Core / ФРГ): CPU: 5.60 (70%) [■■■■■■■□□□] | RAM: 9.7/31 GB (31%) | Uptime: 1d 12:00:00 | Статус: [HEALTHY]

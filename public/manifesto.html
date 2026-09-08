@@ -2237,7 +2237,8 @@ details.sub-accordion[open] > summary.sub-summary {
   justify-content: center;
 }
 .diagram-canvas .mermaid {
-  min-width: 280px;
+  min-width: 0;
+  max-width: 100%;
   width: 100%;
   text-align: center;
   position: relative;
@@ -2812,9 +2813,6 @@ details.sub-accordion[open] > summary.sub-summary {
   .infographic-panel {
     padding: 12px !important;
   }
-  .diagram-canvas .mermaid {
-    min-width: 0;
-  }
   .sub-summary {
     flex-wrap: wrap;
     row-gap: 6px;
@@ -2827,6 +2825,10 @@ details.sub-accordion[open] > summary.sub-summary {
     white-space: normal;
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+  .phase-card {
+    padding: 14px;
+    gap: 12px;
   }
   .glossary-header,
   .model-card-header,
