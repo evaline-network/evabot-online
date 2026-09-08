@@ -41,33 +41,48 @@ test files are included in that check.
 | Module | Status | Notes |
 |---|---|---|
 | `src/ansi.test.ts` | 16 tests | Pure ANSI engine: `stripAnsi`, `visibleWidth` (CJK/emoji double-width), `padEndVisible`/`padStartVisible`, `escapeHtml`, `toHtml` (SGR-to-inline-style mapping, span close on reset, unknown code dropping), `trafficLightIcon`, `renderTerminalTable` (layout, widths, format callbacks), `renderError`, `renderNotice`. |
+| `src/ansi-format.test.ts` | 34 tests | Remaining ANSI helpers: `trafficLightColor`, `statusBadge` (default/custom/fallback labels), `badge`, `divider`, `sectionHeader`/`sectionFooter` (box width via `visibleWidth`, long-title minimum-width path), `formatBanner` (line structure, body padding), `promptSymbol` (mode mapping, case-insensitivity), `formatPrompt` (model/role/mode composition, `general_assistant` omission), `chatBoxHeader`/`chatBoxFooter`/`renderChatBoxContent`/`renderChatBoxWithCost` (cost + tip branches), `renderCostLine` (FREE vs PAID, commercial valuation), `renderConsiliumTurn` (free/paid tags, optional token summary), `renderConsensusBox` (incl. empty synthesis), `renderAuditBox` (with/without model rows), `renderUserLine`, `renderDevModeBlock` (ON/OFF, has-key vs no-key), `renderConfigBlock` (full config vs empty-object defaults), `renderRawAnsiBlock` (ESC escaping), `renderOnboardingStep`, `ANSI_WHISPER_COMMANDS`, `ONBOARDING_TIPS`. |
 | `src/api.test.ts` | 9 tests | Network layer with `vi.stubGlobal('fetch', ...)` and mocked `ReadableStream` SSE bodies: `CatalogStore` (load-once semantics, accessors, failure resilience), `fetchHealth` (ok + offline), `streamChat` (SSE chunk accumulation, usage/cost delivery, in-stream error events, non-ok HTTP error). |
+| `src/api-extra.test.ts` | 21 tests | Untested API surface: `fetchAppConfig` (ok + offline), `setServerDevMode` (POST body, non-ok, thrown), `fetchBootBannerText` (content/empty/404/offline), `fetchBootDiagnostics` (URL model encoding + failure), `fetchVoiceConfig`, `toggleVoicePlugin` (resolves through network rejection), `runConsilium` (payload unwrap, server error message, malformed error body fallback), `CatalogStore` extras (`fetchTopModels` ok + failure, empty-catalog accessors, `defaultModel` adoption vs omission). |
 | `src/onboarding.test.ts` | 6 tests | `OnboardingHandler` against jsdom localStorage: first-step render, step advance + persistence, auto-skip of configured steps, action execution, completion flag (`STORAGE_DONE`), `isDone()`/`reset()`. |
+| `src/onboarding-edge.test.ts` | 12 tests | Edge cases: corrupted/negative/out-of-range saved step recovery, fractional index truncation, completion from the last step, no advancement past the final step, multi-step auto-skip chains (full and partial), welcome step always shown first, spec invariants (unique keys/titles, body lines + actions per step, per-key `autoDone`, `ready` body composition). |
+| `src/smartinput.test.ts` | 47 tests | `SmartInput` autocorrect engine from `app.ts`: `levenshtein` (empty/unicode/symmetry), `subsequenceScore` (prefix + streak bonuses, case-insensitivity), vocab storage (corrupted JSON, command stripping, frequency, recency decay, VOCAB_CAP trimming), lexicon merge + `learnCorrection`, on/off toggle, `protectSegments` (fences, URLs, unclosed fences, orphan markers), `matchCase`, `correctWord` (ties, distance budget), `fixCommand` (known/prefix/translit/fuzzy/ambiguous), `normalizePunct` (spacing rules, numbers, trailing whitespace), `autocorrect` integration (fence/URL/vocabulary protection, learning), `TRANSLATIONS` i18n shape (identical key sets, non-empty values, per-language distinctness, locale-policy zero-tolerance). |
 
-Total: 3 files, 31 tests, all passing.
+Total: 7 files, 145 tests, all passing.
 
-## Baseline coverage (first run, `npm run test:coverage`)
+`src/smartinput.test.ts` imports `app.ts`, whose module scope boots `EvaBotWebApp`
+on `DOMContentLoaded`; the test dispatches the event manually and uses fake
+timers (`shouldAdvanceTime`) so the boot telemetry intervals never create real
+pending handles.
+
+## Baseline coverage (`npm run test:coverage`, TASK coverage push round 2)
 
 | File | Stmts | Branch | Funcs | Lines |
 |---|---|---|---|---|
-| `src/ansi.ts` | 40.51% | 27.58% | 40% | 40.27% |
-| `src/api.ts` | 60.65% | 53.7% | 54.54% | 62.26% |
-| `src/onboarding.ts` | 71.26% | 84.61% | 62.5% | 74.39% |
-| `src/app.ts` | 0% | 0% | 0% | 0% |
+| `src/ansi.ts` | 84.91% | 74.87% | 81.81% | 86.57% |
+| `src/api.ts` | 95.9% | 81.48% | 95.45% | 99.05% |
+| `src/onboarding.ts` | 72.41% | 100% | 62.5% | 74.39% |
+| `src/app.ts` | 32.63% | 23.72% | 27.86% | 33.39% |
 | `src/voice/*` | 0% | 0% | 0% | 0% |
-| **All files** | **10.31%** | **7.02%** | **18.18%** | **10.64%** |
+| **All files** | **35.02%** | **28.25%** | **38.57%** | **35.87%** |
+
+Previous baseline: 10.31% stmts / 7.02% branch / 18.18% funcs / 10.64% lines.
 
 ## Modules intentionally not tested (and why)
 
 - `src/models.ts`, `src/voice/GeminiLiveProtocol.ts` — TypeScript type and
   interface declarations only; zero runtime logic to assert.
-- `src/app.ts` (2337 lines) — the terminal controller is hard-coupled to the
-  DOM, localStorage and network side effects. Testing it requires component-level
-  tooling (see next steps), not unit tests. Skipped instead of refactored.
-- `src/main.ts` — empty entry point, excluded from coverage by config.
 - `src/voice/*` UI/client modules (`VoiceDockUI`, `GeminiLiveClient`,
   `AudioPCMStreamer`, `VoiceVisualizer`) — depend on WebAudio, WebSocket and
   canvas APIs; candidates for future integration tests with heavy mocking.
+  `VoiceDockUI` is vi-mocked in `src/smartinput.test.ts` so the app boot does
+  not touch it.
+- `src/app.ts` remaining ~67% — the chat render loop, slash-command parser,
+  screen transitions and voice engine wiring are DOM/event-coupled; the pure
+  `SmartInput` autocorrect engine and `TRANSLATIONS` dictionary are now
+  extracted as exports and fully tested. The rest needs component-level
+  tooling (see next steps).
+- `src/main.ts` — empty entry point, excluded from coverage by config.
 
 ## Conventions
 

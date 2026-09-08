@@ -27,10 +27,11 @@ import { runTelegramDeepTests } from './telegram_deep.test.js';
 import { runRouterTests } from './routers.test.js';
 import { runSubagentEngineTests } from './subagent_engine.test.js';
 import { runAutoModelRouterTests } from './auto_model_router.test.js';
+import { runCoveragePushTests } from './coverage_push.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
-  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (28 test suites)');
+  console.log('⚡ EVABOT v0.1.0 — FULL TEST SUITE (29 test suites)');
   console.log('================================================================\n');
 
   const results = [
@@ -64,6 +65,7 @@ async function runAllTests(): Promise<void> {
     await runRouterTests(),
     await runSubagentEngineTests(),
     runAutoModelRouterTests(),
+    await runCoveragePushTests(),
   ];
 
   const testNames = [
@@ -97,6 +99,7 @@ async function runAllTests(): Promise<void> {
     'RouterTests',
     'SubagentEngineTests',
     'AutoModelRouterTests',
+    'CoveragePushTests',
   ];
 
   let allPassed = true;
@@ -112,7 +115,7 @@ async function runAllTests(): Promise<void> {
 
   console.log('\n================================================================');
   if (allPassed) {
-    console.log('✅ ALL 28 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
+    console.log('✅ ALL 29 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!');
     console.log('================================================================\n');
     process.exit(0);
   } else {
