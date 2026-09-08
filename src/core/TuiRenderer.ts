@@ -253,7 +253,7 @@ export class TuiRenderer {
         out += `  [->] https://${item.domain.padEnd(14)} :: ${item.role}\n`;
       }
     });
-    out += '  [->] https://github.com/evaline-network :: Официальная Организация GitHub (14 Репозиториев)\n';
+    out += '  [->] https://github.com/evaline-online :: Официальная Организация GitHub (26 Репозиториев)\n';
     out += '────────────────────────────────────────────────────────────────────────────\n';
     out += telemetryBlock + '\n';
     out += '────────────────────────────────────────────────────────────────────────────\n';
@@ -303,9 +303,9 @@ export class TuiRenderer {
           <span class="chip-domain">${item.domain}</span>
           <span class="chip-badge">${item.badge}</span>
         </a>`;
-    }).join('\n') + `\n        <a href="https://github.com/evaline-network" target="_blank" rel="noopener" class="gateway-chip" style="border-color: rgba(255, 214, 0, 0.4);">
+    }).join('\n') + `\n        <a href="https://github.com/evaline-online" target="_blank" rel="noopener" class="gateway-chip" style="border-color: rgba(255, 214, 0, 0.4);">
           <span class="status-indicator" style="color: #ffd600;">●</span>
-          <span class="chip-domain" style="color: #ffd600; font-weight: bold;">github.com/evaline-network</span>
+          <span class="chip-domain" style="color: #ffd600; font-weight: bold;">github.com/evaline-online</span>
           <span class="chip-badge" style="background: rgba(255, 214, 0, 0.15); color: #ffd600;">OPEN SOURCE</span>
         </a>`;
 
@@ -1271,7 +1271,7 @@ ${logRowsHtml || '<div class="c-dim">[Ожидание входящих сете
       <a href="https://evaline.online" target="_blank" style="color: var(--fg-muted); text-decoration: none;">evaline.online ↗</a>
       <a href="https://evaline.website" target="_blank" style="color: var(--fg-muted); text-decoration: none;">evaline.website ↗</a>
       <span style="color: var(--border-dim);">│</span>
-      <a href="https://github.com/evaline-network" target="_blank" rel="noopener" style="color: #ffd600; font-weight: 700; text-decoration: none;">GitHub @evaline-network ↗</a>
+      <a href="https://github.com/evaline-online" target="_blank" rel="noopener" style="color: #ffd600; font-weight: 700; text-decoration: none;">GitHub @evaline-online ↗</a>
     </div>
   </footer>
 

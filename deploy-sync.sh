@@ -110,7 +110,7 @@ echo -e "${GREEN}===============================================================
 echo -e "${GREEN}  [OK] DEPLOYMENT & SYNC COMPLETED!${NC}"
 echo -e "${GREEN}================================================================================${NC}"
 echo -e "${GREEN}  Local:             /var/www/evabot-backend${NC}"
-echo -e "${GREEN}  GitHub:            https://github.com/evaline-network/evabot-online${NC}"
+echo -e "${GREEN}  GitHub:            https://github.com/evaline-online/evabot-online${NC}"
 echo -e "${GREEN}  EvaFace (Edge):    https://evabot.online (Iowa / evaline-micro-vm)${NC}"
 echo -e "${GREEN}  EvaBrain (Core):   http://100.66.98.4:3000 (Frankfurt / evabot-agent-vm)${NC}"
 echo -e "${GREEN}================================================================================${NC}"

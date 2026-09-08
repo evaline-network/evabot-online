@@ -326,7 +326,7 @@ description: "EvaBot Online — Roadmap"
 
 ## 🤝 Contributing
 
-См. [CONTRIBUTING.md](<https://github.com/evaline-network/evabot-online/blob/main/CONTRIBUTING.md>) (в планах)
+См. [CONTRIBUTING.md](<https://github.com/evaline-online/evabot-online/blob/main/CONTRIBUTING.md>) (в планах)
 
 ---
 

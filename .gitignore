@@ -48,3 +48,7 @@ knowledge-base/evaline-knowledge-base/fts_index.db
 
 # Chat history database
 data/
+
+# Release backups (binaries)
+backups/releases/
+backups/*.tar.gz

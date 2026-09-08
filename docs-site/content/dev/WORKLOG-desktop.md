@@ -78,7 +78,7 @@ description: "📜 EvaLine & EvaBot — Project Master Chronicle & Daily Worklog
 
 ### 2026-08-06 — 2026-08-10 (Дни 6–10) — Стандарты разработки и Git
 
-- [x] **Репозитории:** Создана организация [evaline-network](<https://github.com/evaline-network>) и репозиторий `evabot-online`.
+- [x] **Репозитории:** Создана организация [evaline-network](<https://github.com/evaline-online>) и репозиторий `evabot-online`.
 
 - [x] **Стандарты кода:** Выбор TypeScript 5.7, Node.js 22 LTS, строгая типизация без внешних перегруженных фреймворков.
 
