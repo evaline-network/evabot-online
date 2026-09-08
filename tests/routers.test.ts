@@ -24,6 +24,7 @@ import { UniversalLlmClient } from '../src/core/UniversalLlmClient.js';
 import { KnowledgeBaseConnector } from '../src/core/CorporateRoles.js';
 import { ConsiliumEngine } from '../src/core/ConsiliumEngine.js';
 import { cloudTts } from '../src/core/CloudTTS.js';
+import { edgeTts } from '../src/core/EdgeTTS.js';
 import { GoogleAuthProvider } from '../src/core/GoogleAuthProvider.js';
 import { ChatHistoryStore } from '../src/core/ChatHistoryStore.js';
 import { DeveloperMode } from '../src/core/DeveloperMode.js';
@@ -108,6 +109,17 @@ export async function runRouterTests(): Promise<boolean> {
   cloudTtsAny.getUsage = () => ({ month: 'test', chars: 4321 });
   cloudTtsAny.getEvaVoice = () => 'eva-test-voice';
   cloudTtsAny.getAdamVoice = () => 'adam-test-voice';
+  // Edge-TTS primary chain mock: succeed only when edgeOk, else fall through to cloudTts.
+  let edgeOk = true;
+  const edgeTtsAny = edgeTts as any;
+  const origEdgeMethods: Record<string, any> = {};
+  for (const k of ['synthesize', 'getEvaVoice', 'getAdamVoice']) origEdgeMethods[k] = edgeTtsAny[k];
+  edgeTtsAny.synthesize = async (text: string, opts: any) => {
+    if (!edgeOk) throw new Error('edge-tts unavailable');
+    return { audioBuffer: Buffer.from('EDGEAUDIO'), voice: 'uk-UA-PolinaNeural', cached: false, chars: text.length, provider: 'edge-tts' };
+  };
+  edgeTtsAny.getEvaVoice = () => 'uk-UA-PolinaNeural';
+  edgeTtsAny.getAdamVoice = () => 'ru-RU-DmitryNeural';
   cloudTtsAny.getCap = () => 900000;
   cloudTtsAny.getCharsLeft = () => 895679;
 
@@ -195,10 +207,18 @@ export async function runRouterTests(): Promise<boolean> {
 
       const ok = await api('POST', '/api/tts', { text: 'Привіт', persona: 'eva', lang: 'uk-UA' });
       assert(ok.status === 200 && ok.json?.ok === true, 'POST /api/tts: success → 200 ok:true');
-      assert(ok.json?.audioBase64 === 'QUJDRA==' && ok.json?.mimeType === 'audio/mp3' && ok.json?.voice === 'eva-test-voice', 'POST /api/tts: audio payload + mime + voice');
+      assert(ok.json?.provider === 'edge-tts' && ok.json?.voice === 'uk-UA-PolinaNeural', 'POST /api/tts: edge-tts primary serves audio (provider + voice)');
+      assert(Buffer.from(ok.json?.audioBase64 || '', 'base64').toString() === 'EDGEAUDIO', 'POST /api/tts: edge-tts audio payload base64');
+      assert(captured.ttsCalls.length === 0, 'POST /api/tts: cloudTts NOT called while edge-tts healthy');
+
+      edgeOk = false;
+      const okGoogle = await api('POST', '/api/tts', { text: 'Привіт', persona: 'eva', lang: 'uk-UA' });
+      assert(okGoogle.status === 200 && okGoogle.json?.ok === true && okGoogle.json?.provider === 'google-tts', 'POST /api/tts: edge failure → google-tts fallback provider');
       assert(captured.ttsCalls.length === 1 && captured.ttsCalls[0].text === 'Привіт' && captured.ttsCalls[0].opts.persona === 'eva', 'POST /api/tts: delegates to cloudTts.synthesize with persona');
+      edgeOk = true;
 
       ttsResult = { ok: false, error: 'synthesis failed' };
+      edgeOk = false;
       const fail = await api('POST', '/api/tts', { text: 'fail please' });
       assert(fail.status === 200 && fail.json?.ok === false && fail.json?.fallback === 'browser-tts' && fail.json?.error === 'synthesis failed', 'POST /api/tts: synthesis failure → 200 ok:false browser fallback');
 
@@ -206,6 +226,7 @@ export async function runRouterTests(): Promise<boolean> {
       const cap = await api('POST', '/api/tts', { text: 'over cap' });
       assert(cap.status === 200 && cap.json?.overCap === true, 'POST /api/tts: over-cap failure flagged overCap:true');
       ttsResult = { ok: true, base64Audio: 'QUJDRA==', voice: 'eva-test-voice', cached: false };
+      edgeOk = true;
 
       const status = await api('GET', '/api/tts/status');
       assert(status.status === 200 && status.json?.voicesReady === true, 'GET /api/tts/status: 200 voicesReady');

@@ -9,7 +9,42 @@ status: implemented
 
 Back to [[index]]
 
-## What it is
+## Voice chain (2026-09-08, TASK-351): Edge-TTS primary, Google fallback
+
+Decision (2026 reviews): the previous Google-only chain "sounds terrible"
+compared to Azure Neural voices. The synthesis chain is now:
+
+1. **PRIMARY — Microsoft Edge-TTS (Azure Neural)**, `src/core/EdgeTTS.ts`.
+   Free/unlimited, no keys, no quota. Shells out to the `edge-tts` python
+   package already installed on the server
+   (`python3 -m edge_tts --voice <V> --text <T> --write-media <tmp.mp3>`,
+   20 s deadline, output validated > 1 KB before it enters the cache).
+   Verified on this host: uk-UA-PolinaNeural ~1 s, ru-RU-DmitryNeural ~3 s
+   for short phrases.
+2. **FALLBACK — Google Cloud TTS (Chirp3-HD)**, `src/core/CloudTTS.ts`
+   (everything below in this document still applies to this fallback chain).
+   Used only when the `edge_tts` subprocess fails (module missing, timeout,
+   invalid output) — `EdgeTTS.synthesize()` THROWS and
+   `VoiceRouter /api/tts` catches it and calls `cloudTts.synthesize`.
+
+Persona voices:
+
+| Persona | Edge-TTS primary (unlimited) | Google fallback (1M/mo free) |
+|---------|------------------------------|------------------------------|
+| Ева (female) | `uk-UA-PolinaNeural` | `uk-UA-Chirp3-HD-Aoede` |
+| Адам (male)  | `ru-RU-DmitryNeural` | `ru-RU-Chirp3-HD-Fenrir` |
+
+Runtime override: the existing `data/voice-prefs.json` file (`/voices set`)
+also applies to the Edge chain, but ONLY for Edge-Neural voice names
+(`uk-UA-PolinaNeural`, `uk-UA-OstapNeural`, `ru-RU-DmitryNeural`,
+`ru-RU-SvetlanaNeural`) — Google catalog names in the prefs file never leak
+into the Edge chain.
+
+Limits: Edge-TTS = unlimited free (no cap, informational counter at
+`data/edge-tts-usage.json`); Google fallback = 1M chars/month free with the
+hard 900k cap described below.
+
+## What it is (Google fallback)
 
 Server-side speech synthesis for EvaBot (Ева / Адам personas) via
 `POST https://texttospeech.googleapis.com/v1/text:synthesize`, reusing the
@@ -74,10 +109,17 @@ Env overrides: `TTS_VOICE_EVA`, `TTS_VOICE_ADAM`, `TTS_MONTHLY_CHAR_CAP`
 
 ## Architecture
 
-- `src/core/CloudTTS.ts` — synthesis, monthly counter, disk cache
+- `src/core/EdgeTTS.ts` — PRIMARY chain: Edge-TTS (Azure Neural),
+  free/unlimited, subprocess `python3 -m edge_tts` with a 20 s deadline,
+  MP3 cache in the same `data/tts-cache/` directory (sha1 of
+  `voice::text`), throws on failure so the router falls back.
+- `src/core/CloudTTS.ts` — FALLBACK synthesis, monthly counter, disk cache
   (`data/tts-cache/<sha1(text+voice)>.mp3`), 10 s timeout via
   `Resilience.withTimeout`, never throws into the chat flow (failures resolve
-  `{ ok: false, error }`).
+  `{ ok: false, error }`). Also hosts the shared ONLY-FREE voice catalog
+  (`VOICE_CATALOG`) with the `edge-neural` family ranked BEFORE
+  `chirp3-hd` so `/voices` renders Edge-Neural voices first with an
+  unlimited free allowance.
 - `src/server/routes/VoiceRouter.ts` — HTTP surface, registered in
   `src/server/server.ts` sub-routers.
 - `public/index.html` `VoiceEngine.speak()` — tries cloud TTS first
@@ -92,13 +134,19 @@ Env overrides: `TTS_VOICE_EVA`, `TTS_VOICE_ADAM`, `TTS_MONTHLY_CHAR_CAP`
 
 Request: `{ "text": "...", "persona": "eva" | "adam", "lang": "uk-UA" }`
 
+Chain: Edge-TTS first, Google fallback. The response carries the actual
+`provider` used (`"edge-tts"` | `"google-tts"`).
+
 Success (200):
 
 ```json
 { "ok": true, "audioBase64": "//OE…", "mimeType": "audio/mp3",
-  "voice": "uk-UA-Wavenet-B", "charCount": 14, "cached": false,
-  "charsLeftThisMonth": 899986 }
+  "voice": "uk-UA-PolinaNeural", "charCount": 14, "cached": false,
+  "provider": "edge-tts", "overCap": false }
 ```
+
+Google-fallback success looks identical except `voice` is a Chirp3-HD name
+and `provider` is `"google-tts"`.
 
 Failure / over-cap (still HTTP 200, so the web client falls back cleanly):
 
@@ -143,7 +191,11 @@ Output example:
 3. No build/restart was performed during implementation; deploy via the
    normal flow (`deploy-sync.sh`) when ready.
 4. Tests: `tests/cloudtts.test.ts` (registered in `tests/index.ts`), fully
-   mocked — no live API calls.
+   mocked — no live API calls. `tests/edge_tts.test.ts` covers the Edge chain
+   (catalog, rank order, cache keys, prefs override, failure policy) plus one
+   real-synthesis check that SKIPS itself with
+   `skipped: edge-tts unavailable` when `python3 -m edge_tts --help` fails on
+   the host.
 
 ## References
 
