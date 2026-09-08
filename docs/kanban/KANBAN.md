@@ -98,6 +98,14 @@
 
 ---
 
+## ✅ DONE — v0.1.0 wave 3 (2026-09-08, language & UX hardening)
+
+- [x] **TASK-343**: LANGUAGE MIRRORING enforced everywhere — `LocalePolicy.ts`: `LANGUAGE_MIRRORING_RULE`, `detectMessageLanguage()` (uk/ru/en heuristic), `languageLockInstruction()`; per-request LANGUAGE LOCK in ChatEngine + ChatRouter (both endpoints); embedded in `Config.defaultSystemInstruction` + `applyLocalePolicy()`; documented in AGENTS.md. Live-verified: RU→RU, UK→UK, EN→EN (API + browser).
+- [x] **TASK-344**: SmartInput digit-eating bug FIXED — `protectSegments()` restore() consumed user digits ('2+2'→'+'); now control-char sentinels + math-expression protection. Junk-response filter server-side: moderation stubs ('User Safety: safe') now trigger fallback chain (UniversalLlmClient.isJunkResponse).
+- [x] **TASK-345**: ConsiliumEngine ONLY-FREE defaults — synthesis/interviewer no longer silently default to paid gemini-2.5-pro; stale '78 models' literals purged across CLI/web/renderers.
+- [x] **TASK-346**: Roboto SELF-HOSTED (variable woff2 100-900 + italic, public/fonts/, preload + @font-face; Google Fonts links removed) + [CSS:ON/OFF] NOCSS toggle (localStorage 'evabot_css', pre-paint apply); frontend self-hosted too; /fonts/ static route with traversal guard.
+- [x] **TASK-347**: Coverage push — backend 82.7%→85.7% stmts / 77.4% branches (+185 assertions, CoveragePushTests); frontend 10.3%→35.0% (+114 tests: smartinput/ansi-format/api-extra/onboarding-edge); 31 suites + LanguagePolicyTests green.
+
 ## 🔄 IN PROGRESS — v0.1.0 (actual)
 
 _Audit 2026-09-08: all code-verified DONE tasks above check out against the source; the following are genuinely still open:_

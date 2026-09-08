@@ -245,6 +245,11 @@ export function createServer(): http.Server {
     const staticRoutes = [
       '/', '/index.html',
       '/manifesto', '/manifesto.html',
+      '/manifesto-raw', '/manifesto-raw.html',
+      '/manifesto-ru', '/manifesto-ru.html',
+      '/manifesto-uk', '/manifesto-uk.html',
+      '/manifesto-en', '/manifesto-en.html',
+      '/manifesto.txt',
       '/hub', '/hub.html',
       '/network', '/network.html',
       '/visualize', '/visualize.html',
@@ -261,24 +266,64 @@ export function createServer(): http.Server {
         filePath = path.resolve(process.cwd(), 'public', 'fonts', rel);
       } else if (pathname.startsWith('/dist/')) {
         filePath = path.resolve(process.cwd(), pathname.slice(1));
+      } else if (pathname === '/manifesto.txt') {
+        const txtPath = path.resolve(process.cwd(), 'public', 'manifesto.txt');
+        if (fs.existsSync(txtPath)) {
+          sendText(res, 200, fs.readFileSync(txtPath, 'utf-8'), 'text/plain; charset=utf-8');
+          return;
+        }
+      } else if (pathname === '/manifesto-raw' || pathname === '/manifesto-raw.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'manifesto-raw.html');
+      } else if (pathname === '/manifesto-ru' || pathname === '/manifesto-ru.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'manifesto-ru.html');
+      } else if (pathname === '/manifesto-uk' || pathname === '/manifesto-uk.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'manifesto-uk.html');
+      } else if (pathname === '/manifesto-en' || pathname === '/manifesto-en.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'manifesto-en.html');
       } else if (pathname === '/manifesto' || pathname === '/manifesto.html') {
-        filePath = path.resolve(process.cwd(), 'public', 'manifesto.html');
+        const ua = (req.headers['user-agent'] || '').toLowerCase();
+        if (ua.includes('curl') || ua.includes('wget') || ua.includes('httpie')) {
+          const txtPath = path.resolve(process.cwd(), 'public', 'manifesto.txt');
+          if (fs.existsSync(txtPath)) {
+            sendText(res, 200, fs.readFileSync(txtPath, 'utf-8'), 'text/plain; charset=utf-8');
+            return;
+          }
+        }
+        if (ua.includes('lynx') || ua.includes('w3m') || ua.includes('elinks')) {
+          const lang = parsedUrl.searchParams.get('lang');
+          const file = lang === 'uk' ? 'manifesto-uk.html' : lang === 'en' ? 'manifesto-en.html' : 'manifesto-ru.html';
+          filePath = path.resolve(process.cwd(), 'public', file);
+        } else {
+          filePath = path.resolve(process.cwd(), 'public', 'manifesto.html');
+        }
       } else if (pathname === '/hub' || pathname === '/hub.html') {
         filePath = path.resolve(process.cwd(), 'public', 'hub.html');
       } else if (pathname === '/network' || pathname === '/network.html' || pathname === '/visualize' || pathname === '/visualize.html') {
         filePath = path.resolve(process.cwd(), 'public', 'network.html');
       } else if (pathname === '/' || pathname === '/index.html') {
         const ua = (req.headers['user-agent'] || '').toLowerCase();
-        const isCliBrowser = ua.includes('curl') || ua.includes('wget') || ua.includes('lynx') || ua.includes('w3m') || ua.includes('elinks') || ua.includes('httpie');
-        if (isCliBrowser) {
+        const isCurl = ua.includes('curl') || ua.includes('wget') || ua.includes('httpie');
+        const isTextBrowser = ua.includes('lynx') || ua.includes('w3m') || ua.includes('elinks');
+
+        if (host.includes('evaline.online')) {
+          if (isCurl) {
+            const txtPath = path.resolve(process.cwd(), 'public', 'manifesto.txt');
+            if (fs.existsSync(txtPath)) {
+              sendText(res, 200, fs.readFileSync(txtPath, 'utf-8'), 'text/plain; charset=utf-8');
+              return;
+            }
+          }
+          if (isTextBrowser) {
+            const lang = parsedUrl.searchParams.get('lang');
+            const file = lang === 'uk' ? 'manifesto-uk.html' : lang === 'en' ? 'manifesto-en.html' : 'manifesto-ru.html';
+            filePath = path.resolve(process.cwd(), 'public', file);
+          } else {
+            filePath = path.resolve(process.cwd(), 'public', 'manifesto.html');
+          }
+        } else if (isCurl || isTextBrowser) {
           const text = TuiRenderer.renderText(host);
           sendText(res, 200, text, 'text/plain; charset=utf-8');
           return;
-        }
-
-        // Domain-specific home page routing:
-        if (host.includes('evaline.online')) {
-          filePath = path.resolve(process.cwd(), 'public', 'manifesto.html');
         } else if (host.includes('evaline.website')) {
           filePath = path.resolve(process.cwd(), 'public', 'hub.html');
         } else if (host.includes('evaline.network')) {

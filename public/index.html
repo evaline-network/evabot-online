@@ -731,13 +731,17 @@
       // Mask code fences & URLs so corrections never touch them.
       protectSegments(text) {
         const masked = [];
-        const stash = (m) => { masked.push(m); return '' + (masked.length - 1) + ''; };
+        // Sentinel must be unambiguous: bare-number placeholders made restore()
+        // EAT user digits (e.g. '2+2' -> '+'). Use a control-char sentinel.
+        const stash = (m) => { masked.push(m); return '\u0000' + (masked.length - 1) + '\u0000'; };
         let out = text.replace(/```[\s\S]*?(?:```|$)/g, stash);
         out = out.replace(/https?:\/\/\S+|www\.\S+/gi, stash);
+        // Protect math/expressions with digits and operators from autocorrect
+        out = out.replace(/\d+(?:\s*[+\-*/=^%]\s*\d+)+/g, stash);
         return {
           text: out,
           masked,
-          restore: (s) => s.replace(/(\d+)/g, (_, i) => masked[+i] !== undefined ? masked[+i] : ''),
+          restore: (s) => s.replace(/\u0000(\d+)\u0000/g, (_, i) => masked[+i] !== undefined ? masked[+i] : ''),
         };
       },
 

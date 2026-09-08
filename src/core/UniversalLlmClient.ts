@@ -8,6 +8,17 @@ import { OpLog } from './OpLog.js';
 
 export type LlmProvider = 'google' | 'omniroute' | 'openrouter' | 'opencode';
 
+/**
+ * Free-tier models occasionally return boilerplate moderation stubs instead
+ * of real content ('User Safety: safe', etc.). Such junk must not reach the
+ * chat — treat it like an empty response so the fallback chain engages.
+ */
+function isJunkResponse(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (!t) return true;
+  return /^user safety[:\s]/.test(t) || /^(safe|unsafe)\.?$/.test(t) || /^\[?no content/i.test(t);
+}
+
 export interface UniversalMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -215,6 +226,9 @@ export class UniversalLlmClient {
     const t0 = Date.now();
     try {
       const result = await withTimeout(p, LLM_CALL_TIMEOUT_MS, `llm:${provider}:${model}`);
+      if (isJunkResponse(result)) {
+        throw new Error(`[JUNK_RESPONSE] ${model} returned boilerplate instead of content`);
+      }
       breaker.recordSuccess();
       OpLog.getInstance().log('debug', 'llm', `provider=${provider} model=${model} latencyMs=${Date.now() - t0} ok`);
       return result;
