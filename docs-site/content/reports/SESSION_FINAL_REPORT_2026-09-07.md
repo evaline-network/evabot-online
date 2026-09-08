@@ -9,10 +9,10 @@ description: "🏛️ Комплексный генеральный отчет: 
 
 # 🏛️ Комплексный генеральный отчет: Автономная фабрика агентов EvaBot & EvaLine Network
 
-> **Дата составления:** 7 сентября 2026 г.
-> **Окружение:** `evabot-agent-vm` (Frankfurt, GCP `europe-west3-a`) & `evaline-micro-vm` (Iowa, GCP `us-central1-a`)
-> **Статус системы:** PRODUCTION ONLINE (13 из 13 тест-сьютов пройдены, 100% покрытие)
-> **Версия ПО:** EvaBot Brain Core v0.1.0 / TUI v0.0.1
+> **Дата составления:** 7 сентября 2026 г.  
+> **Окружение:** `evabot-agent-vm` (Frankfurt, GCP `europe-west3-a`) & `evaline-micro-vm` (Iowa, GCP `us-central1-a`)  
+> **Статус системы:** PRODUCTION ONLINE (13 из 13 тест-сьютов пройдены, 100% покрытие)  
+> **Версия ПО:** EvaBot Brain Core v0.1.0 / TUI v0.0.1  
 
 ---
 
@@ -40,7 +40,7 @@ description: "🏛️ Комплексный генеральный отчет: 
 
 ## 2. Построчная спецификация терминального интерфейса
 
-Интерфейс спроектирован по принципу абсолютного изоморфизма: веб-браузер, Node.js консоль и терминальные клиенты через `curl -s <http://127.0.0.1:3000/`> отображают идентичную информационную сетку.
+Интерфейс спроектирован по принципу абсолютного изоморфизма: веб-браузер, Node.js консоль и терминальные клиенты через `curl -s http://127.0.0.1:3000/` отображают идентичную информационную сетку.
 
 ```text
 Строка 1: ● EvaBot v0.0.1 ONLINE │ Ping: 4ms │ Mesh: 129ms │ Live: ≈≈≈
@@ -53,19 +53,13 @@ Stream:   [Потоковый контейнер вывода сообщений
 Prompt:   > [Интерактивная строка ввода с автоскроллом и историей]
 ```
 
-### Кодовые якоря
-
-- **Строка 1**: `public/index.html` строка 289; `checkPing()` опрашивает `/api/health` каждую 1000 мс. В терминальном режиме: `src/server/server.ts` строка 448.
-
-- **Строка 2**: `public/index.html` строка 290; динамический бейдж `[FREE]` или `[PAID]` обновляется функцией `setModel()`.
-
-- **Строка 3**: `public/index.html` строка 291; ссылки активируют `handleCommand()`. В бэкенде: `src/models/ModelRatings.ts` метод `ModelCommand.execute()`.
-
-- **Строка 4**: `public/index.html` строка 292; статус БД из `/api/health`.
-
-- **Строка 5**: `public/index.html` строка 293; ASCII-прогрессбары генерируются функцией `makeBar(pct, length)`.
-
-- **Stream & Autoscroll**: `addMessage()` и обработчик SSE стрима вызывают `window.scrollTo(0, document.body.scrollHeight)`.
+### Кодовые якоря:
+* **Строка 1**: `public/index.html` строка 289; `checkPing()` опрашивает `/api/health` каждую 1000 мс. В терминальном режиме: `src/server/server.ts` строка 448.
+* **Строка 2**: `public/index.html` строка 290; динамический бейдж `[FREE]` или `[PAID]` обновляется функцией `setModel()`.
+* **Строка 3**: `public/index.html` строка 291; ссылки активируют `handleCommand()`. В бэкенде: `src/models/ModelRatings.ts` метод `ModelCommand.execute()`.
+* **Строка 4**: `public/index.html` строка 292; статус БД из `/api/health`.
+* **Строка 5**: `public/index.html` строка 293; ASCII-прогрессбары генерируются функцией `makeBar(pct, length)`.
+* **Stream & Autoscroll**: `addMessage()` и обработчик SSE стрима вызывают `window.scrollTo(0, document.body.scrollHeight)`.
 
 ---
 
@@ -74,17 +68,14 @@ Prompt:   > [Интерактивная строка ввода с автоск�
 Система трансформирована в суверенную фабрику агентов:
 
 1. **Европейское вычислительное нейроядро (Frankfurt, `europe-west3`)**:
-   - Развернуто прямое бесключевое подключение через Google Application Default Credentials (ADC) под сервисным аккаунтом `<evabot.online@gmail.com>`.
-   - Прямой доступ к европейским эндпоинтам Vertex AI (`europe-west3-aiplatform.googleapis.com`) со сверхнизкой задержкой.
-
+   * Развернуто прямое бесключевое подключение через Google Application Default Credentials (ADC) под сервисным аккаунтом `evabot.online@gmail.com`.
+   * Прямой доступ к европейским эндпоинтам Vertex AI (`europe-west3-aiplatform.googleapis.com`) со сверхнизкой задержкой.
 2. **Гарантированный доступ в Интернет и фактчекинг (Search Grounding)**:
-   - Нативно внедрен инструмент `tools: [{ googleSearch: {} }]`. Модели Gemini 3.8 Flash и Gemini 3.1 Pro получают живые факты из Google Search перед генерацией ответа.
-
+   * Нативно внедрен инструмент `tools: [{ googleSearch: {} }]`. Модели Gemini 3.8 Flash и Gemini 3.1 Pro получают живые факты из Google Search перед генерацией ответа.
 3. **Google Colab Pro GPU Runners**:
-   - Интеграция с вычислительными кластерами Colab Pro (NVIDIA A100 / L4) для пакетной квантизации, файнтюнинга локальных моделей и тяжелого векторного поиска.
-
+   * Интеграция с вычислительными кластерами Colab Pro (NVIDIA A100 / L4) для пакетной квантизации, файнтюнинга локальных моделей и тяжелого векторного поиска.
 4. **Хранилище знаний и RAG**:
-   - Локальная ChromaDB (1075 векторов) + SQLite FTS5 (1086 фрагментов) + постоянная память `~/.mcp/sqlite.db` + Google NotebookLM.
+   * Локальная ChromaDB (1075 векторов) + SQLite FTS5 (1086 фрагментов) + постоянная память `~/.mcp/sqlite.db` + Google NotebookLM.
 
 ---
 
@@ -93,97 +84,64 @@ Prompt:   > [Интерактивная строка ввода с автоск�
 Командой `/company [free|paid]` запускается виртуальный конструктор автономных корпораций:
 
 ### Ростер 1: Бесплатная автономная корпорация (100% Free Fleet — себестоимость $0.00)
-
 1. **CEO & System Architect**: `Gemini 3.8 Flash` (1,048k) — `sequential-thinking`, `memory`, `sqlite`
-
 2. **CTO & Principal Engineer**: `Gemini 3.1 Pro` (2,097k) — `filesystem`, `git`, `github`
-
 3. **Lead Backend Developer**: `Gemini 3.1 Flash` (1,048k) — `filesystem`, `docker`, `google-cloud`
-
 4. **Fullstack & TUI Engineer**: `OmniRoute Gemini 3.8` (1,048k) — `chrome-devtools`, `fetch`
-
 5. **Data & Vector RAG Architect**: `OmniRoute Gemini 3.1` (2,097k) — `notebooklm`, `sqlite`, `memory`
-
 6. **Senior Coder & Optimizer**: `Qwen 2.5 Coder 32B Free` (128k) — `filesystem`, `git`
-
 7. **Research & Deep Logic Scientist**: `DeepSeek R1 Free` (64k) — `sequential-thinking`, `fetch`
-
 8. **Security Auditor & RedTeam Lead**: `Gemini 2.5 Pro` (2,097k) — `firebase`, `filesystem`, `markdownlint`
-
 9. **DevOps & SRE Engineer**: `Gemini 2.5 Flash` (1,048k) — `docker`, `google-cloud`, `filesystem`
-
 10. **Technical Writer & Localization**: `Llama 3.3 70B Free` (128k) — `markdownlint`, `git`
 
 ### Ростер 2: Коммерческая Frontier-корпорация (Paid Fleet)
-
 1. **Chief Reasoning Officer**: `Claude 3.7 Sonnet` (200k) — $3.00 / $15.00
-
 2. **Deep Multi-Step Problem Solver**: `OpenAI o1` (200k) — $15.00 / $60.00
-
 3. **Senior Omnimodal Engineer**: `GPT-4o` (128k) — $2.50 / $10.00
-
 4. **Specialized High-Speed Coder**: `Codestral 2501` (256k) — $0.30 / $0.90
-
 5. **Autonomous Software Engineer**: `Claude 3.5 Sonnet` (200k) — $3.00 / $15.00
-
 6. **Rapid Verification & QA Inspector**: `Claude 3.5 Haiku` (200k) — $0.80 / $4.00
-
 7. **Massive Open-Weights Analyst**: `Llama 3.1 405B` (128k) — $2.00 / $2.00
-
 8. **Enterprise Security Lead**: `Gemini 2.5 Pro (Paid)` (2,097k) — $1.25 / $5.00
-
 9. **Global SRE Orchestrator**: `Gemini 2.5 Flash (Paid)` (1,048k) — $0.075 / $0.30
-
 10. **Executive Technical Writer**: `Claude 3.5 Sonnet` (200k) — $3.00 / $15.00
 
 ---
 
 ## 5. Финансовый учет и себестоимость (`AccountingEngine` / `/cost`)
 
-### Фиксированные затраты на инфраструктуру (OpEx)
+### Фиксированные затраты на инфраструктуру (OpEx):
+* **Compute Core (`evabot-agent-vm`, 8 vCPU / 32GB RAM)**: $178.40/мес ($0.2478/час)
+* **Edge Ingress (`evaline-micro-vm`, e2-micro)**: $7.14/мес ($0.0099/час)
+* **Диски и хранилище NVMe SSD**: $12.00/мес ($0.0167/час)
+* **Mesh Сеть WireGuard Tailscale**: $5.00/мес ($0.0069/час)
+* **Подписка Google AI Pro**: $20.00/мес ($0.0278/час)
+* **Подписка Google Colab Pro**: $10.00/мес ($0.0139/час)
+* **Буфер платных API OpenRouter**: $25.00/мес ($0.0347/час)
+* **ИТОГО ИНФРАСТРУКТУРА**: **$257.54 в месяц** или **$0.3577 в час**.
 
-- **Compute Core (`evabot-agent-vm`, 8 vCPU / 32GB RAM)**: $178.40/мес ($0.2478/час)
-
-- **Edge Ingress (`evaline-micro-vm`, e2-micro)**: $7.14/мес ($0.0099/час)
-
-- **Диски и хранилище NVMe SSD**: $12.00/мес ($0.0167/час)
-
-- **Mesh Сеть WireGuard Tailscale**: $5.00/мес ($0.0069/час)
-
-- **Подписка Google AI Pro**: $20.00/мес ($0.0278/час)
-
-- **Подписка Google Colab Pro**: $10.00/мес ($0.0139/час)
-
-- **Буфер платных API OpenRouter**: $25.00/мес ($0.0347/час)
-
-- **ИТОГО ИНФРАСТРУКТУРА**: **$257.54 в месяц** или **$0.3577 в час**.
-
-### Себестоимость агентов и экономический эффект
-
-- Себестоимость создания агента на базе Gemini 3.8 Flash / 3.1 Pro / DeepSeek R1: **$0.0000**.
-
-- Стоимость генерации токенов для задачи: **$0.0000**.
-
-- Экономия на каждой задаче относительно платных аналогов: **$0.2250 – $0.3000 USD**.
+### Себестоимость агентов и экономический эффект:
+* Себестоимость создания агента на базе Gemini 3.8 Flash / 3.1 Pro / DeepSeek R1: **$0.0000**.
+* Стоимость генерации токенов для задачи: **$0.0000**.
+* Экономия на каждой задаче относительно платных аналогов: **$0.2250 – $0.3000 USD**.
 
 ---
 
 ## 6. MCP и LSP экосистема
 
-- **Команда `/mcp`**: Отображает статус 21 унифицированного сервера MCP (`notebooklm`, `filesystem`, `git`, `github`, `memory`, `sqlite`, `chrome-devtools`, `fetch`, `context7`, `docker`, `google-cloud` и др.).
-
-- **Команда `/lsp`**: Выводит статус 4 глобальных серверов Language Server Protocol:
-  - TypeScript / JavaScript: `typescript-language-server --stdio`
-  - Python 3.11: `pyright-langserver --stdio`
-  - HTML / CSS / JSON: `vscode-{html,css,json}-language-server`
-  - Markdown / Docs: `marksman`
+* **Команда `/mcp`**: Отображает статус 21 унифицированного сервера MCP (`notebooklm`, `filesystem`, `git`, `github`, `memory`, `sqlite`, `chrome-devtools`, `fetch`, `context7`, `docker`, `google-cloud` и др.).
+* **Команда `/lsp`**: Выводит статус 4 глобальных серверов Language Server Protocol:
+  * TypeScript / JavaScript: `typescript-language-server --stdio`
+  * Python 3.11: `pyright-langserver --stdio`
+  * HTML / CSS / JSON: `vscode-{html,css,json}-language-server`
+  * Markdown / Docs: `marksman`
 
 ---
 
 ## 7. Результаты тестов
 
 Все 13 наборов тестов в `tests/index.ts` пройдены успешно:
-
 ```text
 ✓ Suite PASSED: ModelTests
 ✓ Suite PASSED: ChatTests
@@ -204,11 +162,3 @@ Prompt:   > [Интерактивная строка ввода с автоск�
 ✅ ALL 13 TEST SUITES (100% OF TESTS) PASSED SUCCESSFULLY!
 ================================================================
 ```
-
-## Related
-
-- [[journal/WORKLOG|Worklog]]
-
----
-
-Back to [[index]]

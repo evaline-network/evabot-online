@@ -32,6 +32,9 @@ app = FastAPI(
     title="EvaBot Online API",
     version="v0.0.1 MVP",
     description="Backend for EvaBot & Evaline Online (Chernomorsk, Ukraine & Bratislava, Slovakia). Backend: Python/FastAPI, Frontend: TypeScript.",
+    # Root path behind the nginx /voice/ proxy prefix. Without it, the Swagger
+    # UI at /voice/docs embeds absolute /openapi.json → 404 behind the proxy.
+    root_path=os.environ.get('FASTAPI_ROOT_PATH', ''),
 )
 
 app.add_middleware(

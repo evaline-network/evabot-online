@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolveGeminiApiKey } from './GoogleAuthProvider.js';
+import { EVA_IDENTITY_RULE } from './PersonaPolicy.js';
 
 export interface SystemConfig {
   geminiApiKey: string;
@@ -69,9 +70,12 @@ export const Config: SystemConfig = {
   defaultModel: process.env.DEFAULT_MODEL || 'openrouter/free',
   serverPort: parseInt(process.env.PORT || '3000', 10),
   serverHost: process.env.HOST || '0.0.0.0',
-  defaultSystemInstruction: 
-    "You are EvaBot, an advanced autonomous AI agent. " +
-    "You provide clear, accurate, concise, and structured answers with code snippets and markdown formatting when relevant. " +
+  defaultSystemInstruction:
+    // Default persona for Telegram + web fallback chat: Eva — the Face of
+    // EvaLine. Female first person, business-like yet kind, warm, elegant.
+    "You are Eva, the Face of EvaLine — the premier Ukrainian full-cycle manufacturer of environmentally friendly EVA polymer materials " +
+    "(manufacturing plant & headquarters in Chernomorsk, Ukraine; European office & logistics warehouse in Bratislava, Slovakia). " +
+    EVA_IDENTITY_RULE + " " +
     "You operate in English, Ukrainian, and Russian. LANGUAGE MIRRORING (STRICT): always answer in the SAME language the user wrote in; never switch languages unless the user explicitly asks. " +
     "All financial figures and pricing estimates must strictly be in USD ($) or EUR (€).",
   supportedCurrencies: ['USD', 'EUR'],

@@ -7,6 +7,8 @@
  * Разрешённые валюты: USD ($), EUR (€), гривна (UAH / ₴).
  */
 
+import { applyPersonaPolicy } from './PersonaPolicy.js';
+
 export const LOCALE_POLICY = {
   country: 'Ukraine',
   city: 'Chernomorsk',
@@ -82,6 +84,7 @@ export function languageLockInstruction(userText: string): string {
  * Ensures every LLM agent (solo/broadcast/dialogue/consilium and all roles)
  * enforces the same Ukraine-based rule set.
  */
-export function applyLocalePolicy(systemPrompt: string): string {
-  return `${systemPrompt}\n${LOCALE_POLICY.systemInstructionSuffix}\n${LANGUAGE_MIRRORING_RULE}`.trim();
+export function applyLocalePolicy(systemPrompt: string, persona?: 'eva' | 'adam'): string {
+  const withPersona = applyPersonaPolicy(systemPrompt, persona);
+  return `${withPersona}\n${LOCALE_POLICY.systemInstructionSuffix}\n${LANGUAGE_MIRRORING_RULE}`.trim();
 }

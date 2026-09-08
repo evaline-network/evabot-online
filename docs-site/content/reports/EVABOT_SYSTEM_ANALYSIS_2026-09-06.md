@@ -9,8 +9,8 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 
 # 🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS
 
-**Date**: September 6, 2026
-**Primary VM**: `evabot-agent-vm` (GCP europe-west3-a, 100.66.98.4)
+**Date**: September 6, 2026  
+**Primary VM**: `evabot-agent-vm` (GCP europe-west3-a, 100.66.98.4)  
 **Report Generated**: 2026-09-06 09:41:32 UTC
 
 ---
@@ -20,16 +20,12 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 ### 🖥️ 1. COMPUTE NODE (Primary Server)
 
 - **Hostname**: `evabot-agent-vm`
-
 - **IP**: `100.66.98.4` (Tailscale), `34.159.202.82` (Public)
-
 - **Location**: GCP `europe-west3-a`
-
 - **User**: `evabot`
-
 - **Status**: ✅ **ACTIVE** (Primary compute hub)
 
-## Services Running
+**Services Running**:
 
 | Service | Port | Protocol | Status | Process |
 |---------|------|----------|--------|---------|
@@ -45,47 +41,32 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 ### 💻 2. MICRO NODE (Frontend Proxy)
 
 - **Hostname**: `evaline-micro-vm`
-
 - **IP**: `100.125.200.49` (Tailscale)
-
 - **Status**: ✅ **ACTIVE** (Idle)
-
 - **Function**: Lightweight frontend proxy to compute node
-
 - **Deploy Script**: `/var/www/evabot-backend/deploy-sync.sh`
 
 ### 🍎 3. MACBOOK AIR 2018
 
 - **Hostname**: `macbook-air-2018`
-
 - **IP**: `100.102.22.45` (Tailscale)
-
 - **Status**: ✅ **ACTIVE** (Direct connection: `46.211.38.143:23001`)
-
 - **Traffic**: TX 608MB, RX 114MB
-
 - **Function**: Development workstation
 
 ### 📱 4. GOOGLE PIXEL 10 PRO XL
 
 - **Hostname**: `pixel-10-pro-xl`
-
 - **IP**: `100.80.216.27` (Tailscale)
-
 - **Status**: ✅ **ACTIVE** (Relay via Warsaw)
-
 - **Traffic**: TX 1.07MB, RX 1.48MB
-
 - **Function**: Mobile access point
 
 ### 📱 5. OPPO A5 PRO 5G
 
 - **Hostname**: `oppo-a5-pro-5g`
-
 - **IP**: `100.126.165.5` (Tailscale)
-
 - **Status**: ⚠️ **OFFLINE** (Last seen 4 days ago)
-
 - **Function**: Secondary mobile device
 
 ---
@@ -94,7 +75,7 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 
 ### 🧠 AI MODEL LAYER (Omniroute)
 
-```text
+```
 ┌─────────────────┐    ┌──────────────────────┐
 │   OpenCode      │    │   KiloCode           │
 │   (CLI)         │    │   (System-wide)      │
@@ -135,9 +116,7 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 - **NotebookLM MCP**: Persistent Google session
   - Active notebook: **Antigravity** (1ec088d8-f02c-43c4-9d66-ff279fbffffb)
   - Available: antigravity, evaline-network, evaline-ui-ux
-
 - **Memory Graph**: SQLite at `~/.mcp/sqlite.db`
-
 - **Git Repos**: Anchored to `/var/www/evabot-backend`
 
 ### 🌐 NETWORK & SECURITY
@@ -145,21 +124,15 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 - **Tailscale Mesh**: All devices connected via `evabot.online@` tailnet
   - Exit nodes: Enabled for secure routing
   - DNS: Configured for internal resolution
-
 - **Firewall**: GCP network rules + local ufw
-
 - **SSH**: Key-based authentication, port 22
-
 - **VNC**: TigerVNC on `:5900` (display `:0`)
 
 ### 💾 STORAGE & BACKUPS
 
 - **Primary Storage**: `/var/www/evabot-backend/` (web backend)
-
 - **User Data**: `/home/evabot/Desktop/` (active projects)
-
 - **Backups**: `/home/evabot/backups/` + automated sync
-
 - **Logs**:
   - System: `/var/log/omniroute*.log`, `/var/log/evabot-brain*.log`
   - App: `/home/evabot/Desktop/*/logs/`
@@ -185,7 +158,7 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 
 ### 📊 FULL MODEL TEST RESULTS
 
-```text
+```
 ✅ PASS (100%):
   • omni/mistralai-codestral       3/3 (100.0%)  avg=1.74s
   • omni/nemotron-3-super-120b     3/3 (100.0%)  avg=1.90s
@@ -230,13 +203,10 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 ### 💻 SYSTEM RESOURCE USAGE
 
 - **CPU**: 8 cores available (current load: moderate)
-
 - **RAM**: ~15GB total (usage: ~4GB baseline)
-
 - **Storage**:
   - Root: ~50GB (usage: ~60%)
   - Backend: Dedicated volume
-
 - **Network**:
   - Internal: GCP backbone (low latency)
   - External: Tailscale relay/direct varies by device
@@ -260,17 +230,14 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 ### 👨‍💻 DEVELOPMENT WORKFLOW
 
 1. **Local Dev**: Use Code Server (`:8080`) or SSH/VNC
-
 2. **AI Assistance**:
    - OpenCode/KiloCode CLI with model selection
    - Direct API calls to Omniroute (`:20128`)
    - NotebookLM for research/documentation
-
 3. **Task Execution**:
    - Simple: Antigravity CLI (`agy`) for quick commands
    - Complex: OpenCode agents for multi-step tasks
    - Visual: Antigravity 2.0/IDE for GUI workflows
-
 4. **Deployment**:
    - Backend: Auto-deploy via systemd services
    - Frontend: Sync to micro-node via `deploy-sync.sh`
@@ -278,23 +245,16 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 ### 📱 MOBILE/REMOTE ACCESS
 
 - **Tailscale**: Secure access from any device
-
-- **Code Server**: Browser-based IDE (`<http://[ip]:8080`>)
-
+- **Code Server**: Browser-based IDE (`http://[ip]:8080`)
 - **VNC**: Full desktop via TigerVNC clients
-
 - **API Access**: Direct calls to Omniroute endpoints
-
 - **Notifications**: Via email/webhooks from n8n/workflows
 
 ### 🔬 RESEARCH & DOCUMENTATION
 
 - **NotebookLM**: Grounded RAG with EvaBot documentation
-
 - **Web Search**: Integrated via context7/fetch tools
-
 - **Version Control**: Git operations through agents/CLI
-
 - **Knowledge Base**: Persistent memory graph + SQLite
 
 ---
@@ -303,7 +263,7 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 
 ### 📋 KEY CONFIGURATIONS
 
-```text
+```
 /etc/systemd/system/
 ├── omniroute.service           # LiteLLM proxy
 ├── antigravity-daemon.service  # Simple status server
@@ -333,31 +293,22 @@ description: "🌐 EVA BOT SYSTEM ARCHITECTURE - FULL SYSTEM ANALYSIS"
 ### ⚡ IMMEDIATE ACTIONS
 
 1. **HF Token**: Obtain valid Hugging Face token for full model access
-
 2. **Model Cache**: Pre-load frequently used models to reduce latency
-
 3. **Backup Validation**: Verify automated backup systems
-
 4. **Monitoring**: Set up Prometheus/Grafana for metrics
 
 ### 🚀 FUTURE ENHANCEMENTS
 
 1. **GPU Acceleration**: Add NVIDIA T4/Tensor cores for LLM inference
-
 2. **Load Balancing**: Distribute Omniroute across multiple instances
-
 3. **Edge Caching**: Deploy model replicas closer to users
-
 4. **IoT Integration**: Add sensor/actuary support via GPIO/USB
 
 ### 🛡️ SECURITY HARDENING
 
 1. **2FA**: Add to SSH/console access
-
 2. **Audit Logs**: Enable detailed access logging
-
 3. **Secrets Rotation**: Automate API key rotation
-
 4. **Network Segmentation**: Separate dev/prod networks
 
 ---
@@ -435,7 +386,7 @@ All core services operational, multiple access methods available, AI layer fully
 
 ### Location
 
-```text
+```
 /opt/omniroute/test_coding_fast.py   # Fast parallel test (3 prompts)
 /opt/omniroute/test_models.py        # Comprehensive test (10 prompts)
 /opt/omniroute/test_results.json     # Last test results
@@ -444,23 +395,15 @@ All core services operational, multiple access methods available, AI layer fully
 ### Usage
 
 ```bash
-## Fast test (recommended for quick validation)
+# Fast test (recommended for quick validation)
 python3 /opt/omniroute/test_coding_fast.py
 
-## Full test (detailed with 10 coding challenges)
+# Full test (detailed with 10 coding challenges)
 /opt/omniroute/venv/bin/python3 /opt/omniroute/test_models.py
 ```
 
 ---
 
-*Report generated: 2026-09-06 09:41:32 UTC*
-*Last updated: System architecture review September 2026*
+*Report generated: 2026-09-06 09:41:32 UTC*  
+*Last updated: System architecture review September 2026*  
 *EvaBot Agent System - evabot-agent-vm*
-
-## Related
-
-- [[reports/SYSTEM_OPTIMIZATION_REPORT_2026-09-06|Optimization Report]]
-
----
-
-Back to [[index]]

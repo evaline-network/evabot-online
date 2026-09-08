@@ -1,3 +1,8 @@
+---
+title: "Отчёт 2026-09-08: Покрытие кода + Routing-политика (Gemini reserved)"
+date: "2026-09-08"
+---
+
 # Отчёт 2026-09-08: Покрытие кода + Routing-политика (Gemini reserved)
 
 Автор: EvaBot Engineering (agent session)  

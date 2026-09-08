@@ -1020,8 +1020,20 @@
 
   <main class="container">
 
+    <!-- SINGLE-VIEWPORT TAB NAV (mobile-first, no page scroll) -->
+    <nav class="vp-tabs" id="vp-tabs">
+      <button class="vp-tab active" data-sec="s01" onclick="vpShow('s01')">KPI</button>
+      <button class="vp-tab" data-sec="s02" onclick="vpShow('s02')"><span class="t-en">TOPOLOGY</span><span class="t-uk">ТОПОЛОГІЯ</span><span class="t-ru">ТОПОЛОГИЯ</span></button>
+      <button class="vp-tab" data-sec="s03" onclick="vpShow('s03')"><span class="t-en">LOGIC</span><span class="t-uk">ЛОГІКА</span><span class="t-ru">ЛОГИКА</span></button>
+      <button class="vp-tab" data-sec="s04" onclick="vpShow('s04')"><span class="t-en">AGENTS</span><span class="t-uk">АГЕНТИ</span><span class="t-ru">АГЕНТЫ</span></button>
+      <button class="vp-tab" data-sec="s05" onclick="vpShow('s05')"><span class="t-en">LLM·94</span><span class="t-uk">LLM·94</span><span class="t-ru">LLM·94</span></button>
+      <button class="vp-tab" data-sec="s06" onclick="vpShow('s06')"><span class="t-en">COSTS</span><span class="t-uk">ВАРТІСТЬ</span><span class="t-ru">ЗАТРАТЫ</span></button>
+      <button class="vp-tab" data-sec="s07" onclick="vpShow('s07')"><span class="t-en">PROCS</span><span class="t-uk">ПРОЦЕСИ</span><span class="t-ru">ПРОЦЕССЫ</span></button>
+      <button class="vp-tab" data-sec="s08" onclick="vpShow('s08')"><span class="t-en">LOGS</span><span class="t-uk">ЛОГИ</span><span class="t-ru">ЛОГИ</span></button>
+    </nav>
+
     <!-- SECTION 01: KPI METRICS GRID -->
-    <section class="section-block">
+    <section class="section-block" id="s01">
       <div class="section-header">
         <div class="section-title">
           <span class="tag">[01]</span>
@@ -1168,7 +1180,7 @@
     </section>
 
     <!-- SECTION 02: DUAL-NODE TOPOLOGY -->
-    <section class="section-block">
+    <section class="section-block" id="s02">
       <div class="section-header">
         <div class="section-title">
           <span class="tag">[02]</span>
@@ -1294,7 +1306,7 @@
     </section>
 
     <!-- SECTION 03: HOW THE CONSILIUM WORKS -->
-    <section class="section-block">
+    <section class="section-block" id="s03">
       <div class="section-header">
         <div class="section-title">
           <span class="tag">[03]</span>
@@ -1417,7 +1429,7 @@
     </section>
 
     <!-- SECTION 04: CONSILIUM AGENTS -->
-    <section class="section-block">
+    <section class="section-block" id="s04">
       <div class="section-header">
         <div class="section-title">
           <span class="tag">[04]</span>
@@ -1524,7 +1536,7 @@
     </section>
 
     <!-- SECTION 05: FULL 94 LLMs ROSTER (FREE VS PAID, COSTS & LIMITS) -->
-    <section class="section-block">
+    <section class="section-block" id="s05">
       <div class="section-header">
         <div class="section-title">
           <span class="tag">[05]</span>
@@ -1717,7 +1729,7 @@
     </section>
 
     <!-- SECTION 06: INFRASTRUCTURE COSTS, CAPEX & TOKEN ACCOUNTING -->
-    <section class="section-block">
+    <section class="section-block" id="s06">
       <div class="section-header">
         <div class="section-title">
           <span class="tag">[06]</span>
@@ -1932,7 +1944,7 @@
     </section>
 
     <!-- SECTION 07: LIVE PROCESS INSPECTOR -->
-    <section class="section-block">
+    <section class="section-block" id="s07">
       <div class="section-header">
         <div class="section-title">
           <span class="tag">[07]</span>
@@ -2007,7 +2019,7 @@
     </section>
 
     <!-- SECTION 08: LIVE DOMAIN HIT FEED -->
-    <section class="section-block">
+    <section class="section-block" id="s08">
       <div class="section-header">
         <div class="section-title">
           <span class="tag">[08]</span>

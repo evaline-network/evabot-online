@@ -1,6 +1,6 @@
 import { Router, withErrorHandling } from './Router.js';
 import { UniversalLlmClient, LlmProvider } from '../../core/UniversalLlmClient.js';
-import { ConsiliumEngine, ConsiliumMode } from '../../core/ConsiliumEngine.js';
+import { ConsiliumEngine, ConsiliumMode, personaForRoleId } from '../../core/ConsiliumEngine.js';
 import { Config } from '../../core/Config.js';
 import { CORPORATE_ROLES, KnowledgeBaseConnector } from '../../core/CorporateRoles.js';
 import { rulesEngine } from '../../core/RulesEngine.js';
@@ -60,7 +60,7 @@ export class ChatRouter extends Router {
       }
       const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
 
-      let effectiveInstruction = this.resolveSystemInstruction(roleId, systemInstruction);
+      let { instruction: effectiveInstruction, persona: resolvedPersona } = this.resolveSystemInstruction(roleId, systemInstruction);
 
       if (useKnowledgeBase) {
         try {
@@ -102,6 +102,7 @@ export class ChatRouter extends Router {
         model: targetModel,
         provider: client.resolveProvider(targetModel, provider),
         roleId: roleId || 'default',
+        persona: resolvedPersona || 'eva',
       });
     }));
 
@@ -121,7 +122,7 @@ export class ChatRouter extends Router {
       }
       const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
 
-      let effectiveInstruction = this.resolveSystemInstruction(roleId, systemInstruction);
+      let { instruction: effectiveInstruction, persona: resolvedPersona } = this.resolveSystemInstruction(roleId, systemInstruction);
 
       if (useKnowledgeBase) {
         try {
@@ -172,7 +173,7 @@ export class ChatRouter extends Router {
 
       persistChatMessage(chatSessionId, 'assistant', fullText, targetModel);
 
-      ctx.res.write(`data: ${JSON.stringify({ done: true, fullText: fullTextOut })}\n\n`);
+      ctx.res.write(`data: ${JSON.stringify({ done: true, fullText: fullTextOut, persona: resolvedPersona || 'eva' })}\n\n`);
       ctx.res.end();
     }));
 
@@ -297,15 +298,19 @@ export class ChatRouter extends Router {
     }));
   }
 
-  private resolveSystemInstruction(roleId?: string, explicitInstruction?: string): string {
+  private resolveSystemInstruction(roleId?: string, explicitInstruction?: string): { instruction: string; persona: 'eva' | 'adam' | undefined } {
     let base = explicitInstruction;
+    let persona: 'eva' | 'adam' | undefined = undefined;
     if (roleId && CORPORATE_ROLES[roleId]) {
       base = CORPORATE_ROLES[roleId].systemPrompt;
+      persona = personaForRoleId(roleId);
     } else if (!base) {
+      // Default chat persona: Config.defaultSystemInstruction is Eva's voice.
       base = Config.defaultSystemInstruction;
+      persona = 'eva';
     }
-    const withLocale = applyLocalePolicy(base);
+    const withLocale = applyLocalePolicy(base, persona);
     const withRules = `${withLocale}\n${rulesEngine.compileRulesInstruction()}`;
-    return withRules;
+    return { instruction: withRules, persona };
   }
 }

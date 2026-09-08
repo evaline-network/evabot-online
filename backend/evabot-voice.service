@@ -8,6 +8,7 @@ User=evabot
 WorkingDirectory=/var/www/evabot-backend/backend
 Environment=PORT=8000
 Environment=HOST=127.0.0.1
+Environment=FASTAPI_ROOT_PATH=/voice
 ExecStart=/var/www/evabot-backend/backend/venv/bin/python run.py
 Restart=always
 RestartSec=5

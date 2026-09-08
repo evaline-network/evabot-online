@@ -25,6 +25,8 @@ import { DeveloperMode } from '../core/DeveloperMode.js';
 import { AutoModelRouter } from '../core/AutoModelRouter.js';
 import { SubagentEngine } from '../core/SubagentEngine.js';
 import { AddCommand } from '../core/AddCommand.js';
+import { IdeaCommand } from '../core/IdeaCommand.js';
+import { ReportCommand } from '../core/ReportCommand.js';
 import { logger } from '../core/Logger.js';
 
 export type ModelRatingDimension = 'quality' | 'speed' | 'context' | 'cost';
@@ -596,6 +598,16 @@ export class ModelCommand {
         return parts.length === 1
           ? AddCommand.helpText()
           : `${AddCommand.helpText()}\n[NOTE] Async subcommands run via the async executor (web API / Telegram / CLI async path).`;
+      case '/idea':
+        // /idea runs a real AI consilium (multi-minute LLM fan-out). The sync
+        // registry returns the async-mode hint; the real run lives in
+        // executeAsync (ModelsRouter + Telegram both route through it).
+        return '⏳ /idea runs an AI consilium — use async mode (web API / Telegram / CLI async path).';
+      case '/error':
+      case '/bug':
+      case '/errors':
+        // User error/bug reports need AlertManager I/O (async) — same /add pattern.
+        return '⏳ Reports are registered via the async executor — use web API / Telegram (async mode).';
       default:
         OpLog.getInstance().log('error', 'command', `unknown command: ${action}`);
         return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /translate, /health, /products, /who, /sephirot, /debug, /log, /monitor, /sys, /developer, /voices, /settings, /agents, /room, /rooms, /free, /paid, /auto, or /help.`;
@@ -698,6 +710,13 @@ export class ModelCommand {
     }
     if (cmd.startsWith('/add') || cmd === '/file' || cmd.startsWith('/file ')) {
       return AddCommand.execute(command);
+    }
+    if (cmd.startsWith('/idea')) {
+      // Raw command keeps the topic casing (normalizeCommand lowercases args).
+      return IdeaCommand.execute(command.slice('/idea'.length));
+    }
+    if (cmd.startsWith('/error') || cmd.startsWith('/bug')) {
+      return ReportCommand.execute(command);
     }
     return this.execute(command);
   }

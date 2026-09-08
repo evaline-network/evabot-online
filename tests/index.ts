@@ -31,6 +31,7 @@ import { runEdgeTtsTests } from './edge_tts.test.js';
 import { runAutoModelRouterTests } from './auto_model_router.test.js';
 import { runCoveragePushTests } from './coverage_push.test.js';
 import { runAddCommandTests } from './add_command.test.js';
+import { runReportsCommandsTests } from './reports_commands.test.js';
 
 async function runAllTests(): Promise<void> {
   console.log('================================================================');
@@ -72,6 +73,7 @@ async function runAllTests(): Promise<void> {
     runAutoModelRouterTests(),
     await runCoveragePushTests(),
     await runAddCommandTests(),
+    await runReportsCommandsTests(),
   ];
 
   const testNames = [
@@ -109,6 +111,7 @@ async function runAllTests(): Promise<void> {
     'AutoModelRouterTests',
     'CoveragePushTests',
     'AddCommandTests',
+    'ReportsCommandsTests',
   ];
 
   let allPassed = true;

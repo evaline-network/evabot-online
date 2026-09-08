@@ -286,10 +286,11 @@ export async function transcribeVoiceWithFallback(
   opts: SttOptions = {}
 ): Promise<SttResult> {
   const first = await transcribeAudio(audio, { ...opts, encoding: opts.encoding || 'OGG_OPUS', sampleRate: opts.sampleRate || 48000 });
-  // Fall back to FLAC when the first attempt errors OR silently yields an
-  // empty transcript (e.g. mp3 bytes mislabeled as OGG_OPUS → Google replies
-  // HTTP 200 with zero results instead of an API error).
-  if (!first.transcript && (!first.ok || (first.error || '').includes('MONTHLY_CAP_REACHED'))) return first;
+  // Bail early ONLY on a cap refusal — retrying FLAC cannot bypass the cap and
+  // would only waste ffmpeg time. Any other failure (API error, HTTP 200 with
+  // an empty transcript, e.g. mp3 bytes mislabeled as OGG_OPUS) falls through
+  // to the FLAC 16 kHz retry below.
+  if ((first.error || '').includes('MONTHLY_CAP_REACHED')) return first;
   if (first.ok && first.transcript) return first;
 
   const flac = convertToFlac16k(audio);

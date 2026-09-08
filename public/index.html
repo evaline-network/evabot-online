@@ -564,7 +564,7 @@
   <div class="header-block">
     <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> <span id="lbl-ping">Ping:</span> <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator"></span></div>
     <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">... <span class="c-ok"></span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">... (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span><span class="cmd-link" id="css-toggle" onclick="toggleCss()" title="Display mode: off / term / web (click to cycle)">[CSS:TERM]</span></div>
-    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="handleCommand('/products')">/products</span><span class="cmd-link" onclick="handleCommand('/who')">/who</span><span class="cmd-link" onclick="setLanguage(state.lang)">/lang</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/sephirot')">/sephirot</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/history')">/history</span><span class="cmd-link" onclick="handleCommand('/memory')">/memory</span><span class="cmd-link" onclick="handleCommand('/add')">/add</span><span class="cmd-link" onclick="handleCommand('/file')">/file</span><span class="cmd-link" onclick="handleCommand('/search')">/search</span><span class="cmd-link" onclick="handleCommand('/services')">/services</span><span class="cmd-link" onclick="handleCommand('/servers')">/servers</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="handleCommand('/products')">/products</span><span class="cmd-link" onclick="handleCommand('/who')">/who</span><span class="cmd-link" onclick="setLanguage(state.lang)">/lang</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/sephirot')">/sephirot</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/history')">/history</span><span class="cmd-link" onclick="handleCommand('/memory')">/memory</span><span class="cmd-link" onclick="handleCommand('/add')">/add</span><span class="cmd-link" onclick="handleCommand('/file')">/file</span><span class="cmd-link" onclick="handleCommand('/idea')">/idea</span><span class="cmd-link" onclick="handleCommand('/error')">/error</span><span class="cmd-link" onclick="handleCommand('/bug')">/bug</span><span class="cmd-link" onclick="handleCommand('/errors')">/errors</span><span class="cmd-link" onclick="handleCommand('/search')">/search</span><span class="cmd-link" onclick="handleCommand('/services')">/services</span><span class="cmd-link" onclick="handleCommand('/servers')">/servers</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
     <div class="tui-line" id="db-line"><span class="c-dim" id="lbl-databases">Databases:</span> <span class="c-ok" id="db-values">checking ...</span></div>
     <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">25%</span> · RAM <span class="c-ok">15%</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">2%</span> · RAM <span class="c-ok">46%</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">*</span> 72bpm</span></div>
     <div class="tui-line" id="network-strip"><span class="c-dim">Cluster:</span> <span class="cmd-link bold c-ok">[evabot.online]</span><a href="https://evaline.network" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.network ↗</a><a href="https://evaline.online" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.online ↗</a><a href="https://evaline.website" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.website ↗</a><span class="c-dim">│</span> <a href="https://github.com/evaline-network" class="cmd-link" target="_blank" style="color:var(--yellow); font-weight:700; text-decoration:underline;">GitHub @evaline-network ↗</a></div>
@@ -646,7 +646,7 @@
       VOCAB_CAP: 500,
 
       // All slash commands recognized locally or proxied via /api/models/command
-      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'add', 'file', 'search', 'find', 'services', 'servers', 'health', 'debug', 'log', 'monitor', 'translate', 'news', 'autocorrect', 'voice', 'tts', 'voices', 'settings', 'agents', 'emoji'],
+      COMMANDS: ['help', '?', 'top', 'models', 'info', 'company', 'evaline', 'products', 'who', 'cost', 'lang', 'mcp', 'lsp', 'free', 'paid', 'mode', 'consilium', 'clear', 'history', 'memory', 'add', 'file', 'idea', 'error', 'bug', 'errors', 'search', 'find', 'services', 'servers', 'health', 'debug', 'log', 'monitor', 'translate', 'news', 'autocorrect', 'voice', 'tts', 'voices', 'settings', 'agents', 'emoji'],
 
       // Short localized descriptions (condensed from the I18N help blocks)
       CMD_DESC: {
@@ -670,6 +670,10 @@
         memory: { en: 'Memory stats (KB, FTS, chat DB)', uk: 'Статистика памʼяті (KB, FTS, БД)', ru: 'Статистика памяти (KB, FTS, БД)' },
         add: { en: 'Ingest: db | link | context | bot | human | agent | file', uk: 'Додавання: db | link | context | bot | human | agent | file', ru: 'Добавление: db | link | context | bot | human | agent | file' },
         file: { en: 'Upload files to knowledge base', uk: 'Завантажити файли в базу знань', ru: 'Загрузить файлы в базу знаний' },
+        idea: { en: 'AI consilium brainstorm: /idea <topic>', uk: 'ШІ-консиліум-штурм: /idea <тема>', ru: 'ИИ-консилиум-штурм: /idea <тема>' },
+        error: { en: 'Report an error: /error <desc>', uk: 'Звіт про помилку: /error <опис>', ru: 'Сообщить об ошибке: /error <опис>' },
+        bug: { en: 'Report a bug: /bug <desc>', uk: 'Звіт про баг: /bug <опис>', ru: 'Сообщить о баге: /bug <опис>' },
+        errors: { en: 'List recent system errors', uk: 'Останні системні помилки', ru: 'Последние системные ошибки' },
         search: { en: 'Full-text search <query>', uk: 'Пошук по базі знань <запит>', ru: 'Поиск по базе знаний <запрос>' },
         find: { en: 'Alias of /search', uk: 'Синонім /search', ru: 'Синоним /search' },
         services: { en: 'Services & DB backends status', uk: 'Статус сервісів і бекендів БД', ru: 'Статус сервисов и бекендов БД' },
@@ -1073,6 +1077,10 @@
   /add human <name>       - Register human contact
   /add agent <name> [prompt] - Register agent persona (optional prompt)
   /add file, /add media, /file - Upload files to the knowledge base
+  /idea <topic>           - AI consilium brainstorm (7 specialists + Eva synthesis)
+  /error <description>    - Register an error report for the ops team
+  /bug <description>      - Register a bug report for the ops team
+  /errors                 - Show recent system errors
   /help , /?              - Display this guide`,
         addHelp: `ADD COMMAND — ingest into the knowledge base:
   /add db <title> | <content>    - Add knowledge base document
@@ -1171,6 +1179,10 @@ Examples:
   /add human <ім'я>       - Зареєструвати контакт людини
   /add agent <ім'я> [промпт] - Зареєструвати агента (опціональний промпт)
   /add file, /add media, /file - Завантажити файли у базу знань
+  /idea <тема>            - ШІ-консиліум-штурм (7 спеціалістів + синтез Єви)
+  /error <опис>           - Зареєструвати звіт про помилку для команди
+  /bug <опис>             - Зареєструвати звіт про баг для команди
+  /errors                 - Показати останні системні помилки
   /help , /?              - Ця довідка`,
         addHelp: `КОМАНДА ADD — додавання у базу знань:
   /add db <назва> | <вміст>      - Додати документ у базу знань
@@ -1269,6 +1281,10 @@ Examples:
   /add human <имя>        - Зарегистрировать контакт человека
   /add agent <имя> [промпт] - Зарегистрировать агента (опциональный промпт)
   /add file, /add media, /file - Загрузить файлы в базу знаний
+  /idea <тема>            - ИИ-консилиум-штурм (7 специалистов + синтез Евы)
+  /error <описание>       - Зарегистрировать отчёт об ошибке для команды
+  /bug <описание>         - Зарегистрировать отчёт о баге для команды
+  /errors                 - Показать последние системные ошибки
   /help , /?              - Эта справка`,
         addHelp: `КОМАНДА ADD — добавление в базу знаний:
   /add db <название> | <содержимое> - Добавить документ в базу знаний
@@ -1905,6 +1921,10 @@ Examples:
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                     window.scrollTo(0, document.body.scrollHeight);
                   }
+                  if (data.done) {
+                    // Persona from the backend (eva|adam) drives the TTS voice.
+                    window.__lastPersona = data.persona === 'adam' ? 'adam' : 'eva';
+                  }
                 } catch (e) {}
               }
             }
@@ -2436,7 +2456,9 @@ Examples:
         // Cloud TTS first (Google Cloud WaveNet free tier, ONLY-FREE capped at
         // 900k chars/mo server-side). Persona pitch/rate only apply to the
         // browser fallback below. On any failure → existing browser TTS.
-        const persona = this.persona;
+        // Persona: last chat response persona from the backend wins (eva is
+        // the default); falls back to the manual /voice eva|adam selection.
+        const persona = window.__lastPersona || this.persona;
         const lang = this.langCode();
         fetch('/api/tts', {
           method: 'POST',

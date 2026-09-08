@@ -47,8 +47,9 @@ export class ChatEngine {
   }
 
   public resolveSystemInstruction(): string {
+    // Default Telegram persona: Eva (the Face of the company) — Config.defaultSystemInstruction already speaks as Eva.
     const base = Config.defaultSystemInstruction;
-    const withLocale = applyLocalePolicy(base);
+    const withLocale = applyLocalePolicy(base, 'eva');
     const withRules = `${withLocale}\n${rulesEngine.compileRulesInstruction()}`;
     return withRules;
   }

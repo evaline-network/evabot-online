@@ -1,3 +1,8 @@
+---
+title: "OpenCode Extensions — Recommended FREE MCP & LSP Servers (2026)"
+date: "2026-09-07"
+---
+
 # OpenCode Extensions — Recommended FREE MCP & LSP Servers (2026)
 
 > Research date: 2026-09-07. Every recommendation below was **verified to exist**

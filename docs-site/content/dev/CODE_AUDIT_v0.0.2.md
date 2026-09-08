@@ -9,7 +9,7 @@ description: "🔍 EvaBot Online — Полный Code Audit v0.0.2"
 
 # 🔍 EvaBot Online — Полный Code Audit v0.0.2
 
-**Дата:** 2026-09-07
+**Дата:** 2026-09-07  
 **Аудитор:** EvaBot Engineering Team
 
 ---
@@ -39,7 +39,6 @@ description: "🔍 EvaBot Online — Полный Code Audit v0.0.2"
 | Покрытие тестами | ~8.7% |
 
 ### Самые большие файлы (>500 строк)
-
 | Файл | Строк |
 |------|-------|
 | `src/models/ModelRegistry.ts` | **1760** ⚠️ |
@@ -48,24 +47,19 @@ description: "🔍 EvaBot Online — Полный Code Audit v0.0.2"
 | `src/core/TuiRenderer.ts` | 939 |
 | `src/core/AnsiStreamEngine.ts` | 914 |
 
-### Топ больших файлов — кандидаты на декомпозицию
-
+### Топ больших файлов — кандидаты на декомпозицию:
 1. **ModelRegistry.ts (1760)** — 78 моделей, можно нормализовать до 600 строк
-
 2. **web/app.ts (1246)** — веб-интерфейс, можно разбить на модули
 
 ---
 
 ## 🔍 ESLint (108 errors)
 
-### По типам
-
+### По типам:
 - `@typescript-eslint/no-explicit-any` — **90** (использование `any`)
-
 - `@typescript-eslint/no-unused-vars` — **16** (неиспользуемые переменные)
 
-### Топ файлов с `any`
-
+### Топ файлов с `any`:
 | Файл | Кол-во |
 |------|--------|
 | `src/core/Logger.ts` | 17 |
@@ -75,12 +69,9 @@ description: "🔍 EvaBot Online — Полный Code Audit v0.0.2"
 | `src/web/app.ts` | 4 |
 | `src/server/server.ts` | 4 |
 
-### Рекомендации
-
+### Рекомендации:
 1. Заменить `any` на `unknown` + type guards
-
 2. Удалить неиспользуемые импорты/переменные
-
 3. Добавить `// eslint-disable-next-line` только в исключительных случаях
 
 ---
@@ -97,22 +88,14 @@ description: "🔍 EvaBot Online — Полный Code Audit v0.0.2"
 | `.env.example` для бэкенда | ✅ |
 | process.env usage | ✅ 11 переменных |
 
-### Заблокированные IP (8)
-
+### Заблокированные IP (8):
 - 45.148.10.9 (NL) — WordPress exploits
-
 - 43.157.188.74 (BR)
-
 - 159.195.17.105 (US)
-
 - 67.205.2.98 (US)
-
 - 43.166.136.202 (US)
-
 - 43.165.2.110 (DE)
-
 - 43.164.1.211 (TH)
-
 - 43.156.232.154 (SG)
 
 ---
@@ -162,11 +145,8 @@ description: "🔍 EvaBot Online — Полный Code Audit v0.0.2"
 ## ✅ Исправлено в этом аудите
 
 1. ✅ **Удален** `tests/voice-plugin.test.ts` (для удаленного `src/plugins/voice/`)
-
 2. ✅ **Исправлен** `tests/index.ts` (убрана ссылка на `runVoicePluginTests`)
-
 3. ✅ **TypeScript errors:** 12 → 0
-
 4. ✅ **Server.ts:** 815 → 211 строк (-74%)
 
 ---
@@ -174,13 +154,9 @@ description: "🔍 EvaBot Online — Полный Code Audit v0.0.2"
 ## 🚧 Что можно улучшить
 
 ### High Priority
-
 1. **ESLint 108 errors** — заменить `any` на proper types
-
 2. **ModelRegistry 1760 строк** — нормализовать данные (внешний JSON?)
-
 3. **web/app.ts 1246 строк** — разбить на модули
-
 4. **Покрытие тестами 8.7%** — добавить unit-тесты для новых модулей:
    - Logger.test.ts
    - Security.test.ts
@@ -188,22 +164,15 @@ description: "🔍 EvaBot Online — Полный Code Audit v0.0.2"
    - AlertManager.test.ts
 
 ### Medium Priority
-
-1. **ConsiliumEngine 983 строки** — декомпозиция на отдельные стратегии
-
-2. **TuiRenderer 939 строк** — вынести шаблоны в отдельные файлы
-
-3. **AnsiStreamEngine 914 строк** — аналогично
-
-4. **JSDoc комментарии** — добавить для всех public API
+5. **ConsiliumEngine 983 строки** — декомпозиция на отдельные стратегии
+6. **TuiRenderer 939 строк** — вынести шаблоны в отдельные файлы
+7. **AnsiStreamEngine 914 строк** — аналогично
+8. **JSDoc комментарии** — добавить для всех public API
 
 ### Low Priority
-
-1. **Prettier** — добавить для автоформатирования
-
-2. **Husky pre-commit** — git hooks для автотестов
-
-3. **CI badge** в README (GitHub Actions status)
+9. **Prettier** — добавить для автоформатирования
+10. **Husky pre-commit** — git hooks для автотестов
+11. **CI badge** в README (GitHub Actions status)
 
 ---
 
@@ -223,52 +192,30 @@ description: "🔍 EvaBot Online — Полный Code Audit v0.0.2"
 ## 🚀 Рекомендуемый план на v0.1.0
 
 ### Week 1: Качество кода
-
 - [ ] Убрать 90 `any` типов
-
 - [ ] Удалить 16 неиспользуемых переменных
-
 - [ ] Добавить ESLint в CI
 
 ### Week 2: Тесты
-
 - [ ] Logger.test.ts
-
 - [ ] Security.test.ts (mock rate limiter)
-
 - [ ] KnowledgeBase.test.ts
-
 - [ ] AlertManager.test.ts
-
 - [ ] Довести покрытие до 30%
 
 ### Week 3: Рефакторинг
-
 - [ ] ModelRegistry: external JSON
-
 - [ ] web/app.ts: split into modules
-
 - [ ] ConsiliumEngine: strategy pattern
 
 ### Week 4: Features
-
 - [ ] Vector embeddings (Gemini)
-
 - [ ] Mobile UI
-
 - [ ] Chat history
 
 ---
 
 **Status:** ✅ Production-Ready, рекомендуется улучшить покрытие тестами и убрать `any` в v0.1.0
 
-**Auditor:** EvaBot Engineering Team
+**Auditor:** EvaBot Engineering Team  
 **Date:** 2026-09-07
-
-## Related
-
-- [[dev/CHANGELOG|Changelog]]
-
----
-
-Back to [[index]]

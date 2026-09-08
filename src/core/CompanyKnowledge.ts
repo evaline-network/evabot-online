@@ -23,7 +23,7 @@ export interface InfoExchange {
 export const KNOWLEDGE_MATRIX: Record<string, RoleKnowledge> = {
   god: {
     domains: ['corporate axioms', 'governance & arbitration', 'full product & tech overview', 'consilium deadlock resolution'],
-    sources: ['knowledge-base/evaline-company-dossier.md', 'docs/reports/'],
+    sources: ['knowledge-base/evaline-company-dossier.md', '../eva-reports/reports/'],
     exchangesWith: ['ceo', 'cto', 'adam', 'eva'],
   },
   adam: {
@@ -33,77 +33,77 @@ export const KNOWLEDGE_MATRIX: Record<string, RoleKnowledge> = {
   },
   eva: {
     domains: ['sales & client diplomacy (6 languages)', 'product catalog (B2C/B2B)', 'frontend & UX', 'market & news'],
-    sources: ['data/products.json', 'knowledge-base/evaline-com-ua/site/', 'knowledge-base/evaline-company-dossier.md', 'docs/reports/'],
+    sources: ['data/products.json', 'knowledge-base/evaline-com-ua/site/', 'knowledge-base/evaline-company-dossier.md', '../eva-reports/reports/'],
     exchangesWith: ['adam', 'ceo', 'legal_compliance', 'general_assistant'],
   },
   eva_frontend: {
     domains: ['reactive UI / cyber-terminal ergonomics', 'Web Speech & accessibility', 'zero-CDN performance'],
-    sources: ['public/', 'docs/reports/'],
+    sources: ['public/', '../eva-reports/reports/'],
     exchangesWith: ['eva', 'architect', 'qa_automation'],
   },
   adam_backend: {
     domains: ['Node.js microservices', 'PostgreSQL schemas', 'OmniRoute daemons', 'zero-trust perimeter'],
-    sources: ['docs/reports/', 'knowledge-base/evaline-company-dossier.md'],
+    sources: ['../eva-reports/reports/', 'knowledge-base/evaline-company-dossier.md'],
     exchangesWith: ['adam', 'architect', 'devops', 'security_auditor'],
   },
   architect: {
     domains: ['distributed systems design', 'API contracts', 'scalability & fault tolerance', 'cost optimization'],
-    sources: ['docs/reports/'],
+    sources: ['../eva-reports/reports/'],
     exchangesWith: ['adam', 'adam_backend', 'devops_sre', 'cto'],
   },
   devops: {
     domains: ['Kubernetes & CI/CD', 'IaC (Terraform)', 'observability', 'zero-downtime deployments'],
-    sources: ['docs/reports/'],
+    sources: ['../eva-reports/reports/'],
     exchangesWith: ['devops_sre', 'architect', 'security_auditor'],
   },
   security_auditor: {
     domains: ['Zero-Trust security', 'OWASP & threat modeling', 'IAM/RBAC', 'cryptography & secret isolation'],
-    sources: ['docs/reports/'],
+    sources: ['../eva-reports/reports/'],
     exchangesWith: ['ciso', 'adam', 'adam_backend', 'devops'],
   },
   general_assistant: {
     domains: ['cross-functional coordination', 'meeting synthesis', 'structured documentation', 'market/news digest'],
-    sources: ['knowledge-base/evaline-com-ua/site/uk/novini/', 'docs/reports/'],
+    sources: ['knowledge-base/evaline-com-ua/site/uk/novini/', '../eva-reports/reports/'],
     exchangesWith: ['eva', 'ceo', 'god'],
   },
   data_engineer: {
     domains: ['hybrid PostgreSQL topologies', 'Qdrant vector retrieval', 'streaming pipelines'],
-    sources: ['docs/reports/'],
+    sources: ['../eva-reports/reports/'],
     exchangesWith: ['data_ai_lead', 'adam_backend', 'architect'],
   },
   ceo: {
     domains: ['business & strategy', 'sales & partner negotiations', 'finance (USD/EUR)', 'product roadmap'],
-    sources: ['data/products.json', 'knowledge-base/evaline-company-dossier.md', 'docs/reports/'],
+    sources: ['data/products.json', 'knowledge-base/evaline-company-dossier.md', '../eva-reports/reports/'],
     exchangesWith: ['cfo', 'cto', 'eva', 'legal_compliance', 'god'],
   },
   cto: {
     domains: ['technology strategy', 'system architecture', 'AI model garden', 'engineering excellence'],
-    sources: ['docs/reports/', 'MODELS.2026.md'],
+    sources: ['../eva-reports/reports/', 'MODELS.2026.md'],
     exchangesWith: ['architect', 'data_ai_lead', 'ceo', 'qa_automation'],
   },
   ciso: {
     domains: ['Zero-Trust architecture', 'cryptographic key isolation', 'threat defense', 'mTLS'],
-    sources: ['docs/reports/'],
+    sources: ['../eva-reports/reports/'],
     exchangesWith: ['security_auditor', 'legal_compliance', 'adam'],
   },
   cfo: {
     domains: ['unit economics', 'cloud OpEx & token economics', 'budget planning (USD/EUR)', 'financial compliance'],
-    sources: ['docs/reports/'],
+    sources: ['../eva-reports/reports/'],
     exchangesWith: ['ceo', 'cto', 'legal_compliance'],
   },
   devops_sre: {
     domains: ['multi-cloud Kubernetes', 'GitOps CI/CD', 'Prometheus/Grafana observability', 'SLA 99.99%'],
-    sources: ['docs/reports/'],
+    sources: ['../eva-reports/reports/'],
     exchangesWith: ['devops', 'architect', 'security_auditor'],
   },
   data_ai_lead: {
     domains: ['relational + vector data architecture', 'RAG pipelines & embeddings', 'semantic retrieval'],
-    sources: ['knowledge-base/evaline-knowledge-base/', 'docs/reports/'],
+    sources: ['knowledge-base/evaline-knowledge-base/', '../eva-reports/reports/'],
     exchangesWith: ['data_engineer', 'cto', 'architect'],
   },
   qa_automation: {
     domains: ['test automation', 'regression & integration suites', 'release verification'],
-    sources: ['tests/', 'docs/reports/'],
+    sources: ['tests/', '../eva-reports/reports/'],
     exchangesWith: ['cto', 'architect', 'adam_backend'],
   },
   legal_compliance: {

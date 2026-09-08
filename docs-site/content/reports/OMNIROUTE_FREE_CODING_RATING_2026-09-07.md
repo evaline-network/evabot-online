@@ -43,19 +43,14 @@ description: "OmniRoute: Полный аудит бесплатных кодин
 ## 2. ВАЖНЫЕ ВЫВОДЫ
 
 - **ТОП-кодеры бесплатно (Pass@1 = 5/5, быстро):** Groq (qwen3.8-27b, gpt-oss-20b/120b), Mistral Code, HF `Qwen3-Coder-Next`, Kilo MiniMax-M3, Nemotron-3-Super, North Mini-Code.
-
 - **Best-free-coding-modell overall:** `hf/qwen3-coder-next` (5/5, 1.9s, стабильно бесплатен, хорошо работает для инструментов/агентов). Рекомендуется как дефолт под агентные задачи.
-
 - **BFCL/инструменты:** для `start task` (агентные) — НЕ брать Groq gpt-oss-120b с малым `max_tokens`: reasoning съедает бюджет, tool_call отрезается (`finish=length`) → "зависание". Для агентных задач лучше `hf/qwen3-coder-next` или `omni/gemini-3.8-flash` (но последний — rate-limit днём).
-
 - OpenRouter free-тир исчерпался в этот день (403 "Key limit exceeded (total limit)", ~50 req/day без $10 кредита). Добавлены **fallbacks** для всех openrouter-free и for `omni/qwen3-coder-next` → `hf/qwen3-coder-next` → `omni/gemini-3.8-flash` (проверено: работает).
-
 - HF router: free-кредиты $0.10/мес кончаются быстро; стабильно бесплатны только `qwen3-coder-next`, `qwen3-next-80b`, `qwen3.5-122b` (частично). Остальные hf-модели (glm-5.x, kimi, granite, muse, deepseek-v4 и пр.) — платные/флаки.
 
 ## 3. ПОЛНЫЙ СПИСОК ПРОВАЙДЕРОВ
 
 ### 3.1 Подключенные в OmniRoute (9)
-
 | Провайдер | Base URL / ключ | Модели в конфиге | Статус |
 |---|---|---|---|
 | **OpenRouter** | openrouter.ai/api/v1 / `OPENROUTER_API_KEY` | 71 (вкл. 18 `:free`) | free-лимит днём (403); fallback спас |
@@ -70,7 +65,6 @@ description: "OmniRoute: Полный аудит бесплатных кодин
 | **KILO (новый!)** | api.kilo.ai/api/gateway/v1 / без ключа | 6 (nemotron ultra/super, step-3.7-flash, minimax-m3, inkling, north-mini-code) | ✅ работает, 17+ free-моделей |
 
 ### 3.2 Провайдеры, которые МОЖНО подключить (free-tier, без карты или с лёгким ключом)
-
 | Провайдер | Что даёт бесплатно | Требования |
 |---|---|---|
 | **Google AI Studio** | Gemini 3.x Flash / Flash-Lite (большой free тир) | ключ бесплатно, телефон |
@@ -92,65 +86,34 @@ description: "OmniRoute: Полный аудит бесплатных кодин
 | **DeepSeek официально** | ~5M токенов новичкам, потом почти бесплатно ($0.27/$0.40) | карта позже |
 
 ### 3.3 Недоступны / платные / осторожно
-
 - **Together** — free-тира больше нет (min $5), у нас credits exhausted.
-
 - **Cerebras** — ключ без кредита → 402.
-
 - **Ollama Cloud** — недоступен (530).
-
 - **Poe** — free тир сокращён (~300 поинтов/день).
-
 - **Fireworks/Together/NVIDIA NIM** — кредиты/лимиты меняются.
 
 ## 4. ТОП-10 БЕСПЛАТНЫХ КОДИНГ-МОДЕЛЕЙ (рейтинг по результатам + по сообществу)
 
 1. **Qwen3-Coder-Next** (HF free / OpenRouter) — лучший бесплатный агентный coder.
-
 2. **GLM-5.x** (Z.AI / HF) — топ open-source для кодинга по бенчам Sept-2026.
-
 3. **Kimi-K2.6 / K2.7-Code** (HF/Z.AI) — сильный coding+agentic, но HF-кредиты платные.
-
 4. **DeepSeek V3.2 / V4** ($0.27/$0.40) — почти бесплатно, бюджетный король.
-
 5. **Groq gpt-oss-120b / qwen3.8-27b** — самые быстрые бесплатные.
-
 6. **MiniMax M3 (free)** — 5/5, 2.4s, 1M context.
-
 7. **Nemotron-3 Super/Ultra (free)** — 5/5, тяжёлый reasoning.
-
 8. **North Mini Code (free)** — 5/5, специализирован коду.
-
 9. **Mistral Code / Codestral** — 5/5, 1.0s.
-
 10. **Gemma-4-31B (free)** — топ по scores сообщества (81), OpenRouter free.
 
 ## 5. СДЕЛАННЫЕ ИЗМЕНЕНИЯ (07.09.2026)
-
 - Добавлены в config.yaml: `hf/qwen3-next-80b`, `hf/qwen3.5-122b` (работают бесплатно); временно добавлены и убраны (402) `hf/glm-5.1`, `hf/kimi-k2.6`, `hf/granite-4.2-30b`, `hf/muse-glimmer-30b`.
-
 - **Новый провайдер Kilo** (6 моделей, без ключа), `KILO_DUMMY` в omniroute.env.
-
 - **router_settings.fallbacks: 6→22 правила** — теперь groq AND openrouter-free AND `omni/qwen3-coder-next` падают на `hf/qwen3-coder-next` → `omni/gemini-3.8-flash`. Проверено: 403 OpenRouter → ответ из HF.
-
 - total config: **145 моделей**.
 
 ## 6. РЕКОМЕНДАЦИИ
-
 - Для агентных задач (start task/инструменты): `hf/qwen3-coder-next` (или `omni/gemini-3.8-flash` вне пиков).
-
 - Для быстрых простых кодинг-запросов: `omni/groq-qwen3.8-27b`.
-
 - Для тяжёлого кода/больших контекстов: `kilo/minimax-m3-free`, `omni/nemotron-3-super-120b-a12b-free`, `kilo/north-mini-code-free`.
-
 - OpenRouter free-тир: лимит ~50 req/день при $0 балансе — рассчитывать на fallbacks.
-
 - Подключить следующим: **SambaNova** (DeepSeek-V3.2 бесплатно), **GitHub Models**, **NVIDIA NIM** — дадут больше топовых бесплатных моделей без карты.
-
-## Related
-
-- [[models/OMNIROUTE_REPORT|OmniRoute Report]]
-
----
-
-Back to [[index]]

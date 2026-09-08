@@ -3,6 +3,7 @@ import { ChatHistoryStore } from './ChatHistoryStore.js';
 import { I18nEngine } from './I18nEngine.js';
 import { Config } from './Config.js';
 import { logger } from './Logger.js';
+import { applyPersonaPolicy } from './PersonaPolicy.js';
 
 export type VoicePersona = 'eva' | 'adam' | 'neutral';
 
@@ -226,12 +227,18 @@ export class SephirotEngine {
       const upstream = parents.length
         ? ` You receive input from: ${parents.join(', ')}.`
         : ' You are the root of the tree.';
+      // PersonaPolicy: TIFERET (ADAM voice) and HOD (EVE voice) get their
+      // identity lock; neutral nodes stay neutral (ROLE SPLIT rule only).
+      const persona = node.voicePersona === 'adam' ? 'adam' : node.voicePersona === 'eva' ? 'eva' : undefined;
       return {
         id: `sephira-${node.id}`,
         model: node.model,
         name: node.nameEn,
         title: node.title,
-        systemPrompt: `${node.systemPrompt}${upstream} Topic under deliberation: "${topic}".`,
+        systemPrompt: applyPersonaPolicy(
+          `${node.systemPrompt}${upstream} Topic under deliberation: "${topic}".`,
+          persona
+        ),
         temperature: node.voicePersona === 'neutral' ? 0.4 : 0.6,
       };
     });

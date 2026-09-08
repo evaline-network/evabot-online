@@ -98,9 +98,11 @@ export function createVoiceRouter(): Router {
       return;
     }
     const persona = body?.persona === 'adam' ? 'adam' : body?.persona === 'eva' ? 'eva' : undefined;
-    // Detect language from text (LANGUAGE-FIRST); explicit lang body param is a fallback
+    // Language from the TEXT wins (LANGUAGE-FIRST): Russian text must be voiced
+    // with a Russian voice even when the UI language param says otherwise.
+    // body.lang is only a fallback when text detection yields nothing.
     const detectedLang = detectMessageLanguage(text);
-    const lang = typeof body?.lang === 'string' ? body.lang : detectedLang;
+    const lang = detectedLang || (typeof body?.lang === 'string' ? body.lang : undefined);
 
     let audioBase64: string | null = null;
     let voice = '';

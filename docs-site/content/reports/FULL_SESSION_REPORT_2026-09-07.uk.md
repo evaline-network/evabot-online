@@ -3,7 +3,7 @@ title: Повний звіт сесії 2026-09-07 — EvaBot Global Upgrade
 date: 2026-09-07
 tags: [report, session, evabot, google-cloud, voice, commands, uk]
 aliases: [FULL_SESSION_REPORT_UK]
-description: Повний звіт: 40+ виконаних задач — інфраструктура, команди, голос, Google Cloud free-tier, безпека
+description: "Повний звіт: 40+ виконаних задач — інфраструктура, команди, голос, Google Cloud free-tier, безпека"
 ---
 
 # Повний звіт сесії — 2026-09-07 (вечір/ніч)

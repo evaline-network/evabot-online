@@ -5,6 +5,7 @@ import {
   languageLockInstruction,
   applyLocalePolicy,
 } from '../src/core/LocalePolicy.js';
+import { EVA_IDENTITY_RULE, ADAM_IDENTITY_RULE, ROLE_SPLIT_RULE, personaRuleFor, applyPersonaPolicy } from '../src/core/PersonaPolicy.js';
 import { Config } from '../src/core/Config.js';
 
 export function runLanguagePolicyTests(): boolean {
@@ -40,6 +41,20 @@ export function runLanguagePolicyTests(): boolean {
   assert(LANGUAGE_MIRRORING_RULE.includes('Never switch languages'), 'rule forbids spontaneous switching');
   assert(Config.defaultSystemInstruction.includes('LANGUAGE MIRRORING'), 'default system instruction carries the rule');
   assert(LOCALE_POLICY.primaryLanguages.includes('uk'), 'uk in primary languages');
+
+  // PersonaPolicy (Eva/Adam identity locks + role split)
+  assert(Config.defaultSystemInstruction.includes('You are Eva, the Face of EvaLine'), 'default instruction speaks as Eva (Face of EvaLine)');
+  assert(Config.defaultSystemInstruction.includes('female first person'), 'default instruction enforces female first person');
+  assert(personaRuleFor('eva') === EVA_IDENTITY_RULE && personaRuleFor('adam') === ADAM_IDENTITY_RULE, 'personaRuleFor returns identity rules');
+  assert(personaRuleFor(undefined) === ROLE_SPLIT_RULE, 'neutral persona → ROLE SPLIT only');
+  const evaApplied = applyPersonaPolicy('base', 'eva');
+  assert(evaApplied.includes('IDENTITY LOCK (EVA)') && evaApplied.includes('ROLE SPLIT'), 'applyPersonaPolicy(eva) embeds Eva identity lock + role split');
+  const adamApplied = applyPersonaPolicy('base', 'adam');
+  assert(adamApplied.includes('IDENTITY LOCK (ADAM)') && adamApplied.includes('ROLE SPLIT'), 'applyPersonaPolicy(adam) embeds Adam identity lock + role split');
+  assert(applyPersonaPolicy('base').includes('ROLE SPLIT') && !applyPersonaPolicy('base').includes('IDENTITY LOCK'), 'neutral applyPersonaPolicy appends role split only');
+  assert(applyLocalePolicy('base', 'eva').includes('IDENTITY LOCK (EVA)'), 'applyLocalePolicy with persona eva embeds identity lock');
+  assert(applyLocalePolicy('base').includes('ROLE SPLIT') && !applyLocalePolicy('base').includes('IDENTITY LOCK'), 'applyLocalePolicy without persona: role split, no identity lock (backwards compat)');
+  assert(!EVA_IDENTITY_RULE.includes('RUB') && !ADAM_IDENTITY_RULE.includes('RUB'), 'persona rules contain no rubles');
 
   console.log(passed ? '  LanguagePolicy: ALL PASS' : '  LanguagePolicy: FAILURES');
   return passed;

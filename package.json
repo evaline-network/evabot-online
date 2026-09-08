@@ -10,7 +10,10 @@
     "build": "npm run build:server && npm run build:client",
     "test": "npx tsx tests/index.ts",
     "cli": "npx tsx src/cli/terminal-chat.ts",
-    "start": "npx tsx src/server/server.ts"
+    "start": "npx tsx src/server/server.ts",
+    "docs:sync": "bash scripts/sync-docs.sh",
+    "deploy": "bash scripts/safe-deploy.sh",
+    "rollback": "bash scripts/rollback.sh"
   },
   "keywords": [
     "evabot",

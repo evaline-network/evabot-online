@@ -10,9 +10,9 @@ description: "🏆 OMNIROUTE FREE CODING MODELS - COMPREHENSIVE TEST REPORT"
 
 # 🏆 OMNIROUTE FREE CODING MODELS - COMPREHENSIVE TEST REPORT
 
-**Date**: 2026-09-06
-**Tester**: evabot-agent-vm
-**Infrastructure**: Omniroute (LiteLLM proxy on port 20128) → OpenRouter API
+**Date**: 2026-09-06  
+**Tester**: evabot-agent-vm  
+**Infrastructure**: Omniroute (LiteLLM proxy on port 20128) → OpenRouter API  
 **Config**: `/opt/omniroute/config.yaml` (132 models loaded, 70 coding-specific)
 
 ---
@@ -27,12 +27,9 @@ Three coding challenges tested across **three interfaces**:
 | 2 | BST | Binary Search Tree with insert/search | `class` and `insert` in output |
 | 3 | Fibonacci | Fibonacci generator using `yield` | `yield` and `fib` in output |
 
-## Interfaces tested
-
+**Interfaces tested**:
 - **API**: Direct HTTP call to `localhost:20128/v1/chat/completions`
-
 - **OpenCode CLI**: `opencode --model <model> <prompt>`
-
 - **KiloCode CLI**: `node /usr/bin/kilo chat --model <model> <prompt>`
 
 ---
@@ -53,26 +50,21 @@ Three coding challenges tested across **three interfaces**:
 ## 🔍 Key Findings
 
 ### ✅ Working Interfaces
-
 - **API** and **KiloCode CLI**: Both work perfectly with all top 6 models
-
 - **OpenCode CLI**: ❌ All tests failed (0/3) — likely provider name mismatch or configuration issue in `/home/evabot/.config/opencode/opencode.json`
 
 ### ⚠️ Notes
-
 - `omni/mistralai-codestral` has a typo in the test script — actual model is `omni/mistralai-codestral` (double 'l'), but KiloCode handled it correctly via internal mapping
-
 - KiloCode CLI achieved **100% pass rate across all 6 models** — fastest consistent performer
-
 - KiloCode responses are consistently ~1.1s (cached/handled locally via proxy)
 
 ---
 
 ## 🎯 Council Verification - Ensemble Voting
 
-## Unanimous top 6 (3/3 across all valid interfaces)
+**Unanimous top 6 (3/3 across all valid interfaces)**:
 
-```text
+```
 🥇  omni/mistralai-codestral   100% | 1.30s ⚡ FASTEST
 🥈  omni/qwen3-coder-flash     100% | 2.10s
 🥉  omni/qwen3-coder-plus      100% | 2.40s
@@ -88,13 +80,9 @@ Three coding challenges tested across **three interfaces**:
 ## 📝 Configuration Files
 
 - **Omniroute config**: `/opt/omniroute/config.yaml`
-
 - **Omniroute env**: `/opt/omniroute/omniroute.env`
-
 - **OpenCode config**: `/home/evabot/.config/opencode/opencode.json`
-
 - **System analysis**: `/home/evabot/Desktop/EVABOT_SYSTEM_ANALYSIS_2026-09-06.md`
-
 - **Test results JSON**: `/opt/omniroute/test_results_full.json`
 
 ---
@@ -102,16 +90,16 @@ Three coding challenges tested across **three interfaces**:
 ## 🚀 Usage Examples
 
 ```bash
-## Via Omniroute API
+# Via Omniroute API
 curl -X POST http://localhost:20128/v1/chat/completions \
   -H "Authorization: Bearer omniroute-token" \
   -H "Content-Type: application/json" \
   -d '{"model": "omni/mistralai-codestral", "messages": [{"role": "user", "content": "Implement quicksort in Python"}]}'
 
-## Via KiloCode CLI
+# Via KiloCode CLI
 kilo chat --model omni/mistralai-codestral "Implement quicksort"
 
-## Via OpenCode (may need config fix)
+# Via OpenCode (may need config fix)
 opencode --model omni/mistralai-codestral "Implement quicksort"
 ```
 
@@ -131,14 +119,6 @@ opencode --model omni/mistralai-codestral "Implement quicksort"
 
 ---
 
-**Report generated**: 2026-09-06 18:00 GMT+3
-**Test duration**: ~15 minutes across 6 models × 3 interfaces = 18 test runs
+**Report generated**: 2026-09-06 18:00 GMT+3  
+**Test duration**: ~15 minutes across 6 models × 3 interfaces = 18 test runs  
 **Success rate**: 100% (30/30 via API, 18/18 via KiloCode)
-
-## Related
-
-- [[reports/OMNIROUTE_FREE_CODING_MODELS_REPORT_2026-09-07|Report 09-07]]
-
----
-
-Back to [[index]]

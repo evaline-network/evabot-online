@@ -2,18 +2,18 @@
  * edge_tts.test.ts — EdgeTTS (Microsoft Edge-TTS / Azure Neural) tests.
  *
  * Hermetic tests (no subprocess, no network):
- *  - Catalog entries in VOICE_CATALOG (4 edge-neural voices, genders, family)
+ *  - Catalog entries in VOICE_CATALOG (6 edge-neural voices, genders, family)
  *  - familyRank order: edge-neural BEFORE chirp3-hd
  *  - familyFreeAllowance('edge-neural') = unlimited-ish
  *  - validateVoiceName accepts edge voices (ONLY-FREE /voices set path)
  *  - Cache-key function (deterministic, voice+text sensitive)
- *  - Persona/lang/voiceName resolution + voice-prefs.json override
+ *  - Language-first persona/lang/voiceName resolution + voice-prefs.json override
  *  - Failure policy: empty text throws, broken python throws
  *
  * Real-synthesis test: runs ONLY when `python3 -m edge_tts --help` works on
  * this host; otherwise it is SKIPPED (logs "skipped: edge-tts unavailable").
  *
- * NOTE: deliberately NOT registered in tests/index.ts (owner registers it).
+ * Registered in tests/index.ts as runEdgeTtsTests.
  */
 
 import fs from 'node:fs';
@@ -64,7 +64,9 @@ export async function runEdgeTtsTests(): Promise<boolean> {
     assert(genders['uk-UA-OstapNeural'] === 'MALE', 'uk-UA-OstapNeural is MALE');
     assert(genders['ru-RU-DmitryNeural'] === 'MALE', 'ru-RU-DmitryNeural is MALE');
     assert(genders['ru-RU-SvetlanaNeural'] === 'FEMALE', 'ru-RU-SvetlanaNeural is FEMALE');
-    assert(EDGE_VOICE_CATALOG.length === 4, 'exactly 4 edge-neural catalog entries');
+    assert(genders['en-US-AriaNeural'] === 'FEMALE', 'en-US-AriaNeural is FEMALE');
+    assert(genders['en-US-GuyNeural'] === 'MALE', 'en-US-GuyNeural is MALE');
+    assert(EDGE_VOICE_CATALOG.length === 6, 'exactly 6 edge-neural catalog entries (4 original + 2 EN)');
   }
 
   // 2. Rank order: edge-neural BEFORE chirp3-hd (and the rest)
@@ -97,10 +99,13 @@ export async function runEdgeTtsTests(): Promise<boolean> {
     const tts = new EdgeTTS({ dataDir: makeTmp() });
     assert(tts.getEvaVoice() === EDGE_TTS_DEFAULT_EVA_VOICE, `default eva voice = ${EDGE_TTS_DEFAULT_EVA_VOICE} (FEMALE)`);
     assert(tts.getAdamVoice() === EDGE_TTS_DEFAULT_ADAM_VOICE, `default adam voice = ${EDGE_TTS_DEFAULT_ADAM_VOICE} (MALE)`);
-    assert(tts.resolveVoice({ persona: 'eva' }) === 'uk-UA-PolinaNeural', 'persona eva → uk-UA-PolinaNeural');
-    assert(tts.resolveVoice({ persona: 'adam' }) === 'ru-RU-DmitryNeural', 'persona adam → ru-RU-DmitryNeural');
-    assert(tts.resolveVoice({ lang: 'ru-RU' }) === 'ru-RU-DmitryNeural', 'lang ru → adam voice');
-    assert(tts.resolveVoice({ lang: 'uk-UA' }) === 'uk-UA-PolinaNeural', 'lang uk → eva voice');
+    assert(tts.resolveVoice({ persona: 'eva', lang: 'uk' }) === 'uk-UA-PolinaNeural', 'persona eva + lang uk → uk-UA-PolinaNeural');
+    assert(tts.resolveVoice({ persona: 'adam', lang: 'ru' }) === 'ru-RU-DmitryNeural', 'persona adam + lang ru → ru-RU-DmitryNeural');
+    assert(tts.resolveVoice({ lang: 'ru-RU' }) === 'ru-RU-SvetlanaNeural', 'lang ru (no persona, default female) → ru-RU-SvetlanaNeural');
+    assert(tts.resolveVoice({ lang: 'uk-UA' }) === 'uk-UA-PolinaNeural', 'lang uk (no persona, default female) → uk-UA-PolinaNeural');
+    assert(tts.resolveVoice({ lang: 'en' }) === 'en-US-AriaNeural', 'lang en (default) → eva voice (en-US-AriaNeural, FEMALE)');
+    assert(tts.resolveVoice({ lang: 'en', persona: 'adam' }) === 'en-US-GuyNeural', 'lang en + persona adam → en-US-GuyNeural (MALE)');
+    assert(tts.resolveVoice({ persona: 'eva', lang: 'ru' }) === 'ru-RU-SvetlanaNeural', 'persona eva + lang ru → ru-RU-SvetlanaNeural (FEMALE)');
     assert(tts.resolveVoice({ voiceName: 'uk-UA-OstapNeural' }) === 'uk-UA-OstapNeural', 'explicit voiceName wins');
     assert(isEdgeVoice('ru-RU-SvetlanaNeural') && !isEdgeVoice('uk-UA-Chirp3-HD-Aoede'), 'isEdgeVoice distinguishes edge vs google catalog');
   }
@@ -135,7 +140,7 @@ export async function runEdgeTtsTests(): Promise<boolean> {
     assert(emptyThrew, 'empty text → synthesize THROWS');
   }
 
-  // 8. Real synthesis (skipped when edge-tts is unavailable on this host)
+  // 8. Real synthesis (skipped when edge-tts is unavailable on this host; never crashes the suite)
   {
     const ok = await edgeAvailable();
     if (!ok) {
@@ -144,14 +149,23 @@ export async function runEdgeTtsTests(): Promise<boolean> {
       const dir = makeTmp();
       const tts = new EdgeTTS({ dataDir: dir });
       const t0 = Date.now();
-      const r = await tts.synthesize('Привіт, я Ева.', { persona: 'eva' });
-      const ms = Date.now() - t0;
-      assert(r.provider === 'edge-tts' && r.cached === false, 'real synthesis: provider=edge-tts, cached=false');
-      assert(r.voice === 'uk-UA-PolinaNeural', 'real synthesis uses uk-UA-PolinaNeural');
-      assert(Buffer.isBuffer(r.audioBuffer) && r.audioBuffer.length > 1024, `real synthesis: mp3 bytes = ${r.audioBuffer.length} (${ms} ms)`);
-      const r2 = await tts.synthesize('Привіт, я Ева.', { persona: 'eva' });
-      assert(r2.cached === true && r2.audioBuffer.equals(r.audioBuffer), 'second identical call resolves from cache');
-      assert(fs.existsSync(path.join(dir, 'tts-cache')), 'cache file stored under data/tts-cache/');
+      try {
+        const r = await tts.synthesize('Привіт, я Ева.', { persona: 'eva', lang: 'uk' });
+        const ms = Date.now() - t0;
+        assert(r.provider === 'edge-tts' && r.cached === false, 'real synthesis: provider=edge-tts, cached=false');
+        assert(r.voice === 'uk-UA-PolinaNeural', 'real synthesis uses uk-UA-PolinaNeural');
+        assert(Buffer.isBuffer(r.audioBuffer) && r.audioBuffer.length > 1024, `real synthesis: mp3 bytes = ${r.audioBuffer.length} (${ms} ms)`);
+        const r2 = await tts.synthesize('Привіт, я Ева.', { persona: 'eva', lang: 'uk' });
+        assert(r2.cached === true && r2.audioBuffer.equals(r.audioBuffer), 'second identical call resolves from cache');
+        assert(fs.existsSync(path.join(dir, 'tts-cache')), 'cache file stored under data/tts-cache/');
+      } catch (err: any) {
+        const msg = String(err?.message || err || '');
+        if (msg.includes('NoAudioReceived') || /network|ENOTFOUND|ETIMEDOUT|ECONNRESET|timeout|EAI_AGAIN/i.test(msg)) {
+          console.log('  [SKIP] network unavailable — real synthesis skipped');
+        } else {
+          assert(false, `real synthesis failed unexpectedly: ${msg}`);
+        }
+      }
     }
   }
 

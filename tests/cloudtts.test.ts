@@ -52,10 +52,13 @@ export async function runCloudTtsTests(): Promise<boolean> {
   // 1. Voice resolution (persona aliases)
   {
     const tts = new CloudTTS({ dataDir: makeTmp(), getCredentials: fakeCreds });
-    assert(tts.resolveVoice({ persona: 'eva' }) === 'uk-UA-Chirp3-HD-Aoede', 'persona eva → uk-UA-Chirp3-HD-Aoede (female, Chirp3-HD 1M chars/mo free)');
-    assert(tts.resolveVoice({ persona: 'adam' }) === 'ru-RU-Chirp3-HD-Fenrir', 'persona adam → ru-RU-Chirp3-HD-Fenrir (male, Chirp3-HD 1M chars/mo free)');
-    assert(tts.resolveVoice({ lang: 'ru-RU' }) === 'ru-RU-Chirp3-HD-Fenrir', 'lang ru → adam voice');
-    assert(tts.resolveVoice({ lang: 'uk-UA' }) === 'uk-UA-Chirp3-HD-Aoede', 'lang uk → eva voice');
+    assert(tts.resolveVoice({ persona: 'eva', lang: 'uk' }) === 'uk-UA-Chirp3-HD-Aoede', 'persona eva + lang uk → uk-UA-Chirp3-HD-Aoede (female, Chirp3-HD 1M chars/mo free)');
+    assert(tts.resolveVoice({ persona: 'adam', lang: 'ru' }) === 'ru-RU-Chirp3-HD-Fenrir', 'persona adam + lang ru → ru-RU-Chirp3-HD-Fenrir (male, Chirp3-HD 1M chars/mo free)');
+    assert(tts.resolveVoice({ lang: 'ru-RU' }) === 'ru-RU-Chirp3-HD-Aoede', 'lang ru (no persona, default female) → ru-RU-Chirp3-HD-Aoede');
+    assert(tts.resolveVoice({ lang: 'uk-UA' }) === 'uk-UA-Chirp3-HD-Aoede', 'lang uk (no persona, default female) → uk-UA-Chirp3-HD-Aoede');
+    assert(tts.resolveVoice({ lang: 'en' }) === 'en-US-Chirp3-HD-Aoede', 'lang en (default) → eva voice (en-US-Chirp3-HD-Aoede, FEMALE)');
+    assert(tts.resolveVoice({ lang: 'en', persona: 'adam' }) === 'en-US-Chirp3-HD-Fenrir', 'lang en + persona adam → en-US-Chirp3-HD-Fenrir (MALE)');
+    assert(tts.resolveVoice({ persona: 'eva', lang: 'ru' }) === 'ru-RU-Chirp3-HD-Aoede', 'persona eva + lang ru → ru-RU-Chirp3-HD-Aoede (FEMALE)');
     assert(tts.resolveVoice({ voiceName: 'uk-UA-Standard-B' }) === 'uk-UA-Standard-B', 'explicit voiceName wins over persona');
     assert(voiceFamily('uk-UA-Wavenet-B') === 'wavenet', 'family detection: Wavenet');
     assert(voiceFamily('ru-RU-Chirp3-HD-Kore') === 'chirp3-hd', 'family detection: Chirp3-HD');
@@ -76,7 +79,7 @@ export async function runCloudTtsTests(): Promise<boolean> {
     const dir = makeTmp();
     const calls: Array<{ url: string; body: string }> = [];
     const tts = new CloudTTS({ dataDir: dir, fetchFn: mockFetch(calls), getCredentials: fakeCreds });
-    const r1 = await tts.synthesize('Привіт, я Ева', { persona: 'eva' });
+    const r1 = await tts.synthesize('Привіт, я Ева', { persona: 'eva', lang: 'uk' });
     assert(r1.ok === true && r1.base64Audio === 'U29tZUF1ZGlvQnl0ZXM=', 'synthesize returns base64 audio on success');
     assert(r1.voice === 'uk-UA-Chirp3-HD-Aoede', 'synthesize uses eva voice');
     assert(r1.charCount === 'Привіт, я Ева'.length, 'charCount matches text length');

@@ -8,6 +8,17 @@ import { logger } from './Logger.js';
 export type ConsiliumMode = 'chat' | 'dialog' | 'interview' | 'consilium' | 'solo' | 'broadcast' | 'dialogue';
 export type PersonaId = 'eva' | 'adam' | 'dual';
 
+/**
+ * Derives the PersonaPolicy persona ('eva' | 'adam' | undefined) from a
+ * corporate roleId: ids starting with 'eva' → Eva, with 'adam' → Adam.
+ */
+export function personaForRoleId(roleId?: string): 'eva' | 'adam' | undefined {
+  if (!roleId) return undefined;
+  if (roleId.startsWith('eva')) return 'eva';
+  if (roleId.startsWith('adam')) return 'adam';
+  return undefined;
+}
+
 export interface ConsiliumParticipant {
   id: string;
   model: string;
@@ -166,7 +177,7 @@ export class ConsiliumEngine {
           roleId: p.roleId,
           name: p.name || role?.name || `Agent ${idx + 1}`,
           title: p.title || role?.title || 'Specialist',
-          systemPrompt: applyLocalePolicy(p.systemPrompt || role?.systemPrompt || Config.defaultSystemInstruction),
+          systemPrompt: applyLocalePolicy(p.systemPrompt || role?.systemPrompt || Config.defaultSystemInstruction, personaForRoleId(p.roleId)),
           temperature: p.temperature ?? role?.suggestedTemperature ?? 0.5,
           provider: p.provider,
         };
@@ -195,7 +206,7 @@ export class ConsiliumEngine {
         roleId: role.id,
         name: role.name,
         title: role.title,
-        systemPrompt: applyLocalePolicy(role.systemPrompt),
+        systemPrompt: applyLocalePolicy(role.systemPrompt, personaForRoleId(role.id)),
         temperature: role.suggestedTemperature,
       };
     });
@@ -217,7 +228,7 @@ export class ConsiliumEngine {
           roleId: role.id,
           name: role.name,
           title: role.title,
-        systemPrompt: applyLocalePolicy(role.systemPrompt),
+        systemPrompt: applyLocalePolicy(role.systemPrompt, personaForRoleId(role.id)),
           temperature: role.suggestedTemperature,
         });
       }
@@ -243,7 +254,7 @@ export class ConsiliumEngine {
       model: Config.defaultModel,
       name: 'EvaBot Solo Agent',
       title: 'AI Specialist',
-      systemPrompt: applyLocalePolicy(Config.defaultSystemInstruction),
+      systemPrompt: applyLocalePolicy(Config.defaultSystemInstruction, 'eva'),
       temperature: 0.7,
     };
 
@@ -323,7 +334,8 @@ export class ConsiliumEngine {
           'Format your reply in three clean sections:\n' +
           '1. * Feedback & Assessment: Strengths and gaps observed in candidate answer.\n' +
           '2. [SCORE] Score: Candidate competence rating (e.g. 85/100 or Seniority Level).\n' +
-          '3. ? Next Question / Scenario: Present the next targeted question or architectural trade-off challenge.'
+          '3. ? Next Question / Scenario: Present the next targeted question or architectural trade-off challenge.',
+          'eva'
         ),
         temperature: 0.4,
       };
@@ -339,7 +351,8 @@ export class ConsiliumEngine {
           'Format your reply in three clean sections:\n' +
           '1. * Technical Critique: Algorithmic efficiency, scalability, security posture, and business process impact.\n' +
           '2. [SCORE] Score: Technical rigor score (e.g. 90/100 or Staff Engineer Level).\n' +
-          '3. ? Next System Challenge: Present the next low-latency or high-throughput distributed system scenario.'
+          '3. ? Next System Challenge: Present the next low-latency or high-throughput distributed system scenario.',
+          'adam'
         ),
         temperature: 0.3,
       };
