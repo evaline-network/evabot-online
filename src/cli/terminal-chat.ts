@@ -225,9 +225,27 @@ function getTimeStr(): string {
 }
 
 /**
+ * Installs the defensive de-emoji output filter: every string byte written to
+ * the given stream passes through stripEmoji unless emoji stripping is off.
+ * Extracted from main() for testability (behavior-preserving).
+ */
+export function installEmojiStripFilter(
+  stream: { write: (...args: any[]) => any } = process.stdout,
+  shouldStrip: () => boolean = () => emojiStripOn
+): void {
+  const rawWrite = stream.write.bind(stream);
+  stream.write = function (...args: unknown[]): boolean {
+    if (shouldStrip() && typeof args[0] === 'string') {
+      args[0] = stripEmoji(args[0]);
+    }
+    return rawWrite(...(args as [string]));
+  };
+}
+
+/**
  * Prints the minimalist borderless Cyber-Terminal header (Strict 5-line specification)
  */
-function renderDashboard(session: ChatSession): void {
+export function renderDashboard(session: ChatSession): void {
   console.clear();
   const currentModel = ModelRegistry.getModelById(session.getModel());
   const isFree = currentModel?.pricing.freeTierStatus === '100% Free Quota Available';
@@ -268,7 +286,7 @@ function renderDashboard(session: ChatSession): void {
   console.log(`${C.gray}${getTimeStr()}${C.reset} ${C.yellow}system :${C.reset} ${s.greeting}\n`);
 }
 
-function printHelp(): void {
+export function printHelp(): void {
   console.log(`
 ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/help, /?${C.reset}              Показать это руководство
@@ -293,6 +311,8 @@ ${C.yellow}${C.bold}EVA-BOT CYBER-TERMINAL COMMAND GUIDE:${C.reset}
   ${C.cyan}/dialogue <тема>${C.reset}      Запустить автономный диалог-дебаты двух моделей
   ${C.cyan}/role <id>${C.reset}             Выбрать роль: architect, devops, security_auditor
   ${C.cyan}/say <текст>${C.reset}           Озвучить текст через Google Cloud TTS → /tmp/evabot-say.mp3 (/скажи, /сказать)
+  ${C.cyan}/listen <файл>${C.reset}         Распознать аудиофайл через Google Cloud STT (/розпізнай, /распознать)
+  ${C.cyan}/translate <текст>${C.reset}     Переклад тексту через Google Cloud Translation v3 (/переклад, /перевод)
   ${C.cyan}/clear${C.reset}                 Очистить историю сообщений
   ${C.cyan}/boot${C.reset}                  Повторить аппаратную самодиагностику двух серверов
   ${C.cyan}/sys${C.reset}                   Самоідентифікація системи: модель, кластер, компанія, БЗ (/система)
@@ -435,14 +455,7 @@ async function handleListen(arg: string): Promise<void> {
 async function main(): Promise<void> {
   // Defensive emoji renderer (default ON = evabot_emoji=off): every byte the
   // CLI prints passes through stripEmoji unless /emoji on disables it.
-  const rawStdoutWrite = process.stdout.write.bind(process.stdout);
-  (process.stdout as unknown as { write: (...args: unknown[]) => boolean }).write =
-    function (...args: unknown[]): boolean {
-      if (emojiStripOn && typeof args[0] === 'string') {
-        args[0] = stripEmoji(args[0]);
-      }
-      return rawStdoutWrite(...(args as [string]));
-    };
+  installEmojiStripFilter();
 
   // Smartest model auto-selection at entry with ranked fallback
   const smartest = ModelRatings.getSmartestFreeModel();
@@ -707,7 +720,12 @@ async function main(): Promise<void> {
   });
 }
 
-main().catch((err) => {
-  console.error(`Fatal Terminal Crash:`, err);
-  process.exit(1);
-});
+// BUGFIX (import safety): main() used to auto-run on module import, firing
+// boot diagnostics and hijacking stdout whenever the module was imported (e.g.
+// by the test suite). Only auto-start when launched as a CLI entrypoint.
+if (process.env.EVABOT_CLI_AUTOSTART !== 'off') {
+  main().catch((err) => {
+    console.error(`Fatal Terminal Crash:`, err);
+    process.exit(1);
+  });
+}

@@ -6,6 +6,7 @@ import { AccountingEngine, CapitalExpenses } from '../core/AccountingEngine.js';
 import { AgentBuilder } from '../core/AgentBuilder.js';
 import { I18nEngine } from '../core/I18nEngine.js';
 import { ChatHistoryStore } from '../core/ChatHistoryStore.js';
+import { RoomManager } from '../core/RoomManager.js';
 import { knowledgeBase } from '../core/KnowledgeBase.js';
 import { ClusterMonitor } from '../core/ClusterMonitor.js';
 import { ProductCatalog, CatalogLang } from '../core/ProductCatalog.js';
@@ -280,18 +281,37 @@ export class ModelRatings {
    */
   public static getSmartestFreeModel(): GeminiModelInfo {
     const candidateIds = [
+      'omni/cf-gpt-oss-120b',
+      'omni/cf-qwen2.5-coder-32b',
+      'omni/cf-llama-3.3-70b',
+      'omni/cf-qwen2.5-coder-32b',
+      'omni/cf-mistral-small-3.1',
+      'omni/cf-llama-4-scout',
+      'omni/cf-gemma-4-26b',
+      'omni/cf-nemotron-3-120b',
+      'omni/cf-gpt-oss-20b',
+      'omni/cf-gpt-oss-120b',
+      'omni/cf-llama-4-scout',
+      'omni/cf-gemma-4-26b',
+      'omni/cf-nemotron-3-120b',
+    ];
+
+    for (const id of candidateIds) {
+      const model = ModelRegistry.getModelById(id);
+      if (model && model.pricing.freeTierStatus === '100% Free Quota Available') {
+        return model;
+      }
+    }
+
+    // Fallback to original list
+    const legacyIds = [
       'gemini-3.8-flash',
       'gemini-3.1-pro',
       'gemini-3.1-flash',
       'omniroute/gemini-3.8-flash',
       'omniroute/gemini-3.1-pro',
-      'qwen/qwen-2.5-coder-32b-instruct:free',
-      'deepseek/deepseek-r1:free',
-      'gemini-2.5-pro',
-      'gemini-2.5-flash',
     ];
-
-    for (const id of candidateIds) {
+    for (const id of legacyIds) {
       const model = ModelRegistry.getModelById(id);
       if (model && model.pricing.freeTierStatus === '100% Free Quota Available') {
         return model;
@@ -309,18 +329,21 @@ export class ModelRatings {
     const current = ModelRegistry.getModelById(modelId);
     const isFree = current ? current.pricing.freeTierStatus === '100% Free Quota Available' : true;
 
-    // Strict priority: Newest 2026 Frontier -> Coding Specialists -> Stable Fleet
+    // Strict priority: Working Free Models (Cloudflare + Groq + working Google)
     const trustedFleet = [
+      'omni/cf-gpt-oss-120b',
+      'omni/cf-qwen2.5-coder-32b',
+      'omni/cf-llama-3.3-70b',
+      'omni/cf-mistral-small-3.1',
+      'omni/cf-llama-4-scout',
+      'omni/cf-gemma-4-26b',
+      'omni/cf-nemotron-3-120b',
+      'omni/cf-gpt-oss-20b',
       'gemini-3.8-flash',
       'gemini-3.1-pro',
       'gemini-3.1-flash',
       'omniroute/gemini-3.8-flash',
-      'qwen/qwen-2.5-coder-32b-instruct:free',
-      'deepseek/deepseek-r1:free',
-      'gemini-2.5-pro',
-      'gemini-2.5-flash',
-      'gemini-2.0-flash',
-      'meta-llama/llama-3.3-70b-instruct:free',
+      'omniroute/gemini-3.1-pro',
     ];
 
     if (isFree) {
@@ -560,12 +583,40 @@ export class ModelCommand {
         return this.handleVoices(command);
       case '/settings':
         return this.handleSettings();
+      case '/room':
+        return this.handleRoom(parts.slice(1).join(' '));
+      case '/rooms':
+        return this.handleRooms();
       case '/agents':
         return this.handleAgents();
       default:
         OpLog.getInstance().log('error', 'command', `unknown command: ${action}`);
-        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /translate, /health, /products, /who, /sephirot, /debug, /log, /monitor, /sys, /developer, /voices, /settings, /agents, /free, /paid, or /help.`;
+        return `[ERROR] Unknown command: ${action}. Use /top, /models, /history, /memory, /search, /find, /services, /servers, /mcp, /lsp, /cost, /company, /evaline, /lang, /info, /news, /translate, /health, /products, /who, /sephirot, /debug, /log, /monitor, /sys, /developer, /voices, /settings, /agents, /room, /rooms, /free, /paid, or /help.`;
     }
+  }
+
+
+  private static handleRoom(args: string): string {
+    const roomManager = RoomManager.getInstance();
+    const sessionId = 'cli';
+    if (!args || args === 'leave') {
+      const roomId = roomManager.getRoomForSession(sessionId);
+      if (!roomId) return '[X] Ви не в кімнаті';
+      roomManager.leaveRoom(sessionId);
+      return '[OK] Ви вийшли з кімнати ' + roomId;
+    }
+    const room = roomManager.createOrJoin(args, sessionId);
+    return '[OK] Кімната створена/приєднана: ' + room.id + '\nУчасників: ' + room.members.size;
+  }
+
+  private static handleRooms(): string {
+    const rooms = RoomManager.getInstance().listRooms();
+    if (rooms.length === 0) return '[--] Кімнат немає';
+    let out = 'КІМНАТИ:\n';
+    for (const r of rooms) {
+      out += '  - ' + r.id + ' - ' + r.members + ' учасник(ів)\n';
+    }
+    return out;
   }
 
   /**
