@@ -11,10 +11,25 @@
 
   <title>EvaBot Online // Cyber-Terminal & Neural Voice Hub</title>
 
-  <!-- Roboto variable family (Google Fonts): body = Roboto, code blocks = Roboto Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap">
+  <!-- Self-hosted Roboto variable family (no external font CDN): body = Roboto, code blocks = Roboto Mono fallback -->
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/Roboto-Variable.woff2" crossorigin>
+  <style>
+    @font-face {
+      font-family: 'Roboto';
+      src: url('/fonts/Roboto-Variable.woff2') format('woff2');
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Roboto';
+      src: url('/fonts/Roboto-Italic-Variable.woff2') format('woff2');
+      font-weight: 100 900;
+      font-style: italic;
+      font-display: swap;
+    }
+  </style>
 
   <!-- Zero-CDN Autonomous CSS -->
   <link rel="stylesheet" href="/terminal.css">

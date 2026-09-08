@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Манифест EvaLine // Фабрика автономных ИИ-агентов, система Консилиум и 94 LLM</title>
-  <meta name="description" content="Технологический манифест EvaLine: фабрика автономных ИИ-агентов, система принятия решений Консилиум, матрица из 94 LLM моделей и суверенная IT-инфраструктура.">
+  <title>Манифест EvaLine // Фабрика автономных ИИ-агентов, система «Консилиум» и суверенное производство EVA</title>
+  <meta name="description" content="Технологический манифест EvaLine: фабрика автономных ИИ-агентов, коллегиальная система Консилиум, матрица из 94 LLM моделей и реальное производство полимеров EVA.">
+  
+  <!-- Complete Roboto Font Family: Roboto, Roboto Mono, Roboto Condensed, Roboto Slab (All weights & styles) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Roboto+Condensed:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Roboto+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Roboto+Slab:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
   <style>
     :root {
       --bg: #07090e;
-      --bg-card: rgba(14, 18, 27, 0.78);
-      --bg-card-hover: rgba(20, 26, 40, 0.95);
+      --bg-card: rgba(14, 18, 27, 0.82);
+      --bg-card-hover: rgba(20, 26, 40, 0.96);
       --border: rgba(255, 255, 255, 0.08);
-      --border-accent: rgba(0, 230, 118, 0.35);
-      --border-cyan: rgba(0, 229, 255, 0.3);
+      --border-accent: rgba(0, 230, 118, 0.4);
+      --border-cyan: rgba(0, 229, 255, 0.35);
       
       --fg: #e6edf3;
       --fg-muted: #8b949e;
@@ -27,9 +30,11 @@
       --accent-amber: #ffd600;
       --accent-purple: #b388ff;
       
-      --font-display: 'Space Grotesk', sans-serif;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      /* Pure Roboto Typography Hierarchy */
+      --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-display: 'Roboto Condensed', 'Roboto', sans-serif;
+      --font-slab: 'Roboto Slab', serif;
+      --font-mono: 'Roboto Mono', monospace;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,20 +43,23 @@
       background-color: var(--bg);
       color: var(--fg);
       font-family: var(--font-sans);
+      font-weight: 400;
       font-size: 16px;
-      line-height: 1.65;
+      line-height: 1.68;
       overflow-x: hidden;
       background-image: 
-        radial-gradient(circle at 10% 10%, rgba(0, 230, 118, 0.04) 0%, transparent 40%),
-        radial-gradient(circle at 90% 20%, rgba(0, 229, 255, 0.04) 0%, transparent 45%),
+        radial-gradient(circle at 10% 10%, rgba(0, 230, 118, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 15%, rgba(0, 229, 255, 0.04) 0%, transparent 45%),
         radial-gradient(circle at 50% 85%, rgba(56, 189, 248, 0.03) 0%, transparent 50%);
       background-attachment: fixed;
     }
 
+    /* Fluid / Responsive Container */
     .container {
-      max-width: 1080px;
+      width: 100%;
+      max-width: min(1540px, 94vw);
       margin: 0 auto;
-      padding: 36px 24px 96px;
+      padding: clamp(24px, 4vw, 44px) clamp(16px, 3vw, 36px) 100px;
     }
 
     /* Navigation */
@@ -61,7 +69,9 @@
       align-items: center;
       padding-bottom: 22px;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 48px;
+      margin-bottom: clamp(32px, 5vw, 56px);
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
     .brand {
@@ -72,28 +82,32 @@
       color: #fff;
       font-family: var(--font-display);
       font-weight: 700;
-      font-size: 1.25rem;
-      letter-spacing: -0.02em;
+      font-size: 1.35rem;
+      letter-spacing: -0.01em;
     }
 
     .brand-logo {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #000;
-      font-weight: 800;
-      font-size: 16px;
+      font-family: var(--font-sans);
+      font-weight: 900;
+      font-size: 17px;
     }
 
     .nav-links {
       display: flex;
       gap: 20px;
       align-items: center;
-      font-size: 0.92rem;
+      font-size: 0.94rem;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      flex-wrap: wrap;
     }
 
     .nav-link {
@@ -110,12 +124,13 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 5px 14px;
+      padding: 6px 14px;
       background: rgba(0, 230, 118, 0.08);
-      border: 1px solid rgba(0, 230, 118, 0.25);
+      border: 1px solid rgba(0, 230, 118, 0.28);
       border-radius: 20px;
       font-family: var(--font-mono);
-      font-size: 0.78rem;
+      font-size: 0.8rem;
+      font-weight: 500;
       color: var(--accent-green);
     }
 
@@ -135,7 +150,7 @@
 
     /* Hero Section */
     .hero {
-      margin-bottom: 60px;
+      margin-bottom: clamp(48px, 6vw, 72px);
     }
 
     .hero-eyebrow {
@@ -143,50 +158,53 @@
       align-items: center;
       gap: 8px;
       font-family: var(--font-mono);
+      font-weight: 500;
       color: var(--accent-cyan);
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-bottom: 18px;
-      padding: 4px 10px;
+      padding: 5px 12px;
       background: rgba(0, 229, 255, 0.08);
-      border: 1px solid rgba(0, 229, 255, 0.2);
+      border: 1px solid rgba(0, 229, 255, 0.22);
       border-radius: 4px;
     }
 
     .hero-title {
       font-family: var(--font-display);
-      font-size: clamp(2.3rem, 5.2vw, 3.5rem);
+      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
       font-weight: 700;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
       margin-bottom: 24px;
       color: #ffffff;
     }
 
     .hero-title span {
-      background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan) 100%);
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .hero-subtitle {
-      font-size: 1.22rem;
-      color: #b0b8c5;
-      max-width: 860px;
+      font-family: var(--font-sans);
+      font-weight: 300;
+      font-size: clamp(1.15rem, 2vw, 1.35rem);
+      color: #b8c4d4;
+      max-width: 1040px;
       line-height: 1.65;
       margin-bottom: 36px;
     }
 
     .key-facts-bar {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
       gap: 16px;
       padding: 24px;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      backdrop-filter: blur(12px);
+      border-radius: 14px;
+      backdrop-filter: blur(14px);
     }
 
     .fact-item {
@@ -197,7 +215,7 @@
 
     .fact-value {
       font-family: var(--font-display);
-      font-size: 1.6rem;
+      font-size: clamp(1.6rem, 2.5vw, 2.1rem);
       font-weight: 700;
       color: #fff;
     }
@@ -208,7 +226,9 @@
     .fact-value.purple { color: var(--accent-purple); }
 
     .fact-label {
-      font-size: 0.8rem;
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 0.82rem;
       color: var(--fg-muted);
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -216,14 +236,15 @@
 
     /* Content Sections */
     .section {
-      margin-bottom: 70px;
+      margin-bottom: clamp(56px, 7vw, 84px);
     }
 
     .section-header {
       display: flex;
       align-items: center;
       gap: 16px;
-      margin-bottom: 22px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
     }
 
     .section-num {
@@ -239,23 +260,25 @@
 
     .section-title {
       font-family: var(--font-display);
-      font-size: 1.85rem;
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
       font-weight: 700;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
       color: #fff;
     }
 
     .lead-text {
-      font-size: 1.15rem;
+      font-size: clamp(1.1rem, 1.8vw, 1.25rem);
       color: #d1d8e5;
+      font-weight: 400;
       line-height: 1.7;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
 
     p {
       margin-bottom: 18px;
       color: #9aa5b5;
-      font-size: 1rem;
+      font-size: 1.02rem;
+      line-height: 1.7;
     }
 
     p strong {
@@ -263,11 +286,11 @@
       font-weight: 600;
     }
 
-    /* Cards Grid */
+    /* Fluid Cards Grid */
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(295px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+      gap: clamp(16px, 2vw, 24px);
       margin: 28px 0;
     }
 
@@ -275,7 +298,7 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 26px;
+      padding: clamp(20px, 3vw, 28px);
       transition: transform 0.2s, border-color 0.2s, background 0.2s;
       backdrop-filter: blur(10px);
       display: flex;
@@ -289,22 +312,22 @@
     }
 
     .card-icon {
-      font-size: 1.8rem;
+      font-size: 2rem;
       margin-bottom: 16px;
     }
 
     .card-title {
       font-family: var(--font-display);
-      font-size: 1.2rem;
-      font-weight: 600;
+      font-size: 1.3rem;
+      font-weight: 700;
       color: #fff;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .card-text {
-      font-size: 0.94rem;
+      font-size: 0.96rem;
       color: #9aa5b5;
-      line-height: 1.6;
+      line-height: 1.65;
       margin-bottom: 0;
       flex-grow: 1;
     }
@@ -313,28 +336,28 @@
     .workflow-container {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
+      border-radius: 14px;
+      padding: clamp(22px, 3vw, 36px);
       margin: 32px 0;
     }
 
     .workflow-header {
       font-family: var(--font-display);
-      font-size: 1.25rem;
+      font-size: 1.4rem;
       font-weight: 700;
       color: #fff;
       margin-bottom: 8px;
     }
 
     .workflow-sub {
-      font-size: 0.9rem;
+      font-size: 0.94rem;
       color: var(--fg-muted);
       margin-bottom: 24px;
     }
 
     .workflow-steps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
       gap: 16px;
     }
 
@@ -342,12 +365,13 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.07);
       border-radius: 8px;
-      padding: 20px;
+      padding: 22px;
     }
 
     .step-num {
       font-family: var(--font-mono);
-      font-size: 0.75rem;
+      font-size: 0.78rem;
+      font-weight: 600;
       color: var(--accent-cyan);
       letter-spacing: 0.06em;
       margin-bottom: 8px;
@@ -356,22 +380,22 @@
 
     .step-title {
       font-family: var(--font-display);
-      font-size: 1.05rem;
-      font-weight: 600;
+      font-size: 1.15rem;
+      font-weight: 700;
       color: #fff;
       margin-bottom: 8px;
     }
 
     .step-desc {
-      font-size: 0.86rem;
+      font-size: 0.9rem;
       color: #9aa5b5;
-      line-height: 1.5;
+      line-height: 1.55;
       margin-bottom: 0;
     }
 
     /* Callout Box */
     .callout {
-      padding: 24px 28px;
+      padding: clamp(20px, 3vw, 28px);
       background: rgba(0, 229, 255, 0.04);
       border: 1px solid rgba(0, 229, 255, 0.2);
       border-left: 4px solid var(--accent-cyan);
@@ -381,7 +405,7 @@
 
     .callout-title {
       font-family: var(--font-display);
-      font-size: 1.15rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--accent-cyan);
       margin-bottom: 8px;
@@ -389,9 +413,36 @@
 
     .callout-body {
       color: #d1d8e5;
-      font-size: 0.98rem;
-      line-height: 1.6;
+      font-size: 1.02rem;
+      line-height: 1.65;
       margin: 0;
+    }
+
+    /* Production Specs Box */
+    .production-box {
+      background: var(--bg-card);
+      border: 1px solid rgba(0, 230, 118, 0.25);
+      border-radius: 14px;
+      padding: clamp(22px, 3vw, 36px);
+      margin: 32px 0;
+    }
+
+    .production-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .production-badge {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      background: rgba(0, 230, 118, 0.12);
+      color: var(--accent-green);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+      border-radius: 4px;
+      font-weight: 600;
     }
 
     /* Models Matrix Interactive UI */
@@ -399,7 +450,7 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 24px;
+      padding: clamp(18px, 3vw, 26px);
       margin-bottom: 24px;
       display: flex;
       flex-direction: column;
@@ -419,11 +470,11 @@
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border);
       color: var(--fg-muted);
-      padding: 10px 18px;
+      padding: 10px 20px;
       border-radius: 8px;
       font-family: var(--font-display);
-      font-size: 0.95rem;
-      font-weight: 600;
+      font-size: 1.05rem;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -463,21 +514,23 @@
 
     .sort-label {
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: var(--fg-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-right: 4px;
+      font-weight: 500;
     }
 
     .sort-btn {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border);
       color: var(--fg-muted);
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: 6px;
-      font-size: 0.84rem;
+      font-size: 0.88rem;
       font-family: var(--font-sans);
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -506,10 +559,10 @@
       background: rgba(0, 0, 0, 0.4);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px 16px;
+      padding: 12px 18px;
       color: #fff;
       font-family: var(--font-sans);
-      font-size: 0.92rem;
+      font-size: 0.95rem;
       outline: none;
       transition: border-color 0.2s;
     }
@@ -520,18 +573,20 @@
 
     .count-badge {
       font-family: var(--font-mono);
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       color: var(--accent-green);
       background: rgba(0, 230, 118, 0.08);
       border: 1px solid rgba(0, 230, 118, 0.2);
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 6px;
       white-space: nowrap;
+      font-weight: 500;
     }
 
+    /* Responsive Models Grid */
     .models-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
       gap: 18px;
       margin-top: 16px;
     }
@@ -567,7 +622,7 @@
 
     .model-name {
       font-family: var(--font-display);
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       font-weight: 700;
       color: #fff;
       line-height: 1.3;
@@ -575,7 +630,7 @@
 
     .provider-badge {
       font-family: var(--font-mono);
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       padding: 4px 8px;
       border-radius: 4px;
       text-transform: uppercase;
@@ -601,7 +656,7 @@
 
     .metric-pill {
       font-family: var(--font-mono);
-      font-size: 0.74rem;
+      font-size: 0.76rem;
       padding: 3px 8px;
       border-radius: 4px;
       background: rgba(255, 255, 255, 0.04);
@@ -632,15 +687,15 @@
     }
 
     .model-desc {
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       color: #9aa5b5;
-      line-height: 1.5;
+      line-height: 1.55;
       margin-bottom: 0;
       flex-grow: 1;
     }
 
     .model-role {
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       color: #cbd5e1;
       background: rgba(255, 255, 255, 0.03);
       border-left: 3px solid var(--accent-cyan);
@@ -655,7 +710,7 @@
       padding-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.05);
       font-family: var(--font-mono);
-      font-size: 0.76rem;
+      font-size: 0.78rem;
     }
 
     .price-tag {
@@ -671,7 +726,7 @@
       overflow-x: auto;
       margin: 32px 0;
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       background: var(--bg-card);
     }
 
@@ -679,7 +734,7 @@
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.92rem;
+      font-size: 0.94rem;
     }
 
     th {
@@ -687,6 +742,7 @@
       color: var(--fg-muted);
       font-family: var(--font-mono);
       font-size: 0.82rem;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       padding: 16px 20px;
@@ -716,7 +772,7 @@
     /* Hub Links */
     .hub-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
       gap: 16px;
       margin: 28px 0;
     }
@@ -740,25 +796,26 @@
 
     .hub-item-badge {
       font-family: var(--font-mono);
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       color: var(--accent-green);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 8px;
+      font-weight: 600;
     }
 
     .hub-item-domain {
       font-family: var(--font-display);
-      font-size: 1.15rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: #fff;
       margin-bottom: 6px;
     }
 
     .hub-item-desc {
-      font-size: 0.86rem;
+      font-size: 0.88rem;
       color: var(--fg-muted);
-      line-height: 1.45;
+      line-height: 1.48;
     }
 
     /* Footer */
@@ -768,8 +825,9 @@
       border-top: 1px solid var(--border);
       text-align: center;
       color: var(--fg-subtle);
-      font-size: 0.86rem;
+      font-size: 0.88rem;
       font-family: var(--font-mono);
+      line-height: 1.6;
     }
 
     footer a {
@@ -782,10 +840,6 @@
     }
 
     @media (max-width: 768px) {
-      .container { padding: 24px 16px 64px; }
-      .nav-bar { flex-direction: column; gap: 16px; align-items: flex-start; }
-      .nav-links { flex-wrap: wrap; }
-      .workflow-steps { grid-template-columns: 1fr; }
       .matrix-search-box input { width: 100%; }
     }
   </style>
@@ -814,12 +868,12 @@
 
   <!-- Hero Section -->
   <section class="hero">
-    <div class="hero-eyebrow">Технологический манифест // Архитектура прикладного ИИ</div>
+    <div class="hero-eyebrow">Технологический манифест // Архитектура прикладного ИИ и реального сектора</div>
     <h1 class="hero-title">
-      Фабрика автономных ИИ-агентов и <span>система «Консилиум»</span> для бизнеса
+      Фабрика автономных ИИ-агентов, <span>система «Консилиум»</span> и суверенное производство EvaLine
     </h1>
     <p class="hero-subtitle">
-      Мы создали не просто очередное диалоговое окно. EvaLine — это распределённая сеть цифровых сотрудников и конвейер автономных ИИ-агентов, где критические решения проверяются коллегиальным разумом моделей, а задачи выполняются в реальной IT-инфраструктуре без галлюцинаций и простоев.
+      Мы объединили полный цикл физического производства полимеров EVA (завод в Черноморске, логистический хаб в Братиславе) с передовой цифровой инфраструктурой автономных ИИ-агентов. Решения принимаются коллегиальным разумом Консилиума, а задачи выполняются в реальных IT-системах без галлюцинаций, простоев и лишних затрат.
     </p>
 
     <!-- Key Facts -->
@@ -834,11 +888,11 @@
       </div>
       <div class="fact-item">
         <span class="fact-value amber">21 MCP-Сервер</span>
-        <span class="fact-label">Реальные действия в системах</span>
+        <span class="fact-label">Действия в коде и системах</span>
       </div>
       <div class="fact-item">
-        <span class="fact-value purple">Суверенный кластер</span>
-        <span class="fact-label">Германия ↔ США (Zero-Trust)</span>
+        <span class="fact-value purple">ISO 9001 & CE</span>
+        <span class="fact-label">Завод и экспорт в ЕС</span>
       </div>
     </div>
   </section>
@@ -850,7 +904,7 @@
       <h2 class="section-title">Проблема рынка: почему бизнесу недостаточно обычных чат-ботов</h2>
     </div>
     <p class="lead-text">
-      Подавляющее большинство современных корпоративных внедрений ИИ сводится к банальному веб-чату. Бизнес быстро упирается в фундаментальные ограничения одиночных языковых моделей.
+      Подавляющее большинство корпоративных внедрений ИИ сводится к примитивному окну веб-чата. На практике бизнес мгновенно упирается в системные тупики одиночных языковых моделей.
     </p>
 
     <div class="cards-grid">
@@ -858,7 +912,7 @@
         <div class="card-icon">❌</div>
         <h3 class="card-title">Цена слепых галлюцинаций</h3>
         <p class="card-text">
-          Одиночная нейросеть всегда звучит уверенно, даже когда ошибается. В юриспруденции, финансах, системной архитектуре и безопасности цена одной непроверенной строчки кода или выдуманного пункта договора измеряется сотнями тысяч долларов.
+          Одиночная нейросеть всегда звучит предельно убедительно, даже когда грубо ошибается. В юриспруденции, финансах, системной архитектуре и производстве цена одной выдуманной нормы стандарта, ошибки в расчете рецептуры полимера или уязвимости в коде оборачивается колоссальными убытками.
         </p>
       </div>
 
@@ -866,7 +920,7 @@
         <div class="card-icon">🔒</div>
         <h3 class="card-title">Изоляция без «рук»</h3>
         <p class="card-text">
-          Классический чат умеет лишь генерировать текст. Он не может самостоятельно зайти на сервер, проверить логи, поднять базу данных, запустить автотесты или выкатить микросервис. В итоге человек всё равно остаётся ручным передатчиком между экраном и системой.
+          Классический чат умеет лишь печатать текст. Он не способен подключиться к серверу по SSH, собрать контейнер Docker, выполнить рефакторинг в Git, отправить запрос к базе данных или сгенерировать управляющую программу для ЧПУ-раскроя. Человек остаётся ручным передатчиком между экраном и производством.
         </p>
       </div>
 
@@ -874,7 +928,7 @@
         <div class="card-icon">⛓️</div>
         <h3 class="card-title">Зависимость от монополий (Vendor Lock-in)</h3>
         <p class="card-text">
-          Привязка к одной корпорации делает компанию заложником чужих тарифов, сбоев API и внешней политики. Любое изменение условий в Калифорнии способно парализовать критический бизнес-процесс за считанные минуты.
+          Привязка к одной закрытой корпорации ставит компанию в зависимость от чужих ценовых политик, неожиданных блокировок и технических сбоев. Если калифорнийский провайдер меняет условия или отключает API, бизнес-процессы моментально парализуются.
         </p>
       </div>
     </div>
@@ -887,10 +941,10 @@
       <h2 class="section-title">EvaNetwork: Фабрика агентов и автономное ИИ-агентство</h2>
     </div>
     <p class="lead-text">
-      <strong>EvaLine</strong> проектирует и развёртывает не «ассистентов», а <strong>цифровой штат специализированных агентов</strong> с чёткими зонами ответственности, регламентами и инструментами.
+      <strong>EvaLine</strong> проектирует не «ассистентов», а <strong>автономный штат специализированных цифровых сотрудников</strong>, объединённых строгими регламентами и общим контуром управления.
     </p>
     <p>
-      Это работает по принципу технологической фабрики: под конкретную бизнес-задачу (разработка IT-продукта, круглосуточная поддержка, аудит безопасности, анализ финансовых потоков) формируется автономная группа агентов, управляемая единым протоколом координации.
+      Это работает по принципу высокотехнологичного агентства: под задачу бизнеса формируется команда агентов с четкими ролями, инструментами и перекрёстным контролем качества.
     </p>
 
     <div class="cards-grid">
@@ -898,7 +952,7 @@
         <div class="card-icon">👥</div>
         <h3 class="card-title">Штат ролевых специалистов</h3>
         <p class="card-text">
-          Каждый агент наделён строгой специализацией: Архитектор систем (<strong>Architect</strong>), Ведущий бэкенд-инженер (<strong>Adam</strong>), Фронтенд-директор и голос бренда (<strong>Eva</strong>), Аудитор безопасности (<strong>CISO</strong>), Аналитик данных (<strong>Data Engineer</strong>) и Стратег (<strong>CEO</strong>).
+          Каждый агент наделён строгой специализацией: Главный системный архитектор (<strong>Architect</strong>), Ведущий бэкенд-инженер и шеф производства (<strong>Adam</strong>), Фронтенд-директор и амбассадор клиентского сервиса (<strong>Eva</strong>), Офицер безопасности (<strong>CISO</strong>), Аналитик данных (<strong>Data Engineer</strong>) и Стратег (<strong>CEO</strong>).
         </p>
       </div>
 
@@ -906,7 +960,7 @@
         <div class="card-icon">🛠️</div>
         <h3 class="card-title">Шина инструментов MCP (21 сервер)</h3>
         <p class="card-text">
-          Благодаря промышленному стандарту Model Context Protocol агенты наделены реальными руками: выполнение системных bash-команд, управление контейнерами Docker, работа с Git-репозиториями, чтение баз данных SQLite/Postgres и браузерная автоматизация Chrome DevTools.
+          Благодаря промышленному протоколу Model Context Protocol агенты наделены полноценными руками: прямое выполнение команд Linux/Bash, управление Docker-контейнерами, работа с Git-репозиториями, взаимодействие с PostgreSQL/SQLite и автоматизация браузера Chrome DevTools.
         </p>
       </div>
 
@@ -914,7 +968,7 @@
         <div class="card-icon">🧠</div>
         <h3 class="card-title">Заземлённая корпоративная память (RAG)</h3>
         <p class="card-text">
-          Агенты не забывают контекст компании: гибридная система памяти объединяет графовые связи, векторные базы знаний и полнотекстовый поиск FTS5. Агенты оперируют только проверенными регламентами, контрактами и кодом вашей компании.
+          Агенты не забывают контекст компании: гибридная система объединяет графовую память связей, векторную базу ChromaDB и полнотекстовый поиск FTS5. Агенты оперируют только проверенными ГОСТами, стандартами ISO, контрактами и внутренней кодовой базой.
         </p>
       </div>
     </div>
@@ -924,59 +978,163 @@
   <section class="section">
     <div class="section-header">
       <span class="section-num">03</span>
-      <h2 class="section-title">Система «Евалайн Консилиум»: Коллегиальный интеллект без права на ошибку</h2>
+      <h2 class="section-title">Система «Евалайн Консилиум»: Как работает коллегиальный разум</h2>
     </div>
     <p class="lead-text">
-      Главное технологическое ядро фабрики EvaLine — <strong>система Консилиума (Consilium Engine)</strong>. Это математически выверенный алгоритм многоагентных дебатов и перекрёстной валидации.
-    </p>
-    <p>
-      Когда в систему поступает сложный вызов, решение вырабатывается не одной изолированной моделью, а коллегией независимых экспертов, представляющих разные нейросетевые архитектуры:
+      Главное ядро платформы — <strong>Consilium Engine</strong>. Это алгоритмическая система многоагентных состязательных дебатов, взаимного аудита и синтеза консенсуса между независимыми нейросетевыми архитектурами.
     </p>
 
-    <!-- Workflow Box -->
+    <!-- Workflow Box: 4 Stages -->
     <div class="workflow-container">
-      <div class="workflow-header">4 этапа выработки решения в Консилиуме EvaLine</div>
-      <div class="workflow-sub">От бизнес-требования до верифицированного внедрения в продакшен</div>
+      <div class="workflow-header">4 этапа выработки решения в системе «Евалайн Консилиум»</div>
+      <div class="workflow-sub">От входящей бизнес-потребности до верифицированного внедрения</div>
 
       <div class="workflow-steps">
         <div class="step-box">
           <div class="step-num">Этап 01</div>
-          <div class="step-title">Декомпозиция задачи</div>
+          <div class="step-title">Декомпозиция и контекст</div>
           <p class="step-desc">
-            Системный Архитектор и Бизнес-Аналитик разбирают входящий запрос, извлекают ограничения, критерии успеха и подключают релевантные документы из корпоративной базы знаний.
+            Архитектор и Бизнес-аналитик формулируют технические ограничения, критерии качества и извлекают регламенты из вечной памяти RAG.
           </p>
         </div>
 
         <div class="step-box">
           <div class="step-num">Этап 02</div>
-          <div class="step-title">Параллельные дебаты</div>
+          <div class="step-title">Параллельные дебаты гетерогенных LLM</div>
           <p class="step-desc">
-            Различные модели (Google Gemini 2.5 Pro, Claude Sonnet, DeepSeek R1, GPT-4o) независимо предлагают свои гипотезы, код и варианты архитектуры с оценкой рисков и затрат.
+            Google Gemini 3.1 Pro (архитектура), Claude 3.7 Sonnet (инженерия/код), DeepSeek R1 (математика) и OpenAI o1 (формальная верификация) предлагают независимые решения.
           </p>
         </div>
 
         <div class="step-box">
           <div class="step-num">Этап 03</div>
-          <div class="step-title">Перекрёстный аудит (CISO)</div>
+          <div class="step-title">Состязательный аудит (CISO / QA)</div>
           <p class="step-desc">
-            Офицер безопасности и QA-инженер проводят состязательную атаку на предложенные решения: проверяют на уязвимости OWASP, утечки данных, скрытые затраты и сбои при масштабировании.
+            Офицер безопасности и QA-инженер проводят стресс-тестирование: выявляют уязвимости OWASP, скрытые утечки данных, регуляторные риски и узкие места в расчётах.
           </p>
         </div>
 
         <div class="step-box">
           <div class="step-num">Этап 04</div>
-          <div class="step-title">Синтез консенсуса</div>
+          <div class="step-title">Консенсусный синтез и исполнение</div>
           <p class="step-desc">
-            Движок ConsiliumEngine синтезирует позиции экспертов в единый согласованный вердикт: математически выверенную стратегию или рабочий программный код, готовый к запуску.
+            Движок ConsiliumEngine сопоставляет аргументы, отсекает до 99.4% галлюцинаций и формирует окончательный выверенный вердикт, готовый к запуску через шину MCP.
           </p>
         </div>
       </div>
     </div>
 
+    <!-- How Consilium Works for ANY Business -->
+    <h3 style="font-family: var(--font-display); font-size: 1.5rem; color: #fff; margin: 36px 0 16px;">
+      1. Как Консилиум работает для ЛЮБОГО бизнеса
+    </h3>
+    <p>
+      Консилиум применим в любой индустрии, где цена ошибки высока, а рутинные процессы отнимают рабочие часы квалифицированных специалистов:
+    </p>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-icon">💻</div>
+        <h3 class="card-title">IT и разработка программного обеспечения</h3>
+        <p class="card-text">
+          Архитектор проектирует модули, Claude 3.7 пишет код, DeepSeek R1 проверяет алгоритмическую сложность, CISO валидирует права доступа, а DevOps формирует пайплайн развертывания. Без участия человека закрывается до 80% задач бэклога.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">⚖️</div>
+        <h3 class="card-title">Юриспруденция и международный комплаенс</h3>
+        <p class="card-text">
+          Перекрёстный аудит внешнеэкономических контрактов, проверка на соответствие европейским регламентам (GDPR, CE, таможенное право ЕС), поиск скрытых санкционных рисков и автоматическая подготовка двуязычных соглашений.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <h3 class="card-title">Финансы, аудит и оценка себестоимости</h3>
+        <p class="card-text">
+          Сопоставление финансовых прогнозов независимыми моделями, стресс-тестирование маржинальности, предотвращение кассовых разрывов и верификация бухгалтерских проводок.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🌍</div>
+        <h3 class="card-title">Омниканальные продажи и поддержка 24/7</h3>
+        <p class="card-text">
+          Голосовые и текстовые агенты общаются с клиентами на 6 языках без усталости, строго соблюдая скрипты и регламенты компании, мгновенно рассчитывая коммерческие предложения и логистику.
+        </p>
+      </div>
+    </div>
+
+    <!-- How Consilium Works for EvaLine Physical Production -->
+    <h3 style="font-family: var(--font-display); font-size: 1.5rem; color: #fff; margin: 40px 0 16px;">
+      2. Как Консилиум работает КОНКРЕТНО для компании EvaLine
+    </h3>
+    <p>
+      Компания <strong>EvaLine</strong> — это первый в Украине производитель полного цикла экологически чистых полимерных материалов EVA (этиленвинилацетат) от исходных листов до готовой продукции. Производство расположено в <strong>г. Черноморск (ул. Промышленная, 1)</strong>, а европейский логистический склад — в <strong>г. Братислава (Obchodna 37, Словакия)</strong>.
+    </p>
+
+    <!-- Physical Production Box -->
+    <div class="production-box">
+      <div class="production-header">
+        <span class="production-badge">РЕАЛЬНЫЙ СЕКТОР</span>
+        <h4 style="font-family: var(--font-display); font-size: 1.3rem; color: #fff; margin: 0;">
+          Материаловедение, продуктовая линейка и заводские стандарты EvaLine
+        </h4>
+      </div>
+      <p style="color: #cbd5e1; margin-bottom: 16px;">
+        Материал EVA — это вспененный полиолефин, который <strong>в 5 раз легче резины и в 4 раза легче ПВХ</strong>, не впитывает влагу, является диэлектриком, сохраняет упругость при температурах от <strong>-50°C до +70°C</strong> и устойчив к маслам, растворителям и дорожным реагентам.
+      </p>
+
+      <div class="cards-grid" style="margin: 20px 0 10px;">
+        <div class="card" style="background: rgba(0,0,0,0.35);">
+          <h4 style="color: var(--accent-green); font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 8px;">
+            🚗 Листы EVA для автоковриков («Ромб» и «Соты»)
+          </h4>
+          <p class="card-text">
+            Глубокие ячейки (до 8 мм) собирают и удерживают до 2.5 литров воды, снега и песка. Салон всегда сухой. Консилиум автоматизирует раскрой под лекала более 1 200 моделей автомобилей для производителей ковриков по всей Европе.
+          </p>
+        </div>
+
+        <div class="card" style="background: rgba(0,0,0,0.35);">
+          <h4 style="color: var(--accent-cyan); font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 8px;">
+            🐄 Маты для животноводства «Бурьонка» (КРС)
+          </h4>
+          <p class="card-text">
+            Сертифицированные маты для коровников, включённые в государственную программу компенсации 25% стоимости в Украине. Исключают травматизм копыт, предотвращают мастит у коров и повышают надои молока на 12–15%. Консилиум автоматически рассчитывает окупаемость для агрохолдингов.
+          </p>
+        </div>
+
+        <div class="card" style="background: rgba(0,0,0,0.35);">
+          <h4 style="color: var(--accent-amber); font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 8px;">
+            🥋 Спортивные татами и покрытия-пазлы
+          </h4>
+          <p class="card-text">
+            Плотность 75–250 кг/м³, твердость от 20 до 75 по Шору А, замки «ласточкин хвост» (dovetail), толщина 10–50 мм для дзюдо, карате, самбо и детских комнат. Консилиум подбирает амортизацию под нормативы спортивных федераций.
+          </p>
+        </div>
+
+        <div class="card" style="background: rgba(0,0,0,0.35);">
+          <h4 style="color: var(--accent-purple); font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 8px;">
+            ⚓ Искусственный тик EVA для катеров и яхт
+          </h4>
+          <p class="card-text">
+            Палубное покрытие с клеевым слоем 3M, устойчивое к ультрафиолету, соленой морской воде и механическому истиранию.
+          </p>
+        </div>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 16px; font-size: 0.92rem; color: #9aa5b5;">
+        <strong style="color: #fff;">Сертификация и доверие:</strong> EvaLine — официальный участник Всеукраинской сети добропорядочности и комплаенса <strong>UNIC</strong> (куда входят лишь 52 компании Украины), обладатель международного сертификата менеджмента качества <strong>ISO 9001</strong>, европейского знака <strong>CE</strong> и гигиенических заключений СЭС МОЗ Украины. Предприятие выполняет контрактное производство <strong>Private Label (OEM/ODM)</strong> под ключ.
+      </div>
+    </div>
+
     <div class="callout">
-      <div class="callout-title">💡 Почему Консилиум превосходит одиночные LLM:</div>
+      <div class="callout-title">🏭 Консилиум в действии на производстве EvaLine:</div>
       <p class="callout-body">
-        То, что упустила одна модель, гарантированно выявит другая в ходе состязательного оппонирования. Консилиум отсекает до 99.4% логических галлюцинаций, превращая вероятностный генератор текста в строгий инструмент инженерной точности.
+        <strong>Adam (Бэкенд-инженер и шеф производства)</strong> оптимизирует рецептуры вспенивания полимера, рассчитывает карты раскроя для ЧПУ-плоттеров и управляет защищённой базой лекал.<br>
+        <strong>Eva (Директор фронтенда и амбассадор бренда)</strong> общается с B2B-партнёрами из Польши, Германии, Румынии и Украины на 6 языках, мгновенно формируя коммерческие предложения с логистикой из Братиславы или Черноморска.<br>
+        <strong>Zero-OpEx Routing</strong>: рутинный подбор параметров ковриков обрабатывается бесплатными моделями Gemini Flash ($0 себестоимости), а сложная экспортная документация и согласование Private Label — Консилиумом на Gemini 3.1 Pro и Claude 3.7 Sonnet.
       </p>
     </div>
   </section>
@@ -2264,55 +2422,10 @@
     </div>
   </section>
 
-  <!-- Section 05: Практическая ценность для бизнеса -->
+  <!-- Section 05: Сравнительная таблица -->
   <section class="section">
     <div class="section-header">
       <span class="section-num">05</span>
-      <h2 class="section-title">Что фабрика агентов решает для бизнеса и человека</h2>
-    </div>
-    <p class="lead-text">
-      Мы переводим искусственный интеллект из плоскости экспериментов в плоскость прямого экономического эффекта.
-    </p>
-
-    <div class="cards-grid">
-      <div class="card">
-        <div class="card-icon">⚡</div>
-        <h3 class="card-title">Преодоление кадрового голода</h3>
-        <p class="card-text">
-          Один ведущий инженер или руководитель во главе агентской фабрики EvaLine выполняет объём работы целого IT-отдела из 8–10 специалистов. Агенты не болеют, не выгорают и работают 24/7/365 с неизменным качеством.
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">🚀</div>
-        <h3 class="card-title">Ускорение Time-to-Market в 5 раз</h3>
-        <p class="card-text">
-          От идеи нового сервиса до создания API, интерфейса, написания документации и развёртывания на сервере проходят дни, а не кварталы. Консилиум параллелит разработку, тестирование и документацию.
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">📉</div>
-        <h3 class="card-title">Zero-OpEx: Контроль над затратами</h3>
-        <p class="card-text">
-          Наша система умной маршрутизации направляет 80% рутинных шагов на сверхбыстрые и бесплатные LPU-модели, подключая дорогие рассуждающие LLM только на этапе синтеза и глубокого аудита. Экономия бюджета достигает 70–85%.
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">🛡️</div>
-        <h3 class="card-title">Непрерывная безопасность и мониторинг</h3>
-        <p class="card-text">
-          Агенты мониторинга непрерывно инспектируют состояние серверов, журналы безопасности, нагрузку процессоров и расход памяти. Зависшие процессы и аномалии нейтрализуются автоматическими сторожевыми службами.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section 06: Сравнительная таблица -->
-  <section class="section">
-    <div class="section-header">
-      <span class="section-num">06</span>
       <h2 class="section-title">Сравнение подходов: Одиночный ИИ vs Фабрика Агентов EvaLine</h2>
     </div>
 
@@ -2334,17 +2447,17 @@
           <tr>
             <td><strong>Устойчивость к галлюцинациям</strong></td>
             <td>Низкая: модель склонна уверенно выдумывать факты.</td>
-            <td class="col-highlight">Высокая: перекрёстный аудит несколькими независимыми LLM.</td>
+            <td class="col-highlight">Высокая: перекрёстный аудит несколькими независимыми LLM (точность 99.4%).</td>
           </tr>
           <tr>
             <td><strong>Выполнение действий в IT</strong></td>
             <td>Невозможно (только советы и сниппеты текста).</td>
-            <td class="col-highlight">Прямое управление серверами, кодом, БД и Docker через MCP.</td>
+            <td class="col-highlight">Прямое управление серверами, кодом, ЧПУ-раскроем и Docker через MCP.</td>
           </tr>
           <tr>
             <td><strong>Безопасность данных</strong></td>
             <td>Утечка коммерческой тайны на сервера сторонней компании.</td>
-            <td class="col-highlight">Суверенная архитектура: закрытый WireGuard контур и свои БД.</td>
+            <td class="col-highlight">Суверенная архитектура: закрытый WireGuard контур и изолированные БД.</td>
           </tr>
           <tr>
             <td><strong>Зависимость от одного провайдера</strong></td>
@@ -2356,14 +2469,14 @@
     </div>
   </section>
 
-  <!-- Section 07: Инфраструктурный фундамент -->
+  <!-- Section 06: Инфраструктурный фундамент и военная устойчивость -->
   <section class="section">
     <div class="section-header">
-      <span class="section-num">07</span>
-      <h2 class="section-title">Инфраструктурный фундамент: Суверенный кластер двух узлов</h2>
+      <span class="section-num">06</span>
+      <h2 class="section-title">Военная устойчивость, блэкаут-резистентность и кластер двух узлов</h2>
     </div>
     <p class="lead-text">
-      Агенты EvaLine опираются на физически изолированную, геораспределённую серверную архитектуру, не зависящую от локальных блэкаутов и сбоев отдельных площадок:
+      Инфраструктура EvaLine спроектирована для работы в условиях полномасштабных вызовов: ракетных ударов по энергосистеме, блэкаутов и мобилизационного дефицита кадров.
     </p>
 
     <div class="cards-grid">
@@ -2371,7 +2484,7 @@
         <div class="card-icon">🇩🇪</div>
         <h3 class="card-title">EvaBrain — Вычислительное ядро (Франкфурт)</h3>
         <p class="card-text">
-          Мощный compute-сервер (8 vCPU Intel Xeon, 32 GB RAM) в защищённой европейской зоне. Здесь непрерывно работают агенты, компиляторы, локальные языковые серверы LSP и графовая память.
+          Мощный compute-сервер (8 vCPU Intel Xeon, 32 GB RAM) в защищённой европейской зоне НАТО. Здесь непрерывно функционируют агенты, компиляторы, локальные языковые серверы LSP и графовая память. 100% аптайм даже при блэкауте в Украине.
         </p>
       </div>
 
@@ -2379,7 +2492,7 @@
         <div class="card-icon">🇺🇸</div>
         <h3 class="card-title">EvaFace — Краевой защитный шлюз (Айова)</h3>
         <p class="card-text">
-          Облегчённый edge-узел на стеке Caddy HTTP/3 QUIC и автоматическом TLS 1.3. Принимает глобальный трафик пользователей, отсекает DDoS-атаки и мгновенно проксирует запросы.
+          Облегчённый edge-узел на стеке Caddy HTTP/3 QUIC и автоматическом TLS 1.3. Принимает глобальный трафик пользователей, отсекает атаки и мгновенно перенаправляет запросы в ядро.
         </p>
       </div>
 
@@ -2387,16 +2500,16 @@
         <div class="card-icon">🌐</div>
         <h3 class="card-title">Магистраль WireGuard Mesh (ChaCha20-Poly1305)</h3>
         <p class="card-text">
-          Узлы связаны шифрованным тоннелем без открытых наружу системных портов. Автоматические сторожи (Watchdog) и защита ядра (EarlyOOM) исключают зависания процессов.
+          Шифрованная магистраль без публично открытых системных портов. Автоматические сторожевые службы (Watchdog каждые 3 минуты) и защита ядра (EarlyOOM) исключают зависания процессов.
         </p>
       </div>
     </div>
   </section>
 
-  <!-- Section 08: Каталог экосистемы -->
+  <!-- Section 07: Каталог экосистемы -->
   <section class="section">
     <div class="section-header">
-      <span class="section-num">08</span>
+      <span class="section-num">07</span>
       <h2 class="section-title">Единая экосистема: Каталог доменов и сервисов</h2>
     </div>
     <p class="lead-text">
@@ -2413,7 +2526,7 @@
       <a href="https://evaline.network" class="hub-item">
         <span class="hub-item-badge">Телеметрия кластера</span>
         <div class="hub-item-domain">evaline.network</div>
-        <div class="hub-item-desc">Высокотехнологичный TUI-дашборд: мониторинг процессов, задержки сети и состояния 78 LLM моделей.</div>
+        <div class="hub-item-desc">Высокотехнологичный TUI-дашборд: мониторинг процессов, задержки сети и состояния 94 LLM моделей.</div>
       </a>
 
       <a href="https://evaline.online" class="hub-item">
@@ -2445,15 +2558,18 @@
 
   <!-- Footer -->
   <footer>
-    <p>EVALINE NETWORK & EVABOT ONLINE // СУВЕРЕННАЯ ФАБРИКА АВТОНОМНЫХ ИИ-АГЕНТОВ</p>
+    <p>EVALINE NETWORK & EVABOT ONLINE // СУВЕРЕННАЯ ФАБРИКА АВТОНОМНЫХ ИИ-АГЕНТОВ & ПРОИЗВОДСТВО ПОЛИМЕРОВ EVA</p>
     <p style="margin-top: 8px;">
-      Кластер высокой готовности: Франкфурт (GCP 8 vCPU) ⟷ Айова (GCP Ingress) ⟷ Защищённый Mesh-контур.
+      Производство: Украина, г. Черноморск, ул. Промышленная, 1 • Склад в ЕС: Словакия, г. Братислава, Obchodna 37 • Сертификация ISO 9001 & CE
+    </p>
+    <p style="margin-top: 8px; color: var(--fg-subtle);">
+      Кластер: Франкфурт (8 vCPU) ⟷ Айова (Ingress) ⟷ Защищённый WireGuard Mesh-контур.
     </p>
   </footer>
 
 </div>
 
-<!-- EMBEDDED MODELS REGISTRY DATA -->
+<!-- EMBEDDED MODELS REGISTRY DATA & INTERACTIVE SCRIPT -->
 <script>
   const RAW_MODELS = [{"id": "gemini-3.8-flash", "name": "Gemini 3.8 Flash", "provider": "Google DeepMind", "category": "Google Gemini (Next-Gen)", "desc": "Frontier ultra-fast autonomous agentic model with native real-time tool orchestration and multi-modal streaming.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Pro / AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00)", "priceIn": "$0.00 (Free) / $0.075 (Paid)", "priceOut": "$0.00 (Free) / $0.300 (Paid)", "quality": 99, "recency": 100, "speed": 85, "composite": 97, "recommended": false, "roleHint": "Сверхбыстрый мультиагентный исполнитель и автономный роутер", "numPrice": 0.0}, {"id": "gemini-3.1-pro", "name": "Gemini 3.1 Pro", "provider": "Google DeepMind", "category": "Google Gemini (Next-Gen)", "desc": "Premier enterprise reasoning frontier model with 2M token context, deep logic, and architectural planning capability.", "context": 2097152, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Pro / AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00)", "priceIn": "$0.00 (Free) / $1.25 (Paid)", "priceOut": "$0.00 (Free) / $5.00 (Paid)", "quality": 100, "recency": 99, "speed": 45, "composite": 94, "recommended": false, "roleHint": "Главный системный архитектор и логический арбитр (Контекст 2M)", "numPrice": 0.0}, {"id": "gemini-3.1-flash", "name": "Gemini 3.1 Flash", "provider": "Google DeepMind", "category": "Google Gemini (Next-Gen)", "desc": "Lightweight high-efficiency frontier flash model with ultra-low latency inference.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Studio: 15 RPM, 1M TPM ($0.00)", "priceIn": "$0.00 (Free) / $0.050 (Paid)", "priceOut": "$0.00 (Free) / $0.200 (Paid)", "quality": 96, "recency": 99, "speed": 85, "composite": 95, "recommended": false, "roleHint": "Сверхбыстрый мультиагентный исполнитель и автономный роутер", "numPrice": 0.0}, {"id": "gemini-2.5-flash", "name": "Gemini 2.5 Flash", "provider": "Google DeepMind", "category": "Google Gemini (Next-Gen)", "desc": "Google’s fastest flagship model with native multimodal reasoning and real-time responsiveness.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00)", "priceIn": "$0.00 (Free) / $0.075 (Paid)", "priceOut": "$0.00 (Free) / $0.30 (Paid)", "quality": 93, "recency": 88, "speed": 85, "composite": 90, "recommended": true, "roleHint": "Сложные аналитические рассуждения и верификация гипотез", "numPrice": 0.0}, {"id": "gemini-2.5-pro", "name": "Gemini 2.5 Pro", "provider": "Google DeepMind", "category": "Google Gemini (Next-Gen)", "desc": "Premier reasoning and code generation engine for complex analytical challenges.", "context": 2097152, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00)", "priceIn": "$0.00 (Free) / $1.25 (Paid)", "priceOut": "$0.00 (Free) / $5.00 (Paid)", "quality": 95, "recency": 88, "speed": 45, "composite": 89, "recommended": true, "roleHint": "Главный системный архитектор и логический арбитр (Контекст 2M)", "numPrice": 0.0}, {"id": "gemini-2.0-flash", "name": "Gemini 2.0 Flash", "provider": "Google DeepMind", "category": "Google Gemini (Next-Gen)", "desc": "Next-gen streaming architecture for high-frequency interactive dialogues and agent loops.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Studio: 15 RPM, 1M TPM, 1,500 RPD ($0.00)", "priceIn": "$0.00 (Free) / $0.10 (Paid)", "priceOut": "$0.00 (Free) / $0.40 (Paid)", "quality": 83, "recency": 80, "speed": 85, "composite": 84, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 0.0}, {"id": "gemini-2.0-flash-lite", "name": "Gemini 2.0 Flash Lite", "provider": "Google DeepMind", "category": "Google Gemini (Next-Gen)", "desc": "Ultra cost-efficient model designed for extreme throughput and low latency agent tasks.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Studio: 30 RPM, 1,500 RPD ($0.00)", "priceIn": "$0.00 (Free) / $0.075 (Paid)", "priceOut": "$0.00 (Free) / $0.30 (Paid)", "quality": 83, "recency": 80, "speed": 100, "composite": 86, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 0.0}, {"id": "gemini-1.5-pro", "name": "Gemini 1.5 Pro", "provider": "Google DeepMind", "category": "Google Gemini (Long-Context)", "desc": "2,000,000 token context window capable of ingesting entire codebases and long video streams.", "context": 2097152, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Studio: 2 RPM, 32k TPM, 50 RPD ($0.00)", "priceIn": "$0.00 (Free) / $1.25 (Paid)", "priceOut": "$0.00 (Free) / $5.00 (Paid)", "quality": 70, "recency": 60, "speed": 45, "composite": 70, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "gemini-1.5-flash", "name": "Gemini 1.5 Flash", "provider": "Google DeepMind", "category": "Google Gemini (Long-Context)", "desc": "Fast, lightweight multimodal model with 1,000,000 tokens context.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Studio: 15 RPM, 1M TPM ($0.00)", "priceIn": "$0.00 (Free) / $0.075 (Paid)", "priceOut": "$0.00 (Free) / $0.30 (Paid)", "quality": 65, "recency": 60, "speed": 85, "composite": 71, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "gemini-1.5-flash-8b", "name": "Gemini 1.5 Flash 8B", "provider": "Google DeepMind", "category": "Google Gemini (Long-Context)", "desc": "Compact 8-billion parameter version built for high-speed lightweight routing.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Google AI Studio: 15 RPM ($0.00)", "priceIn": "$0.00 (Free) / $0.0375 (Paid)", "priceOut": "$0.00 (Free) / $0.15 (Paid)", "quality": 65, "recency": 60, "speed": 85, "composite": 71, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "gemma-2-27b-it", "name": "Gemma 2 (27B Instruct)", "provider": "Google DeepMind", "category": "Google Gemma (Open Weights)", "desc": "Google’s flagship open weights model with performance rivaling closed models.", "context": 8192, "maxOutput": 4096, "isFree": true, "freeDetails": "Open Weights ($0.00) or Google AI Studio Free Quota", "priceIn": "$0.00 (Free) / $0.27 (Vertex AI)", "priceOut": "$0.00 (Free) / $0.27 (Vertex AI)", "quality": 45, "recency": 55, "speed": 50, "composite": 47, "recommended": false, "roleHint": "Локальные легковесные задачи и вспомогательные микросервисы", "numPrice": 0.0}, {"id": "gemma-2-9b-it", "name": "Gemma 2 (9B Instruct)", "provider": "Google DeepMind", "category": "Google Gemma (Open Weights)", "desc": "High efficiency open weights model with exceptional reasoning-per-parameter ratio.", "context": 8192, "maxOutput": 4096, "isFree": true, "freeDetails": "Open Weights ($0.00) or Google AI Studio Free Quota", "priceIn": "$0.00 (Free) / $0.10 (Vertex AI)", "priceOut": "$0.00 (Free) / $0.10 (Vertex AI)", "quality": 45, "recency": 55, "speed": 50, "composite": 47, "recommended": false, "roleHint": "Локальные легковесные задачи и вспомогательные микросервисы", "numPrice": 0.0}, {"id": "claude-3-7-sonnet", "name": "Claude 3.7 Sonnet (Vertex AI)", "provider": "Anthropic", "category": "Anthropic Claude on Google Cloud", "desc": "Hybrid reasoning and instant response model available on Google Cloud Vertex AI.", "context": 200000, "maxOutput": 8192, "isFree": false, "freeDetails": "Google Cloud billing per token consumption", "priceIn": "$3.00", "priceOut": "$15.00", "quality": 98, "recency": 98, "speed": 50, "composite": 85, "recommended": false, "roleHint": "Глубокий инженерный кодинг, архитектурный ревью и рефакторинг", "numPrice": 3.0}, {"id": "claude-3-5-sonnet", "name": "Claude 3.5 Sonnet (Vertex AI)", "provider": "Anthropic", "category": "Anthropic Claude on Google Cloud", "desc": "Industry benchmark for code generation and multi-step reasoning on Vertex AI.", "context": 200000, "maxOutput": 8192, "isFree": false, "freeDetails": "Google Cloud billing per token consumption", "priceIn": "$3.00", "priceOut": "$15.00", "quality": 86, "recency": 70, "speed": 50, "composite": 71, "recommended": false, "roleHint": "Глубокий инженерный кодинг, архитектурный ревью и рефакторинг", "numPrice": 3.0}, {"id": "claude-3-5-haiku", "name": "Claude 3.5 Haiku (Vertex AI)", "provider": "Anthropic", "category": "Anthropic Claude on Google Cloud", "desc": "High speed, cost-effective Anthropic model running in Google Cloud.", "context": 200000, "maxOutput": 8192, "isFree": false, "freeDetails": "Google Cloud billing per token consumption", "priceIn": "$0.80", "priceOut": "$4.00", "quality": 86, "recency": 70, "speed": 70, "composite": 74, "recommended": false, "roleHint": "Быстрый синтаксический анализ, валидация JSON и микроагенты", "numPrice": 0.8}, {"id": "llama-3.3-70b-instruct", "name": "Meta Llama 3.3 (70B Instruct)", "provider": "Meta", "category": "Meta Llama 3 on Google Cloud", "desc": "Meta’s latest 70-billion parameter model fully hosted on Google Cloud Vertex AI.", "context": 128000, "maxOutput": 4096, "isFree": false, "freeDetails": "Google Cloud Vertex AI prediction pricing", "priceIn": "$0.70", "priceOut": "$0.90", "quality": 45, "recency": 86, "speed": 50, "composite": 62, "recommended": false, "roleHint": "Суверенная независимая экспертиза открытых весов", "numPrice": 0.7}, {"id": "llama-3.2-90b-vision-instruct", "name": "Meta Llama 3.2 (90B Vision)", "provider": "Meta", "category": "Meta Llama 3 on Google Cloud", "desc": "Premier open multimodal vision and text model on Google Cloud Vertex AI.", "context": 128000, "maxOutput": 4096, "isFree": false, "freeDetails": "Google Cloud Vertex AI prediction pricing", "priceIn": "$0.90", "priceOut": "$1.20", "quality": 45, "recency": 50, "speed": 50, "composite": 50, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.9}, {"id": "llama-3.1-405b-instruct", "name": "Meta Llama 3.1 (405B Instruct)", "provider": "Meta", "category": "Meta Llama 3 on Google Cloud", "desc": "Massive 405-billion parameter frontier model running on Google TPU/GPU cluster.", "context": 128000, "maxOutput": 4096, "isFree": false, "freeDetails": "Google Cloud Vertex AI prediction pricing", "priceIn": "$3.50", "priceOut": "$3.50", "quality": 45, "recency": 99, "speed": 50, "composite": 65, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 3.5}, {"id": "mistral-large-2411", "name": "Mistral Large 2 (Vertex AI)", "provider": "Mistral AI", "category": "Mistral AI on Google Cloud", "desc": "Mistral’s top-tier multilingual reasoning and coding model on Google Cloud.", "context": 128000, "maxOutput": 4096, "isFree": false, "freeDetails": "Google Cloud Vertex AI prediction pricing", "priceIn": "$2.00", "priceOut": "$6.00", "quality": 75, "recency": 50, "speed": 50, "composite": 59, "recommended": false, "roleHint": "Европейский суверенный аудит и мультиязычный анализ", "numPrice": 2.0}, {"id": "codestral-2501", "name": "Codestral 25.01 (Vertex AI)", "provider": "Mistral AI", "category": "Mistral AI on Google Cloud", "desc": "Specialized code completion, debugging, and fill-in-the-middle on Google Cloud.", "context": 256000, "maxOutput": 4096, "isFree": false, "freeDetails": "Google Cloud Vertex AI prediction pricing", "priceIn": "$0.30", "priceOut": "$0.90", "quality": 94, "recency": 50, "speed": 50, "composite": 70, "recommended": false, "roleHint": "Сложные аналитические рассуждения и верификация гипотез", "numPrice": 0.3}, {"id": "deepseek-r1", "name": "DeepSeek R1 (Reasoning)", "provider": "DeepSeek", "category": "DeepSeek on Google Cloud", "desc": "Frontier open reasoning model with transparent chain-of-thought verification on Google Cloud.", "context": 64000, "maxOutput": 8192, "isFree": false, "freeDetails": "Vertex AI Model Garden compute rate", "priceIn": "$0.55", "priceOut": "$2.19", "quality": 95, "recency": 95, "speed": 50, "composite": 81, "recommended": false, "roleHint": "Пошаговые математические рассуждения и состязательный аудит логики", "numPrice": 0.55}, {"id": "jamba-1.5-large", "name": "AI21 Jamba 1.5 Large", "provider": "AI21 Labs", "category": "AI21 Labs & Cohere on Google Cloud", "desc": "Hybrid Mamba-Transformer architecture offering 256,000 tokens long-context speed.", "context": 256000, "maxOutput": 4096, "isFree": false, "freeDetails": "Google Cloud Vertex AI prediction pricing", "priceIn": "$2.00", "priceOut": "$8.00", "quality": 60, "recency": 50, "speed": 50, "composite": 57, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 2.0}, {"id": "command-r-plus", "name": "Cohere Command R+", "provider": "Cohere", "category": "AI21 Labs & Cohere on Google Cloud", "desc": "Enterprise Retrieval-Augmented Generation (RAG) model on Google Cloud.", "context": 128000, "maxOutput": 4096, "isFree": false, "freeDetails": "Google Cloud Vertex AI prediction pricing", "priceIn": "$2.50", "priceOut": "$10.00", "quality": 58, "recency": 50, "speed": 50, "composite": 53, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 2.5}, {"id": "omniroute/gemini-3.8-flash", "name": "OmniRoute Gemini 3.8 Flash (Edge Router)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Frontier ultra-fast autonomous agentic model routed via internal OmniRoute daemon cluster.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Direct edge routing via internal daemon cluster ($0.00 margin)", "priceIn": "$0.00 (Self-Hosted) / $0.075 (Upstream)", "priceOut": "$0.00 (Self-Hosted) / $0.300 (Upstream)", "quality": 99, "recency": 100, "speed": 65, "composite": 95, "recommended": false, "roleHint": "Сверхбыстрый мультиагентный исполнитель и автономный роутер", "numPrice": 0.0}, {"id": "omniroute/gemini-3.1-pro", "name": "OmniRoute Gemini 3.1 Pro (Edge Router)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Premier enterprise reasoning frontier model with 2M context proxied via OmniRoute daemon cluster.", "context": 2097152, "maxOutput": 8192, "isFree": true, "freeDetails": "Direct edge routing via internal daemon cluster ($0.00 margin)", "priceIn": "$0.00 (Self-Hosted) / $1.25 (Upstream)", "priceOut": "$0.00 (Self-Hosted) / $5.00 (Upstream)", "quality": 100, "recency": 99, "speed": 65, "composite": 96, "recommended": false, "roleHint": "Главный системный архитектор и логический арбитр (Контекст 2M)", "numPrice": 0.0}, {"id": "omniroute/gemini-2.5-pro", "name": "OmniRoute Gemini 2.5 Pro (Edge Router)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "High-availability routing proxy via OmniRoute daemon with automatic load balancing and fallback.", "context": 2097152, "maxOutput": 8192, "isFree": true, "freeDetails": "Direct edge routing via internal daemon cluster ($0.00 margin)", "priceIn": "$0.00 (Self-Hosted) / $1.25 (Upstream)", "priceOut": "$0.00 (Self-Hosted) / $5.00 (Upstream)", "quality": 90, "recency": 88, "speed": 65, "composite": 89, "recommended": false, "roleHint": "Главный системный архитектор и логический арбитр (Контекст 2M)", "numPrice": 0.0}, {"id": "omniroute/gemini-2.5-flash", "name": "OmniRoute Gemini 2.5 Flash (Edge Router)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Workhorse Google model routed via OmniRoute daemon. Fast, multimodal, 1M context.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Direct edge routing via internal daemon cluster ($0.00 margin)", "priceIn": "$0.00 (Self-Hosted) / $0.075 (Upstream)", "priceOut": "$0.00 (Self-Hosted) / $0.30 (Upstream)", "quality": 93, "recency": 88, "speed": 65, "composite": 88, "recommended": true, "roleHint": "Сложные аналитические рассуждения и верификация гипотез", "numPrice": 0.0}, {"id": "omniroute/gemini-2.0-flash", "name": "OmniRoute Gemini 2.0 Flash (Edge Router)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Next-gen streaming architecture routed via OmniRoute for high-frequency interactive dialogues.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "Direct edge routing via internal daemon cluster ($0.00 margin)", "priceIn": "$0.00 (Self-Hosted) / $0.10 (Upstream)", "priceOut": "$0.00 (Self-Hosted) / $0.40 (Upstream)", "quality": 83, "recency": 80, "speed": 65, "composite": 82, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 0.0}, {"id": "omniroute/deepseek-r1", "name": "OmniRoute DeepSeek R1 (Daemon Cluster)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "DeepSeek R1 reasoning executed through local OmniRoute daemon cluster.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "Routed through high-throughput OmniRoute node ($0.00 node fee)", "priceIn": "$0.00 (Local) / $0.55 (Upstream)", "priceOut": "$0.00 (Local) / $2.19 (Upstream)", "quality": 95, "recency": 95, "speed": 50, "composite": 84, "recommended": false, "roleHint": "Пошаговые математические рассуждения и состязательный аудит логики", "numPrice": 0.0}, {"id": "omniroute/deepseek-v3", "name": "OmniRoute DeepSeek V3 (Daemon Cluster)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "DeepSeek V3 671B MoE with extreme cost efficiency and high coding quality routed via OmniRoute.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "Routed through high-throughput OmniRoute node ($0.00 node fee)", "priceIn": "$0.00 (Local) / $0.14 (Upstream)", "priceOut": "$0.00 (Local) / $0.28 (Upstream)", "quality": 45, "recency": 95, "speed": 50, "composite": 67, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "omniroute/llama-3.3-70b", "name": "OmniRoute Llama 3.3 70B (Daemon Cluster)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Meta Llama 3.3 70B Instruct open weights routed through OmniRoute daemon cluster.", "context": 128000, "maxOutput": 4096, "isFree": true, "freeDetails": "Routed through high-throughput OmniRoute node ($0.00 node fee)", "priceIn": "$0.00 (Local) / $0.59 (Upstream)", "priceOut": "$0.00 (Local) / $0.79 (Upstream)", "quality": 85, "recency": 86, "speed": 50, "composite": 79, "recommended": false, "roleHint": "Суверенная независимая экспертиза открытых весов", "numPrice": 0.0}, {"id": "omniroute/qwen-2.5-coder-32b", "name": "OmniRoute Qwen 2.5 Coder 32B (Daemon Cluster)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Alibaba Qwen 2.5 Coder 32B code generation specialist routed via OmniRoute.", "context": 128000, "maxOutput": 8192, "isFree": true, "freeDetails": "Routed through high-throughput OmniRoute node ($0.00 node fee)", "priceIn": "$0.00 (Local) / $0.18 (Upstream)", "priceOut": "$0.00 (Local) / $0.18 (Upstream)", "quality": 93, "recency": 88, "speed": 50, "composite": 82, "recommended": false, "roleHint": "Сложные аналитические рассуждения и верификация гипотез", "numPrice": 0.0}, {"id": "omniroute/mistral-7b", "name": "OmniRoute Mistral 7B (Daemon Cluster)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Fast, reliable Mistral 7B lightweight instruction model routed via OmniRoute.", "context": 32768, "maxOutput": 4096, "isFree": true, "freeDetails": "Routed through high-throughput OmniRoute node ($0.00 node fee)", "priceIn": "$0.00 (Local) / $0.05 (Upstream)", "priceOut": "$0.00 (Local) / $0.05 (Upstream)", "quality": 45, "recency": 50, "speed": 50, "composite": 49, "recommended": false, "roleHint": "Европейский суверенный аудит и мультиязычный анализ", "numPrice": 0.0}, {"id": "omniroute/gpt-4o", "name": "OmniRoute GPT-4o (Edge Proxy)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "OpenAI GPT-4o multimodal flagship proxied through OmniRoute daemon gateway.", "context": 128000, "maxOutput": 16384, "isFree": false, "freeDetails": "Edge-routed OpenAI upstream billing", "priceIn": "$2.50", "priceOut": "$10.00", "quality": 82, "recency": 75, "speed": 50, "composite": 70, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 2.5}, {"id": "omniroute/gpt-4o-mini", "name": "OmniRoute GPT-4o Mini (Edge Proxy)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "OpenAI GPT-4o Mini cost-efficient multimodal model proxied via OmniRoute.", "context": 128000, "maxOutput": 16384, "isFree": true, "freeDetails": "Routed through high-throughput OmniRoute node ($0.00 node fee)", "priceIn": "$0.00 (Local) / $0.15 (Upstream)", "priceOut": "$0.00 (Local) / $0.60 (Upstream)", "quality": 82, "recency": 75, "speed": 65, "composite": 75, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 0.0}, {"id": "omniroute/o1", "name": "OmniRoute OpenAI o1 (Edge Proxy)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "OpenAI o1 advanced reasoning model with chain-of-thought proxied via OmniRoute.", "context": 200000, "maxOutput": 100000, "isFree": false, "freeDetails": "Edge-routed OpenAI upstream billing", "priceIn": "$15.00", "priceOut": "$60.00", "quality": 88, "recency": 80, "speed": 50, "composite": 75, "recommended": false, "roleHint": "Формальная верификация алгоритмов и доказательства безопасности", "numPrice": 15.0}, {"id": "omniroute/o3-mini", "name": "OmniRoute OpenAI o3-mini (Edge Proxy)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "OpenAI o3-mini fast reasoning model with cost-effective chain-of-thought via OmniRoute.", "context": 200000, "maxOutput": 100000, "isFree": true, "freeDetails": "Routed through high-throughput OmniRoute node ($0.00 node fee)", "priceIn": "$0.00 (Local) / $1.10 (Upstream)", "priceOut": "$0.00 (Local) / $4.40 (Upstream)", "quality": 88, "recency": 80, "speed": 65, "composite": 81, "recommended": false, "roleHint": "Формальная верификация алгоритмов и доказательства безопасности", "numPrice": 0.0}, {"id": "omniroute/claude-sonnet-4-5", "name": "OmniRoute Claude Sonnet 4.5 (Edge Proxy)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Anthropic Claude Sonnet 4.5 frontier model proxied through OmniRoute daemon gateway.", "context": 200000, "maxOutput": 8192, "isFree": false, "freeDetails": "Edge-routed Anthropic upstream billing", "priceIn": "$3.00", "priceOut": "$15.00", "quality": 98, "recency": 98, "speed": 50, "composite": 85, "recommended": false, "roleHint": "Сложные аналитические рассуждения и верификация гипотез", "numPrice": 3.0}, {"id": "omniroute/claude-3.5-sonnet", "name": "OmniRoute Claude 3.5 Sonnet (Edge Proxy)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Anthropic Claude 3.5 Sonnet proxied through high-reliability OmniRoute daemon gateway.", "context": 200000, "maxOutput": 8192, "isFree": false, "freeDetails": "Edge-routed Anthropic upstream billing", "priceIn": "$3.00", "priceOut": "$15.00", "quality": 86, "recency": 70, "speed": 50, "composite": 71, "recommended": false, "roleHint": "Глубокий инженерный кодинг, архитектурный ревью и рефакторинг", "numPrice": 3.0}, {"id": "omniroute/claude-3-5-haiku", "name": "OmniRoute Claude 3.5 Haiku (Edge Proxy)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "High speed, cost-effective Anthropic Claude 3.5 Haiku routed via OmniRoute.", "context": 200000, "maxOutput": 8192, "isFree": true, "freeDetails": "Routed through high-throughput OmniRoute node ($0.00 node fee)", "priceIn": "$0.00 (Local) / $0.80 (Upstream)", "priceOut": "$0.00 (Local) / $4.00 (Upstream)", "quality": 86, "recency": 70, "speed": 70, "composite": 77, "recommended": false, "roleHint": "Быстрый синтаксический анализ, валидация JSON и микроагенты", "numPrice": 0.0}, {"id": "omniroute/grok-2", "name": "OmniRoute Grok 2 (Edge Proxy)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "xAI Grok 2 frontier model with real-time knowledge proxied via OmniRoute.", "context": 131072, "maxOutput": 8192, "isFree": false, "freeDetails": "Edge-routed xAI upstream billing", "priceIn": "$2.00", "priceOut": "$10.00", "quality": 70, "recency": 50, "speed": 50, "composite": 57, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 2.0}, {"id": "deepseek/deepseek-r1:free", "name": "DeepSeek R1 (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Frontier open reasoning model with chain-of-thought verification, 100% free via OpenRouter tier.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 95, "recency": 95, "speed": 80, "composite": 87, "recommended": false, "roleHint": "Пошаговые математические рассуждения и состязательный аудит логики", "numPrice": 0.0}, {"id": "meta-llama/llama-3.3-70b:free", "name": "Llama 3.3 70B Instruct (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "State-of-the-art Meta 70B open weight instruction model hosted on OpenRouter free tier.", "context": 128000, "maxOutput": 4096, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 85, "recency": 86, "speed": 80, "composite": 82, "recommended": false, "roleHint": "Суверенная независимая экспертиза открытых весов", "numPrice": 0.0}, {"id": "google/gemini-2.0-flash-exp:free", "name": "Gemini 2.0 Flash Exp (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Ultra-fast Google experimental Gemini 2.0 Flash endpoint accessed via OpenRouter free gateway.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 83, "recency": 80, "speed": 65, "composite": 82, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 0.0}, {"id": "qwen/qwen-2.5-coder-32b-instruct:free", "name": "Qwen 2.5 Coder 32B (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Alibaba Qwen code generation specialist with 128k context on OpenRouter free tier.", "context": 128000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 93, "recency": 88, "speed": 50, "composite": 82, "recommended": false, "roleHint": "Сложные аналитические рассуждения и верификация гипотез", "numPrice": 0.0}, {"id": "mistralai/mistral-7b-instruct:free", "name": "Mistral 7B Instruct (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Fast, reliable 7B lightweight instruction model on OpenRouter free queue.", "context": 32768, "maxOutput": 4096, "isFree": true, "freeDetails": "OpenRouter Community Free Tier", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 50, "composite": 49, "recommended": false, "roleHint": "Европейский суверенный аудит и мультиязычный анализ", "numPrice": 0.0}, {"id": "anthropic/claude-3.5-haiku:free", "name": "Claude 3.5 Haiku (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Anthropic Claude 3.5 Haiku fast inference model 100% free via OpenRouter community tier.", "context": 200000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 86, "recency": 70, "speed": 70, "composite": 77, "recommended": false, "roleHint": "Быстрый синтаксический анализ, валидация JSON и микроагенты", "numPrice": 0.0}, {"id": "google/gemini-3.0-flash:free", "name": "Gemini 3.0 Flash (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Google Gemini 3.0 Flash ultra-fast model, 100% free via OpenRouter community tier.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 96, "speed": 65, "composite": 74, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "openai/gpt-4o-mini:free", "name": "GPT-4o Mini (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "OpenAI GPT-4o Mini cost-efficient model, 100% free via OpenRouter community tier.", "context": 128000, "maxOutput": 16384, "isFree": true, "freeDetails": "OpenRouter Community Free Tier", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 82, "recency": 75, "speed": 65, "composite": 75, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 0.0}, {"id": "cognitivecomputations/dolphin3.0-r1-2506:free", "name": "Dolphin 3.0 R1 2506 (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Open-source reasoning model Dolphin 3.0 R1 fine-tuned for instruction following, free on OpenRouter.", "context": 128000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 96, "speed": 50, "composite": 68, "recommended": false, "roleHint": "Пошаговые математические рассуждения и состязательный аудит логики", "numPrice": 0.0}, {"id": "openrouter/free", "name": "OpenRouter Free Models Router", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Meta-router that auto-picks any currently-available 100% free OpenRouter model. Never dies from a single model removal — TOP-1 entry choice.", "context": 200000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 50, "recency": 50, "speed": 80, "composite": 59, "recommended": true, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "nvidia/nemotron-3-ultra-550b-a55b:free", "name": "NVIDIA Nemotron 3 Ultra 550B (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Smartest free model of the fleet: NVIDIA Nemotron 3 Ultra 550B MoE (55B active) reasoning, 1M context, free community tier.", "context": 1000000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 80, "composite": 60, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "thinkingmachines/inkling:free", "name": "Thinking Machines Inkling (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Thinking Machines flagship with 1M context on OpenRouter free tier.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 80, "composite": 60, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "thinkingmachines/inkling-small:free", "name": "Thinking Machines Inkling Small (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Fast small variant of Inkling, 1M context, free community tier.", "context": 1048576, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 80, "composite": 60, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "nvidia/nemotron-3-super-120b-a12b:free", "name": "NVIDIA Nemotron 3 Super 120B (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "NVIDIA Nemotron 3 Super 120B MoE (12B active), 262k context, free community tier.", "context": 262144, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 80, "composite": 58, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "dots-studio/dots-3-note-preview:free", "name": "Dots Studio Dots3-Note Preview (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Dots3-Note 512k-context preview model on OpenRouter free tier.", "context": 512000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 80, "composite": 58, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "google/gemma-4-31b-it:free", "name": "Google Gemma 4 31B IT (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Google Gemma 4 31B open-weights instruct via OpenRouter community tier (does NOT consume our Google account).", "context": 262144, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 80, "composite": 58, "recommended": false, "roleHint": "Локальные легковесные задачи и вспомогательные микросервисы", "numPrice": 0.0}, {"id": "cohere/north-mini-code:free", "name": "Cohere North Mini Code (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Cohere North Mini coding specialist, 256k context, free community tier.", "context": 256000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 95, "composite": 60, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "inclusionai/ling-3.0-flash-sante:free", "name": "inclusionAI Ling 3.0 Flash Sante (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "inclusionAI Ling 3.0 Flash reasoning model, 262k context, free community tier.", "context": 262144, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 96, "speed": 95, "composite": 76, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "poolside/laguna-s-2.1:free", "name": "Poolside Laguna S 2.1 (Free on OpenRouter)", "provider": "OpenRouter", "category": "OpenRouter Free Models", "desc": "Poolside Laguna S 2.1 code-generation model, 262k context, free community tier.", "context": 262144, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter Community Free Tier (20 RPM queue)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 80, "composite": 58, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "omni/cf-gpt-oss-120b", "name": "OmniRoute CF GPT-OSS 120B (Cloudflare via edge)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "OpenAI GPT-OSS 120B open-weights routed through Cloudflare Workers AI via the local OmniRoute edge daemon.", "context": 131072, "maxOutput": 8192, "isFree": true, "freeDetails": "Self-hosted edge routing ($0.00 node fee)", "priceIn": "$0.00 (Self-Hosted)", "priceOut": "$0.00 (Self-Hosted)", "quality": 45, "recency": 50, "speed": 50, "composite": 52, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "omni/cf-llama-3.3-70b", "name": "OmniRoute CF Llama 3.3 70B (Cloudflare via edge)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Meta Llama 3.3 70B Instruct via Cloudflare Workers AI routed by the local OmniRoute edge daemon.", "context": 128000, "maxOutput": 4096, "isFree": true, "freeDetails": "Self-hosted edge routing ($0.00 node fee)", "priceIn": "$0.00 (Self-Hosted)", "priceOut": "$0.00 (Self-Hosted)", "quality": 85, "recency": 86, "speed": 50, "composite": 79, "recommended": false, "roleHint": "Суверенная независимая экспертиза открытых весов", "numPrice": 0.0}, {"id": "omni/cf-qwen2.5-coder-32b", "name": "OmniRoute CF Qwen 2.5 Coder 32B (Cloudflare via edge)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Alibaba Qwen 2.5 Coder 32B code specialist via Cloudflare Workers AI on the OmniRoute edge.", "context": 128000, "maxOutput": 8192, "isFree": true, "freeDetails": "Self-hosted edge routing ($0.00 node fee)", "priceIn": "$0.00 (Self-Hosted)", "priceOut": "$0.00 (Self-Hosted)", "quality": 93, "recency": 88, "speed": 50, "composite": 82, "recommended": false, "roleHint": "Сложные аналитические рассуждения и верификация гипотез", "numPrice": 0.0}, {"id": "omni/groq-gpt-oss-120b", "name": "OmniRoute Groq GPT-OSS 120B (Groq via edge)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "OpenAI GPT-OSS 120B on Groq LPU ultra-low-latency inference via the OmniRoute edge daemon.", "context": 131072, "maxOutput": 8192, "isFree": true, "freeDetails": "Groq free tier routed by self-hosted edge ($0.00 node fee)", "priceIn": "$0.00 (Groq Free Tier)", "priceOut": "$0.00 (Groq Free Tier)", "quality": 70, "recency": 50, "speed": 50, "composite": 61, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "omni/zai-glm-5.3-flash", "name": "OmniRoute Z.ai GLM 5.3 Flash (edge)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "Z.ai GLM 5.3 Flash fast frontier model routed by the OmniRoute edge daemon.", "context": 128000, "maxOutput": 8192, "isFree": true, "freeDetails": "Z.ai free tier routed by self-hosted edge ($0.00 node fee)", "priceIn": "$0.00 (Z.ai Free Tier)", "priceOut": "$0.00 (Z.ai Free Tier)", "quality": 45, "recency": 50, "speed": 65, "composite": 54, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "omni/or-nemotron-3-ultra-550b", "name": "OmniRoute OR Nemotron 3 Ultra 550B (OpenRouter via edge)", "provider": "OmniRoute", "category": "OmniRoute Daemon Cluster", "desc": "NVIDIA Nemotron 3 Ultra 550B MoE routed through OpenRouter free tier by the OmniRoute edge daemon.", "context": 1000000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenRouter community free tier routed by self-hosted edge ($0.00 node fee)", "priceIn": "$0.00 (100% Free)", "priceOut": "$0.00 (100% Free)", "quality": 45, "recency": 50, "speed": 50, "composite": 57, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "openai/gpt-4o", "name": "GPT-4o (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "OpenAI GPT-4o multimodal flagship with 128k context on OpenRouter.", "context": 128000, "maxOutput": 16384, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$2.50", "priceOut": "$10.00", "quality": 82, "recency": 75, "speed": 50, "composite": 70, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 2.5}, {"id": "openai/gpt-4o-mini", "name": "GPT-4o Mini (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "OpenAI GPT-4o Mini cost-efficient multimodal model on OpenRouter.", "context": 128000, "maxOutput": 16384, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$0.15", "priceOut": "$0.60", "quality": 82, "recency": 75, "speed": 65, "composite": 72, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 0.15}, {"id": "openai/o1-preview", "name": "OpenAI o1 Preview (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "OpenAI o1 advanced reasoning model with chain-of-thought on OpenRouter.", "context": 200000, "maxOutput": 100000, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$15.00", "priceOut": "$60.00", "quality": 88, "recency": 80, "speed": 50, "composite": 75, "recommended": false, "roleHint": "Формальная верификация алгоритмов и доказательства безопасности", "numPrice": 15.0}, {"id": "openai/o1-mini", "name": "OpenAI o1 Mini (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "OpenAI o1 Mini fast reasoning model on OpenRouter.", "context": 200000, "maxOutput": 100000, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$1.10", "priceOut": "$4.40", "quality": 88, "recency": 80, "speed": 65, "composite": 77, "recommended": false, "roleHint": "Формальная верификация алгоритмов и доказательства безопасности", "numPrice": 1.1}, {"id": "anthropic/claude-3.5-sonnet", "name": "Claude 3.5 Sonnet (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "Anthropic Claude 3.5 Sonnet industry-leading code and reasoning model on OpenRouter.", "context": 200000, "maxOutput": 8192, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$3.00", "priceOut": "$15.00", "quality": 86, "recency": 70, "speed": 50, "composite": 71, "recommended": false, "roleHint": "Глубокий инженерный кодинг, архитектурный ревью и рефакторинг", "numPrice": 3.0}, {"id": "anthropic/claude-3-opus", "name": "Claude 3 Opus (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "Anthropic Claude 3 Opus frontier model for complex reasoning on OpenRouter.", "context": 200000, "maxOutput": 8192, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$15.00", "priceOut": "$75.00", "quality": 45, "recency": 50, "speed": 50, "composite": 49, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 15.0}, {"id": "google/gemini-2.5-flash", "name": "Gemini 2.5 Flash (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "Google Gemini 2.5 Flash fast multimodal model on OpenRouter.", "context": 1048576, "maxOutput": 8192, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$0.075", "priceOut": "$0.30", "quality": 88, "recency": 88, "speed": 65, "composite": 86, "recommended": false, "roleHint": "Инженерная разработка, системная интеграция и тесты", "numPrice": 0.075}, {"id": "google/gemini-3.0-pro-exp", "name": "Gemini 3.0 Pro Exp (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "Google Gemini 3.0 Pro experimental frontier model on OpenRouter.", "context": 2097152, "maxOutput": 8192, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$1.25", "priceOut": "$5.00", "quality": 45, "recency": 96, "speed": 65, "composite": 73, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 1.25}, {"id": "deepseek/deepseek-chat-v3-0324", "name": "DeepSeek V3 (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "DeepSeek V3 671B MoE model with extreme cost efficiency and high coding quality.", "context": 64000, "maxOutput": 8192, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$0.14", "priceOut": "$0.28", "quality": 45, "recency": 50, "speed": 50, "composite": 49, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.14}, {"id": "meta-llama/llama-3.1-405b-instruct", "name": "Llama 3.1 405B (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "Meta Llama 3.1 405B frontier open weights model on OpenRouter.", "context": 128000, "maxOutput": 4096, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$3.50", "priceOut": "$3.50", "quality": 82, "recency": 99, "speed": 50, "composite": 78, "recommended": false, "roleHint": "Суверенная независимая экспертиза открытых весов", "numPrice": 3.5}, {"id": "mistralai/mistral-large-3", "name": "Mistral Large 3 (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "Mistral Large 3 top-tier multilingual reasoning and coding model on OpenRouter.", "context": 128000, "maxOutput": 32000, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$2.00", "priceOut": "$6.00", "quality": 75, "recency": 50, "speed": 50, "composite": 59, "recommended": false, "roleHint": "Европейский суверенный аудит и мультиязычный анализ", "numPrice": 2.0}, {"id": "qwen/qwen-2.5-72b-instruct", "name": "Qwen 2.5 72B (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "Alibaba Qwen 2.5 72B large instruction model on OpenRouter.", "context": 32000, "maxOutput": 8192, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$0.90", "priceOut": "$0.90", "quality": 45, "recency": 88, "speed": 50, "composite": 59, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.9}, {"id": "x-ai/grok-2", "name": "Grok 2 (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "xAI Grok 2 frontier model with real-time knowledge on OpenRouter.", "context": 131072, "maxOutput": 8192, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$2.00", "priceOut": "$10.00", "quality": 70, "recency": 50, "speed": 50, "composite": 57, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 2.0}, {"id": "perplexity/llama-3.1-sonar-405b-instruct", "name": "Perplexity Sonar 405B (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "Perplexity Llama 3.1 Sonar 405B with real-time web search integration on OpenRouter.", "context": 128000, "maxOutput": 8192, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$3.50", "priceOut": "$14.00", "quality": 45, "recency": 55, "speed": 50, "composite": 50, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 3.5}, {"id": "nvidia/llama-3.1-nemotron-70b-instruct", "name": "NVIDIA Nemotron 70B (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "NVIDIA NeMo Nemotron 70B RLHF-optimized instruction model on OpenRouter.", "context": 128000, "maxOutput": 4096, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$0.59", "priceOut": "$0.79", "quality": 45, "recency": 55, "speed": 50, "composite": 51, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.59}, {"id": "deepseek/deepseek-r1", "name": "DeepSeek R1 (OpenRouter Premium)", "provider": "OpenRouter", "category": "OpenRouter Premium", "desc": "DeepSeek R1 reasoning model on OpenRouter (higher limits than free tier).", "context": 64000, "maxOutput": 8192, "isFree": false, "freeDetails": "OpenRouter credit balance", "priceIn": "$0.55", "priceOut": "$2.19", "quality": 95, "recency": 95, "speed": 50, "composite": 81, "recommended": false, "roleHint": "Пошаговые математические рассуждения и состязательный аудит логики", "numPrice": 0.55}, {"id": "opencode/go-coder-32b", "name": "OpenCode Go Coder 32B", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Specialized enterprise coding platform model with automated unit test generation and refactoring.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenCode Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.20 (Prod)", "priceOut": "$0.00 (Dev Tier) / $0.60 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 51, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/go-fast", "name": "OpenCode Go Fast (Low-Latency)", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Ultra-low latency code agent model optimized for autocomplete and fast interactive edits.", "context": 32768, "maxOutput": 4096, "isFree": true, "freeDetails": "OpenCode Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.08 (Prod)", "priceOut": "$0.00 (Dev Tier) / $0.24 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 49, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-coder-pro", "name": "OpenCode Zen Coder Pro", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Zen-grade enterprise coding model with multi-language refactoring, AST analysis, and security audit. Pro tier with deeper reasoning.", "context": 128000, "maxOutput": 16384, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.40 (Prod)", "priceOut": "$0.00 (Dev Tier) / $1.20 (Prod)", "quality": 50, "recency": 50, "speed": 50, "composite": 54, "recommended": true, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-fast-7b", "name": "OpenCode Zen Fast 7B (Edge Coder)", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Lightweight 7B Zen-fast edge coder optimized for IDE autocomplete and inline refactoring at sub-100ms latency.", "context": 32768, "maxOutput": 4096, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.04 (Prod)", "priceOut": "$0.00 (Dev Tier) / $0.12 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 49, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-reasoner-32b", "name": "OpenCode Zen Reasoner 32B", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Deep chain-of-thought reasoning coder for complex algorithms, architectural refactors, and bug forensics.", "context": 128000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.30 (Prod)", "priceOut": "$0.00 (Dev Tier) / $0.90 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 52, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-multi-lang-70b", "name": "OpenCode Zen Multi-Lang 70B", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "70B frontier code model supporting 100+ languages with deep context and CI/CD-grade refactoring.", "context": 200000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.60 (Prod)", "priceOut": "$0.00 (Dev Tier) / $1.80 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 54, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-security-auditor", "name": "OpenCode Zen Security Auditor", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Specialized security audit coder trained on OWASP Top 10, CVE database, and zero-trust patterns.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.35 (Prod)", "priceOut": "$0.00 (Dev Tier) / $1.05 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 51, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-test-gen", "name": "OpenCode Zen Test Generator", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Automated unit test and integration test generation. Supports Jest, pytest, JUnit, Go test frameworks.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.25 (Prod)", "priceOut": "$0.00 (Dev Tier) / $0.75 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 51, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-docs-writer", "name": "OpenCode Zen Docs Writer", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Technical documentation generator producing JSDoc, OpenAPI specs, README files, and architecture diagrams.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.18 (Prod)", "priceOut": "$0.00 (Dev Tier) / $0.54 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 51, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-frontend-react", "name": "OpenCode Zen Frontend (React/Next.js)", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Frontend specialist for React 19, Next.js 15, TypeScript, Tailwind CSS, and component architecture.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.22 (Prod)", "priceOut": "$0.00 (Dev Tier) / $0.66 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 51, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-backend-go", "name": "OpenCode Zen Backend (Go/Rust)", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "Backend systems specialist for Go, Rust, gRPC, microservices, and high-throughput APIs.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.22 (Prod)", "priceOut": "$0.00 (Dev Tier) / $0.66 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 51, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}, {"id": "opencode/zen-devops-k8s", "name": "OpenCode Zen DevOps (K8s/Terraform)", "provider": "OpenCode AI", "category": "OpenCode Go Platforms", "desc": "DevOps and SRE specialist for Kubernetes manifests, Terraform modules, Helm charts, and CI/CD pipelines.", "context": 64000, "maxOutput": 8192, "isFree": true, "freeDetails": "OpenCode Zen Developer Community Quota", "priceIn": "$0.00 (Dev Tier) / $0.28 (Prod)", "priceOut": "$0.00 (Dev Tier) / $0.84 (Prod)", "quality": 45, "recency": 50, "speed": 50, "composite": 51, "recommended": false, "roleHint": "Высокоскоростная фоновая обработка и потоковый парсинг", "numPrice": 0.0}];
 

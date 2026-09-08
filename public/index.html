@@ -4,10 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EvaBot v0.0.1</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/Roboto-Variable.woff2" crossorigin>
   <style>
+    /* Self-hosted Roboto (variable, wght 100-900) — no external font CDN dependency */
+    @font-face {
+      font-family: 'Roboto';
+      src: url('/fonts/Roboto-Variable.woff2') format('woff2');
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Roboto';
+      src: url('/fonts/Roboto-Italic-Variable.woff2') format('woff2');
+      font-weight: 100 900;
+      font-style: italic;
+      font-display: swap;
+    }
+
     :root {
       --bg: #000000;
       --fg: #ffffff;
@@ -427,7 +442,7 @@
       opacity: 1;
       transform: translateY(0);
     }
-    html[data-locale-pending] body { visibility: hidden; }
+    html:not([data-nocss])[data-locale-pending] body { visibility: hidden; }
   </style>
   <script>
     (function () {
@@ -441,6 +456,16 @@
         } else {
           document.documentElement.lang = 'en';
         }
+        // NOCSS pre-paint state: all <style>/<link rel=stylesheet> already
+        // exist in <head> at this point — disable them before first paint.
+        if (localStorage.getItem('evabot_css') === 'off') {
+          document.documentElement.setAttribute('data-nocss', '1');
+          var els = document.querySelectorAll('style, link[rel="stylesheet"]');
+          for (var i = 0; i < els.length; i++) {
+            els[i].setAttribute('data-css-media', els[i].getAttribute('media') || 'all');
+            els[i].setAttribute('media', 'not all');
+          }
+        }
       } catch (e) { document.documentElement.lang = 'en'; }
     })();
   </script>
@@ -450,7 +475,7 @@
   <!-- Header Rows -->
   <div class="header-block">
     <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> <span id="lbl-ping">Ping:</span> <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator"></span></div>
-    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">... <span class="c-ok"></span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">... (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">... <span class="c-ok"></span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">... (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span><span class="cmd-link" id="css-toggle" onclick="toggleCss()" title="Toggle all CSS styling on/off (terminal mode)">[CSS:ON]</span></div>
     <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="handleCommand('/products')">/products</span><span class="cmd-link" onclick="handleCommand('/who')">/who</span><span class="cmd-link" onclick="setLanguage(state.lang)">/lang</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/sephirot')">/sephirot</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/history')">/history</span><span class="cmd-link" onclick="handleCommand('/memory')">/memory</span><span class="cmd-link" onclick="handleCommand('/search')">/search</span><span class="cmd-link" onclick="handleCommand('/services')">/services</span><span class="cmd-link" onclick="handleCommand('/servers')">/servers</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
     <div class="tui-line" id="db-line"><span class="c-dim" id="lbl-databases">Databases:</span> <span class="c-ok" id="db-values">checking ...</span></div>
     <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">[■■░░░░░░]</span> 25% RAM <span class="c-ok">[■░░░░░░░]</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">[░░░░░░]</span> 2% RAM <span class="c-ok">[■■■░░░]</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">*</span> 72bpm</span></div>
@@ -1191,6 +1216,50 @@
     }
     window.setLanguage = setLanguage;
 
+    // =======================================================================
+    // NOCSS toggle — terminal-mode styling kill switch.
+    // Disables EVERY <style>/<link rel=stylesheet> by swapping its `media`
+    // attribute to 'not all' (previous value stashed in data-css-media).
+    // Content always stays visible: default browser styling = plain text flow.
+    // State persisted in localStorage 'evabot_css' ('on'|'off', default 'on').
+    // =======================================================================
+    function isCssOn() {
+      return localStorage.getItem('evabot_css') !== 'off';
+    }
+
+    function applyCssState(on) {
+      const els = document.querySelectorAll('style, link[rel="stylesheet"]');
+      for (const el of els) {
+        if (on) {
+          const prev = el.getAttribute('data-css-media');
+          if (prev !== null) {
+            if (prev === 'all' && !el.hasAttribute('data-css-had-media')) el.removeAttribute('media');
+            else el.setAttribute('media', prev);
+            el.removeAttribute('data-css-media');
+            el.removeAttribute('data-css-had-media');
+          }
+        } else if (!el.hasAttribute('data-css-media')) {
+          if (el.hasAttribute('media')) el.setAttribute('data-css-had-media', '1');
+          el.setAttribute('data-css-media', el.getAttribute('media') || 'all');
+          el.setAttribute('media', 'not all');
+        }
+      }
+      if (on) document.documentElement.removeAttribute('data-nocss');
+      else document.documentElement.setAttribute('data-nocss', '1');
+      const btn = document.getElementById('css-toggle');
+      if (btn) {
+        btn.textContent = on ? '[CSS:ON]' : '[CSS:OFF]';
+        btn.className = on ? 'cmd-link' : 'cmd-link c-wrn';
+      }
+    }
+
+    function toggleCss() {
+      const next = !isCssOn();
+      try { localStorage.setItem('evabot_css', next ? 'on' : 'off'); } catch (e) { /* private mode */ }
+      applyCssState(next);
+    }
+    window.toggleCss = toggleCss;
+
     function getTimeStr() {
       const now = new Date();
       return '[' + now.toTimeString().split(' ')[0] + ']';
@@ -1404,9 +1473,11 @@
 
     function setModel(model) {
       state.currentModel = model.id;
-      state.currentProvider = model.id.startsWith('omniroute/') ? 'omniroute' : 
-                              model.id.startsWith('openai/') || model.id.startsWith('anthropic/') || model.id.startsWith('meta-') || model.id.startsWith('google/') || model.id.startsWith('deepseek/') || model.id.startsWith('x-ai/') || model.id.startsWith('mistralai/') || model.id.startsWith('qwen/') || model.id.startsWith('perplexity/') || model.id.startsWith('cognitivecomputations/') ? 'openrouter' :
-                              'google';
+      // Provider is derived server-side from the model id (openrouter/free,
+      // omni/*, bare google ids, ':free' suffix). Sending an explicit provider
+      // here would FORCE wrong routing (e.g. 'openrouter/free' → google API)
+      // and hang the chat — never send one from the client.
+      state.currentProvider = undefined;
       const isFree = model.pricing && model.pricing.freeTierStatus === '100% Free Quota Available';
       const badge = isFree ? '<span class="c-ok">[FREE]</span>' : '<span class="c-wrn">[PAID]</span>';
       modelPill.innerHTML = `${escapeHtml(model.name)} ${badge}`;
@@ -1513,8 +1584,7 @@
           body: JSON.stringify({
             message: text,
             model: state.currentModel,
-            history: state.history.slice(-10),
-            provider: state.currentProvider,
+            history: state.history.slice(-10)
           }),
           signal: controller.signal
         });
@@ -2226,6 +2296,7 @@
     });
 
     // Start
+    applyCssState(isCssOn());
     setLanguage(state.lang, true);
     loadModels();
     setStatus(true);

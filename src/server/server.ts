@@ -30,6 +30,7 @@ const MIME_TYPES: Record<string, string> = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
 };
 
 function sendJson(res: http.ServerResponse, statusCode: number, data: any): void {
@@ -250,11 +251,15 @@ export function createServer(): http.Server {
       '/terminal', '/terminal.txt', '/plain',
     ];
 
-    if (pathname.startsWith('/dist/') || staticRoutes.includes(pathname)) {
+    if (pathname.startsWith('/dist/') || pathname.startsWith('/fonts/') || staticRoutes.includes(pathname)) {
       let filePath = '';
       const host = (req.headers.host || 'localhost').toLowerCase().replace(/^www\./, '');
 
-      if (pathname.startsWith('/dist/')) {
+      if (pathname.startsWith('/fonts/')) {
+        // Self-hosted static fonts (public/fonts) — path-sanitized, no traversal
+        const rel = pathname.slice('/fonts/'.length).replace(/\\/g, '/').replace(/\.\./g, '');
+        filePath = path.resolve(process.cwd(), 'public', 'fonts', rel);
+      } else if (pathname.startsWith('/dist/')) {
         filePath = path.resolve(process.cwd(), pathname.slice(1));
       } else if (pathname === '/manifesto' || pathname === '/manifesto.html') {
         filePath = path.resolve(process.cwd(), 'public', 'manifesto.html');

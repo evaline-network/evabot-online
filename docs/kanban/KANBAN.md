@@ -9,10 +9,10 @@
 
 | Column | Count | Total Items |
 |--------|-------|-------------|
-| **Backlog** | 59 | v0.1.0 - v1.0.0 features (unchecked) |
-| **In Progress** | 4 | v0.1.0 — actual audit 2026-09-08 |
+| **Backlog** | 60 | v0.1.0 - v1.0.0 features (unchecked) |
+| **In Progress** | 8 | v0.1.0 — INFRA-001..004, QA-002, QA-003 + TASK-340/342 in flight |
 | **Review & Testing** | 0 | - |
-| **Done (v0.1.0)** | 12 | ✅ TASK-320..325, 330..333, QA-001 |
+| **Done (v0.1.0)** | 16 | ✅ TASK-320..329, 330..333, QA-001, 341 |
 | **Done (v0.0.2)** | 23 | ✅ Completed |
 | **Done (v0.0.1)** | 10 | ✅ MVP |
 
@@ -28,6 +28,21 @@
 
 ### QA / Coverage (2026-09-08, c8 V8-coverage поверх тест-сюита)
 - [x] **QA-001**: Backend `src/` — statements **82.7%**, branches **75.4%**, functions **83.9%**, lines **82.7%** (29 suites, c8 report: `coverage/coverage-summary.json`). Фронтенд `frontend/` — 0% (test-runner отсутствует, только `tsc --noEmit` + vite build gate). Цель v0.1.0: backend ≥ 85%, внедрить vitest для frontend.
+
+---
+
+## ✅ DONE — v0.1.0 wave 2 (2026-09-08 evening)
+
+### Web / Frontend
+- [x] **TASK-326**: FOUC / language-flash fix — early locale script applies language before first paint; EN static defaults baked into the HTML shell (no more EN-flash-then-locale flicker on web).
+- [x] **TASK-327**: FIX chat hang root cause — web forced `provider:'google'`, so server-side requests for `openrouter/free` were routed to the Google API (hangs / empty replies). Provider is now derived server-side; client sends none. Added server-side EMPTY_STREAM guard (reasoning models returning no content now trigger fallback) + web stream watchdog 60s/120s with AbortController.
+- [~] **TASK-340**: Roboto self-hosting + `[CSS:ON/OFF]` NOCSS toggle — IN PROGRESS (another agent): self-hosted fonts + css toggle wave in flight, not merged yet.
+- [~] **TASK-342**: frontend vitest coverage push — IN PROGRESS (baseline 10.3% stmts, see QA-002).
+
+### Backend / Model Fleet
+- [x] **TASK-328**: model fleet LIVE-verification + pruning — OmniRoute fixed (prisma client), then fleet verified live: `thinkingmachines/inkling*` removed (403), `nemotron-ultra` removed (45s+ timeout). `/subagent` live-verified (90s run, synthesis OK).
+- [x] **TASK-329**: stale static data cleanup — hardcoded counts (78 models), DB stats and 'Gemini 3.8 Flash' mentions neutralized in EN+UK+RU dictionaries; `/health` fixed; dead aliases cleaned in CLI; `/voices` hijack on web eliminated.
+- [x] **TASK-341**: backend test suite — 30/30 suites green (`tests/index.ts`); backend coverage 82.7% statements (c8 V8).
 
 ---
 
@@ -87,10 +102,12 @@
 
 _Audit 2026-09-08: all code-verified DONE tasks above check out against the source; the following are genuinely still open:_
 
-- [ ] **INFRA-001** (2026-09-08): systemd timer `evabot-registry-sync` not yet enabled (`config/evabot-registry-sync.{service,timer}` staged; enable needs root — sudo is tty-gated on this host).
+- [ ] **INFRA-001** (2026-09-08): systemd timer `evabot-registry-sync` not yet enabled (`config/evabot-registry-sync.{service,timer}` staged; enable needs root — sudo is tty-gated on this host). _Update 2026-09-08 evening: timer reported enabled — verify root-side on next session._
 - [ ] **QA-002** (2026-09-08): frontend vitest coverage baseline 10.3% statements — goal ≥ 60% by v0.1.1 (DOM-heavy `app.ts` / `voice/*` deferred).
 - [ ] **INFRA-002** (2026-09-08): OmniRoute (:20128) restart churn investigation — root cause of repeated litellm daemon restarts not yet identified.
 - [ ] **INFRA-003** (2026-09-08): port 8092 firewall exposure review — confirm expected ingress scope or close.
+- [ ] **QA-003** (2026-09-08 evening): web chat E2E per-model verification ongoing — every advertised model checked live through `/api/chat` + streaming path.
+- [ ] **INFRA-004** (2026-09-08 evening): ConsiliumEngine synthesis may default to `gemini-2.5-pro` — verify and parameterize (should follow model policy / `openrouter/free`).
 
 ---
 
@@ -246,7 +263,7 @@ Tasks:  10  8  5  0  🎯 TARGET
 |--------|-----------|-----------|
 | v0.0.1 | 10 tasks | 10/sprint |
 | v0.0.2 | 25 tasks | 25/sprint ⬆️ |
-| v0.1.0 | 10 tasks | TBD |
+| v0.1.0 | 16 tasks | TBD |
 
 ---
 
