@@ -234,6 +234,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Versioning:** [Semantic Versioning](https://semver.org/)  
 **Status:** Active development
 
+## [v0.2.1] - 2026-09-09 — GCP SSH Security Hardening
+
+### 🔒 Added - Security
+- **SSH Hardening**: Firewall rule `allow-iap-ssh` restricted from `0.0.0.0/0` → `35.235.240.0/20` (IAP only)
+- **OS Login enabled** (`enable-oslogin=TRUE`) — replaces legacy project-level SSH keys
+- **Legacy SSH keys purged** from project metadata; access now identity-based via IAM
+- **IAM bindings**: `roles/compute.osAdminLogin` granted to `evabot.online@gmail.com` and `olegzai.server@gmail.com`
+- **Network tags**: `allow-iap-ssh` applied to both `evabot-agent-vm` and `evaline-micro-vm`
+- **Documentation**: `docs/security/AUDIT-2026-09-09.md`, `docs/ops/SECURE_SSH_ACCESS.md`
+
+### 📊 Summary
+| Metric | Before | After |
+|--------|--------|-------|
+| SSH port 22 from internet | ✅ Open (0.0.0.0/0) | ❌ Blocked |
+| SSH through IAP tunnel | ✅ | ✅ |
+| Access management | SSH keys in metadata | IAM (per-user) |
+| Audit trail | No | Yes (Google identity) |
+
+---
+
 ## [v0.2.0] - 2026-09-08 — Modular Architecture & Security Hardening
 
 ### 🏗️ Added
