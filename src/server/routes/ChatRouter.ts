@@ -54,8 +54,9 @@ export class ChatRouter extends Router {
       const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
       const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
       // TASK-320: /auto mode — dynamic FREE model per message when opted in.
-      let targetModel = model || Config.defaultModel;
-      if (!model && AutoModelRouter.isActive(chatSessionId)) {
+      const requestedModel = model && model !== 'auto' && model !== 'default' ? model : undefined;
+      let targetModel = requestedModel || Config.defaultModel;
+      if (!requestedModel && AutoModelRouter.isActive(chatSessionId)) {
         targetModel = AutoModelRouter.pick({ message, history }, chatSessionId).modelId;
       }
       const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
@@ -64,7 +65,7 @@ export class ChatRouter extends Router {
 
       if (useKnowledgeBase) {
         try {
-          const docs = await this.kbConnector.search(message, { limit: 3 });
+          const docs = await this.kbConnector.search(message, { limit: 6 });
           if (docs.length > 0) {
             effectiveInstruction += `\n${this.kbConnector.formatContextForPrompt(docs)}`;
           }
@@ -118,8 +119,9 @@ export class ChatRouter extends Router {
       const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
       const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
       // TASK-320: /auto mode — dynamic FREE model per message when opted in.
-      let targetModel = model || Config.defaultModel;
-      if (!model && AutoModelRouter.isActive(chatSessionId)) {
+      const requestedModel = model && model !== 'auto' && model !== 'default' ? model : undefined;
+      let targetModel = requestedModel || Config.defaultModel;
+      if (!requestedModel && AutoModelRouter.isActive(chatSessionId)) {
         targetModel = AutoModelRouter.pick({ message, history }, chatSessionId).modelId;
       }
       const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
@@ -128,7 +130,7 @@ export class ChatRouter extends Router {
 
       if (useKnowledgeBase) {
         try {
-          const docs = await this.kbConnector.search(message, { limit: 3 });
+          const docs = await this.kbConnector.search(message, { limit: 6 });
           if (docs.length > 0) {
             effectiveInstruction += `\n${this.kbConnector.formatContextForPrompt(docs)}`;
           }
