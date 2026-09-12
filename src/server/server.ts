@@ -31,10 +31,12 @@ const MIME_TYPES: Record<string, string> = {
   '.js': 'application/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
+  '.md': 'text/markdown; charset=utf-8',
 };
 
 function sendJson(res: http.ServerResponse, statusCode: number, data: unknown, origin: string = '*'): void {
@@ -274,20 +276,34 @@ export function createServer(): http.Server {
       '/manifesto-uk', '/manifesto-uk.html',
       '/manifesto-en', '/manifesto-en.html',
       '/manifesto.txt',
+      '/MANIFESTO.md',
       '/hub', '/hub.html',
       '/network', '/network.html',
       '/visualize', '/visualize.html',
       '/terminal', '/terminal.txt', '/plain',
+      '/sw.js', '/service-worker.js',
+      '/manifest.webmanifest', '/manifest.json',
+      '/offline.html',
     ];
 
-    if (pathname.startsWith('/dist/') || pathname.startsWith('/fonts/') || staticRoutes.includes(pathname)) {
+    if (pathname.startsWith('/dist/') || pathname.startsWith('/fonts/') || pathname.startsWith('/assets/') || staticRoutes.includes(pathname)) {
       let filePath = '';
       const host = (req.headers.host || 'localhost').toLowerCase().replace(/^www\./, '');
 
-      if (pathname.startsWith('/fonts/')) {
+      if (pathname.startsWith('/assets/')) {
+        // Self-hosted static assets (public/assets) — path-sanitized, no traversal
+        const rel = pathname.slice('/assets/'.length).replace(/\\/g, '/').replace(/\.\./g, '');
+        filePath = path.resolve(process.cwd(), 'public', 'assets', rel);
+      } else if (pathname.startsWith('/fonts/')) {
         // Self-hosted static fonts (public/fonts) — path-sanitized, no traversal
         const rel = pathname.slice('/fonts/'.length).replace(/\\/g, '/').replace(/\.\./g, '');
         filePath = path.resolve(process.cwd(), 'public', 'fonts', rel);
+      } else if (pathname === '/sw.js' || pathname === '/service-worker.js') {
+        filePath = path.resolve(process.cwd(), 'public', 'sw.js');
+      } else if (pathname === '/manifest.webmanifest' || pathname === '/manifest.json') {
+        filePath = path.resolve(process.cwd(), 'public', 'manifest.webmanifest');
+      } else if (pathname === '/offline.html') {
+        filePath = path.resolve(process.cwd(), 'public', 'offline.html');
       } else if (pathname.startsWith('/dist/')) {
         filePath = path.resolve(process.cwd(), pathname.slice(1));
       } else if (pathname === '/manifesto.txt') {
@@ -320,6 +336,8 @@ export function createServer(): http.Server {
         } else {
           filePath = path.resolve(process.cwd(), 'public', 'manifesto.html');
         }
+      } else if (pathname === '/MANIFESTO.md') {
+        filePath = path.resolve(process.cwd(), 'public', 'MANIFESTO.md');
       } else if (pathname === '/hub' || pathname === '/hub.html') {
         filePath = path.resolve(process.cwd(), 'public', 'hub.html');
       } else if (pathname === '/network' || pathname === '/network.html' || pathname === '/visualize' || pathname === '/visualize.html') {
@@ -376,7 +394,10 @@ export function createServer(): http.Server {
       if (filePath && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
         const ext = path.extname(filePath).toLowerCase();
         const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-        res.writeHead(200, { 'Content-Type': contentType });
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0'
+        });
         fs.createReadStream(filePath).pipe(res);
         return;
       }

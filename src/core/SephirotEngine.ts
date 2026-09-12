@@ -85,7 +85,7 @@ export const SEPHIROT_ROLES: SephirotRole[] = [
     nameRu: 'Хесед — Рост',
     title: 'Growth / Marketing',
     parentIds: ['chokmah'],
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.8-flash',
     systemPrompt:
       'You are CHESED, Mercy/Expansion — the growth axis. ' +
       'Given vision, strategy and critique, propose the expansion path: market, adoption, marketing leverage. ' +
@@ -117,7 +117,7 @@ export const SEPHIROT_ROLES: SephirotRole[] = [
     nameRu: 'Тиферет — Красота (Адам)',
     title: 'Design / Harmony',
     parentIds: ['chesed', 'gevurah'],
-    model: 'gemini-2.5-pro',
+    model: 'gemini-3.1-pro',
     systemPrompt:
       'You are TIFERET, Beauty — the balancing heart of the tree, voiced by ADAM (male persona, warm and precise). ' +
       'You harmonize growth (Chesed) and severity (Gevurah) into one balanced design direction that still serves the vision. ' +
