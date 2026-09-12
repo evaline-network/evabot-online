@@ -54,8 +54,9 @@ export class ChatRouter extends Router {
       const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
       const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
       // TASK-320: /auto mode — dynamic FREE model per message when opted in.
-      let targetModel = model || Config.defaultModel;
-      if (!model && AutoModelRouter.isActive(chatSessionId)) {
+      const requestedModel = model && model !== 'auto' && model !== 'default' ? model : undefined;
+      let targetModel = requestedModel || Config.defaultModel;
+      if (!requestedModel && AutoModelRouter.isActive(chatSessionId)) {
         targetModel = AutoModelRouter.pick({ message, history }, chatSessionId).modelId;
       }
       const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
@@ -64,7 +65,7 @@ export class ChatRouter extends Router {
 
       if (useKnowledgeBase) {
         try {
-          const docs = await this.kbConnector.search(message, { limit: 3 });
+          const docs = await this.kbConnector.search(message, { limit: 6 });
           if (docs.length > 0) {
             effectiveInstruction += `\n${this.kbConnector.formatContextForPrompt(docs)}`;
           }
@@ -73,10 +74,12 @@ export class ChatRouter extends Router {
         }
       }
 
+      // LANGUAGE LOCK (PRIMARY): mirror the user's message language (uk/ru/en) – put first for maximum weight.
+      effectiveInstruction = `${languageLockInstruction(message)}\n`;
       // System-awareness (FEATURE 1) + developer block (FEATURE 2), appended
       // AFTER the existing system prompt building (role/LocalePolicy/rules/KB).
       effectiveInstruction += `\n${SystemContext.build()}`;
-      // LANGUAGE LOCK: mirror the user's message language (uk/ru/en).
+      // Also append lock as a safeguard.
       effectiveInstruction += `\n${languageLockInstruction(message)}`;
       if (DeveloperMode.isUnlocked(chatSessionId)) {
         effectiveInstruction += `\n${SystemContext.DEVELOPER_BLOCK}`;
@@ -116,8 +119,9 @@ export class ChatRouter extends Router {
       const chatSessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId : 'web-default';
       const client = new UniversalLlmClient(apiKey || (Config.vertexEnabled ? undefined : Config.geminiApiKey) || undefined);
       // TASK-320: /auto mode — dynamic FREE model per message when opted in.
-      let targetModel = model || Config.defaultModel;
-      if (!model && AutoModelRouter.isActive(chatSessionId)) {
+      const requestedModel = model && model !== 'auto' && model !== 'default' ? model : undefined;
+      let targetModel = requestedModel || Config.defaultModel;
+      if (!requestedModel && AutoModelRouter.isActive(chatSessionId)) {
         targetModel = AutoModelRouter.pick({ message, history }, chatSessionId).modelId;
       }
       const usedProvider = client.resolveProvider(targetModel, provider as LlmProvider | undefined);
@@ -126,7 +130,7 @@ export class ChatRouter extends Router {
 
       if (useKnowledgeBase) {
         try {
-          const docs = await this.kbConnector.search(message, { limit: 3 });
+          const docs = await this.kbConnector.search(message, { limit: 6 });
           if (docs.length > 0) {
             effectiveInstruction += `\n${this.kbConnector.formatContextForPrompt(docs)}`;
           }
@@ -136,8 +140,9 @@ export class ChatRouter extends Router {
       }
 
       // System-awareness (FEATURE 1) + developer block (FEATURE 2).
+      effectiveInstruction = `${languageLockInstruction(message)}\n${effectiveInstruction}`;
       effectiveInstruction += `\n${SystemContext.build()}`;
-      // LANGUAGE LOCK: mirror the user's message language (uk/ru/en).
+      // Also append lock as a safeguard.
       effectiveInstruction += `\n${languageLockInstruction(message)}`;
       if (DeveloperMode.isUnlocked(chatSessionId)) {
         effectiveInstruction += `\n${SystemContext.DEVELOPER_BLOCK}`;

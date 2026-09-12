@@ -560,14 +560,22 @@
 </head>
 <body>
 
-  <!-- Header Rows -->
+  <!-- Tab Navigation -->
+  <div class="header-block" style="border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px;">
+    <div class="tui-line" style="display: flex; gap: 8px; align-items: center;">
+      <span class="cmd-link bold c-ok" id="tab-terminal" onclick="switchTab('terminal')" style="font-size: 0.8rem;">[ TERMINAL ]</span>
+      <span class="cmd-link" id="tab-metrics" onclick="switchTab('metrics')" style="font-size: 0.8rem;">[ METRICS ]</span>
+      <span class="c-dim" style="font-size: 0.75rem;">Switch views: chat focus vs system telemetry</span>
+    </div>
+  </div>
+
+  <!-- Terminal / Chat Panel -->
+  <div id="chat-panel">
   <div class="header-block">
     <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> <span id="lbl-ping">Ping:</span> <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator"></span></div>
     <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">... <span class="c-ok"></span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">... (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span><span class="cmd-link" id="css-toggle" onclick="toggleCss()" title="Display mode: off / term / web (click to cycle)">[CSS:TERM]</span></div>
-    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="handleCommand('/products')">/products</span><span class="cmd-link" onclick="handleCommand('/who')">/who</span><span class="cmd-link" onclick="setLanguage(state.lang)">/lang</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/sephirot')">/sephirot</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/history')">/history</span><span class="cmd-link" onclick="handleCommand('/memory')">/memory</span><span class="cmd-link" onclick="handleCommand('/add')">/add</span><span class="cmd-link" onclick="handleCommand('/file')">/file</span><span class="cmd-link" onclick="handleCommand('/idea')">/idea</span><span class="cmd-link" onclick="handleCommand('/error')">/error</span><span class="cmd-link" onclick="handleCommand('/bug')">/bug</span><span class="cmd-link" onclick="handleCommand('/errors')">/errors</span><span class="cmd-link" onclick="handleCommand('/search')">/search</span><span class="cmd-link" onclick="handleCommand('/services')">/services</span><span class="cmd-link" onclick="handleCommand('/servers')">/servers</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/about')">/about</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="handleCommand('/products')">/products</span><span class="cmd-link" onclick="handleCommand('/who')">/who</span><span class="cmd-link" onclick="setLanguage(state.lang)">/lang</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/sephirot')">/sephirot</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/history')">/history</span><span class="cmd-link" onclick="handleCommand('/memory')">/memory</span><span class="cmd-link" onclick="handleCommand('/add')">/add</span><span class="cmd-link" onclick="handleCommand('/file')">/file</span><span class="cmd-link" onclick="handleCommand('/idea')">/idea</span><span class="cmd-link" onclick="handleCommand('/error')">/error</span><span class="cmd-link" onclick="handleCommand('/bug')">/bug</span><span class="cmd-link" onclick="handleCommand('/errors')">/errors</span><span class="cmd-link" onclick="handleCommand('/search')">/search</span><span class="cmd-link" onclick="handleCommand('/services')">/services</span><span class="cmd-link" onclick="handleCommand('/servers')">/servers</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
     <div class="tui-line" id="db-line"><span class="c-dim" id="lbl-databases">Databases:</span> <span class="c-ok" id="db-values">checking ...</span></div>
-    <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">25%</span> · RAM <span class="c-ok">15%</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">2%</span> · RAM <span class="c-ok">46%</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">*</span> 72bpm</span></div>
-    <div class="tui-line" id="network-strip"><span class="c-dim">Cluster:</span> <span class="cmd-link bold c-ok">[evabot.online]</span><a href="https://evaline.network" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.network ↗</a><a href="https://evaline.online" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.online ↗</a><a href="https://evaline.website" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.website ↗</a><span class="c-dim">│</span> <a href="https://github.com/evaline-online" class="cmd-link" target="_blank" style="color:var(--yellow); font-weight:700; text-decoration:underline;">GitHub @evaline-online ↗</a></div>
   </div>
 
   <!-- Messages stream -->
@@ -584,6 +592,23 @@
     <textarea id="user-input" placeholder="Type a message or command (/help)..." autofocus></textarea>
     <button class="mic-btn" id="mic-btn" title="Voice input [ MIC ]" onclick="VoiceEngine.toggle()">[ MIC ]</button>
     <span class="mic-btn" id="tts-toggle" onclick="VoiceEngine.toggleTtsMute()" title="TTS on/off">[ TTS:ON ]</span>
+  </div>
+
+  </div>
+
+  <!-- Metrics Panel (second screen) -->
+  <div id="metrics-panel" style="display: none;">
+  <div class="header-block">
+    <div class="tui-line"><span class="status-dot pulse" id="status-light">●</span> EvaBot v0.0.1  <span class="c-ok" id="status-text">ONLINE</span>  <span class="c-dim">│</span> <span id="lbl-ping">Ping:</span> <span class="c-ok bold" id="ping-text">...</span>  <span class="c-dim">│</span> Mesh: <span class="c-ok" id="mesh-ping">134ms</span>  <span class="c-dim">│</span> Live: <span class="c-ok" id="pulse-indicator"></span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-model">Model:</span> <span class="interactive-link" id="model-pill" onclick="openModelModal()">... <span class="c-ok"></span></span>  <span class="c-dim" id="lbl-mode">Mode:</span> <span class="interactive-link" id="current-mode" onclick="toggleMode()">solo</span>  <span class="c-dim" id="lbl-pool">Pool:</span> <span class="interactive-link" id="models-link" onclick="openModelModal()">... (/models)</span>  <span class="c-dim" id="lbl-lang">Lang:</span> <span class="cmd-link bold c-ok" id="lang-en" onclick="setLanguage('en')">[EN]</span><span class="cmd-link" id="lang-uk" onclick="setLanguage('uk')">UK</span><span class="cmd-link" id="lang-ru" onclick="setLanguage('ru')">RU</span><span class="cmd-link" id="css-toggle" onclick="toggleCss()" title="Display mode: off / term / web (click to cycle)">[CSS:TERM]</span></div>
+    <div class="tui-line"><span class="c-dim" id="lbl-commands">Commands:</span> <span class="cmd-link" onclick="handleCommand('/help')">/help</span><span class="cmd-link" onclick="handleCommand('/?')">/?</span><span class="cmd-link" onclick="handleCommand('/about')">/about</span><span class="cmd-link" onclick="handleCommand('/top')">/top</span><span class="cmd-link" onclick="openModelModal()">/models</span><span class="cmd-link" onclick="handleCommand('/cost')">/cost</span><span class="cmd-link" onclick="handleCommand('/company')">/company</span><span class="cmd-link" onclick="handleCommand('/evaline')">/evaline</span><span class="cmd-link" onclick="handleCommand('/products')">/products</span><span class="cmd-link" onclick="handleCommand('/who')">/who</span><span class="cmd-link" onclick="setLanguage(state.lang)">/lang</span><span class="cmd-link" onclick="toggleMode()">/mode</span><span class="cmd-link" onclick="handleCommand('/consilium')">/consilium</span><span class="cmd-link" onclick="handleCommand('/sephirot')">/sephirot</span><span class="cmd-link" onclick="handleCommand('/mcp')">/mcp</span><span class="cmd-link" onclick="handleCommand('/lsp')">/lsp</span><span class="cmd-link" onclick="handleCommand('/history')">/history</span><span class="cmd-link" onclick="handleCommand('/memory')">/memory</span><span class="cmd-link" onclick="handleCommand('/add')">/add</span><span class="cmd-link" onclick="handleCommand('/file')">/file</span><span class="cmd-link" onclick="handleCommand('/idea')">/idea</span><span class="cmd-link" onclick="handleCommand('/error')">/error</span><span class="cmd-link" onclick="handleCommand('/bug')">/bug</span><span class="cmd-link" onclick="handleCommand('/errors')">/errors</span><span class="cmd-link" onclick="handleCommand('/search')">/search</span><span class="cmd-link" onclick="handleCommand('/services')">/services</span><span class="cmd-link" onclick="handleCommand('/servers')">/servers</span><span class="cmd-link" onclick="handleCommand('/clear')">/clear</span></div>
+    <div class="tui-line" id="db-line"><span class="c-dim" id="lbl-databases">Databases:</span> <span class="c-ok" id="db-values">checking ...</span></div>
+    <div class="tui-line" id="metrics-line"><span class="c-dim" id="lbl-load">Load:</span> <span id="metrics-frankfurt">Brain(Frankfurt) CPU <span class="c-ok">25%</span> · RAM <span class="c-ok">15%</span> 4.7/31GB</span> │ <span id="metrics-iowa">Face(Iowa) CPU <span class="c-ok">2%</span> · RAM <span class="c-ok">46%</span> 440MB</span> │ <span id="heartbeat-indicator" class="c-ok"><span style="color:var(--red)">*</span> 72bpm</span></div>
+    <div class="tui-line" id="network-strip"><span class="c-dim">Cluster:</span> <span class="cmd-link bold c-ok">[evabot.online]</span><a href="https://evaline.network" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.network ↗</a><a href="https://evaline.online" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.online ↗</a><a href="https://evaline.website" class="cmd-link" target="_blank" style="color:var(--fg); text-decoration:underline;">evaline.website ↗</a><span class="c-dim">│</span> <a href="https://github.com/evaline-online" class="cmd-link" target="_blank" style="color:var(--yellow); font-weight:700; text-decoration:underline;">GitHub @evaline-online ↗</a></div>
+  </div>
+    <div class="chat-container" id="metrics-container" style="flex: 1; overflow-y: auto;">
+      <div class="msg" style="color: var(--dim);">Loading live metrics...</div>
+    </div>
   </div>
 
   <!-- Models Modal -->
@@ -1043,6 +1068,7 @@
         noModels: 'No models in this category.',
         modelSelected: 'Selected model: ',
         help: `SYSTEM COMMANDS:
+  /about                  - EvaBot & EvaLine passport, cluster architecture & EU hub
   /top [free|paid|speed]  - Top models leaderboard by quality and recency
   /models                 - Full interactive model catalog
   /info <model>           - Technical passport, context limits & token pricing
@@ -1146,6 +1172,7 @@ Examples:
         noModels: 'Немає моделей у даній категорії.',
         modelSelected: 'Вибрано модель: ',
         help: `СИСТЕМНІ КОМАНДИ:
+  /about                  - Паспорт EvaBot & EvaLine, архітектура кластера та єврохаб
   /top [free|paid|speed]  - Рейтинг моделей за якістю та новизною
   /models                 - Повний інтерактивний каталог моделей
   /info <model>           - Технічний паспорт, контекстне вікно та тарифи
@@ -1248,6 +1275,7 @@ Examples:
         noModels: 'Нет моделей в данной категории.',
         modelSelected: 'Выбрана модель: ',
         help: `СИСТЕМНЫЕ КОМАНДЫ:
+  /about                  - Паспорт EvaBot & EvaLine, архитектура кластера и еврохаб
   /top [free|paid|speed]  - Топ моделей по качеству и новизне
   /models                 - Полный интерактивный каталог моделей
   /info <model>           - Паспорт, контекстное окно и квоты модели
@@ -2094,7 +2122,7 @@ Examples:
           const res = await fetch('/api/models/command', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command: cmd })
+            body: JSON.stringify({ command: cmd, lang: state.lang })
           });
           if (!res.ok) {
             addMessage('error', res.status === 429
@@ -2204,6 +2232,9 @@ Examples:
       persona: localStorage.getItem('evabot_tts_persona') === 'adam' ? 'adam' : 'eva',
       ttsOn: localStorage.getItem('evabot_tts') !== 'off',
       autosend: localStorage.getItem('evabot_voice_autosend') !== 'off',
+      // Queue guard + currently playing audio so mute/new-reply cancel cleanly.
+      speakSeq: 0,
+      activeAudio: null,
 
       langCode() {
         return state.lang === 'uk' ? 'uk-UA' : state.lang === 'ru' ? 'ru-RU' : 'en-US';
@@ -2401,7 +2432,11 @@ Examples:
         this.ttsOn = !!v;
         localStorage.setItem('evabot_tts', this.ttsOn ? 'on' : 'off');
         this.updateTtsToggle();
-        if (!this.ttsOn && window.speechSynthesis) window.speechSynthesis.cancel();
+        if (!this.ttsOn) {
+          this.speakSeq++; // cancel any queued speak chain
+          if (this.activeAudio) { try { this.activeAudio.pause(); } catch (e) {} this.activeAudio = null; }
+          if (window.speechSynthesis) window.speechSynthesis.cancel();
+        }
       },
 
       toggleTtsMute() {
@@ -2442,6 +2477,63 @@ Examples:
         return pool.find((v) => re.test(v.name)) || pool[0] || null;
       },
 
+      // Text-language detection mirroring the server (src/core/LocalePolicy.ts):
+      // Cyrillic with Ukrainian markers → uk-UA, other Cyrillic → ru-RU, else en-US.
+      detectLang(text) {
+        if (!text || !/[\u0400-\u04FF]/.test(text)) return 'en-US';
+        const lower = text.toLowerCase();
+        const ukMarks = (lower.match(/[іїєґ]/g) || []).length;
+        const ukWords = ['привіт', 'дякую', 'будь ласка', 'скажи', 'що', 'виготовлення', 'замовлення', 'київ'];
+        const ruWords = ['привет', 'спасибо', 'пожалуйста', 'как', 'что', 'это', 'производство', 'заказ', 'киев'];
+        const ukScore = ukMarks * 2 + ukWords.filter((w) => lower.includes(w)).length;
+        const ruScore = ruWords.filter((w) => lower.includes(w)).length;
+        if (ukScore > ruScore) return 'uk-UA';
+        if (ruScore > ukScore) return 'ru-RU';
+        return 'ru-RU';
+      },
+
+      // Splits reply text at sentence boundaries into chunks ≤ 340 chars so
+      // the FULL reply is voiced (the old code spoke only the first 350 chars).
+      splitSpeech(cleanText, max = 340) {
+        const chunks = [];
+        let start = 0;
+        while (start < cleanText.length) {
+          let end = Math.min(start + max, cleanText.length);
+          if (end < cleanText.length) {
+            const slice = cleanText.slice(start, end);
+            const cuts = ['. ', '! ', '? ', '… ', '... ', '; ', ', ']
+              .map((sep) => slice.lastIndexOf(sep))
+              .filter((idx) => idx >= Math.floor(max / 2));
+            if (cuts.length) end = start + Math.max(...cuts) + 1;
+          }
+          chunks.push(cleanText.slice(start, end).trim());
+          start = end;
+        }
+        return chunks.filter(Boolean);
+      },
+
+      // Cloud TTS for one chunk. Resolves true on played audio, false on any
+      // failure so the caller drops into the browser speechSynthesis fallback.
+      cloudSpeak(chunk, persona, lang) {
+        return fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: chunk, persona, lang }),
+        }).then((r) => r.json()).then((data) => {
+          if (!(data && data.ok && data.audioBase64)) return false;
+          const audio = new Audio('data:audio/mp3;base64,' + data.audioBase64);
+          this.activeAudio = audio;
+          return new Promise((resolve) => {
+            audio.onended = () => { if (this.activeAudio === audio) this.activeAudio = null; resolve(true); };
+            audio.onerror = () => { if (this.activeAudio === audio) this.activeAudio = null; resolve(false); };
+            audio.play().catch(() => { if (this.activeAudio === audio) this.activeAudio = null; resolve(false); });
+          });
+        }).catch(() => false);
+      },
+
+      // Voices the WHOLE reply: language detected from the spoken text (so a
+      // Russian/Ukrainian reply is never voiced with an English voice), split
+      // into sentence-aligned chunks and queued one after another.
       speak(text) {
         if (!this.ttsOn) return;
         const cleanText = String(text || '')
@@ -2453,38 +2545,29 @@ Examples:
           .replace(/\s+/g, ' ')
           .trim();
         if (!cleanText) return;
-        // Cloud TTS first (Google Cloud WaveNet free tier, ONLY-FREE capped at
-        // 900k chars/mo server-side). Persona pitch/rate only apply to the
-        // browser fallback below. On any failure → existing browser TTS.
-        // Persona: last chat response persona from the backend wins (eva is
-        // the default); falls back to the manual /voice eva|adam selection.
+        const seq = ++this.speakSeq;
         const persona = window.__lastPersona || this.persona;
-        const lang = this.langCode();
-        fetch('/api/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: cleanText.slice(0, 350), persona, lang }),
-        }).then((r) => r.json()).then((data) => {
-          if (data && data.ok && data.audioBase64) {
-            try {
-              const audio = new Audio('data:audio/mp3;base64,' + data.audioBase64);
-              audio.play().catch(() => this.speakBrowser(cleanText));
-            } catch (e) {
-              this.speakBrowser(cleanText);
-            }
-          } else {
-            this.speakBrowser(cleanText);
-          }
-        }).catch(() => this.speakBrowser(cleanText));
+        const lang = this.detectLang(cleanText);
+        const chunks = this.splitSpeech(cleanText);
+        const self = this;
+        (async function speakQueue(i) {
+          if (self.speakSeq !== seq || !self.ttsOn) return;
+          if (i >= chunks.length) return;
+          const okay = await self.cloudSpeak(chunks[i], persona, lang);
+          if (self.speakSeq !== seq || !self.ttsOn) return;
+          if (!okay) self.speakBrowser(chunks[i], lang);
+          if (self.speakSeq === seq && self.ttsOn) setTimeout(() => speakQueue(i + 1), 140);
+        })(0);
       },
 
-      // Legacy browser speechSynthesis fallback (persona pitch/rate apply here).
-      speakBrowser(cleanText) {
+      // Legacy browser speechSynthesis fallback (persona pitch/rate apply here;
+      // language comes from the spoken text, not the UI locale).
+      speakBrowser(cleanText, lang) {
         if (!this.ttsOn || !window.speechSynthesis) return;
         window.speechSynthesis.cancel();
         const spokenSlice = cleanText.length > 350 ? `${cleanText.slice(0, 350)}...` : cleanText;
         const utterance = new SpeechSynthesisUtterance(spokenSlice);
-        utterance.lang = this.langCode();
+        utterance.lang = lang || this.langCode();
         // persona tuning (see frontend/src/app.ts:760-769 conventions)
         utterance.rate = 1.05;
         utterance.pitch = this.persona === 'adam' ? 0.85 : 1.12;
@@ -2697,6 +2780,71 @@ Examples:
     loadModels();
     setStatus(true);
     VoiceEngine.init();
+
+    function switchTab(tab) {
+      const chatPanel = document.getElementById('chat-panel');
+      const metricsPanel = document.getElementById('metrics-panel');
+      const tabTerminal = document.getElementById('tab-terminal');
+      const tabMetrics = document.getElementById('tab-metrics');
+
+      if (tab === 'terminal') {
+        chatPanel.style.display = 'block';
+        metricsPanel.style.display = 'none';
+        tabTerminal.className = 'cmd-link bold c-ok';
+        tabMetrics.className = 'cmd-link';
+        const input = document.getElementById('user-input');
+        if (input) input.focus();
+      } else {
+        chatPanel.style.display = 'none';
+        metricsPanel.style.display = 'block';
+        tabTerminal.className = 'cmd-link';
+        tabMetrics.className = 'cmd-link bold c-ok';
+        refreshMetricsPanel();
+      }
+    }
+
+    function refreshMetricsPanel() {
+      const container = document.getElementById('metrics-container');
+      if (!container) return;
+      fetch('/api/health')
+        .then(r => r.json())
+        .then(data => {
+          let html = '<div class="msg"><pre>';
+          html += 'Server: ' + (data.server || 'evabot-online-edge') + '\n';
+          html += 'Status: ' + (data.status || 'online') + '\n';
+          html += 'Uptime: ' + Math.floor((data.uptimeSeconds || 0) / 3600) + 'h ' + Math.floor(((data.uptimeSeconds || 0) % 3600) / 60) + 'm\n';
+          html += 'Memory: ' + (data.memoryUsageMb || 0) + ' MB\n';
+          html += 'CPU Cores: ' + (data.cpuCores || 0) + '\n';
+          html += 'Load: ' + (data.systemLoad || '0.00') + '\n\n';
+          if (data.telemetry) {
+            html += '=== Frankfurt (Brain) ===\n';
+            html += 'CPU: ' + (data.telemetry.frankfurt?.cpuPct || 0) + '%\n';
+            html += 'RAM: ' + (data.telemetry.frankfurt?.memUsedGb || 0) + '/' + (data.telemetry.frankfurt?.memTotalGb || 0) + ' GB\n\n';
+            html += '=== Iowa (Face) ===\n';
+            html += 'CPU: ' + (data.telemetry.iowa?.cpuPct || 0) + '%\n';
+            html += 'RAM: ' + (data.telemetry.iowa?.memUsedMb || 0) + '/' + (data.telemetry.iowa?.memTotalMb || 0) + ' MB\n\n';
+            html += 'Mesh Latency: ' + (data.telemetry.meshLatencyMs || 0) + ' ms\n';
+          }
+          if (data.databases) {
+            html += '\n=== Databases ===\n';
+            for (const [key, db] of Object.entries(data.databases)) {
+              html += key.toUpperCase() + ': ' + (db.name || key) + ' (' + (db.count || 0) + ') [' + (db.status || 'OK') + ']\n';
+            }
+          }
+          if (data.plugins) {
+            html += '\n=== Plugins (' + data.plugins.loaded + ' loaded, ' + data.plugins.active + ' active) ===\n';
+            data.plugins.list.forEach(p => {
+              html += '- ' + p.name + ' v' + p.version + ' [' + (p.enabled ? 'ON' : 'OFF') + ']\n';
+            });
+          }
+          html += '</pre></div>';
+          container.innerHTML = html;
+        })
+        .catch(err => {
+          container.innerHTML = '<div class="msg" style="color: var(--red);">Error loading metrics: ' + err.message + '</div>';
+        });
+    }
+
   </script>
 </body>
 </html>
